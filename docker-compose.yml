@@ -1,0 +1,91 @@
+services:
+  # 1. Base de Datos (Relacional: PostgreSQL)
+  db:
+    image: postgres:16
+    container_name: incidencias_db
+    ports:
+      - "5433:5432"
+    restart: always
+    environment:
+      POSTGRES_DB: gestion_incidencias
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: Joseepc_1805
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d gestion_incidencias" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - incidencias_network
+
+  # 1.1 Administrador Gráfico de BD (PgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: incidencias_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sistema.com
+      PGADMIN_DEFAULT_PASSWORD: password123
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - incidencias_network
+
+  # 1.2 Servidor de Caché (Redis)
+  redis:
+    image: redis:alpine
+    container_name: incidencias_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - incidencias_network
+
+  # 2. Backend (Laravel API REST)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    expose:
+      - "8000"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "php -r 'echo 1;' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - incidencias_network
+    deploy:
+      mode: replicated
+      replicas: 2
+
+  # 3. Servidor Web y Balanceador de Carga (Nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: incidencias_frontend_lb
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - incidencias_network
+
+networks:
+  incidencias_network:
+    driver: bridge
+
+volumes:
+  pgdata:
