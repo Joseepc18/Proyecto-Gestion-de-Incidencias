@@ -30,7 +30,9 @@ Homestead.json
 auth.json
 
 # Documentación / Guías privadas
-PLAN_REPLICACION.md
 PLANFASES.md
 aprender.md
 lineamientos.md
+comandos.txt
+dificultades_soluciones.md
+
