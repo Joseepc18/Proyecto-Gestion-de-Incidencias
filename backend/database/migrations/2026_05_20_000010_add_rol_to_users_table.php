@@ -13,8 +13,8 @@ public function up(): void
     {
         DB::statement("
         ALTER TABLE users
-        ADD COLUMN id_rol BIGINT NULL,
-        ADD CONSTRAINT fk_users_roles FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE SET NULL;
+        ADD COLUMN id_rol BIGINT NOT NULL,
+        ADD CONSTRAINT fk_users_roles FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE RESTRICT;
         ");
     }
 

@@ -18,6 +18,7 @@ return new class extends Migration
             id_tipo_incidencia BIGINT NOT NULL,
             FOREIGN KEY (id_tipo_incidencia) REFERENCES tipos_incidencia(id_tipo_incidencia) ON DELETE RESTRICT ON UPDATE CASCADE,
             descripcion_subtipo_incidencia TEXT,
+            UNIQUE(nombre_subtipo_incidencia, id_tipo_incidencia),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

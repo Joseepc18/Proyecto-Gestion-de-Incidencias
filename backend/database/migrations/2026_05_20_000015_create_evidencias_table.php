@@ -15,7 +15,7 @@ return new class extends Migration
         CREATE TABLE evidencias(
             id_evidencia BIGSERIAL PRIMARY KEY,
             id_incidencia BIGINT NOT NULL,
-            url_evidencia VARCHAR(255) NOT NULL,
+            url_evidencia VARCHAR(500) NOT NULL,
             id_usuario BIGINT NOT NULL,
             FOREIGN KEY (id_incidencia) REFERENCES incidencias(id_incidencia) ON DELETE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE,

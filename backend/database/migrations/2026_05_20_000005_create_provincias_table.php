@@ -14,9 +14,10 @@ return new class extends Migration
         DB::statement("
         CREATE TABLE provincias(
             id_provincia BIGSERIAL PRIMARY KEY,
-            nombre_provincia VARCHAR(255) NOT NULL UNIQUE,
+            nombre_provincia VARCHAR(255) NOT NULL,
             id_pais BIGINT NOT NULL,
             FOREIGN KEY (id_pais) REFERENCES paises(id_pais) ON DELETE RESTRICT ON UPDATE CASCADE,
+            UNIQUE(nombre_provincia, id_pais),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

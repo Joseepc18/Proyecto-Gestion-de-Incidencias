@@ -26,8 +26,8 @@ return new class extends Migration
         ");
 
         DB::statement("
-            CREATE UNIQUE INDEX idx_un_responsable_por_incidencia 
-            ON asignaciones_incidencia(id_incidencia) 
+            CREATE UNIQUE INDEX idx_un_responsable_por_incidencia
+            ON asignaciones_incidencia(id_incidencia)
             WHERE rol_asignado = 'RESPONSABLE';
         ");
     }

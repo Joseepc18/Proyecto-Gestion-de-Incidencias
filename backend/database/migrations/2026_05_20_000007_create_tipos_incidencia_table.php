@@ -14,7 +14,7 @@ return new class extends Migration
         DB::statement("
         CREATE TABLE tipos_incidencia(
             id_tipo_incidencia BIGSERIAL PRIMARY KEY,
-            nombre_tipo_incidencia VARCHAR(255) NOT NULL,
+            nombre_tipo_incidencia VARCHAR(255) NOT NULL UNIQUE,
             descripcion_tipo_incidencia TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
