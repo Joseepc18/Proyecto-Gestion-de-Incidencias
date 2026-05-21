@@ -1,4 +1,4 @@
-#sirve para levantar los contenedores
+#sirve para levantar los contenedores, ejecutar siempre desde la raiz
 docker compose up -d --build
 
 #sirve para detener los contenedores sin borrar los datos
@@ -18,3 +18,10 @@ docker compose exec backend php artisan key:generate
 
 #sirve para crear el enlace de almacenamiento
 docker compose exec backend php artisan storage:link
+
+#sirve para migrar la base de datos
+docker-compose exec backend php artisan migrate
+
+#sirve para sembrar la base de datos
+docker compose exec backend php artisan db:seed
+
