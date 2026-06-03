@@ -101,11 +101,11 @@ return new class extends Migration
         ");
 
         // Índices de rendimiento
-        DB::unprepared("CREATE INDEX idx_incidencias_estado ON incidencias(estado_incidencia);");
-        DB::unprepared("CREATE INDEX idx_incidencias_usuario ON incidencias(id_usuario);");
-        DB::unprepared("CREATE INDEX idx_comentarios_incidencia ON comentarios(id_incidencia);");
-        DB::unprepared("CREATE INDEX idx_historial_incidencia ON historial_estados(id_incidencia);");
-        DB::unprepared("CREATE INDEX idx_notificaciones_usuario ON notificaciones(id_usuario);");
+        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);");
+        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);");
+        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);");
+        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_historial_incidencia ON historial_estados(id_incidencia);");
+        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);");
     }
 
     public function down(): void
