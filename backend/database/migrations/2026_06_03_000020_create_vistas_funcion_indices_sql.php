@@ -6,9 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        // Vista 1: incidencia completa con todos sus JOINs
+        // VISTA 1: v_incidencias_completas
+        // Une incidencias con usuario, subtipo, tipo, ciudad y provincia en una
+        // sola consulta. Evita repetir los mismos JOINs en cada controlador.
         DB::unprepared("
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
@@ -50,7 +55,9 @@ return new class extends Migration
             JOIN provincias          p ON c.id_provincia           = p.id_provincia;
         ");
 
-        // Vista 2: métricas agrupadas por tipo para el dashboard
+        // VISTA 2: v_metricas_por_tipo
+        // Estadísticas agrupadas por tipo para el dashboard: totales por estado
+        // y promedio de días de resolución de las incidencias ya resueltas.
         DB::unprepared("
             CREATE OR REPLACE VIEW v_metricas_por_tipo AS
             SELECT
@@ -78,7 +85,9 @@ return new class extends Migration
             ORDER BY total DESC;
         ");
 
-        // Función: días que tardó en resolverse una incidencia
+        // FUNCIÓN: calcular_tiempo_resolucion
+        // Retorna los días exactos que tardó en resolverse una incidencia específica.
+        // Si aún no está resuelta, retorna NULL.
         DB::unprepared("
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
             RETURNS NUMERIC AS \$\$
@@ -100,7 +109,9 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
 
-        // Índices de rendimiento
+        // ÍNDICES DE RENDIMIENTO
+        // Aceleran las consultas más frecuentes del sistema evitando que PostgreSQL
+        // recorra toda la tabla fila por fila para encontrar los registros.
         DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);");
         DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);");
         DB::unprepared("CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);");
@@ -108,6 +119,9 @@ return new class extends Migration
         DB::unprepared("CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);");
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         DB::unprepared("DROP VIEW IF EXISTS v_incidencias_completas;");

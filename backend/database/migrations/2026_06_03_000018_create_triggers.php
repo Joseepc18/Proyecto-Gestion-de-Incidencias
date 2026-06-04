@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // ─── TRIGGER 1: Auditoría de cambios de estado ───────────────────────────
+        // TRIGGER 1: Auditoría de cambios de estado
         // Guarda en historial_estados cada vez que el estado de una incidencia
         // cambia, registrando el estado anterior y el nuevo para trazabilidad.
         DB::unprepared("
@@ -37,7 +37,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_registrar_cambio_estado();
         ");
 
-        // ─── TRIGGER 2: Fecha de resolución automática ───────────────────────────
+        // TRIGGER 2: Fecha de resolución automática
         // Gestiona fecha_resolucion automáticamente según el estado. Usa BEFORE
         // para poder modificar la fila antes de que se escriba en disco.
         DB::unprepared("
@@ -65,7 +65,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ");
 
-        // ─── TRIGGER 3: Notificación al ciudadano por nuevo comentario ───────────
+        // TRIGGER 3: Notificación al ciudadano por nuevo comentario
         // Al insertar un comentario notifica al reportador de la incidencia.
         // No notifica si quien comenta es el mismo que reportó.
         DB::unprepared("
@@ -101,7 +101,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_notificar_nuevo_comentario();
         ");
 
-        // ─── TRIGGER 4: Límite máximo de evidencias por incidencia ───────────────
+        // TRIGGER 4: Límite máximo de evidencias por incidencia
         // Antes de insertar una evidencia verifica que no supere el máximo de 5.
         // Si ya tiene 5, cancela el INSERT con un error.
         DB::unprepared("
