@@ -29,6 +29,7 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // Dispara la función después de cada UPDATE en incidencias, una vez por fila
+        DB::unprepared("DROP TRIGGER IF EXISTS tr_cambio_estado_incidencias ON incidencias;");
         DB::unprepared("
         CREATE TRIGGER tr_cambio_estado_incidencias
             AFTER UPDATE ON incidencias
@@ -56,6 +57,7 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // BEFORE: intercepta la fila antes de guardarse para poder modificarla
+        DB::unprepared("DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;");
         DB::unprepared("
         CREATE TRIGGER tr_fecha_resolucion
             BEFORE UPDATE ON incidencias
@@ -91,6 +93,7 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // Dispara al insertar un comentario nuevo en la tabla comentarios
+        DB::unprepared("DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;");
         DB::unprepared("
         CREATE TRIGGER tr_notificar_nuevo_comentario
             AFTER INSERT ON comentarios
@@ -115,6 +118,7 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // BEFORE: intercepta el INSERT antes de que llegue a la tabla
+        DB::unprepared("DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;");
         DB::unprepared("
         CREATE TRIGGER tr_limite_evidencias
             BEFORE INSERT ON evidencias
