@@ -1,0 +1,19 @@
+name: Deploy - Laravel Backend
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy-backend:
+    runs-on: self-hosted
+
+    steps:
+      - name: Traer últimos cambios
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: git pull origin develop
+
+      - name: Reiniciar el backend
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: docker compose restart backend

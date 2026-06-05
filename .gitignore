@@ -28,3 +28,12 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Documentación / Guías privadas
+
+lineamientos.md
+comandos.txt
+dificultades_soluciones.md
+
+GUIA_SERVIDOR_INCIDENCIAS.md
+PLAN_REPLICACION.md
