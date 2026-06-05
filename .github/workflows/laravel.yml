@@ -10,6 +10,21 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: gestion_incidencias_test
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
@@ -17,8 +32,8 @@ jobs:
       - name: Configurar PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
-          extensions: pdo, pdo_sqlite, mbstring, tokenizer, xml, ctype, json
+          php-version: "8.3"
+          extensions: pdo, pdo_pgsql, mbstring, tokenizer, xml, ctype, json
           coverage: none
 
       - name: Instalar dependencias
@@ -33,16 +48,24 @@ jobs:
         working-directory: backend
         run: php artisan key:generate
 
-      - name: Ejecutar migraciones (SQLite en memoria)
+      - name: Ejecutar migraciones
         working-directory: backend
         run: php artisan migrate --force
         env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: gestion_incidencias_test
+          DB_USERNAME: admin
+          DB_PASSWORD: password123
 
       - name: Ejecutar Tests (PHPUnit)
         working-directory: backend
         run: php artisan test --testdox
         env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ":memory:"
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: gestion_incidencias_test
+          DB_USERNAME: admin
+          DB_PASSWORD: password123
