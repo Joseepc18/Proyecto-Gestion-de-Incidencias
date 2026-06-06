@@ -87,23 +87,6 @@ services:
     networks:
       - incidencias_network
 
-  # 4. Webhook Discord (Alertas bonitas)
-  webhook-discord:
-    image: python:3.11-slim
-    container_name: webhook_discord
-    restart: unless-stopped
-    working_dir: /app
-    volumes:
-      - ./webhook_discord.py:/app/webhook_discord.py
-    environment:
-      - DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1510325298598514788/BDz6WYTP7B4CPtrlN9nAjY5C4tKbVPeX5FWIHGsH8ndQ3B6cshe7nQp8hPieNzNDFzCn
-    command: >
-      sh -c "pip install flask requests pytz --quiet &&
-             python webhook_discord.py"
-    ports:
-      - "5001:5001"
-    networks:
-      - incidencias_network
 
 networks:
   incidencias_network:
