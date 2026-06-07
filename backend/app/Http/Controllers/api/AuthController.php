@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -19,15 +19,17 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'id_rol' => 'required|integer|exists:roles,id_rol'
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'id_rol' => $request->id_rol,
         ]);
+
+        $rolNormal = Rol::where('nombre_rol', 'normal')->first();
+        $user->id_rol = $rolNormal->id_rol;
+        $user->save();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -35,7 +37,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
-        ], 210); // 201 Created
+        ], 201);
     }
 
     /**
@@ -51,9 +53,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Las credenciales proporcionadas son incorrectas.'],
-            ]);
+            return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
         // Eliminar tokens anteriores para no acumular sesiones activas inútiles
@@ -65,7 +65,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user
-        ]);
+        ], 200);
     }
 
     /**
