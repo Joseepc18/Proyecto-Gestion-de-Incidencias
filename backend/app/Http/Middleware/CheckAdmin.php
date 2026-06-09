@@ -17,10 +17,10 @@ class CheckAdmin
     {
         $user = $request->user();
 
-        if (!$user || !$user->rol || $user->rol->nombre_rol !== 'admin') {
+        if (! $user || ! $user->rol || $user->rol->nombre_rol !== 'admin') {
             return response()->json(['message' => 'Acceso denegado'], 403);
         }
-        
+
         return $next($request);
     }
 }

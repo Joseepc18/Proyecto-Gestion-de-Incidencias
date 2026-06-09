@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,7 +12,7 @@ return new class extends Migration
         // VISTA 1: v_incidencias_completas
         // Une incidencias con usuario, subtipo, tipo, ciudad y provincia en una
         // sola consulta. Evita repetir los mismos JOINs en cada controlador.
-        DB::unprepared("
+        DB::unprepared('
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
                 -- Datos de la incidencia
@@ -53,7 +51,7 @@ return new class extends Migration
             JOIN tipos_incidencia    t ON s.id_tipo_incidencia     = t.id_tipo_incidencia
             JOIN ciudades            c ON i.id_ciudad              = c.id_ciudad
             JOIN provincias          p ON c.id_provincia           = p.id_provincia;
-        ");
+        ');
 
         // VISTA 2: v_metricas_por_tipo
         // Estadísticas agrupadas por tipo para el dashboard: totales por estado
@@ -88,9 +86,9 @@ return new class extends Migration
         // FUNCIÓN: calcular_tiempo_resolucion
         // Retorna los días exactos que tardó en resolverse una incidencia específica.
         // Si aún no está resuelta, retorna NULL.
-        DB::unprepared("
+        DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
-            RETURNS NUMERIC AS \$\$
+            RETURNS NUMERIC AS $$
             DECLARE
                 v_dias NUMERIC;
             BEGIN
@@ -106,17 +104,17 @@ return new class extends Migration
                 -- Si no está resuelta aún, retorna NULL
                 RETURN v_dias;
             END;
-            \$\$ LANGUAGE plpgsql;
-        ");
+            $$ LANGUAGE plpgsql;
+        ');
 
         // ÍNDICES DE RENDIMIENTO
         // Aceleran las consultas más frecuentes del sistema evitando que PostgreSQL
         // recorra toda la tabla fila por fila para encontrar los registros.
-        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);");
-        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);");
-        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);");
-        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_historial_incidencia ON historial_estados(id_incidencia);");
-        DB::unprepared("CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);");
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);');
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);');
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);');
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_historial_incidencia ON historial_estados(id_incidencia);');
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);');
     }
 
     /**
@@ -124,13 +122,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("DROP VIEW IF EXISTS v_incidencias_completas;");
-        DB::unprepared("DROP VIEW IF EXISTS v_metricas_por_tipo;");
-        DB::unprepared("DROP FUNCTION IF EXISTS calcular_tiempo_resolucion(BIGINT);");
-        DB::unprepared("DROP INDEX IF EXISTS idx_incidencias_estado;");
-        DB::unprepared("DROP INDEX IF EXISTS idx_incidencias_usuario;");
-        DB::unprepared("DROP INDEX IF EXISTS idx_comentarios_incidencia;");
-        DB::unprepared("DROP INDEX IF EXISTS idx_historial_incidencia;");
-        DB::unprepared("DROP INDEX IF EXISTS idx_notificaciones_usuario;");
+        DB::unprepared('DROP VIEW IF EXISTS v_incidencias_completas;');
+        DB::unprepared('DROP VIEW IF EXISTS v_metricas_por_tipo;');
+        DB::unprepared('DROP FUNCTION IF EXISTS calcular_tiempo_resolucion(BIGINT);');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_estado;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_usuario;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_comentarios_incidencia;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_historial_incidencia;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_notificaciones_usuario;');
     }
 };

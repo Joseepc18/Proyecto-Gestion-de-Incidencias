@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -133,7 +131,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("DROP PROCEDURE IF EXISTS asignar_tecnico(BIGINT, BIGINT, VARCHAR);");
-        DB::unprepared("DROP PROCEDURE IF EXISTS resolver_incidencia(BIGINT, BIGINT);");
+        DB::unprepared('DROP PROCEDURE IF EXISTS asignar_tecnico(BIGINT, BIGINT, VARCHAR);');
+        DB::unprepared('DROP PROCEDURE IF EXISTS resolver_incidencia(BIGINT, BIGINT);');
     }
 };

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\TipoIncidencia;
 use App\Models\SubtipoIncidencia;
+use App\Models\TipoIncidencia;
+use Illuminate\Database\Seeder;
 
 class TipoYSubtipoSeeder extends Seeder
 {
@@ -15,7 +15,7 @@ class TipoYSubtipoSeeder extends Seeder
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Baches / Huecos en la calzada',                  'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Fisuras o grietas extensas',                     'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Hundimiento del asfalto',                        'id_tipo_incidencia' => $t->id_tipo_incidencia]);
-        SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Señales de tránsito dañadas, caídas o faltantes','id_tipo_incidencia' => $t->id_tipo_incidencia]);
+        SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Señales de tránsito dañadas, caídas o faltantes', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Pintura de pasos cebra o líneas de carril borradas', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Espejos de seguridad convexos rotos',            'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Semáforo apagado por completo',                  'id_tipo_incidencia' => $t->id_tipo_incidencia]);
@@ -71,7 +71,7 @@ class TipoYSubtipoSeeder extends Seeder
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Animales muertos en la vía pública',            'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Ruido excesivo (fiestas, locales o talleres fuera de horario)', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Quema de basura o maleza al aire libre',        'id_tipo_incidencia' => $t->id_tipo_incidencia]);
-        SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Emisión ilegal de gases, humos o contaminantes','id_tipo_incidencia' => $t->id_tipo_incidencia]);
+        SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Emisión ilegal de gases, humos o contaminantes', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Zonas con sospecha de actividad delictiva o vandalismo recurrente', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
         SubtipoIncidencia::firstOrCreate(['nombre_subtipo_incidencia' => 'Consumo de sustancias prohibidas en parques públicos', 'id_tipo_incidencia' => $t->id_tipo_incidencia]);
     }

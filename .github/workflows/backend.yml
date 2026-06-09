@@ -1,4 +1,4 @@
-name: CI - Backend (Tests)
+name: CI - Backend (Pint + Tests)
 
 on:
   push:
@@ -42,6 +42,10 @@ jobs:
       - name: Instalar dependencias
         working-directory: backend
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Verificar formato (Pint)
+        working-directory: backend
+        run: ./vendor/bin/pint --test
 
       - name: Copiar .env de pruebas
         working-directory: backend

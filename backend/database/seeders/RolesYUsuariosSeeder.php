@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Rol;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Rol;
-
 
 class RolesYUsuariosSeeder extends Seeder
 {
@@ -19,28 +18,28 @@ class RolesYUsuariosSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@sistema.com'],
             [
-            'name' => 'Administrador',
-            'password' => Hash::make('password123'),
-            'id_rol' => $admin->id_rol,
-        ]
+                'name' => 'Administrador',
+                'password' => Hash::make('password123'),
+                'id_rol' => $admin->id_rol,
+            ]
         );
 
         User::firstOrCreate(
             ['email' => 'tecnico@sistema.com'],
             [
-            'name' => 'Tecnico',
-            'password' => Hash::make('password123'),
-            'id_rol' => $tecnico->id_rol,
-        ]
+                'name' => 'Tecnico',
+                'password' => Hash::make('password123'),
+                'id_rol' => $tecnico->id_rol,
+            ]
         );
 
         User::firstOrCreate(
             ['email' => 'normal@sistema.com'],
             [
-            'name' => 'Normal',
-            'password' => Hash::make('password123'),
-            'id_rol' => $normal->id_rol,
-        ]
+                'name' => 'Normal',
+                'password' => Hash::make('password123'),
+                'id_rol' => $normal->id_rol,
+            ]
         );
     }
 }

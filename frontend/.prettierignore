@@ -1,0 +1,11 @@
+# Dependencias y lockfile
+node_modules/
+package-lock.json
+
+# Archivos de terceros (plantilla AdminHMD) — no reformatear.
+# Solo formateamos NUESTRO assets/js/api.js; el resto de assets/ se ignora.
+assets/css/
+assets/vendors/
+assets/images/
+assets/js/bootstrap.bundle.min.js
+assets/js/main.js

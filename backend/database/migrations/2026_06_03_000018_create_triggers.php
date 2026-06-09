@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,9 +12,9 @@ return new class extends Migration
         // TRIGGER 1: Auditoría de cambios de estado
         // Guarda en historial_estados cada vez que el estado de una incidencia
         // cambia, registrando el estado anterior y el nuevo para trazabilidad.
-        DB::unprepared("
+        DB::unprepared('
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
-            RETURNS TRIGGER AS \$\$
+            RETURNS TRIGGER AS $$
             BEGIN
                 -- Solo actúa si el estado realmente cambió
                 IF NEW.estado_incidencia <> OLD.estado_incidencia THEN
@@ -26,16 +24,16 @@ return new class extends Migration
                 END IF;
                 RETURN NEW; -- permite que el UPDATE continúe normalmente
             END;
-            \$\$ LANGUAGE plpgsql;
-        ");
+            $$ LANGUAGE plpgsql;
+        ');
         // Dispara la función después de cada UPDATE en incidencias, una vez por fila
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_cambio_estado_incidencias ON incidencias;");
-        DB::unprepared("
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_cambio_estado_incidencias ON incidencias;');
+        DB::unprepared('
         CREATE TRIGGER tr_cambio_estado_incidencias
             AFTER UPDATE ON incidencias
             FOR EACH ROW
             EXECUTE FUNCTION fn_registrar_cambio_estado();
-        ");
+        ');
 
         // TRIGGER 2: Fecha de resolución automática
         // Gestiona fecha_resolucion automáticamente según el estado. Usa BEFORE
@@ -57,13 +55,13 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // BEFORE: intercepta la fila antes de guardarse para poder modificarla
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;");
-        DB::unprepared("
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;');
+        DB::unprepared('
         CREATE TRIGGER tr_fecha_resolucion
             BEFORE UPDATE ON incidencias
             FOR EACH ROW
             EXECUTE FUNCTION fn_fecha_resolucion();
-        ");
+        ');
 
         // TRIGGER 3: Notificación al ciudadano por nuevo comentario
         // Al insertar un comentario notifica al reportador de la incidencia.
@@ -93,13 +91,13 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // Dispara al insertar un comentario nuevo en la tabla comentarios
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;");
-        DB::unprepared("
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;');
+        DB::unprepared('
         CREATE TRIGGER tr_notificar_nuevo_comentario
             AFTER INSERT ON comentarios
             FOR EACH ROW
             EXECUTE FUNCTION fn_notificar_nuevo_comentario();
-        ");
+        ');
 
         // TRIGGER 4: Límite máximo de evidencias por incidencia
         // Antes de insertar una evidencia verifica que no supere el máximo de 5.
@@ -118,13 +116,13 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
         // BEFORE: intercepta el INSERT antes de que llegue a la tabla
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;");
-        DB::unprepared("
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;');
+        DB::unprepared('
         CREATE TRIGGER tr_limite_evidencias
             BEFORE INSERT ON evidencias
             FOR EACH ROW
             EXECUTE FUNCTION fn_limite_evidencias();
-        ");
+        ');
     }
 
     /**
@@ -132,13 +130,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_cambio_estado_incidencias ON incidencias;");
-        DB::unprepared("DROP FUNCTION IF EXISTS fn_registrar_cambio_estado();");
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;");
-        DB::unprepared("DROP FUNCTION IF EXISTS fn_fecha_resolucion();");
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;");
-        DB::unprepared("DROP FUNCTION IF EXISTS fn_notificar_nuevo_comentario();");
-        DB::unprepared("DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;");
-        DB::unprepared("DROP FUNCTION IF EXISTS fn_limite_evidencias();");
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_cambio_estado_incidencias ON incidencias;');
+        DB::unprepared('DROP FUNCTION IF EXISTS fn_registrar_cambio_estado();');
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;');
+        DB::unprepared('DROP FUNCTION IF EXISTS fn_fecha_resolucion();');
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;');
+        DB::unprepared('DROP FUNCTION IF EXISTS fn_notificar_nuevo_comentario();');
+        DB::unprepared('DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;');
+        DB::unprepared('DROP FUNCTION IF EXISTS fn_limite_evidencias();');
     }
 };

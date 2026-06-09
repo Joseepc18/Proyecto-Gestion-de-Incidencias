@@ -3,7 +3,6 @@
 /* global apiFetch, guardarToken */
 
 document.addEventListener("DOMContentLoaded", function () {
-
   const form = document.getElementById("loginForm");
   const errorBox = document.getElementById("loginError");
   const boton = document.getElementById("loginSubmit");
@@ -12,9 +11,9 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     if (!form.checkValidity()) {
-      return;                          // form inválido: no enviar
+      return; // form inválido: no enviar
     }
-    errorBox.classList.add("d-none");  // ocultar error anterior
+    errorBox.classList.add("d-none"); // ocultar error anterior
 
     // Bloquear botón y mostrar spinner mientras procesa
     boton.disabled = true;
@@ -43,5 +42,4 @@ document.addEventListener("DOMContentLoaded", function () {
       spinner.classList.add("d-none");
     }
   });
-
 });

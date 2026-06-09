@@ -13,43 +13,43 @@ const TOKEN_KEY = "access_token";
 // ---- Helpers de token ----
 
 function guardarToken(token) {
-    localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 function obtenerToken() {
-    return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function eliminarToken() {
-    localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 }
 
 async function apiFetch(endpoint, opciones = {}) {
-    // URL completa: "/api" + "/login" -> "/api/login"
-    const url = API_BASE + endpoint;
+  // URL completa: "/api" + "/login" -> "/api/login"
+  const url = API_BASE + endpoint;
 
-    // Headers que siempre mandamos
-    const headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    };
+  // Headers que siempre mandamos
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
 
-    // Si ya hay token guardado, lo añadimos para las rutas protegidas
-    const token = obtenerToken();
-    if (token) {
-        headers["Authorization"] = "Bearer " + token;
-    }
+  // Si ya hay token guardado, lo añadimos para las rutas protegidas
+  const token = obtenerToken();
+  if (token) {
+    headers["Authorization"] = "Bearer " + token;
+  }
 
-    // Hacemos la petición y esperamos la respuesta
-    const respuesta = await fetch(url, { ...opciones, headers });
+  // Hacemos la petición y esperamos la respuesta
+  const respuesta = await fetch(url, { ...opciones, headers });
 
-    // Leemos el cuerpo y lo convertimos de JSON a objeto JS
-    const data = await respuesta.json();
+  // Leemos el cuerpo y lo convertimos de JSON a objeto JS
+  const data = await respuesta.json();
 
-    // Si el status no fue 2xx, lanzamos error con el mensaje del backend
-    if (!respuesta.ok) {
-        throw new Error(data.message || "Error en la petición");
-    }
+  // Si el status no fue 2xx, lanzamos error con el mensaje del backend
+  if (!respuesta.ok) {
+    throw new Error(data.message || "Error en la petición");
+  }
 
-    return data;
+  return data;
 }

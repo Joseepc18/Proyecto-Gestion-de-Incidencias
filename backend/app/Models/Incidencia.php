@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Incidencia extends Model
 {
     protected $table = 'incidencias';
+
     protected $primaryKey = 'id_incidencia';
 
     protected $fillable = [
@@ -25,9 +26,9 @@ class Incidencia extends Model
     ];
 
     protected $casts = [
-        'latitud_incidencia'  => 'decimal:8',
+        'latitud_incidencia' => 'decimal:8',
         'longitud_incidencia' => 'decimal:8',
-        'fecha_resolucion'    => 'datetime',
+        'fecha_resolucion' => 'datetime',
     ];
 
     public function ciudad()

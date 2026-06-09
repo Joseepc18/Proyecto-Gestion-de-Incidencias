@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Notificacion extends Model
 {
     protected $table = 'notificaciones';
+
     protected $primaryKey = 'id_notificacion';
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class Notificacion extends Model
 
     protected $casts = [
         'estado_lectura' => 'boolean',
-        'fecha_lectura'  => 'datetime',
+        'fecha_lectura' => 'datetime',
     ];
 
     public function incidencia()

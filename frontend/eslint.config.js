@@ -8,11 +8,7 @@ module.exports = [
   // 1) Archivos que NO revisamos: JS de terceros (plantilla / minificados)
   //    y este mismo archivo de config (es de Node, no del navegador).
   {
-    ignores: [
-      "assets/js/bootstrap.bundle.min.js",
-      "assets/js/main.js",
-      "eslint.config.js",
-    ],
+    ignores: ["assets/js/bootstrap.bundle.min.js", "assets/js/main.js", "eslint.config.js"],
   },
 
   // 2) Reglas para NUESTRO JavaScript

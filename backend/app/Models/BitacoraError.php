@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class BitacoraError extends Model
 {
     protected $table = 'bitacora_errores';
+
     protected $primaryKey = 'id_bitacora_errores';
 
     protected $fillable = [

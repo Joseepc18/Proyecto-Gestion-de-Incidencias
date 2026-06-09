@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Ciudad;
 use App\Models\Pais;
 use App\Models\Provincia;
-use App\Models\Ciudad;
+use Illuminate\Database\Seeder;
 
 class UbicacionSeeder extends Seeder
 {

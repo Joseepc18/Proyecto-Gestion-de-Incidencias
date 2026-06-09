@@ -3,7 +3,6 @@
 /* global apiFetch */
 
 document.addEventListener("DOMContentLoaded", function () {
-
   const form = document.getElementById("registroForm");
   const errorBox = document.getElementById("registroError");
   const boton = document.getElementById("registroSubmit");
@@ -12,9 +11,9 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     if (!form.checkValidity()) {
-      return;                          // form inválido: no enviar
+      return; // form inválido: no enviar
     }
-    errorBox.classList.add("d-none");  // ocultar error anterior
+    errorBox.classList.add("d-none"); // ocultar error anterior
 
     // Datos del formulario (trim quita espacios sobrantes)
     const name = document.getElementById("registerName").value.trim();
@@ -37,7 +36,12 @@ document.addEventListener("DOMContentLoaded", function () {
       // Registrar
       await apiFetch("/register", {
         method: "POST",
-        body: JSON.stringify({ name, email, password, password_confirmation: passwordConfirmation }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          password_confirmation: passwordConfirmation,
+        }),
       });
       // Cuenta creada: ir al login
       window.location.href = "../login/login.html";
@@ -51,5 +55,4 @@ document.addEventListener("DOMContentLoaded", function () {
       spinner.classList.add("d-none");
     }
   });
-
 });
