@@ -2,18 +2,25 @@
 
 /* global apiFetch, guardarToken */
 
-// Espera a que el HTML esté cargado antes de tocar los elementos.
 document.addEventListener("DOMContentLoaded", function () {
 
   const form = document.getElementById("loginForm");
   const errorBox = document.getElementById("loginError");
+  const boton = document.getElementById("loginSubmit");
+  const spinner = document.getElementById("loginSpinner");
 
-  // Al enviar el formulario:
   form.addEventListener("submit", async (evento) => {
-    evento.preventDefault();        // no recargar la página
-    errorBox.classList.add("d-none"); // ocultar error anterior
+    evento.preventDefault();
+    if (!form.checkValidity()) {
+      return;                          // form inválido: no enviar
+    }
+    errorBox.classList.add("d-none");  // ocultar error anterior
 
-    // Datos escritos por el usuario
+    // Bloquear botón y mostrar spinner mientras procesa
+    boton.disabled = true;
+    spinner.classList.remove("d-none");
+
+    // Datos del formulario
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -23,14 +30,17 @@ document.addEventListener("DOMContentLoaded", function () {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-
       // Éxito: guardar token y entrar al dashboard
       guardarToken(data.access_token);
       window.location.href = "../dashboard/dashboard.html";
     } catch (error) {
-      // Fallo: mostrar el mensaje del backend
+      // Mostrar error del backend
       errorBox.textContent = error.message;
       errorBox.classList.remove("d-none");
+    } finally {
+      // Reactivar botón y ocultar spinner pase lo que pase
+      boton.disabled = false;
+      spinner.classList.add("d-none");
     }
   });
 

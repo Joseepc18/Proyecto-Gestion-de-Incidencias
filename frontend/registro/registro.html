@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crear cuenta - Sistema de Gestión de Incidencias">
+  <title>Crear cuenta | Gestión de Incidencias</title>
+
+  <!-- Estilos compartidos (registro/ -> assets/) -->
+  <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="registro.css">
+</head>
+
+<body class="auth-body">
+  <button class="icon-button theme-toggle auth-theme-toggle" type="button" data-theme-toggle aria-label="Cambiar tema" title="Cambiar tema">
+    <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+  </button>
+
+  <main class="auth-page">
+    <section class="auth-card">
+      <a class="auth-brand" href="../login/login.html">
+        <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+        <span><strong>Incidencias UPSE</strong><small>Gestión de incidencias georreferenciadas</small></span>
+      </a>
+
+      <div class="auth-visual">
+        <img src="../assets/images/png/banner-login.jpg" alt="Panel del sistema de incidencias">
+      </div>
+
+      <!-- id="registroForm" -> registro.js lo captura -->
+      <form id="registroForm" class="needs-validation" novalidate>
+        <div class="mb-4">
+          <p class="eyebrow mb-1">Acceso seguro</p>
+          <h1 class="h3 mb-1">Crear cuenta</h1>
+          <p class="text-muted mb-0">Regístrate para empezar a gestionar incidencias.</p>
+        </div>
+
+        <!-- Aquí registro.js mostrará los errores del backend -->
+        <div id="registroError" class="alert alert-danger d-none" role="alert"></div>
+
+        <div class="mb-3">
+          <label class="form-label" for="registerName">Nombre completo</label>
+          <input class="form-control" id="registerName" type="text" required>
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="registerEmail">Correo electrónico</label>
+          <input class="form-control" id="registerEmail" type="email" required>
+          <div class="invalid-feedback">Ingresa un correo válido.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="registerPassword">Contraseña</label>
+          <input class="form-control" id="registerPassword" type="password" minlength="8" required>
+          <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="registerPasswordConfirmation">Confirmar contraseña</label>
+          <input class="form-control" id="registerPasswordConfirmation" type="password" minlength="8" required>
+          <div class="invalid-feedback">Repite la contraseña.</div>
+        </div>
+
+        <button id="registroSubmit" class="btn btn-primary w-100" type="submit">
+          <span id="registroSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          <i class="bi bi-person-plus" aria-hidden="true"></i> Crear cuenta
+        </button>
+      </form>
+
+      <div class="auth-footer">¿Ya tienes cuenta? <a href="../login/login.html">Inicia sesión</a></div>
+    </section>
+  </main>
+
+  <!-- JS compartido -->
+  <script src="../assets/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <!-- Capa de API compartida -->
+  <script src="../assets/js/api.js"></script>
+  <!-- Lógica propia -->
+  <script src="registro.js"></script>
+</body>
+</html>
