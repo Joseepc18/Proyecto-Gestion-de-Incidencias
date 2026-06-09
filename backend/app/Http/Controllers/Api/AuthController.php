@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Registro de usuarios
-     */
+    // Registrar usuario, asignarle el rol 'normal' y devolver su token.
     public function register(Request $request)
     {
         $request->validate([
@@ -40,9 +38,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Inicio de sesión (Login)
-     */
+    // Validar credenciales y devolver un token nuevo.
     public function login(Request $request)
     {
         $request->validate([
@@ -56,7 +52,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // Eliminar tokens anteriores para no acumular sesiones activas inútiles
+        // Borramos tokens viejos para no acumular sesiones.
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -68,9 +64,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Cerrar sesión (Logout)
-     */
+    // Cerrar sesión: borra el token actual.
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -80,9 +74,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Obtener el perfil del usuario autenticado
-     */
+    // Perfil del usuario autenticado (con su rol).
     public function me(Request $request)
     {
         return response()->json($request->user()->load('rol'));
