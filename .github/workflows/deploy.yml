@@ -1,4 +1,4 @@
-name: Deploy - Laravel Backend
+name: Deploy - Aplicación (Backend + Frontend)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  deploy-backend:
+  deploy:
     runs-on: self-hosted
 
     steps:
@@ -17,3 +17,7 @@ jobs:
       - name: Reiniciar el backend
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart backend
+
+      - name: Reiniciar el frontend (nginx)
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: docker compose restart frontend

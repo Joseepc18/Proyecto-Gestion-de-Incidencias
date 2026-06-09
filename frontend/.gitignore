@@ -1,0 +1,2 @@
+# Dependencias de Node (solo se usan para los checks de ESLint en CI)
+node_modules/
