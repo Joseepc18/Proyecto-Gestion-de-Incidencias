@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class IncidenciaController extends Controller
 {
@@ -65,5 +66,78 @@ class IncidenciaController extends Controller
         $incidencia = Incidencia::create($datos);
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']), 201);
+    }
+
+    // Ver una incidencia con sus datos completos
+    public function verIncidencia(Request $request, Incidencia $incidencia)
+    {
+        // El usuario "normal" solo puede ver las suyas.
+        $user = $request->user();
+        if ($user->rol && $user->rol->nombre_rol === 'normal' && $incidencia->id_usuario !== $user->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+    }
+
+    // Actualizar una incidencia (admin, autor o técnico asignado).
+    public function actualizarIncidencia(Request $request, Incidencia $incidencia)
+    {
+        $user = $request->user();
+
+        // Permisos: admin, el autor, o un técnico asignado.
+        $esAdmin = $user->rol && $user->rol->nombre_rol === 'admin';
+        $esAutor = $incidencia->id_usuario === $user->id;
+        $esTecnicoAsignado = $incidencia->asignaciones()->where('id_usuario', $user->id)->exists();
+
+        if (! $esAdmin && ! $esAutor && ! $esTecnicoAsignado) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // 'sometimes' = validar solo si el campo viene.
+        $datos = $request->validate([
+            'nombre_incidencia' => 'sometimes|string|min:5|max:255',
+            'descripcion_incidencia' => 'sometimes|nullable|string',
+            'direccion_incidencia' => 'sometimes|nullable|string|max:500',
+            'latitud_incidencia' => 'sometimes|numeric',
+            'longitud_incidencia' => 'sometimes|numeric',
+            'estado_incidencia' => 'sometimes|in:PENDIENTE,EN_PROCESO,RESUELTO',
+            'prioridad_incidencia' => 'sometimes|in:ALTA,MEDIA,BAJA',
+            'id_ciudad' => 'sometimes|exists:ciudades,id_ciudad',
+            'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
+        ]);
+
+        $incidencia->update($datos);
+
+        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+    }
+
+    // Eliminar una incidencia (solo admin o autor).
+    public function eliminarIncidencia(Request $request, Incidencia $incidencia)
+    {
+        $user = $request->user();
+        $esAdmin = $user->rol && $user->rol->nombre_rol === 'admin';
+        $esAutor = $incidencia->id_usuario === $user->id;
+
+        if (! $esAdmin && ! $esAutor) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // Borrar los archivos de las evidencias del disco antes de eliminar.
+        foreach ($incidencia->evidencias as $evidencia) {
+            Storage::disk('public')->delete($evidencia->url_evidencia);
+        }
+
+        $incidencia->delete();
+
+        return response()->json(['message' => 'Incidencia eliminada']);
+    }
+
+    // Historial de cambios de estado (más reciente primero).
+    public function historialIncidencia(Incidencia $incidencia)
+    {
+        return response()->json(
+            $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
+        );
     }
 }
