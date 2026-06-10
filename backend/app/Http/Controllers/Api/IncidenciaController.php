@@ -3,19 +3,35 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class IncidenciaController extends Controller
 {
-    // Listar incidencias con filtros opcionales, paginadas
+    // Helpers de permisos
+
+    private function esAdmin(Request $request): bool
+    {
+        $user = $request->user();
+
+        return $user->rol && $user->rol->nombre_rol === 'admin';
+    }
+
+    private function esTecnicoAsignado(Request $request, Incidencia $incidencia): bool
+    {
+        return $incidencia->asignaciones()->where('id_usuario', $request->user()->id)->exists();
+    }
+
+    // Endpoints
+
     public function listadoIncidencias(Request $request)
     {
         $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
             ->orderBy('created_at', 'desc');
 
-        // Filtros opcionales (solo si vienen en la petición)
+        // Filtros opcionales
         if ($request->filled('estado')) {
             $query->where('estado_incidencia', $request->estado);
         }
@@ -23,7 +39,6 @@ class IncidenciaController extends Controller
             $query->where('prioridad_incidencia', $request->prioridad);
         }
         if ($request->filled('busqueda')) {
-            // ilike = sin distinguir mayúsculas y minúsculas
             $query->where('nombre_incidencia', 'ilike', '%'.$request->busqueda.'%');
         }
         if ($request->filled('ciudad_id')) {
@@ -39,68 +54,81 @@ class IncidenciaController extends Controller
         return response()->json($query->paginate(10));
     }
 
-    // Crear una incidencia
     public function crearIncidencia(Request $request)
     {
+        // between de lat/long = rango geográfico de Ecuador
         $datos = $request->validate([
             'nombre_incidencia' => 'required|string|min:5|max:255',
             'descripcion_incidencia' => 'nullable|string',
             'direccion_incidencia' => 'nullable|string|max:500',
-            'latitud_incidencia' => 'required|numeric',
-            'longitud_incidencia' => 'required|numeric',
+            'latitud_incidencia' => 'required|numeric|between:-5.5,1.8',
+            'longitud_incidencia' => 'required|numeric|between:-82.0,-74.5',
             'prioridad_incidencia' => 'required|in:ALTA,MEDIA,BAJA',
             'id_ciudad' => 'required|exists:ciudades,id_ciudad',
             'id_subtipo_incidencia' => 'required|exists:subtipos_incidencia,id_subtipo_incidencia',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'fotos' => 'nullable|array|max:5',
+            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Si vino una foto, la guardamos y su ruta queda en foto_incidencia
-        if ($request->hasFile('foto')) {
-            $datos['foto_incidencia'] = $request->file('foto')->store('incidencias', 'public');
-        }
-        unset($datos['foto']);
-
-        // El dueño es el usuario autenticado (no lo manda el frontend)
         $datos['id_usuario'] = $request->user()->id;
+        unset($datos['fotos']);
 
-        $incidencia = Incidencia::create($datos);
+        try {
+            $incidencia = Incidencia::create($datos);
 
-        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']), 201);
+            // Cada foto se guarda como una evidencia ligada a la incidencia
+            if ($request->hasFile('fotos')) {
+                foreach ($request->file('fotos') as $foto) {
+                    $incidencia->evidencias()->create([
+                        'url_evidencia' => $foto->store('incidencias', 'public'),
+                        'id_usuario' => $request->user()->id,
+                    ]);
+                }
+            }
+
+            return response()->json(
+                $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']),
+                201
+            );
+        } catch (\Exception $e) {
+            BitacoraError::create([
+                'id_usuario' => $request->user()->id,
+                'tipo_error' => 'IncidenciaController@crearIncidencia',
+                'descripcion_error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Error al crear la incidencia'], 500);
+        }
     }
 
-    // Ver una incidencia con sus datos completos
     public function verIncidencia(Request $request, Incidencia $incidencia)
     {
-        // El usuario "normal" solo puede ver las suyas.
+        // El "normal" solo puede ver las suyas
         $user = $request->user();
         if ($user->rol && $user->rol->nombre_rol === 'normal' && $incidencia->id_usuario !== $user->id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']));
     }
 
-    // Actualizar una incidencia (admin, autor o técnico asignado).
     public function actualizarIncidencia(Request $request, Incidencia $incidencia)
     {
-        $user = $request->user();
+        // Pueden editar: admin, autor o técnico asignado
+        $puede = $this->esAdmin($request)
+            || $incidencia->id_usuario === $request->user()->id
+            || $this->esTecnicoAsignado($request, $incidencia);
 
-        // Permisos: admin, el autor, o un técnico asignado.
-        $esAdmin = $user->rol && $user->rol->nombre_rol === 'admin';
-        $esAutor = $incidencia->id_usuario === $user->id;
-        $esTecnicoAsignado = $incidencia->asignaciones()->where('id_usuario', $user->id)->exists();
-
-        if (! $esAdmin && ! $esAutor && ! $esTecnicoAsignado) {
+        if (! $puede) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        // 'sometimes' = validar solo si el campo viene.
         $datos = $request->validate([
             'nombre_incidencia' => 'sometimes|string|min:5|max:255',
             'descripcion_incidencia' => 'sometimes|nullable|string',
             'direccion_incidencia' => 'sometimes|nullable|string|max:500',
-            'latitud_incidencia' => 'sometimes|numeric',
-            'longitud_incidencia' => 'sometimes|numeric',
+            'latitud_incidencia' => 'sometimes|numeric|between:-5.5,1.8',
+            'longitud_incidencia' => 'sometimes|numeric|between:-82.0,-74.5',
             'estado_incidencia' => 'sometimes|in:PENDIENTE,EN_PROCESO,RESUELTO',
             'prioridad_incidencia' => 'sometimes|in:ALTA,MEDIA,BAJA',
             'id_ciudad' => 'sometimes|exists:ciudades,id_ciudad',
@@ -112,28 +140,33 @@ class IncidenciaController extends Controller
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 
-    // Eliminar una incidencia (solo admin o autor).
     public function eliminarIncidencia(Request $request, Incidencia $incidencia)
     {
-        $user = $request->user();
-        $esAdmin = $user->rol && $user->rol->nombre_rol === 'admin';
-        $esAutor = $incidencia->id_usuario === $user->id;
-
-        if (! $esAdmin && ! $esAutor) {
+        // Eliminar: solo admin o autor
+        if (! $this->esAdmin($request) && $incidencia->id_usuario !== $request->user()->id) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        // Borrar los archivos de las evidencias del disco antes de eliminar.
-        foreach ($incidencia->evidencias as $evidencia) {
-            Storage::disk('public')->delete($evidencia->url_evidencia);
+        try {
+            // La cascada borra las filas de evidencias, pero los archivos hay que borrarlos a mano
+            foreach ($incidencia->evidencias as $evidencia) {
+                Storage::disk('public')->delete($evidencia->url_evidencia);
+            }
+
+            $incidencia->delete();
+
+            return response()->json(['message' => 'Incidencia eliminada']);
+        } catch (\Exception $e) {
+            BitacoraError::create([
+                'id_usuario' => $request->user()->id,
+                'tipo_error' => 'IncidenciaController@eliminarIncidencia',
+                'descripcion_error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Error al eliminar la incidencia'], 500);
         }
-
-        $incidencia->delete();
-
-        return response()->json(['message' => 'Incidencia eliminada']);
     }
 
-    // Historial de cambios de estado (más reciente primero).
     public function historialIncidencia(Incidencia $incidencia)
     {
         return response()->json(
