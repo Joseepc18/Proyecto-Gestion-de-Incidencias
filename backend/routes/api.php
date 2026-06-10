@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
+use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,5 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
+
+    // Apis de evidencias (fotos)
+    Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
+    Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar']);
 
 });
