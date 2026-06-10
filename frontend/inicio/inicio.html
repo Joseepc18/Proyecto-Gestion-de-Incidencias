@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Inicio - Sistema de Gestión de Incidencias" />
+    <title>Inicio | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link rel="stylesheet" href="inicio.css" />
+  </head>
+
+  <body>
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
+        <div class="sidebar-header">
+          <a class="brand-mark" href="inicio.html">
+            <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <span class="brand-copy">
+              <span class="brand-title">Incidencias UPSE</span>
+              <span class="brand-subtitle">Gestión georreferenciada</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link active" href="inicio.html" aria-current="page">
+            <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+            <span class="nav-text">Inicio</span>
+          </a>
+          <a class="nav-link" href="../incidencias/incidencias.html">
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Incidencias</span>
+          </a>
+          <!-- Solo admin: inicio.js le quita la clase d-none si el rol es admin -->
+          <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
+            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            <span class="nav-text">Usuarios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span class="sidebar-footer-text">Sistema activo</span>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand bg-white">
+          <div class="container-fluid px-3 px-lg-4">
+            <button
+              class="sidebar-toggle"
+              type="button"
+              data-sidebar-toggle
+              aria-controls="adminSidebar"
+              aria-expanded="true"
+              aria-label="Mostrar/ocultar menú"
+            >
+              <span></span><span></span><span></span>
+            </button>
+
+            <div class="navbar-actions ms-auto">
+              <button
+                class="icon-button theme-toggle"
+                type="button"
+                data-theme-toggle
+                aria-label="Cambiar tema"
+                title="Cambiar tema"
+              >
+                <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+              </button>
+
+              <div class="dropdown">
+                <button
+                  class="profile-button dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <span class="brand-icon"
+                    ><i class="bi bi-person-circle" aria-hidden="true"></i
+                  ></span>
+                  <!-- inicio.js rellena el nombre con GET /user -->
+                  <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1">Inicio</p>
+                  <h1 class="h3 mb-1">Bienvenido, <span id="saludoNombre">usuario</span></h1>
+                  <p class="text-muted mb-0">Desde aquí gestionas las incidencias del sistema.</p>
+                </div>
+              </div>
+            </div>
+
+            <section class="row g-3 mt-1">
+              <div class="col-12">
+                <article class="metric-card">
+                  <p class="mb-0 text-muted">
+                    Las métricas y gráficas se mostrarán aquí próximamente.
+                  </p>
+                </article>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="inicio.js"></script>
+  </body>
+</html>

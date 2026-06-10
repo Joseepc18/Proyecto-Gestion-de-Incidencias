@@ -29,9 +29,9 @@ document.addEventListener("DOMContentLoaded", function () {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      // Éxito: guardar token y entrar al dashboard
+      // Éxito: guardar token y entrar al inicio
       guardarToken(data.access_token);
-      window.location.href = "../dashboard/dashboard.html";
+      window.location.href = "../inicio/inicio.html";
     } catch (error) {
       // Mostrar error del backend
       errorBox.textContent = error.message;
