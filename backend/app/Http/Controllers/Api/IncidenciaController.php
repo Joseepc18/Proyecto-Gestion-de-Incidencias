@@ -66,7 +66,7 @@ class IncidenciaController extends Controller
             'prioridad_incidencia' => 'required|in:ALTA,MEDIA,BAJA',
             'id_ciudad' => 'required|exists:ciudades,id_ciudad',
             'id_subtipo_incidencia' => 'required|exists:subtipos_incidencia,id_subtipo_incidencia',
-            'fotos' => 'nullable|array|max:5',
+            'fotos' => 'nullable|array|max:3',
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -129,7 +129,6 @@ class IncidenciaController extends Controller
             'direccion_incidencia' => 'sometimes|nullable|string|max:500',
             'latitud_incidencia' => 'sometimes|numeric|between:-5.5,1.8',
             'longitud_incidencia' => 'sometimes|numeric|between:-82.0,-74.5',
-            'estado_incidencia' => 'sometimes|in:PENDIENTE,EN_PROCESO,RESUELTO',
             'prioridad_incidencia' => 'sometimes|in:ALTA,MEDIA,BAJA',
             'id_ciudad' => 'sometimes|exists:ciudades,id_ciudad',
             'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
@@ -172,5 +171,35 @@ class IncidenciaController extends Controller
         return response()->json(
             $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
         );
+    }
+
+    // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
+    public function cambiarEstado(Request $request, Incidencia $incidencia)
+    {
+        $request->validate([
+            'estado_incidencia' => 'required|in:PENDIENTE,EN_PROCESO,RESUELTO',
+        ]);
+
+        $nuevo = $request->estado_incidencia;
+        $actual = $incidencia->estado_incidencia;
+
+        if ($this->esAdmin($request)) {
+            // Admin: cualquier cambio, sin restricción
+        } elseif ($this->esTecnicoAsignado($request, $incidencia)) {
+            // Técnico: solo la transición "siguiente" permitida (avanzar)
+            $siguientePermitido = [
+                'PENDIENTE' => 'EN_PROCESO',
+                'EN_PROCESO' => 'RESUELTO',
+            ];
+            if (($siguientePermitido[$actual] ?? null) !== $nuevo) {
+                return response()->json(['message' => 'Transición de estado no permitida'], 422);
+            }
+        } else {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        $incidencia->update(['estado_incidencia' => $nuevo]);
+
+        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 }

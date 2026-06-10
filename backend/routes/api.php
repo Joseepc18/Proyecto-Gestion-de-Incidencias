@@ -29,9 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
+    Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado']);
 
     // Apis de evidencias (fotos)
     Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
     Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar']);
-
 });

@@ -14,6 +14,7 @@ class Evidencia extends Model
         'id_incidencia',
         'url_evidencia',
         'id_usuario',
+        'tipo_evidencia',
     ];
 
     public function incidencia()

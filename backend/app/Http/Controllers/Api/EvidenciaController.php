@@ -10,30 +10,37 @@ use Illuminate\Support\Facades\Storage;
 
 class EvidenciaController extends Controller
 {
-    // Agregar fotos a una incidencia (máximo 5 en total).
+    // Agregar fotos a una incidencia (3 de REPORTE, 1 de RESOLUCION).
     public function subir(Request $request, Incidencia $incidencia)
     {
-        // Permiso: admin o autor de la incidencia
+        // Permiso: admin, autor o técnico asignado
         $user = $request->user();
         $esAdmin = $user->rol && $user->rol->nombre_rol === 'admin';
-        if (! $esAdmin && $incidencia->id_usuario !== $user->id) {
+        $esAutor = $incidencia->id_usuario === $user->id;
+        $esTecnicoAsignado = $incidencia->asignaciones()->where('id_usuario', $user->id)->exists();
+        if (! $esAdmin && ! $esAutor && ! $esTecnicoAsignado) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
         $request->validate([
             'fotos' => 'required|array',
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+            'tipo_evidencia' => 'nullable|in:REPORTE,RESOLUCION',
         ]);
 
-        // No pasar de 5 fotos en total (las que ya hay + las nuevas)
-        if ($incidencia->evidencias()->count() + count($request->file('fotos')) > 5) {
-            return response()->json(['message' => 'Máximo 5 fotos por incidencia'], 422);
+        $tipo = $request->input('tipo_evidencia', 'REPORTE');
+        $limite = $tipo === 'RESOLUCION' ? 1 : 3;
+
+        // No pasar del límite por tipo (las que ya hay + las nuevas)
+        if ($incidencia->evidencias()->where('tipo_evidencia', $tipo)->count() + count($request->file('fotos')) > $limite) {
+            return response()->json(['message' => "Máximo $limite foto(s) de tipo $tipo"], 422);
         }
 
         foreach ($request->file('fotos') as $foto) {
             $incidencia->evidencias()->create([
                 'url_evidencia' => $foto->store('incidencias', 'public'),
                 'id_usuario' => $user->id,
+                'tipo_evidencia' => $tipo,
             ]);
         }
 
