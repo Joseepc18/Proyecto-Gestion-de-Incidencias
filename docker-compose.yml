@@ -20,21 +20,6 @@ services:
     networks:
       - incidencias_network
 
-  # 1.1 Administrador Gráfico de BD (PgAdmin)
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: incidencias_pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@sistema.com
-      PGADMIN_DEFAULT_PASSWORD: password123
-    ports:
-      - "5050:80"
-    depends_on:
-      - db
-    networks:
-      - incidencias_network
-
   # 1.2 Servidor de Caché (Redis)
   redis:
     image: redis:alpine
