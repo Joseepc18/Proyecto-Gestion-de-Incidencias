@@ -25,28 +25,24 @@ function eliminarToken() {
 }
 
 async function apiFetch(endpoint, opciones = {}) {
-  // URL completa: "/api" + "/login" -> "/api/login"
   const url = API_BASE + endpoint;
 
-  // Headers que siempre mandamos
-  const headers = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
+  const headers = { Accept: "application/json" };
 
-  // Si ya hay token guardado, lo añadimos para las rutas protegidas
+  // FormData: el navegador pone Content-Type automáticamente (multipart)
+  const esFormData = opciones.body instanceof FormData;
+  if (!esFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const token = obtenerToken();
   if (token) {
     headers["Authorization"] = "Bearer " + token;
   }
 
-  // Hacemos la petición y esperamos la respuesta
   const respuesta = await fetch(url, { ...opciones, headers });
-
-  // Leemos el cuerpo y lo convertimos de JSON a objeto JS
   const data = await respuesta.json();
 
-  // Si el status no fue 2xx, lanzamos error con el mensaje del backend
   if (!respuesta.ok) {
     throw new Error(data.message || "Error en la petición");
   }

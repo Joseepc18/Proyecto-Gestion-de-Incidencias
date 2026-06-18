@@ -1,0 +1,22 @@
+/* Badges pulidos */
+#tablaIncidencias .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+/* Estado: colores custom */
+.badge.badge-estado-pendiente {
+  color: #fff;
+  background-color: #e74c3c;
+}
+.badge.badge-estado-proceso {
+  color: #fff;
+  background-color: #2980d0;
+}
+.badge.badge-estado-resuelto {
+  color: #fff;
+  background-color: #6c757d;
+}

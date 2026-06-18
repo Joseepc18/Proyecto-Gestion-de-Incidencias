@@ -44,6 +44,9 @@ class IncidenciaController extends Controller
         if ($request->filled('ciudad_id')) {
             $query->where('id_ciudad', $request->ciudad_id);
         }
+        if ($request->filled('tipo_id')) {
+            $query->whereHas('subtipo', fn ($q) => $q->where('id_tipo_incidencia', $request->tipo_id));
+        }
 
         // El usuario "normal" solo ve sus propias incidencias
         $user = $request->user();

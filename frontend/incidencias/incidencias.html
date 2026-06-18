@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Incidencias - Sistema de Gestión de Incidencias" />
+    <title>Incidencias | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link rel="stylesheet" href="incidencias.css" />
+  </head>
+
+  <body>
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <!-- ============ SIDEBAR (igual que inicio.html, pero "Incidencias" es active) ============ -->
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
+        <div class="sidebar-header">
+          <a class="brand-mark" href="../inicio/inicio.html">
+            <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <span class="brand-copy">
+              <span class="brand-title">Incidencias UPSE</span>
+              <span class="brand-subtitle">Gestión georreferenciada</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="../inicio/inicio.html">
+            <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+            <span class="nav-text">Inicio</span>
+          </a>
+          <a class="nav-link active" href="incidencias.html" aria-current="page">
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Incidencias</span>
+          </a>
+          <a class="nav-link" href="../registrarIncidencias/registrar.html">
+            <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
+            <span class="nav-text">Registrar incidencia</span>
+          </a>
+          <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
+            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            <span class="nav-text">Usuarios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span class="sidebar-footer-text">Sistema activo</span>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <!-- ============ NAVBAR (igual que inicio.html) ============ -->
+        <nav class="navbar admin-navbar navbar-expand bg-white">
+          <div class="container-fluid px-3 px-lg-4">
+            <button class="sidebar-toggle" type="button" data-sidebar-toggle
+              aria-controls="adminSidebar" aria-expanded="true" aria-label="Mostrar/ocultar menú">
+              <span></span><span></span><span></span>
+            </button>
+
+            <div class="navbar-actions ms-auto">
+              <button class="icon-button theme-toggle" type="button" data-theme-toggle
+                aria-label="Cambiar tema" title="Cambiar tema">
+                <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+              </button>
+
+              <div class="dropdown">
+                <button class="profile-button dropdown-toggle" type="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="brand-icon"><i class="bi bi-person-circle" aria-hidden="true"></i></span>
+                  <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <!-- ============ CONTENIDO PRINCIPAL ============ -->
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+
+            <!-- Encabezado de página -->
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1">Gestión</p>
+                  <h1 class="h3 mb-1">Incidencias</h1>
+                  <p class="text-muted mb-0">Consulta, crea y gestiona las incidencias reportadas.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel: filtros + tabla -->
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="h5 mb-1 section-title">
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                    <span>Listado de incidencias</span>
+                  </h2>
+                </div>
+                <a class="btn btn-primary btn-sm" href="../registrarIncidencias/registrar.html">
+                  <i class="bi bi-plus-lg" aria-hidden="true"></i> Registrar incidencia
+                </a>
+              </div>
+
+              <!-- Fila de filtros -->
+              <div class="px-3 pb-3">
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <input class="form-control form-control-sm" type="search" id="filtroBusqueda"
+                      placeholder="Buscar por título..." aria-label="Buscar incidencias" />
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroEstado" aria-label="Filtrar por estado">
+                      <option value="">Todos los estados</option>
+                      <option value="PENDIENTE">Pendiente</option>
+                      <option value="EN_PROCESO">En proceso</option>
+                      <option value="RESUELTO">Resuelto</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroPrioridad" aria-label="Filtrar por prioridad">
+                      <option value="">Todas las prioridades</option>
+                      <option value="ALTA">Alta</option>
+                      <option value="MEDIA">Media</option>
+                      <option value="BAJA">Baja</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select class="form-select form-select-sm" id="filtroTipo" aria-label="Filtrar por tipo">
+                      <option value="">Todos los tipos</option>
+                      <!-- incidencias.js llena esto con GET /api/catalogos/tipos-incidencia -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filtroCiudad" aria-label="Filtrar por ciudad">
+                      <option value="">Todas las ciudades</option>
+                      <!-- incidencias.js llena esto con GET /api/catalogos/ciudades -->
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tabla de incidencias -->
+              <div class="table-responsive">
+                <table class="table align-middle mb-0" id="tablaIncidencias">
+                  <thead>
+                    <tr>
+                      <th>Título</th>
+                      <th>Estado</th>
+                      <th>Prioridad</th>
+                      <th>Tipo</th>
+                      <th>Ciudad</th>
+                      <th>Fecha</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyIncidencias">
+                    <!-- incidencias.js llena esto dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Paginación -->
+              <div class="d-flex justify-content-between align-items-center px-3 py-3">
+                <small class="text-muted" id="infoPaginacion">Cargando...</small>
+                <div>
+                  <button class="btn btn-light btn-sm" id="btnAnterior" disabled>
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                  </button>
+                  <button class="btn btn-light btn-sm" id="btnSiguiente" disabled>
+                    Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Modal crear removido — ahora es ../registrarIncidencias/registrar.html -->
+
+    <!-- ============ MODAL: VER DETALLE ============ -->
+    <!-- Lo agregaremos después -->
+
+    <!-- JS compartido -->
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <!-- Lógica propia -->
+    <script src="incidencias.js"></script>
+  </body>
+</html>

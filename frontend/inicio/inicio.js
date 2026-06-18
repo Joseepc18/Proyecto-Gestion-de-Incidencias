@@ -26,14 +26,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // LOGOUT: avisar al backend, borrar token y salir.
+  // LOGOUT
   document.getElementById("btnLogout").addEventListener("click", async (evento) => {
     evento.preventDefault();
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      // Aunque falle el backend, cerramos la sesión local igual.
-    }
+    try { await apiFetch("/logout", { method: "POST" }); } catch {}
     eliminarToken();
     window.location.href = "../login/login.html";
   });
