@@ -220,11 +220,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 // Funciones globales (se llaman desde onclick en el HTML)
-
+// eslint-disable-next-line no-unused-vars
 async function verDetalle(id) {
   alert("Ver detalle de incidencia #" + id + " (próximamente)");
 }
 
+// eslint-disable-next-line no-unused-vars
 async function eliminarIncidencia(id) {
   if (!confirm("¿Estás seguro de eliminar esta incidencia?")) return;
 

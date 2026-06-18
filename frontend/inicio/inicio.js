@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // LOGOUT
   document.getElementById("btnLogout").addEventListener("click", async (evento) => {
     evento.preventDefault();
-    try { await apiFetch("/logout", { method: "POST" }); } catch {}
+    try { await apiFetch("/logout", { method: "POST" }); } catch { /* ignorar */ }
     eliminarToken();
     window.location.href = "../login/login.html";
   });
