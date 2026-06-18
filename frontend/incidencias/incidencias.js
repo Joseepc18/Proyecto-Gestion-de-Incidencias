@@ -5,7 +5,6 @@
 let usuarioActual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-
   // Guard
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
@@ -29,7 +28,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
-    try { await apiFetch("/logout", { method: "POST" }); } catch { /* ignorar */ }
+    try {
+      await apiFetch("/logout", { method: "POST" });
+    } catch {
+      /* ignorar */
+    }
     eliminarToken();
     window.location.href = "../login/login.html";
   });
@@ -104,58 +107,101 @@ document.addEventListener("DOMContentLoaded", async function () {
     tbody.innerHTML = incidencias
       .map(function (inc) {
         const estadoConfig = {
-          PENDIENTE:  { clase: "badge-estado-pendiente",  icono: "bi-clock-history",       texto: "Pendiente" },
-          EN_PROCESO: { clase: "badge-estado-proceso",    icono: "bi-gear-wide-connected", texto: "En proceso" },
-          RESUELTO:   { clase: "badge-estado-resuelto",   icono: "bi-check2-circle",       texto: "Resuelto" },
+          PENDIENTE: {
+            clase: "badge-estado-pendiente",
+            icono: "bi-clock-history",
+            texto: "Pendiente",
+          },
+          EN_PROCESO: {
+            clase: "badge-estado-proceso",
+            icono: "bi-gear-wide-connected",
+            texto: "En proceso",
+          },
+          RESUELTO: {
+            clase: "badge-estado-resuelto",
+            icono: "bi-check2-circle",
+            texto: "Resuelto",
+          },
         };
         const prioridadConfig = {
-          ALTA:  { clase: "text-bg-danger",  icono: "bi-fire",              texto: "Alta" },
+          ALTA: { clase: "text-bg-danger", icono: "bi-fire", texto: "Alta" },
           MEDIA: { clase: "text-bg-warning", icono: "bi-shield-exclamation", texto: "Media" },
-          BAJA:  { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
+          BAJA: { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
         };
-        const est = estadoConfig[inc.estado_incidencia] || { clase: "", icono: "", texto: inc.estado_incidencia };
-        const pri = prioridadConfig[inc.prioridad_incidencia] || { clase: "", icono: "", texto: inc.prioridad_incidencia };
+        const est = estadoConfig[inc.estado_incidencia] || {
+          clase: "",
+          icono: "",
+          texto: inc.estado_incidencia,
+        };
+        const pri = prioridadConfig[inc.prioridad_incidencia] || {
+          clase: "",
+          icono: "",
+          texto: inc.prioridad_incidencia,
+        };
 
         const nombreTipo =
-          inc.subtipo && inc.subtipo.tipo
-            ? inc.subtipo.tipo.nombre_tipo_incidencia
-            : "—";
+          inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
 
         const nombreCiudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "—";
         const fecha = new Date(inc.created_at).toLocaleDateString("es-EC");
 
         const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
         const esAutor = inc.id_usuario === usuarioActual.id;
-        const opcionEliminar = (esAdmin || esAutor)
-          ? '<li><a class="dropdown-item text-danger" href="#" onclick="eliminarIncidencia(' +
-            inc.id_incidencia + '); return false;">' +
-            '<i class="bi bi-trash me-2"></i>Eliminar</a></li>'
-          : "";
+        const opcionEliminar =
+          esAdmin || esAutor
+            ? '<li><a class="dropdown-item text-danger" href="#" onclick="eliminarIncidencia(' +
+              inc.id_incidencia +
+              '); return false;">' +
+              '<i class="bi bi-trash me-2"></i>Eliminar</a></li>'
+            : "";
 
         const acciones =
           '<div class="dropdown">' +
-            '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
-              '<i class="bi bi-three-dots-vertical"></i>' +
-            '</button>' +
-            '<ul class="dropdown-menu dropdown-menu-end">' +
-              '<li><a class="dropdown-item" href="#" onclick="verDetalle(' +
-                inc.id_incidencia + '); return false;">' +
-                '<i class="bi bi-eye me-2"></i>Ver detalle</a></li>' +
-              opcionEliminar +
-            '</ul>' +
-          '</div>';
+          '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
+          '<i class="bi bi-three-dots-vertical"></i>' +
+          "</button>" +
+          '<ul class="dropdown-menu dropdown-menu-end">' +
+          '<li><a class="dropdown-item" href="#" onclick="verDetalle(' +
+          inc.id_incidencia +
+          '); return false;">' +
+          '<i class="bi bi-eye me-2"></i>Ver detalle</a></li>' +
+          opcionEliminar +
+          "</ul>" +
+          "</div>";
 
         return (
           "<tr>" +
-          "<td>" + inc.nombre_incidencia + "</td>" +
-          '<td><span class="badge ' + est.clase + '">' +
-            '<i class="bi ' + est.icono + ' me-1"></i>' + est.texto + "</span></td>" +
-          '<td><span class="badge ' + pri.clase + '">' +
-            '<i class="bi ' + pri.icono + ' me-1"></i>' + pri.texto + "</span></td>" +
-          "<td>" + nombreTipo + "</td>" +
-          "<td>" + nombreCiudad + "</td>" +
-          "<td>" + fecha + "</td>" +
-          '<td class="text-end">' + acciones + "</td>" +
+          "<td>" +
+          inc.nombre_incidencia +
+          "</td>" +
+          '<td><span class="badge ' +
+          est.clase +
+          '">' +
+          '<i class="bi ' +
+          est.icono +
+          ' me-1"></i>' +
+          est.texto +
+          "</span></td>" +
+          '<td><span class="badge ' +
+          pri.clase +
+          '">' +
+          '<i class="bi ' +
+          pri.icono +
+          ' me-1"></i>' +
+          pri.texto +
+          "</span></td>" +
+          "<td>" +
+          nombreTipo +
+          "</td>" +
+          "<td>" +
+          nombreCiudad +
+          "</td>" +
+          "<td>" +
+          fecha +
+          "</td>" +
+          '<td class="text-end">' +
+          acciones +
+          "</td>" +
           "</tr>"
         );
       })
@@ -165,8 +211,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Paginación
   function actualizarPaginacion(respuesta) {
     document.getElementById("infoPaginacion").textContent =
-      "Página " + respuesta.current_page + " de " + respuesta.last_page +
-      " (" + respuesta.total + " incidencias)";
+      "Página " +
+      respuesta.current_page +
+      " de " +
+      respuesta.last_page +
+      " (" +
+      respuesta.total +
+      " incidencias)";
 
     const btnAnt = document.getElementById("btnAnterior");
     const btnSig = document.getElementById("btnSiguiente");

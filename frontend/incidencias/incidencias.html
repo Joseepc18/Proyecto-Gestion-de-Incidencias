@@ -57,21 +57,38 @@
         <!-- ============ NAVBAR (igual que inicio.html) ============ -->
         <nav class="navbar admin-navbar navbar-expand bg-white">
           <div class="container-fluid px-3 px-lg-4">
-            <button class="sidebar-toggle" type="button" data-sidebar-toggle
-              aria-controls="adminSidebar" aria-expanded="true" aria-label="Mostrar/ocultar menú">
+            <button
+              class="sidebar-toggle"
+              type="button"
+              data-sidebar-toggle
+              aria-controls="adminSidebar"
+              aria-expanded="true"
+              aria-label="Mostrar/ocultar menú"
+            >
               <span></span><span></span><span></span>
             </button>
 
             <div class="navbar-actions ms-auto">
-              <button class="icon-button theme-toggle" type="button" data-theme-toggle
-                aria-label="Cambiar tema" title="Cambiar tema">
+              <button
+                class="icon-button theme-toggle"
+                type="button"
+                data-theme-toggle
+                aria-label="Cambiar tema"
+                title="Cambiar tema"
+              >
                 <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
               </button>
 
               <div class="dropdown">
-                <button class="profile-button dropdown-toggle" type="button"
-                  data-bs-toggle="dropdown" aria-expanded="false">
-                  <span class="brand-icon"><i class="bi bi-person-circle" aria-hidden="true"></i></span>
+                <button
+                  class="profile-button dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <span class="brand-icon"
+                    ><i class="bi bi-person-circle" aria-hidden="true"></i
+                  ></span>
                   <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -85,7 +102,6 @@
         <!-- ============ CONTENIDO PRINCIPAL ============ -->
         <main class="dashboard-content">
           <div class="container-fluid px-3 px-lg-4 py-4">
-
             <!-- Encabezado de página -->
             <div class="page-heading">
               <div class="page-heading-copy">
@@ -93,7 +109,9 @@
                 <div>
                   <p class="eyebrow mb-1">Gestión</p>
                   <h1 class="h3 mb-1">Incidencias</h1>
-                  <p class="text-muted mb-0">Consulta, crea y gestiona las incidencias reportadas.</p>
+                  <p class="text-muted mb-0">
+                    Consulta, crea y gestiona las incidencias reportadas.
+                  </p>
                 </div>
               </div>
             </div>
@@ -116,11 +134,20 @@
               <div class="px-3 pb-3">
                 <div class="row g-2">
                   <div class="col-md-3">
-                    <input class="form-control form-control-sm" type="search" id="filtroBusqueda"
-                      placeholder="Buscar por título..." aria-label="Buscar incidencias" />
+                    <input
+                      class="form-control form-control-sm"
+                      type="search"
+                      id="filtroBusqueda"
+                      placeholder="Buscar por título..."
+                      aria-label="Buscar incidencias"
+                    />
                   </div>
                   <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filtroEstado" aria-label="Filtrar por estado">
+                    <select
+                      class="form-select form-select-sm"
+                      id="filtroEstado"
+                      aria-label="Filtrar por estado"
+                    >
                       <option value="">Todos los estados</option>
                       <option value="PENDIENTE">Pendiente</option>
                       <option value="EN_PROCESO">En proceso</option>
@@ -128,7 +155,11 @@
                     </select>
                   </div>
                   <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filtroPrioridad" aria-label="Filtrar por prioridad">
+                    <select
+                      class="form-select form-select-sm"
+                      id="filtroPrioridad"
+                      aria-label="Filtrar por prioridad"
+                    >
                       <option value="">Todas las prioridades</option>
                       <option value="ALTA">Alta</option>
                       <option value="MEDIA">Media</option>
@@ -136,13 +167,21 @@
                     </select>
                   </div>
                   <div class="col-md-3">
-                    <select class="form-select form-select-sm" id="filtroTipo" aria-label="Filtrar por tipo">
+                    <select
+                      class="form-select form-select-sm"
+                      id="filtroTipo"
+                      aria-label="Filtrar por tipo"
+                    >
                       <option value="">Todos los tipos</option>
                       <!-- incidencias.js llena esto con GET /api/catalogos/tipos-incidencia -->
                     </select>
                   </div>
                   <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filtroCiudad" aria-label="Filtrar por ciudad">
+                    <select
+                      class="form-select form-select-sm"
+                      id="filtroCiudad"
+                      aria-label="Filtrar por ciudad"
+                    >
                       <option value="">Todas las ciudades</option>
                       <!-- incidencias.js llena esto con GET /api/catalogos/ciudades -->
                     </select>
@@ -183,7 +222,6 @@
                 </div>
               </div>
             </section>
-
           </div>
         </main>
       </div>
