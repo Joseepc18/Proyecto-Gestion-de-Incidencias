@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Registrar incidencia - Sistema de Gestión de Incidencias" />
+    <title>Registrar incidencia | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body>
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <!-- ============ SIDEBAR ============ -->
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
+        <div class="sidebar-header">
+          <a class="brand-mark" href="../inicio/inicio.html">
+            <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <span class="brand-copy">
+              <span class="brand-title">Incidencias UPSE</span>
+              <span class="brand-subtitle">Gestión georreferenciada</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="../inicio/inicio.html">
+            <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+            <span class="nav-text">Inicio</span>
+          </a>
+          <a class="nav-link" href="../incidencias/incidencias.html">
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Incidencias</span>
+          </a>
+          <a class="nav-link active" href="registrar.html" aria-current="page">
+            <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
+            <span class="nav-text">Registrar incidencia</span>
+          </a>
+          <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
+            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            <span class="nav-text">Usuarios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span class="sidebar-footer-text">Sistema activo</span>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <!-- ============ NAVBAR ============ -->
+        <nav class="navbar admin-navbar navbar-expand bg-white">
+          <div class="container-fluid px-3 px-lg-4">
+            <button
+              class="sidebar-toggle"
+              type="button"
+              data-sidebar-toggle
+              aria-controls="adminSidebar"
+              aria-expanded="true"
+              aria-label="Mostrar/ocultar menú"
+            >
+              <span></span><span></span><span></span>
+            </button>
+
+            <div class="navbar-actions ms-auto">
+              <button
+                class="icon-button theme-toggle"
+                type="button"
+                data-theme-toggle
+                aria-label="Cambiar tema"
+                title="Cambiar tema"
+              >
+                <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+              </button>
+
+              <div class="dropdown">
+                <button
+                  class="profile-button dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <span class="brand-icon"
+                    ><i class="bi bi-person-circle" aria-hidden="true"></i
+                  ></span>
+                  <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <!-- ============ CONTENIDO PRINCIPAL ============ -->
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1">Nueva</p>
+                  <h1 class="h3 mb-1">Registrar incidencia</h1>
+                  <p class="text-muted mb-0">
+                    Completa el formulario para reportar una incidencia.
+                  </p>
+                </div>
+              </div>
+              <div class="heading-actions">
+                <a class="btn btn-outline-secondary btn-sm" href="../incidencias/incidencias.html">
+                  <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a incidencias
+                </a>
+              </div>
+            </div>
+
+            <section class="row g-3">
+              <!-- Columna izquierda: formulario -->
+              <div class="col-12 col-xl-8">
+                <form id="formCrear" class="panel needs-validation" novalidate>
+                  <div class="panel-header">
+                    <div>
+                      <h2 class="h5 mb-1 section-title">
+                        <i class="bi bi-clipboard-plus" aria-hidden="true"></i>
+                        <span>Datos de la incidencia</span>
+                      </h2>
+                      <p class="text-muted mb-0">
+                        Los campos con <span class="text-danger">*</span> son obligatorios.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div id="crearError" class="alert alert-danger d-none mx-3"></div>
+
+                  <div class="row g-3">
+                    <!-- Título -->
+                    <div class="col-12">
+                      <label class="form-label" for="crearTitulo"
+                        >Título <span class="text-danger">*</span></label
+                      >
+                      <input
+                        class="form-control"
+                        id="crearTitulo"
+                        type="text"
+                        minlength="5"
+                        maxlength="255"
+                        required
+                        placeholder="Ej: Bache en Av. Principal"
+                      />
+                      <div class="invalid-feedback">Mínimo 5 caracteres.</div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="col-12">
+                      <label class="form-label" for="crearDescripcion">Descripción</label>
+                      <textarea
+                        class="form-control"
+                        id="crearDescripcion"
+                        rows="3"
+                        placeholder="Describe el problema con detalle..."
+                      ></textarea>
+                    </div>
+
+                    <!-- Prioridad -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearPrioridad"
+                        >Prioridad <span class="text-danger">*</span></label
+                      >
+                      <select class="form-select" id="crearPrioridad" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="ALTA">Alta</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="BAJA">Baja</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona una prioridad.</div>
+                    </div>
+
+                    <!-- Tipo -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearTipo"
+                        >Tipo <span class="text-danger">*</span></label
+                      >
+                      <select class="form-select" id="crearTipo" required>
+                        <option value="">Seleccionar...</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona un tipo.</div>
+                    </div>
+
+                    <!-- Subtipo -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearSubtipo"
+                        >Subtipo <span class="text-danger">*</span></label
+                      >
+                      <select class="form-select" id="crearSubtipo" required disabled>
+                        <option value="">Primero selecciona un tipo</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona un subtipo.</div>
+                    </div>
+
+                    <!-- Ciudad -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearCiudad"
+                        >Ciudad <span class="text-danger">*</span></label
+                      >
+                      <select class="form-select" id="crearCiudad" required>
+                        <option value="">Seleccionar...</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona una ciudad.</div>
+                    </div>
+
+                    <!-- Latitud -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearLatitud"
+                        >Latitud <span class="text-danger">*</span></label
+                      >
+                      <input
+                        class="form-control"
+                        id="crearLatitud"
+                        type="number"
+                        step="any"
+                        min="-5.5"
+                        max="1.8"
+                        required
+                        placeholder="-2.2267"
+                      />
+                      <div class="invalid-feedback">Latitud entre -5.5 y 1.8</div>
+                    </div>
+
+                    <!-- Longitud -->
+                    <div class="col-md-4">
+                      <label class="form-label" for="crearLongitud"
+                        >Longitud <span class="text-danger">*</span></label
+                      >
+                      <input
+                        class="form-control"
+                        id="crearLongitud"
+                        type="number"
+                        step="any"
+                        min="-82.0"
+                        max="-74.5"
+                        required
+                        placeholder="-80.8593"
+                      />
+                      <div class="invalid-feedback">Longitud entre -82.0 y -74.5</div>
+                    </div>
+
+                    <!-- Dirección -->
+                    <div class="col-12">
+                      <label class="form-label" for="crearDireccion">Dirección</label>
+                      <input
+                        class="form-control"
+                        id="crearDireccion"
+                        type="text"
+                        maxlength="500"
+                        placeholder="Ej: Av. Principal y calle 10 de Agosto"
+                      />
+                    </div>
+
+                    <!-- Fotos -->
+                    <div class="col-12">
+                      <label class="form-label" for="crearFotos"
+                        >Fotos (máx. 3, JPG/PNG, 2MB c/u)</label
+                      >
+                      <input
+                        class="form-control"
+                        id="crearFotos"
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        multiple
+                      />
+                      <div id="crearFotosError" class="text-danger small mt-1 d-none"></div>
+                      <div id="crearFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                    <a class="btn btn-outline-secondary" href="../incidencias/incidencias.html"
+                      >Cancelar</a
+                    >
+                    <button type="submit" class="btn btn-primary" id="btnCrearIncidencia">
+                      <span
+                        id="crearSpinner"
+                        class="spinner-border spinner-border-sm d-none me-1"
+                      ></span>
+                      <i class="bi bi-send" aria-hidden="true"></i> Registrar incidencia
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Columna derecha: guía -->
+              <div class="col-12 col-xl-4">
+                <div class="panel h-100">
+                  <h2 class="h5 mb-3 section-title">
+                    <i class="bi bi-list-check" aria-hidden="true"></i>
+                    <span>Guía de registro</span>
+                  </h2>
+                  <div class="activity-list">
+                    <div class="activity-item">
+                      <span class="activity-dot bg-danger"></span>
+                      <div>
+                        <p class="mb-1 fw-semibold">Título claro</p>
+                        <p class="text-muted small mb-0">
+                          Describe el problema en pocas palabras. Ej: "Bache en Av. Principal".
+                        </p>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="activity-dot bg-warning"></span>
+                      <div>
+                        <p class="mb-1 fw-semibold">Prioridad correcta</p>
+                        <p class="text-muted small mb-0">
+                          Alta = riesgo inmediato. Media = molestia importante. Baja = puede
+                          esperar.
+                        </p>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="activity-dot bg-primary"></span>
+                      <div>
+                        <p class="mb-1 fw-semibold">Tipo y subtipo</p>
+                        <p class="text-muted small mb-0">
+                          Selecciona primero el tipo para ver los subtipos disponibles.
+                        </p>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="activity-dot bg-success"></span>
+                      <div>
+                        <p class="mb-1 fw-semibold">Ubicación precisa</p>
+                        <p class="text-muted small mb-0">
+                          La latitud y longitud ayudan a localizar la incidencia en el mapa.
+                        </p>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <span class="activity-dot bg-info"></span>
+                      <div>
+                        <p class="mb-1 fw-semibold">Fotos de evidencia</p>
+                        <p class="text-muted small mb-0">
+                          Sube hasta 3 fotos (JPG/PNG, máx. 2MB cada una) para documentar el
+                          problema.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="registrar.js"></script>
+  </body>
+</html>
