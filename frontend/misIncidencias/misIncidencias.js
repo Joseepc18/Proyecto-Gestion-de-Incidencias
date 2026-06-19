@@ -71,6 +71,35 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+  // Enviar un comentario nuevo
+  document.getElementById("formComentario").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!incidenciaSeleccionada) return;
+
+    const textarea = document.getElementById("nuevoComentario");
+    const btn = document.getElementById("btnEnviarComentario");
+    const spinner = document.getElementById("comentarioSpinner");
+    const texto = textarea.value.trim();
+    if (!texto) return;
+
+    btn.disabled = true;
+    spinner.classList.remove("d-none");
+
+    try {
+      await apiFetch("/incidencias/" + incidenciaSeleccionada + "/comentarios", {
+        method: "POST",
+        body: JSON.stringify({ comentario: texto }),
+      });
+      textarea.value = "";
+      cargarComentarios(incidenciaSeleccionada);
+    } catch (error) {
+      alert("Error al enviar el comentario: " + error.message);
+    } finally {
+      btn.disabled = false;
+      spinner.classList.add("d-none");
+    }
+  });
+
   // Arranque
   cargarLista();
 });
@@ -216,7 +245,52 @@ async function seleccionarIncidencia(id) {
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
+
+    // Cargar los comentarios de esta incidencia
+    cargarComentarios(id);
   } catch (error) {
     alert("Error al cargar el detalle: " + error.message);
+  }
+}
+
+// Trae y pinta los comentarios de una incidencia.
+async function cargarComentarios(id) {
+  const contenedor = document.getElementById("detalleComentarios");
+
+  try {
+    const comentarios = await apiFetch("/incidencias/" + id + "/comentarios");
+
+    if (comentarios.length === 0) {
+      contenedor.innerHTML =
+        '<p class="text-muted small mb-0">Aún no hay comentarios. Sé el primero.</p>';
+      return;
+    }
+
+    contenedor.innerHTML = comentarios
+      .map(function (c) {
+        const autor = c.usuario ? c.usuario.name : "Usuario";
+        const fecha = new Date(c.created_at).toLocaleString("es-EC");
+        return (
+          '<div class="border rounded p-2 bg-light">' +
+          '<div class="d-flex justify-content-between align-items-center mb-1">' +
+          '<span class="fw-semibold small">' +
+          autor +
+          "</span>" +
+          '<span class="text-muted small">' +
+          fecha +
+          "</span>" +
+          "</div>" +
+          '<p class="mb-0 small">' +
+          c.comentario +
+          "</p>" +
+          "</div>"
+        );
+      })
+      .join("");
+  } catch (error) {
+    contenedor.innerHTML =
+      '<p class="text-danger small mb-0">No se pudieron cargar los comentarios: ' +
+      error.message +
+      "</p>";
   }
 }

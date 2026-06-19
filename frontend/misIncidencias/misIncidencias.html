@@ -221,13 +221,36 @@
                       <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
                     </div>
 
-                    <!-- Seguimiento (placeholder, pendiente comentarios) -->
+                    <!-- Seguimiento / Comentarios -->
                     <div class="border rounded p-3 mt-3">
-                      <h3 class="h6 text-primary mb-2">Seguimiento</h3>
-                      <p class="text-muted small mb-0">
-                        <i class="bi bi-info-circle me-1"></i> Comentarios y seguimiento
-                        (próximamente).
-                      </p>
+                      <h3 class="h6 text-primary mb-3">Seguimiento</h3>
+
+                      <!-- Lista de comentarios (la llena el JS) -->
+                      <div id="detalleComentarios" class="d-flex flex-column gap-2 mb-3"></div>
+
+                      <!-- Caja para escribir un comentario -->
+                      <form id="formComentario" class="d-flex flex-column gap-2">
+                        <textarea
+                          class="form-control"
+                          id="nuevoComentario"
+                          rows="2"
+                          placeholder="Escribe un comentario..."
+                          required
+                        ></textarea>
+                        <div class="d-flex justify-content-end">
+                          <button
+                            class="btn btn-primary btn-sm"
+                            type="submit"
+                            id="btnEnviarComentario"
+                          >
+                            <span
+                              id="comentarioSpinner"
+                              class="spinner-border spinner-border-sm d-none me-1"
+                            ></span>
+                            <i class="bi bi-send me-1"></i> Enviar comentario
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   </div>
                 </section>
