@@ -1640,3 +1640,40 @@ html[data-theme="dark"] {
   color: #fff;
   background-color: #6c757d;
 }
+
+/* Tarjetas de la lista maestro-detalle (Mis incidencias) */
+.incidencia-card {
+  width: 100%;
+  text-align: left;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.incidencia-card:hover {
+  border-color: var(--admin-primary);
+  box-shadow: var(--admin-shadow-sm);
+}
+.incidencia-card.activa {
+  border-left-color: var(--admin-primary);
+  background: rgba(37, 99, 235, 0.05);
+  box-shadow: var(--admin-ring);
+}
+.incidencia-card .card-codigo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--admin-primary);
+  letter-spacing: 0.02em;
+}
+.incidencia-card .card-titulo {
+  font-weight: 600;
+  color: var(--admin-text);
+  margin: 0.15rem 0;
+}
+.incidencia-card .card-ubicacion {
+  font-size: 0.8rem;
+  color: var(--admin-muted);
+}

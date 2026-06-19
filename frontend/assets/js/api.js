@@ -3,7 +3,7 @@
 //  nginx hace que front y back compartan origen -> URL relativa.
 // =============================================================
 
-/* exported guardarToken, obtenerToken, eliminarToken, apiFetch */
+/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol */
 
 const API_BASE = "/api";
 
@@ -48,4 +48,19 @@ async function apiFetch(endpoint, opciones = {}) {
   }
 
   return data;
+}
+
+// Muestra/oculta los enlaces del menú según el rol del usuario.
+// Admin: tabla de incidencias + usuarios. Resto: "Mis incidencias".
+function aplicarMenuRol(rol) {
+  const esAdmin = rol === "admin";
+
+  function mostrar(id, visible) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("d-none", !visible);
+  }
+
+  mostrar("navIncidencias", esAdmin);
+  mostrar("navUsuarios", esAdmin);
+  mostrar("navMisIncidencias", !esAdmin);
 }

@@ -1,6 +1,6 @@
 // inicio.js — Protege el panel y maneja usuario + logout.
 
-/* global apiFetch, obtenerToken, eliminarToken */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // GUARD: si no hay token, no puede estar aquí -> al login.
@@ -15,10 +15,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("nombreUsuario").textContent = usuario.name;
     document.getElementById("saludoNombre").textContent = usuario.name;
 
-    // El enlace "Usuarios" solo se muestra al admin.
-    if (usuario.rol && usuario.rol.nombre_rol === "admin") {
-      document.getElementById("navUsuarios").classList.remove("d-none");
-    }
+    // El menú se ajusta según el rol (admin: tabla + usuarios; resto: mis incidencias).
+    aplicarMenuRol(usuario.rol ? usuario.rol.nombre_rol : "");
   } catch {
     // Token inválido o expirado -> limpiar y al login.
     eliminarToken();

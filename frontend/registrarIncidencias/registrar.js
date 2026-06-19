@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -15,9 +15,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
 
-    if (usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin") {
-      document.getElementById("navUsuarios").classList.remove("d-none");
-    }
+    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";

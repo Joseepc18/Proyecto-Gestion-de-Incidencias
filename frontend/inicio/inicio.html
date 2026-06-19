@@ -31,9 +31,19 @@
             <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
             <span class="nav-text">Inicio</span>
           </a>
-          <a class="nav-link" href="../incidencias/incidencias.html">
+          <!-- Solo admin -->
+          <a class="nav-link d-none" id="navIncidencias" href="../incidencias/incidencias.html">
             <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
             <span class="nav-text">Incidencias</span>
+          </a>
+          <!-- Solo usuario normal -->
+          <a
+            class="nav-link d-none"
+            id="navMisIncidencias"
+            href="../misIncidencias/misIncidencias.html"
+          >
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Mis incidencias</span>
           </a>
           <a class="nav-link" href="../registrarIncidencias/registrar.html">
             <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>

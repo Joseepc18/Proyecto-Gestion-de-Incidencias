@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mis incidencias - Sistema de Gestión de Incidencias" />
+    <title>Mis incidencias | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body>
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <!-- Sidebar -->
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
+        <div class="sidebar-header">
+          <a class="brand-mark" href="../inicio/inicio.html">
+            <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <span class="brand-copy">
+              <span class="brand-title">Incidencias UPSE</span>
+              <span class="brand-subtitle">Gestión georreferenciada</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="../inicio/inicio.html">
+            <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+            <span class="nav-text">Inicio</span>
+          </a>
+          <!-- Solo admin -->
+          <a class="nav-link d-none" id="navIncidencias" href="../incidencias/incidencias.html">
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Incidencias</span>
+          </a>
+          <!-- Solo usuario normal -->
+          <a
+            class="nav-link active d-none"
+            id="navMisIncidencias"
+            href="misIncidencias.html"
+            aria-current="page"
+          >
+            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
+            <span class="nav-text">Mis incidencias</span>
+          </a>
+          <a class="nav-link" href="../registrarIncidencias/registrar.html">
+            <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
+            <span class="nav-text">Registrar incidencia</span>
+          </a>
+          <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
+            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+            <span class="nav-text">Usuarios</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span class="sidebar-footer-text">Sistema activo</span>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <!-- Navbar -->
+        <nav class="navbar admin-navbar navbar-expand bg-white">
+          <div class="container-fluid px-3 px-lg-4">
+            <button
+              class="sidebar-toggle"
+              type="button"
+              data-sidebar-toggle
+              aria-controls="adminSidebar"
+              aria-expanded="true"
+              aria-label="Mostrar/ocultar menú"
+            >
+              <span></span><span></span><span></span>
+            </button>
+
+            <div class="navbar-actions ms-auto">
+              <button
+                class="icon-button theme-toggle"
+                type="button"
+                data-theme-toggle
+                aria-label="Cambiar tema"
+                title="Cambiar tema"
+              >
+                <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+              </button>
+
+              <div class="dropdown">
+                <button
+                  class="profile-button dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <span class="brand-icon"
+                    ><i class="bi bi-person-circle" aria-hidden="true"></i
+                  ></span>
+                  <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <!-- Contenido principal: layout maestro-detalle -->
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <div class="row g-3">
+              <!-- Columna izquierda: lista de incidencias (maestro) -->
+              <div class="col-12 col-lg-4">
+                <section class="panel h-100">
+                  <div class="p-3">
+                    <h2 class="h5 mb-3">Mis Incidencias</h2>
+
+                    <!-- Buscador + filtro -->
+                    <div class="d-flex gap-2 mb-3">
+                      <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="filtroBusqueda"
+                          placeholder="Buscar incidencia..."
+                        />
+                      </div>
+                      <button class="btn btn-outline-secondary" type="button" id="btnFiltro">
+                        <i class="bi bi-funnel"></i>
+                      </button>
+                    </div>
+
+                    <!-- Lista de tarjetas (la llena el JS) -->
+                    <div id="listaIncidencias" class="d-flex flex-column gap-2"></div>
+
+                    <!-- Pie: conteo -->
+                    <p class="text-muted small mb-0 mt-3" id="listaInfo"></p>
+                  </div>
+                </section>
+              </div>
+
+              <!-- Columna derecha: detalle (detalle) -->
+              <div class="col-12 col-lg-8">
+                <!-- Estado vacío: nada seleccionado -->
+                <section class="panel h-100" id="detalleVacio">
+                  <div class="p-5 text-center text-muted">
+                    <i class="bi bi-hand-index-thumb fs-1 d-block mb-2"></i>
+                    <p class="mb-0">Selecciona una incidencia de la lista para ver su detalle.</p>
+                  </div>
+                </section>
+
+                <!-- Contenido del detalle (oculto hasta seleccionar) -->
+                <section class="panel h-100 d-none" id="detalleContenido">
+                  <div class="p-3 p-lg-4">
+                    <!-- Cabecera del detalle -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
+                        <h1 class="h4 mb-2" id="detalleTitulo"></h1>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                          <span class="badge" id="detalleEstado"></span>
+                          <span class="text-muted small" id="detalleFecha"></span>
+                        </div>
+                      </div>
+                      <button class="btn btn-primary btn-sm" type="button" id="btnEditar">
+                        <i class="bi bi-pencil-square me-1"></i> Editar Incidencia
+                      </button>
+                    </div>
+
+                    <div class="row g-3">
+                      <!-- Información General -->
+                      <div class="col-12 col-xl-7">
+                        <div class="border rounded p-3 h-100">
+                          <h3 class="h6 text-primary mb-3">Información General</h3>
+
+                          <h6 class="text-muted mb-1">Descripción</h6>
+                          <p id="detalleDescripcion" class="mb-3"></p>
+
+                          <h6 class="text-muted mb-1">Tipo de Incidencia</h6>
+                          <p id="detalleTipo" class="mb-3 fw-semibold"></p>
+
+                          <h6 class="text-muted mb-1">Subtipo</h6>
+                          <p id="detalleSubtipo" class="mb-3 fw-semibold"></p>
+
+                          <h6 class="text-muted mb-1">Ubicación</h6>
+                          <p id="detalleUbicacion" class="mb-3"></p>
+
+                          <h6 class="text-muted mb-1">Prioridad</h6>
+                          <p class="mb-0"><span class="badge" id="detallePrioridad"></span></p>
+                        </div>
+                      </div>
+
+                      <!-- Mapa (placeholder, pendiente Leaflet) -->
+                      <div class="col-12 col-xl-5">
+                        <div
+                          class="border rounded h-100 d-flex align-items-center justify-content-center text-muted bg-light"
+                          style="min-height: 220px"
+                        >
+                          <span><i class="bi bi-map me-1"></i> Mapa (próximamente)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Responsables (placeholder, pendiente asignación) -->
+                    <div class="border rounded p-3 mt-3">
+                      <h3 class="h6 text-primary mb-2">Responsables</h3>
+                      <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Asignación de técnicos
+                        (próximamente).
+                      </p>
+                    </div>
+
+                    <!-- Evidencias -->
+                    <div class="border rounded p-3 mt-3" id="detalleEvidenciasBloque">
+                      <h3 class="h6 text-primary mb-3">Evidencias</h3>
+                      <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
+                    </div>
+
+                    <!-- Seguimiento (placeholder, pendiente comentarios) -->
+                    <div class="border rounded p-3 mt-3">
+                      <h3 class="h6 text-primary mb-2">Seguimiento</h3>
+                      <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> Comentarios y seguimiento
+                        (próximamente).
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- JS compartido -->
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <!-- Lógica propia -->
+    <script src="misIncidencias.js"></script>
+  </body>
+</html>

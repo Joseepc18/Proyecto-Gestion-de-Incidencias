@@ -1,6 +1,6 @@
 // detalle.js — Página de detalle de una incidencia (antes era un modal).
 
-/* global apiFetch, obtenerToken, eliminarToken */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard de sesión
@@ -14,9 +14,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
 
-    if (usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin") {
-      document.getElementById("navUsuarios").classList.remove("d-none");
-    }
+    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";
