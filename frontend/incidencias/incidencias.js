@@ -1,6 +1,6 @@
 // incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash */
 
 let usuarioActual = null;
 
@@ -277,12 +277,19 @@ function verDetalle(id) {
 
 // eslint-disable-next-line no-unused-vars
 async function eliminarIncidencia(id) {
-  if (!confirm("¿Estás seguro de eliminar esta incidencia?")) return;
+  const ok = await confirmar({
+    titulo: "Eliminar incidencia",
+    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+    textoConfirmar: "Eliminar",
+    peligro: true,
+  });
+  if (!ok) return;
 
   try {
     await apiFetch("/incidencias/" + id, { method: "DELETE" });
+    toastFlash("Incidencia eliminada", "success");
     location.reload();
   } catch (error) {
-    alert("Error: " + error.message);
+    mostrarToast("Error: " + error.message, "error");
   }
 }

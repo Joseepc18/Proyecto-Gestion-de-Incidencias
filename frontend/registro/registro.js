@@ -1,6 +1,6 @@
 // registro.js — Lógica del registro. Usa apiFetch de api.js.
 
-/* global apiFetch */
+/* global apiFetch, toastFlash */
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("registroForm");
@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }),
       });
       // Cuenta creada: ir al login
+      toastFlash("Cuenta creada. Inicia sesión.", "success");
       window.location.href = "../login/login.html";
     } catch (error) {
       // Mostrar error del backend

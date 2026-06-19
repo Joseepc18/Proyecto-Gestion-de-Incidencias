@@ -1,6 +1,6 @@
 // toast.js — Notificaciones tipo "toast" (reemplazan a alert()).
 
-/* exported mostrarToast */
+/* exported mostrarToast, toastFlash */
 
 // Crea (una sola vez) el contenedor donde se apilan los toasts.
 function obtenerContenedorToasts() {
@@ -60,3 +60,22 @@ function mostrarToast(mensaje, tipo = "info", duracion = 4000) {
     cerrar();
   });
 }
+
+// Guarda un toast para mostrarlo en la siguiente página (tras recargar o redirigir).
+function toastFlash(mensaje, tipo = "info") {
+  sessionStorage.setItem("toastFlash", JSON.stringify({ mensaje, tipo }));
+}
+
+// Al cargar cada página, muestra el toast pendiente si lo hay.
+document.addEventListener("DOMContentLoaded", function () {
+  const pendiente = sessionStorage.getItem("toastFlash");
+  if (pendiente) {
+    sessionStorage.removeItem("toastFlash");
+    try {
+      const { mensaje, tipo } = JSON.parse(pendiente);
+      mostrarToast(mensaje, tipo);
+    } catch {
+      /* ignorar */
+    }
+  }
+});

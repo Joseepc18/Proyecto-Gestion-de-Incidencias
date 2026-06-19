@@ -1,6 +1,6 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken */
+/* global apiFetch, guardarToken, toastFlash */
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("loginForm");
@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       // Éxito: guardar token y entrar al inicio
       guardarToken(data.access_token);
+      toastFlash("Bienvenido de nuevo", "success");
       window.location.href = "../inicio/inicio.html";
     } catch (error) {
       // Mostrar error del backend
@@ -43,3 +44,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+// Alterna entre login y registro (animación deslizante). Se llama desde el HTML.
+// eslint-disable-next-line no-unused-vars
+function toggleAuth(registrando) {
+  document.getElementById("authSlider").classList.toggle("is-registering", registrando);
+}

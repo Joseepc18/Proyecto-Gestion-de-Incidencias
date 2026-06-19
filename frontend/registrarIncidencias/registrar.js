@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -155,6 +155,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
       await apiFetch("/incidencias", { method: "POST", body: formData });
+      toastFlash("Incidencia registrada", "success");
       window.location.href = "../incidencias/incidencias.html";
     } catch (error) {
       errorDiv.textContent = error.message;

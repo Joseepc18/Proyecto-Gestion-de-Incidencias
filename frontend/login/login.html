@@ -3,10 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Inicio de sesión - Sistema de Gestión de Incidencias" />
-    <title>Iniciar sesión | Gestión de Incidencias</title>
+    <meta name="description" content="Acceso - Sistema de Gestión de Incidencias" />
+    <title>Acceso | Gestión de Incidencias</title>
 
-    <!-- Estilos compartidos de la plantilla (un nivel arriba: login/ -> assets/) -->
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
@@ -23,68 +22,148 @@
       <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
     </button>
 
-    <main class="auth-page">
-      <section class="auth-card">
-        <a class="auth-brand" href="../inicio/inicio.html">
-          <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
-          <span
-            ><strong>Incidencias UPSE</strong
-            ><small>Gestión de incidencias georreferenciadas</small></span
-          >
-        </a>
-
-        <div class="auth-visual">
-          <img src="../assets/images/png/banner-login.jpg" alt="Panel del sistema de incidencias" />
+    <main class="auth-page auth-page--full">
+      <section class="auth-slider" id="authSlider">
+        <!-- Hero del mapa (se desliza al registrar) -->
+        <div class="auth-hero">
+          <div class="auth-hero-overlay"></div>
+          <div class="auth-hero-content">
+            <div class="auth-hero-brand">
+              <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+              <span>Incidencias UPSE</span>
+            </div>
+            <h2>Gestiona incidencias en tiempo real</h2>
+            <p>Plataforma para el monitoreo georreferenciado de tu ciudad.</p>
+          </div>
         </div>
 
-        <!-- id="loginForm" -> login.js lo captura con addEventListener('submit') -->
-        <form id="loginForm" class="needs-validation" novalidate>
-          <div class="mb-4">
-            <p class="eyebrow mb-1">Acceso seguro</p>
-            <h1 class="h3 mb-1">Iniciar sesión</h1>
-            <p class="text-muted mb-0">Ingresa con tu cuenta para gestionar incidencias.</p>
+        <!-- Panel de formularios (login + registro superpuestos) -->
+        <div class="auth-panel">
+          <!-- Vista de Login -->
+          <div class="auth-view auth-view-login">
+            <form id="loginForm" class="needs-validation" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Acceso seguro</p>
+                <h1 class="h3 mb-1">Iniciar sesión</h1>
+                <p class="text-muted mb-0">Ingresa con tu cuenta para gestionar incidencias.</p>
+              </div>
+
+              <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="loginEmail">Correo electrónico</label>
+                <input class="form-control" id="loginEmail" type="email" required />
+                <div class="invalid-feedback">Ingresa un correo válido.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="loginPassword">Contraseña</label>
+                <input
+                  class="form-control"
+                  id="loginPassword"
+                  type="password"
+                  minlength="8"
+                  required
+                />
+                <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres.</div>
+              </div>
+
+              <button id="loginSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="loginSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Entrar
+              </button>
+
+              <div class="auth-footer">
+                ¿No tienes cuenta?
+                <button type="button" class="auth-link" onclick="toggleAuth(true)">
+                  Crear una cuenta
+                </button>
+              </div>
+            </form>
           </div>
 
-          <!-- Aquí login.js mostrará "Credenciales incorrectas" u otros errores del backend.
-             Empieza oculto (d-none) y se hace visible cuando haya un error. -->
-          <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+          <!-- Vista de Registro -->
+          <div class="auth-view auth-view-register">
+            <form id="registroForm" class="needs-validation" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Acceso seguro</p>
+                <h1 class="h3 mb-1">Crear cuenta</h1>
+                <p class="text-muted mb-0">Regístrate para empezar a gestionar incidencias.</p>
+              </div>
 
-          <div class="mb-3">
-            <label class="form-label" for="loginEmail">Correo electrónico</label>
-            <input class="form-control" id="loginEmail" type="email" required />
-            <div class="invalid-feedback">Ingresa un correo válido.</div>
+              <div id="registroError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="registerName">Nombre completo</label>
+                <input class="form-control" id="registerName" type="text" required />
+                <div class="invalid-feedback">El nombre es obligatorio.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="registerEmail">Correo electrónico</label>
+                <input class="form-control" id="registerEmail" type="email" required />
+                <div class="invalid-feedback">Ingresa un correo válido.</div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="registerPassword">Contraseña</label>
+                  <input
+                    class="form-control"
+                    id="registerPassword"
+                    type="password"
+                    minlength="8"
+                    required
+                  />
+                  <div class="invalid-feedback">Mínimo 8 caracteres.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="registerPasswordConfirmation">Confirmar</label>
+                  <input
+                    class="form-control"
+                    id="registerPasswordConfirmation"
+                    type="password"
+                    minlength="8"
+                    required
+                  />
+                  <div class="invalid-feedback">Repite la contraseña.</div>
+                </div>
+              </div>
+
+              <button id="registroSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="registroSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-person-plus" aria-hidden="true"></i> Crear cuenta
+              </button>
+
+              <div class="auth-footer">
+                ¿Ya tienes cuenta?
+                <button type="button" class="auth-link" onclick="toggleAuth(false)">
+                  Inicia sesión
+                </button>
+              </div>
+            </form>
           </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="loginPassword">Contraseña</label>
-            <input class="form-control" id="loginPassword" type="password" minlength="8" required />
-            <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres.</div>
-          </div>
-
-          <button id="loginSubmit" class="btn btn-primary w-100" type="submit">
-            <span
-              id="loginSpinner"
-              class="spinner-border spinner-border-sm d-none"
-              role="status"
-              aria-hidden="true"
-            ></span>
-            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Entrar
-          </button>
-        </form>
-
-        <div class="auth-footer">
-          ¿No tienes cuenta? <a href="../registro/registro.html">Crear una cuenta</a>
         </div>
       </section>
     </main>
 
-    <!-- JS compartido de la plantilla -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
-    <!-- Capa de API compartida (define apiFetch, guardarToken, etc.) -->
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
-    <!-- Lógica propia de esta página -->
+    <script src="../assets/js/confirmar.js"></script>
+    <!-- Lógica de login y de registro (cada una se engancha a su formulario) -->
     <script src="login.js"></script>
+    <script src="../registro/registro.js"></script>
   </body>
 </html>

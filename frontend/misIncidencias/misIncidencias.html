@@ -11,103 +11,16 @@
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
-  <body>
+  <body data-page="misIncidencias">
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
       <!-- Sidebar -->
-      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
-        <div class="sidebar-header">
-          <a class="brand-mark" href="../inicio/inicio.html">
-            <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
-            <span class="brand-copy">
-              <span class="brand-title">Incidencias UPSE</span>
-              <span class="brand-subtitle">Gestión georreferenciada</span>
-            </span>
-          </a>
-        </div>
-
-        <nav class="sidebar-nav">
-          <a class="nav-link" href="../inicio/inicio.html">
-            <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
-            <span class="nav-text">Inicio</span>
-          </a>
-          <!-- Solo admin -->
-          <a class="nav-link d-none" id="navIncidencias" href="../incidencias/incidencias.html">
-            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
-            <span class="nav-text">Incidencias</span>
-          </a>
-          <!-- Solo usuario normal -->
-          <a
-            class="nav-link active d-none"
-            id="navMisIncidencias"
-            href="misIncidencias.html"
-            aria-current="page"
-          >
-            <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
-            <span class="nav-text">Mis incidencias</span>
-          </a>
-          <a class="nav-link" href="../registrarIncidencias/registrar.html">
-            <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
-            <span class="nav-text">Registrar incidencia</span>
-          </a>
-          <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
-            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
-            <span class="nav-text">Usuarios</span>
-          </a>
-        </nav>
-
-        <div class="sidebar-footer">
-          <span class="status-dot"></span>
-          <span class="sidebar-footer-text">Sistema activo</span>
-        </div>
-      </aside>
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
 
       <div class="admin-main">
         <!-- Navbar -->
-        <nav class="navbar admin-navbar navbar-expand bg-white">
-          <div class="container-fluid px-3 px-lg-4">
-            <button
-              class="sidebar-toggle"
-              type="button"
-              data-sidebar-toggle
-              aria-controls="adminSidebar"
-              aria-expanded="true"
-              aria-label="Mostrar/ocultar menú"
-            >
-              <span></span><span></span><span></span>
-            </button>
-
-            <div class="navbar-actions ms-auto">
-              <button
-                class="icon-button theme-toggle"
-                type="button"
-                data-theme-toggle
-                aria-label="Cambiar tema"
-                title="Cambiar tema"
-              >
-                <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
-              </button>
-
-              <div class="dropdown">
-                <button
-                  class="profile-button dropdown-toggle"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  <span class="brand-icon"
-                    ><i class="bi bi-person-circle" aria-hidden="true"></i
-                  ></span>
-                  <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
 
         <!-- Contenido principal: layout maestro-detalle -->
         <main class="dashboard-content">
@@ -275,6 +188,8 @@
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
+    <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/layout.js"></script>
     <!-- Lógica propia -->
     <script src="misIncidencias.js"></script>
   </body>
