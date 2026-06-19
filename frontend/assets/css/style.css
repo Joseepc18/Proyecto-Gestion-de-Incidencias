@@ -1616,3 +1616,27 @@ html[data-theme="dark"] {
   border-top-color: var(--admin-sidebar-border);
   color: var(--admin-sidebar-text);
 }
+
+/* Badges de estado de incidencias (listado y detalle) */
+#tablaIncidencias .badge,
+.badge-estado-pendiente,
+.badge-estado-proceso,
+.badge-estado-resuelto {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+.badge-estado-pendiente {
+  color: #fff;
+  background-color: #e74c3c;
+}
+.badge-estado-proceso {
+  color: #fff;
+  background-color: #2980d0;
+}
+.badge-estado-resuelto {
+  color: #fff;
+  background-color: #6c757d;
+}

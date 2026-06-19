@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Inicio - Sistema de Gestión de Incidencias" />
-    <title>Inicio | Gestión de Incidencias</title>
+    <meta name="description" content="Detalle de incidencia - Sistema de Gestión de Incidencias" />
+    <title>Detalle de incidencia | Gestión de Incidencias</title>
 
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
@@ -15,9 +15,10 @@
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
+      <!-- Sidebar (igual que incidencias.html) -->
       <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
         <div class="sidebar-header">
-          <a class="brand-mark" href="inicio.html">
+          <a class="brand-mark" href="../inicio/inicio.html">
             <span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
             <span class="brand-copy">
               <span class="brand-title">Incidencias UPSE</span>
@@ -27,11 +28,11 @@
         </div>
 
         <nav class="sidebar-nav">
-          <a class="nav-link active" href="inicio.html" aria-current="page">
+          <a class="nav-link" href="../inicio/inicio.html">
             <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
             <span class="nav-text">Inicio</span>
           </a>
-          <a class="nav-link" href="../incidencias/incidencias.html">
+          <a class="nav-link active" href="../incidencias/incidencias.html" aria-current="page">
             <span class="nav-icon"><i class="bi bi-list-task" aria-hidden="true"></i></span>
             <span class="nav-text">Incidencias</span>
           </a>
@@ -39,7 +40,6 @@
             <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
             <span class="nav-text">Registrar incidencia</span>
           </a>
-          <!-- Solo admin: inicio.js le quita la clase d-none si el rol es admin -->
           <a class="nav-link d-none" id="navUsuarios" href="../usuarios/usuarios.html">
             <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
             <span class="nav-text">Usuarios</span>
@@ -53,6 +53,7 @@
       </aside>
 
       <div class="admin-main">
+        <!-- Navbar (igual que incidencias.html) -->
         <nav class="navbar admin-navbar navbar-expand bg-white">
           <div class="container-fluid px-3 px-lg-4">
             <button
@@ -87,7 +88,6 @@
                   <span class="brand-icon"
                     ><i class="bi bi-person-circle" aria-hidden="true"></i
                   ></span>
-                  <!-- inicio.js rellena el nombre con GET /user -->
                   <span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -98,26 +98,82 @@
           </div>
         </nav>
 
+        <!-- Contenido principal -->
         <main class="dashboard-content">
           <div class="container-fluid px-3 px-lg-4 py-4">
+            <!-- Encabezado de página -->
             <div class="page-heading">
               <div class="page-heading-copy">
-                <span class="page-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+                <span class="page-icon"><i class="bi bi-card-text" aria-hidden="true"></i></span>
                 <div>
-                  <p class="eyebrow mb-1">Inicio</p>
-                  <h1 class="h3 mb-1">Bienvenido, <span id="saludoNombre">usuario</span></h1>
-                  <p class="text-muted mb-0">Desde aquí gestionas las incidencias del sistema.</p>
+                  <p class="eyebrow mb-1">Incidencia</p>
+                  <h1 class="h3 mb-1" id="detalleTitulo">Detalle de incidencia</h1>
+                  <p class="text-muted mb-0">Información completa de la incidencia reportada.</p>
                 </div>
               </div>
+              <a class="btn btn-outline-secondary btn-sm" href="../incidencias/incidencias.html">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a incidencias
+              </a>
             </div>
 
-            <section class="row g-3 mt-1">
-              <div class="col-12">
-                <article class="metric-card">
-                  <p class="mb-0 text-muted">
-                    Las métricas y gráficas se mostrarán aquí próximamente.
-                  </p>
-                </article>
+            <!-- Panel: detalle -->
+            <section class="panel">
+              <div class="p-3 p-lg-4">
+                <!-- Spinner de carga -->
+                <div id="detalleCargando" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                  </div>
+                </div>
+
+                <!-- Contenido (oculto mientras carga) -->
+                <div id="detalleContenido" class="d-none">
+                  <!-- Badges estado y prioridad -->
+                  <div class="d-flex gap-2 mb-3">
+                    <span class="badge" id="detalleEstado"></span>
+                    <span class="badge" id="detallePrioridad"></span>
+                  </div>
+
+                  <!-- Descripción -->
+                  <div id="detalleDescripcionBloque" class="mb-3">
+                    <h6 class="text-muted mb-1">Descripción</h6>
+                    <p id="detalleDescripcion" class="mb-0"></p>
+                  </div>
+
+                  <!-- Datos en 2 columnas -->
+                  <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Tipo / Subtipo</h6>
+                      <p id="detalleTipoSubtipo" class="mb-0 fw-semibold"></p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Ciudad</h6>
+                      <p id="detalleCiudad" class="mb-0 fw-semibold"></p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Coordenadas</h6>
+                      <p id="detalleCoordenadas" class="mb-0"></p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Dirección</h6>
+                      <p id="detalleDireccion" class="mb-0"></p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Reportado por</h6>
+                      <p id="detalleUsuario" class="mb-0"></p>
+                    </div>
+                    <div class="col-md-6">
+                      <h6 class="text-muted mb-1">Fecha de creación</h6>
+                      <p id="detalleFecha" class="mb-0"></p>
+                    </div>
+                  </div>
+
+                  <!-- Fotos -->
+                  <div id="detalleFotosBloque" class="d-none">
+                    <h6 class="text-muted mb-2">Evidencia fotográfica</h6>
+                    <div id="detalleFotos" class="d-flex gap-2 flex-wrap"></div>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -125,9 +181,11 @@
       </div>
     </div>
 
+    <!-- JS compartido -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/api.js"></script>
-    <script src="inicio.js"></script>
+    <!-- Lógica propia -->
+    <script src="detalle.js"></script>
   </body>
 </html>

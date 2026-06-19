@@ -9,14 +9,13 @@
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
-    <link rel="stylesheet" href="incidencias.css" />
   </head>
 
   <body>
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
-      <!-- ============ SIDEBAR (igual que inicio.html, pero "Incidencias" es active) ============ -->
+      <!-- SIDEBAR (igual que inicio.html, pero "Incidencias" es active) -->
       <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal">
         <div class="sidebar-header">
           <a class="brand-mark" href="../inicio/inicio.html">
@@ -54,7 +53,7 @@
       </aside>
 
       <div class="admin-main">
-        <!-- ============ NAVBAR (igual que inicio.html) ============ -->
+        <!-- NAVBAR -->
         <nav class="navbar admin-navbar navbar-expand bg-white">
           <div class="container-fluid px-3 px-lg-4">
             <button
@@ -99,7 +98,7 @@
           </div>
         </nav>
 
-        <!-- ============ CONTENIDO PRINCIPAL ============ -->
+        <!-- CONTENIDO PRINCIPAL -->
         <main class="dashboard-content">
           <div class="container-fluid px-3 px-lg-4 py-4">
             <!-- Encabezado de página -->
@@ -224,91 +223,6 @@
             </section>
           </div>
         </main>
-      </div>
-    </div>
-
-    <!-- ============ MODAL: VER DETALLE ============ -->
-    <div
-      class="modal fade"
-      id="modalDetalle"
-      tabindex="-1"
-      aria-labelledby="modalDetalleLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title h5" id="modalDetalleLabel">Detalle de incidencia</h2>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Cerrar"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <!-- Spinner de carga -->
-            <div id="detalleCargando" class="text-center py-4">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-            </div>
-
-            <!-- Contenido (oculto mientras carga) -->
-            <div id="detalleContenido" class="d-none">
-              <!-- Badges estado y prioridad -->
-              <div class="d-flex gap-2 mb-3">
-                <span class="badge" id="detalleEstado"></span>
-                <span class="badge" id="detallePrioridad"></span>
-              </div>
-
-              <!-- Descripción -->
-              <div id="detalleDescripcionBloque" class="mb-3">
-                <h6 class="text-muted mb-1">Descripción</h6>
-                <p id="detalleDescripcion" class="mb-0"></p>
-              </div>
-
-              <!-- Datos en 2 columnas -->
-              <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Tipo / Subtipo</h6>
-                  <p id="detalleTipoSubtipo" class="mb-0 fw-semibold"></p>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Ciudad</h6>
-                  <p id="detalleCiudad" class="mb-0 fw-semibold"></p>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Coordenadas</h6>
-                  <p id="detalleCoordenadas" class="mb-0"></p>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Dirección</h6>
-                  <p id="detalleDireccion" class="mb-0"></p>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Reportado por</h6>
-                  <p id="detalleUsuario" class="mb-0"></p>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-muted mb-1">Fecha de creación</h6>
-                  <p id="detalleFecha" class="mb-0"></p>
-                </div>
-              </div>
-
-              <!-- Fotos -->
-              <div id="detalleFotosBloque" class="d-none">
-                <h6 class="text-muted mb-2">Evidencia fotográfica</h6>
-                <div id="detalleFotos" class="d-flex gap-2 flex-wrap"></div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-              Cerrar
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
