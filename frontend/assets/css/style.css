@@ -1677,3 +1677,111 @@ html[data-theme="dark"] {
   font-size: 0.8rem;
   color: var(--admin-muted);
 }
+
+/* Spinner global de carga */
+.global-spinner {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.15);
+}
+
+/* Toasts (notificaciones) */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 360px;
+}
+.toast-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 2rem 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow);
+  border-left: 4px solid var(--admin-primary);
+  overflow: hidden;
+  transform: translateX(120%);
+  opacity: 0;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+.toast-item.toast-visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast-icon {
+  font-size: 1.2rem;
+}
+.toast-msg {
+  font-size: 0.9rem;
+  flex: 1;
+}
+.toast-close {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.5rem;
+  border: 0;
+  background: transparent;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--admin-muted);
+}
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--admin-primary);
+  transform-origin: left;
+  animation: toastProgress linear forwards;
+}
+@keyframes toastProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.toast-success {
+  border-left-color: var(--admin-success);
+}
+.toast-success .toast-icon,
+.toast-success .toast-progress {
+  color: var(--admin-success);
+  background: var(--admin-success);
+}
+.toast-error {
+  border-left-color: var(--admin-danger);
+}
+.toast-error .toast-icon,
+.toast-error .toast-progress {
+  color: var(--admin-danger);
+  background: var(--admin-danger);
+}
+.toast-warning {
+  border-left-color: var(--admin-warning);
+}
+.toast-warning .toast-icon,
+.toast-warning .toast-progress {
+  color: var(--admin-warning);
+  background: var(--admin-warning);
+}
+.toast-info .toast-icon {
+  color: var(--admin-primary);
+}

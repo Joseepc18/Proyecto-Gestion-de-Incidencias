@@ -1,7 +1,5 @@
-// =============================================================
-//  api.js — Capa base de comunicación con el backend (Laravel)
-//  nginx hace que front y back compartan origen -> URL relativa.
-// =============================================================
+// api.js — Capa base de comunicación con el backend (Laravel).
+// nginx hace que front y back compartan origen, por eso la URL es relativa.
 
 /* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol */
 
@@ -24,6 +22,43 @@ function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+// ---- Spinner global (solo aparece si la petición tarda más de 300ms) ----
+
+let peticionesActivas = 0;
+let spinnerTimer = null;
+
+// Crea (una sola vez) la capa con la ruedita de carga.
+function obtenerSpinner() {
+  let sp = document.getElementById("globalSpinner");
+  if (!sp) {
+    sp = document.createElement("div");
+    sp.id = "globalSpinner";
+    sp.className = "global-spinner d-none";
+    sp.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+    document.body.appendChild(sp);
+  }
+  return sp;
+}
+
+function spinnerInicio() {
+  peticionesActivas++;
+  // Solo la primera petición arranca el temporizador de 300ms
+  if (peticionesActivas === 1) {
+    spinnerTimer = setTimeout(function () {
+      obtenerSpinner().classList.remove("d-none");
+    }, 300);
+  }
+}
+
+function spinnerFin() {
+  peticionesActivas = Math.max(0, peticionesActivas - 1);
+  // Cuando ya no quedan peticiones, cancela el temporizador y oculta
+  if (peticionesActivas === 0) {
+    clearTimeout(spinnerTimer);
+    obtenerSpinner().classList.add("d-none");
+  }
+}
+
 async function apiFetch(endpoint, opciones = {}) {
   const url = API_BASE + endpoint;
 
@@ -40,14 +75,19 @@ async function apiFetch(endpoint, opciones = {}) {
     headers["Authorization"] = "Bearer " + token;
   }
 
-  const respuesta = await fetch(url, { ...opciones, headers });
-  const data = await respuesta.json();
+  spinnerInicio();
+  try {
+    const respuesta = await fetch(url, { ...opciones, headers });
+    const data = await respuesta.json();
 
-  if (!respuesta.ok) {
-    throw new Error(data.message || "Error en la petición");
+    if (!respuesta.ok) {
+      throw new Error(data.message || "Error en la petición");
+    }
+
+    return data;
+  } finally {
+    spinnerFin();
   }
-
-  return data;
 }
 
 // Muestra/oculta los enlaces del menú según el rol del usuario.

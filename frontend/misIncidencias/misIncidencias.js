@@ -1,6 +1,6 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
@@ -71,6 +71,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+  // Enlace del aviso: lleva a la caja de comentarios
+  document.getElementById("linkComentarios").addEventListener("click", function (e) {
+    e.preventDefault();
+    const textarea = document.getElementById("nuevoComentario");
+    textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+    textarea.focus();
+  });
+
   // Enviar un comentario nuevo
   document.getElementById("formComentario").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -92,8 +100,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
       textarea.value = "";
       cargarComentarios(incidenciaSeleccionada);
+      mostrarToast("Comentario enviado", "success");
     } catch (error) {
-      alert("Error al enviar el comentario: " + error.message);
+      mostrarToast("Error al enviar el comentario: " + error.message, "error");
     } finally {
       btn.disabled = false;
       spinner.classList.add("d-none");
@@ -183,6 +192,12 @@ async function seleccionarIncidencia(id) {
     const inc = await apiFetch("/incidencias/" + id);
     incidenciaSeleccionada = id;
 
+    // El autor solo edita mientras está PENDIENTE; el admin siempre puede.
+    const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+    const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
+    document.getElementById("btnEditar").disabled = !editable;
+    document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
+
     // Cabecera
     document.getElementById("detalleCodigo").textContent = codigoIncidencia(inc.id_incidencia);
     document.getElementById("detalleTitulo").textContent = inc.nombre_incidencia;
@@ -249,7 +264,7 @@ async function seleccionarIncidencia(id) {
     // Cargar los comentarios de esta incidencia
     cargarComentarios(id);
   } catch (error) {
-    alert("Error al cargar el detalle: " + error.message);
+    mostrarToast("Error al cargar el detalle: " + error.message, "error");
   }
 }
 

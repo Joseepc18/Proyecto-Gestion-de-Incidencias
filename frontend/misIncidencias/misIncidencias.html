@@ -172,6 +172,15 @@
                       </button>
                     </div>
 
+                    <!-- Aviso cuando ya no se puede editar (estado distinto de PENDIENTE) -->
+                    <div id="avisoEdicion" class="alert alert-info py-2 px-3 small d-none">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Esta incidencia ya está en proceso, por lo que no puedes editarla.
+                      <a href="#" id="linkComentarios" class="alert-link"
+                        >Comunícate con el equipo en los comentarios.</a
+                      >
+                    </div>
+
                     <div class="row g-3">
                       <!-- Información General -->
                       <div class="col-12 col-xl-7">
@@ -265,6 +274,7 @@
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/toast.js"></script>
     <!-- Lógica propia -->
     <script src="misIncidencias.js"></script>
   </body>
