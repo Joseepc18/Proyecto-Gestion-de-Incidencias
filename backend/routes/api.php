@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
+use App\Http\Controllers\Api\ComentarioController;
 use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
     Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado']);
+
+    // Apis de comentarios
+    Route::get('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'listadoComentarios']);
+    Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario']);
 
     // Apis de evidencias (fotos)
     Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
