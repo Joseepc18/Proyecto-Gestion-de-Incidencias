@@ -118,12 +118,20 @@ class IncidenciaController extends Controller
     public function actualizarIncidencia(Request $request, Incidencia $incidencia)
     {
         // Pueden editar: admin, autor o técnico asignado
-        $puede = $this->esAdmin($request)
-            || $incidencia->id_usuario === $request->user()->id
-            || $this->esTecnicoAsignado($request, $incidencia);
+        $esAdmin = $this->esAdmin($request);
+        $esAutor = $incidencia->id_usuario === $request->user()->id;
+        $esTecnico = $this->esTecnicoAsignado($request, $incidencia);
 
-        if (! $puede) {
+        if (! $esAdmin && ! $esAutor && ! $esTecnico) {
             return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        // El autor (ciudadano) solo puede editar mientras está PENDIENTE.
+        // Cuando el admin la pone EN_PROCESO o RESUELTO, ya no puede modificarla.
+        if ($esAutor && ! $esAdmin && ! $esTecnico && $incidencia->estado_incidencia !== 'PENDIENTE') {
+            return response()->json([
+                'message' => 'No puedes editar esta incidencia porque ya está en proceso. Usa los comentarios para comunicarte con el equipo.',
+            ], 403);
         }
 
         $datos = $request->validate([
