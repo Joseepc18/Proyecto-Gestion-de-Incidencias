@@ -19,15 +19,14 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
+        $rolNormal = Rol::where('nombre_rol', 'normal')->first();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'id_rol' => $rolNormal->id_rol,
         ]);
-
-        $rolNormal = Rol::where('nombre_rol', 'normal')->first();
-        $user->id_rol = $rolNormal->id_rol;
-        $user->save();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
