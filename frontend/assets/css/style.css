@@ -1703,14 +1703,14 @@ html[data-theme="dark"] {
 .toast-item {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 2rem 0.75rem 0.9rem;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 2.2rem 0.95rem 0.9rem;
   border-radius: 12px;
   background: var(--admin-surface);
   color: var(--admin-text);
   box-shadow: var(--admin-shadow);
-  border-left: 4px solid var(--admin-primary);
+  border-bottom: 4px solid var(--admin-primary);
   overflow: hidden;
   transform: translateX(120%);
   opacity: 0;
@@ -1723,16 +1723,35 @@ html[data-theme="dark"] {
   opacity: 1;
 }
 .toast-icon {
-  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--admin-primary);
+  color: #fff;
+  font-size: 1rem;
+}
+.toast-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+.toast-titulo {
+  margin: 0 0 0.1rem;
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 .toast-msg {
-  font-size: 0.9rem;
-  flex: 1;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--admin-muted);
 }
 .toast-close {
   position: absolute;
-  top: 0.3rem;
-  right: 0.5rem;
+  top: 0.4rem;
+  right: 0.55rem;
   border: 0;
   background: transparent;
   font-size: 1.1rem;
@@ -1758,32 +1777,39 @@ html[data-theme="dark"] {
     transform: scaleX(0);
   }
 }
+
+/* Colores por tipo: fondo tenue + acento (círculo del icono, borde, progreso) */
 .toast-success {
-  border-left-color: var(--admin-success);
+  background: color-mix(in srgb, var(--admin-success) 14%, var(--admin-surface));
+  border-bottom-color: var(--admin-success);
 }
 .toast-success .toast-icon,
 .toast-success .toast-progress {
-  color: var(--admin-success);
   background: var(--admin-success);
 }
 .toast-error {
-  border-left-color: var(--admin-danger);
+  background: color-mix(in srgb, var(--admin-danger) 14%, var(--admin-surface));
+  border-bottom-color: var(--admin-danger);
 }
 .toast-error .toast-icon,
 .toast-error .toast-progress {
-  color: var(--admin-danger);
   background: var(--admin-danger);
 }
 .toast-warning {
-  border-left-color: var(--admin-warning);
+  background: color-mix(in srgb, var(--admin-warning) 18%, var(--admin-surface));
+  border-bottom-color: var(--admin-warning);
 }
 .toast-warning .toast-icon,
 .toast-warning .toast-progress {
-  color: var(--admin-warning);
   background: var(--admin-warning);
 }
-.toast-info .toast-icon {
-  color: var(--admin-primary);
+.toast-info {
+  background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+  border-bottom-color: var(--admin-primary);
+}
+.toast-info .toast-icon,
+.toast-info .toast-progress {
+  background: var(--admin-primary);
 }
 
 /* Diálogo de confirmación */

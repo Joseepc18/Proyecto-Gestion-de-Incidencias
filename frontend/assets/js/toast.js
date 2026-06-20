@@ -23,17 +23,29 @@ function mostrarToast(mensaje, tipo = "info", duracion = 4000) {
     info: "bi-info-circle-fill",
   };
 
+  const titulos = {
+    success: "Éxito",
+    error: "Error",
+    warning: "Advertencia",
+    info: "Información",
+  };
+
   const cont = obtenerContenedorToasts();
 
   const toast = document.createElement("div");
   toast.className = "toast-item toast-" + tipo;
   toast.innerHTML =
-    '<i class="bi ' +
+    '<span class="toast-icon"><i class="bi ' +
     (iconos[tipo] || iconos.info) +
-    ' toast-icon"></i>' +
-    '<span class="toast-msg">' +
+    '"></i></span>' +
+    '<div class="toast-cuerpo">' +
+    '<p class="toast-titulo">' +
+    (titulos[tipo] || titulos.info) +
+    "</p>" +
+    '<p class="toast-msg">' +
     mensaje +
-    "</span>" +
+    "</p>" +
+    "</div>" +
     '<button class="toast-close" aria-label="Cerrar">&times;</button>' +
     '<span class="toast-progress"></span>';
 
