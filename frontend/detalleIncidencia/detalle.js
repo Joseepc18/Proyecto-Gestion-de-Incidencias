@@ -1,6 +1,8 @@
 // detalle.js — Página de detalle de una incidencia (antes era un modal).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar */
+
+let esAdmin = false;
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard de sesión
@@ -15,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
 
     aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+    esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";
@@ -43,6 +46,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   cargarDetalle(id);
+  cargarAsignaciones(id);
+  if (esAdmin) {
+    prepararAsignacion(id);
+  }
 });
 
 async function cargarDetalle(id) {
@@ -156,4 +163,107 @@ async function cargarDetalle(id) {
       error.message +
       "</p>";
   }
+}
+
+async function cargarAsignaciones(id) {
+  const lista = document.getElementById("asignacionesLista");
+
+  try {
+    const asignaciones = await apiFetch("/incidencias/" + id + "/asignaciones");
+
+    if (asignaciones.length === 0) {
+      lista.innerHTML = '<p class="text-muted mb-0">Sin técnicos asignados.</p>';
+      return;
+    }
+
+    lista.innerHTML = "";
+    asignaciones.forEach(function (asig) {
+      const fila = document.createElement("div");
+      fila.className = "d-flex align-items-center gap-2 mb-2";
+
+      const badge = document.createElement("span");
+      badge.className =
+        "badge " + (asig.rol_asignado === "RESPONSABLE" ? "text-bg-primary" : "text-bg-secondary");
+      badge.textContent = asig.rol_asignado === "RESPONSABLE" ? "Responsable" : "Apoyo";
+      fila.appendChild(badge);
+
+      const nombre = document.createElement("span");
+      nombre.textContent = asig.usuario ? asig.usuario.name : "—";
+      fila.appendChild(nombre);
+
+      // Botón de quitar (solo admin)
+      if (esAdmin) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm btn-outline-danger ms-auto";
+        btn.innerHTML = '<i class="bi bi-trash"></i>';
+        btn.addEventListener("click", function () {
+          quitarAsignacion(asig.id_asignacion, id);
+        });
+        fila.appendChild(btn);
+      }
+
+      lista.appendChild(fila);
+    });
+  } catch {
+    lista.innerHTML = '<p class="text-danger mb-0">No se pudieron cargar las asignaciones.</p>';
+  }
+}
+
+async function quitarAsignacion(idAsignacion, idIncidencia) {
+  const ok = await confirmar({
+    titulo: "¿Quitar asignación?",
+    mensaje: "El técnico dejará de estar asignado a esta incidencia.",
+    textoConfirmar: "Quitar",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/asignaciones/" + idAsignacion, { method: "DELETE" });
+    mostrarToast("Asignación eliminada", "success");
+    cargarAsignaciones(idIncidencia);
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+async function prepararAsignacion(id) {
+  const form = document.getElementById("formAsignar");
+  const select = document.getElementById("selectTecnico");
+
+  // Llenar el desplegable con los técnicos
+  try {
+    const tecnicos = await apiFetch("/tecnicos");
+    tecnicos.forEach(function (t) {
+      const opcion = document.createElement("option");
+      opcion.value = t.id;
+      opcion.textContent = t.name;
+      select.appendChild(opcion);
+    });
+  } catch {
+    mostrarToast("No se pudieron cargar los técnicos", "error");
+  }
+
+  // Mostrar el formulario (estaba oculto con d-none)
+  form.classList.remove("d-none");
+
+  // Manejar el envío
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    try {
+      await apiFetch("/incidencias/" + id + "/asignaciones", {
+        method: "POST",
+        body: JSON.stringify({
+          id_usuario: select.value,
+          rol_asignado: document.getElementById("selectRol").value,
+        }),
+      });
+      mostrarToast("Técnico asignado", "success");
+      form.reset();
+      cargarAsignaciones(id);
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    }
+  });
 }

@@ -46,5 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
+        Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
     });
 });

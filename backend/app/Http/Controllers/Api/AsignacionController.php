@@ -6,12 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\AsignacionIncidencia;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AsignacionController extends Controller
 {
+    // Listar los técnicos disponibles (para el desplegable de asignación).
+    public function tecnicos()
+    {
+        return response()->json(
+            User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'TECNICO'))
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get()
+        );
+    }
+
     // Listar las asignaciones (responsable + apoyo) de una incidencia.
     public function listado(Incidencia $incidencia)
     {
