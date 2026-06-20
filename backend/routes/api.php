@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AsignacionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ComentarioController;
@@ -39,4 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Apis de evidencias (fotos)
     Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
     Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar']);
+
+    // Apis de asignaciones (responsable / apoyo)
+    Route::get('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'listado']);
+    Route::middleware('admin')->group(function () {
+        Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
+        Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
+    });
 });
