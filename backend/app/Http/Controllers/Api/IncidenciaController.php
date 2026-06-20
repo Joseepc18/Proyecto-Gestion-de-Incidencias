@@ -48,10 +48,13 @@ class IncidenciaController extends Controller
             $query->whereHas('subtipo', fn ($q) => $q->where('id_tipo_incidencia', $request->tipo_id));
         }
 
-        // El usuario "normal" solo ve sus propias incidencias
+        // Visibilidad por rol: normal ve solo las suyas; técnico solo donde está asignado
         $user = $request->user();
+
         if ($user->rol && $user->rol->nombre_rol === 'normal') {
             $query->where('id_usuario', $user->id);
+        } elseif ($user->rol && $user->rol->nombre_rol === 'tecnico') {
+            $query->whereHas('asignaciones', fn ($q) => $q->where('id_usuario', $user->id));
         }
 
         return response()->json($query->paginate(10));
@@ -177,8 +180,14 @@ class IncidenciaController extends Controller
         }
     }
 
-    public function historialIncidencia(Incidencia $incidencia)
+    public function historialIncidencia(Request $request, Incidencia $incidencia)
     {
+        // El usuario normal solo puede ver sus propias incidencias
+        $user = $request->user();
+        if ($user->rol && $user->rol->nombre_rol === 'normal' && $incidencia->id_usuario !== $user->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
         return response()->json(
             $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
         );
