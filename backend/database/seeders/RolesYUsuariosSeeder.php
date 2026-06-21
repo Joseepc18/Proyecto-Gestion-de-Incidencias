@@ -11,34 +11,19 @@ class RolesYUsuariosSeeder extends Seeder
 {
     public function run(): void
     {
+        // Los 3 roles son datos de referencia (siempre se siembran).
         $admin = Rol::firstOrCreate(['nombre_rol' => 'admin']);
-        $tecnico = Rol::firstOrCreate(['nombre_rol' => 'tecnico']);
-        $normal = Rol::firstOrCreate(['nombre_rol' => 'normal']);
+        Rol::firstOrCreate(['nombre_rol' => 'tecnico']);
+        Rol::firstOrCreate(['nombre_rol' => 'normal']);
 
+        // Solo se siembra la cuenta admin. Los técnicos se crearán desde la
+        // gestión de usuarios (admin) y los usuarios normales por registro público.
         User::firstOrCreate(
             ['email' => 'admin@sistema.com'],
             [
                 'name' => 'Administrador',
                 'password' => Hash::make('password123'),
                 'id_rol' => $admin->id_rol,
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'tecnico@sistema.com'],
-            [
-                'name' => 'Tecnico',
-                'password' => Hash::make('password123'),
-                'id_rol' => $tecnico->id_rol,
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'normal@sistema.com'],
-            [
-                'name' => 'Normal',
-                'password' => Hash::make('password123'),
-                'id_rol' => $normal->id_rol,
             ]
         );
     }

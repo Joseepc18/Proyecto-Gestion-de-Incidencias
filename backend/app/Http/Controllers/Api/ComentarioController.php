@@ -69,8 +69,8 @@ class ComentarioController extends Controller
         } catch (\Exception $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
-                'tipo_error' => 'ComentarioController@store',
-                'descripcion_error' => $e->getMessage(),
+                'tipo_error' => 'SERVIDOR',
+                'descripcion_error' => 'ComentarioController@crearComentario: '.$e->getMessage(),
             ]);
 
             return response()->json(['message' => 'Error al crear el comentario'], 500);

@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await apiFetch("/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
+        sinSpinner: true,
       });
       // Éxito: guardar token y entrar al inicio
       guardarToken(data.access_token);

@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         body: JSON.stringify({ comentario: texto }),
       });
       textarea.value = "";
-      cargarComentarios(incidenciaSeleccionada);
+      await cargarComentarios(incidenciaSeleccionada);
       mostrarToast("Comentario enviado", "success");
     } catch (error) {
       mostrarToast("Error al enviar el comentario: " + error.message, "error");
@@ -189,6 +189,10 @@ async function seleccionarIncidencia(id) {
   });
 
   try {
+    // Lanzar comentarios y responsables en paralelo con el detalle → un solo spinner
+    cargarComentarios(id);
+    cargarResponsables(id);
+
     const inc = await apiFetch("/incidencias/" + id);
     incidenciaSeleccionada = id;
 
@@ -243,13 +247,11 @@ async function seleccionarIncidencia(id) {
       contenedorFotos.innerHTML = inc.evidencias
         .map(function (ev) {
           return (
-            '<a href="/storage/' +
-            ev.url_evidencia +
-            '" target="_blank">' +
             '<img src="/storage/' +
             ev.url_evidencia +
-            '" class="rounded" style="width:110px;height:110px;object-fit:cover" alt="Evidencia" />' +
-            "</a>"
+            '" class="evidencia-foto rounded" data-lightbox="/storage/' +
+            ev.url_evidencia +
+            '" style="width:110px;height:110px;object-fit:cover" alt="Evidencia" />'
           );
         })
         .join("");
@@ -260,9 +262,6 @@ async function seleccionarIncidencia(id) {
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
-
-    // Cargar los comentarios de esta incidencia
-    cargarComentarios(id);
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
   }
@@ -286,12 +285,12 @@ async function cargarComentarios(id) {
         const autor = c.usuario ? c.usuario.name : "Usuario";
         const fecha = new Date(c.created_at).toLocaleString("es-EC");
         return (
-          '<div class="border rounded p-2 bg-light">' +
+          '<div class="comentario-item mb-2">' +
           '<div class="d-flex justify-content-between align-items-center mb-1">' +
           '<span class="fw-semibold small">' +
           autor +
           "</span>" +
-          '<span class="text-muted small">' +
+          '<span class="comentario-meta small">' +
           fecha +
           "</span>" +
           "</div>" +
@@ -307,5 +306,41 @@ async function cargarComentarios(id) {
       '<p class="text-danger small mb-0">No se pudieron cargar los comentarios: ' +
       error.message +
       "</p>";
+  }
+}
+
+// Trae y muestra los técnicos asignados (solo lectura para el usuario).
+async function cargarResponsables(id) {
+  const cont = document.getElementById("misResponsables");
+
+  try {
+    const asignaciones = await apiFetch("/incidencias/" + id + "/asignaciones");
+
+    if (asignaciones.length === 0) {
+      cont.innerHTML = '<p class="text-muted small mb-0">Aún no hay técnicos asignados.</p>';
+      return;
+    }
+
+    cont.innerHTML = "";
+    asignaciones.forEach(function (asig) {
+      const fila = document.createElement("div");
+      fila.className = "d-flex align-items-center gap-2 mb-2";
+
+      const badge = document.createElement("span");
+      badge.className =
+        "badge " + (asig.rol_asignado === "RESPONSABLE" ? "text-bg-primary" : "text-bg-secondary");
+      badge.textContent = asig.rol_asignado === "RESPONSABLE" ? "Responsable" : "Apoyo";
+      fila.appendChild(badge);
+
+      const nombre = document.createElement("span");
+      nombre.className = "small";
+      nombre.textContent = asig.usuario ? asig.usuario.name : "—";
+      fila.appendChild(nombre);
+
+      cont.appendChild(fila);
+    });
+  } catch {
+    cont.innerHTML =
+      '<p class="text-danger small mb-0">No se pudieron cargar los responsables.</p>';
   }
 }

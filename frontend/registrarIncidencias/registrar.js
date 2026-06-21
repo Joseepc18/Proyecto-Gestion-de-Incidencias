@@ -156,7 +156,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await apiFetch("/incidencias", { method: "POST", body: formData });
       toastFlash("Incidencia registrada", "success");
-      window.location.href = "../incidencias/incidencias.html";
+      // El admin va a la tabla de gestión; el resto, a "Mis incidencias".
+      const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+      window.location.href = esAdmin
+        ? "../incidencias/incidencias.html"
+        : "../misIncidencias/misIncidencias.html";
     } catch (error) {
       errorDiv.textContent = error.message;
       errorDiv.classList.remove("d-none");

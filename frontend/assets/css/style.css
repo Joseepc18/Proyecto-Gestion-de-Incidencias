@@ -1689,19 +1689,96 @@ html[data-theme="dark"] {
   background: rgba(15, 23, 42, 0.15);
 }
 
+/* Evita que el menú de 3 puntos se recorte dentro de la tabla. Bootstrap pone
+   overflow:auto en .table-responsive y, con pocas filas, recorta el dropdown
+   (aparece una barra de scroll). En escritorio lo dejamos visible; en móvil
+   mantenemos el scroll horizontal para tablas anchas. */
+.table-responsive {
+  overflow: visible;
+}
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+}
+
+/* Spinner global — pin georreferenciado que rebota y recorre los estados */
+.loader-pin-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: loaderPinColor 2.4s infinite linear;
+}
+.loader-pin {
+  width: 40px;
+  height: 40px;
+  color: inherit;
+  z-index: 2;
+  animation: loaderPinBounce 1.4s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+}
+.loader-pin-shadow {
+  position: absolute;
+  bottom: 6px;
+  width: 24px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  z-index: 1;
+  animation: loaderPinShadow 1.4s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+}
+@keyframes loaderPinColor {
+  0%,
+  100% {
+    color: var(--admin-warning);
+  }
+  33% {
+    color: var(--admin-primary);
+  }
+  66% {
+    color: var(--admin-success);
+  }
+}
+@keyframes loaderPinBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes loaderPinShadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(0.5);
+    opacity: 0.1;
+  }
+}
+
 /* Toasts (notificaciones) */
 .toast-container {
   position: fixed;
-  top: 1rem;
+  top: 5rem;
   right: 1rem;
-  z-index: 1100;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 360px;
+  width: min(440px, calc(100vw - 2rem));
 }
 .toast-item {
   position: relative;
+  /* .toast-container choca con la clase de Bootstrap (pointer-events: none);
+     devolvemos los clics al toast para que la X funcione. */
+  pointer-events: auto;
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
@@ -1750,14 +1827,25 @@ html[data-theme="dark"] {
 }
 .toast-close {
   position: absolute;
-  top: 0.4rem;
-  right: 0.55rem;
+  top: 0.3rem;
+  right: 0.4rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 0;
+  border-radius: 6px;
   background: transparent;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
   color: var(--admin-muted);
+}
+.toast-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--admin-text);
 }
 .toast-progress {
   position: absolute;
@@ -1768,6 +1856,7 @@ html[data-theme="dark"] {
   background: var(--admin-primary);
   transform-origin: left;
   animation: toastProgress linear forwards;
+  pointer-events: none;
 }
 @keyframes toastProgress {
   from {
@@ -1810,6 +1899,67 @@ html[data-theme="dark"] {
 .toast-info .toast-icon,
 .toast-info .toast-progress {
   background: var(--admin-primary);
+}
+
+/* Tarjeta de comentario (seguimiento) — adaptada a modo claro/oscuro */
+.comentario-item {
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  background: var(--admin-surface-soft);
+  color: var(--admin-text);
+}
+.comentario-item .comentario-meta {
+  color: var(--admin-muted);
+}
+
+/* Lightbox — visor de evidencias a pantalla completa */
+.evidencia-foto {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.evidencia-foto:hover {
+  transform: scale(1.04);
+}
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.lightbox-overlay.lightbox-visible {
+  opacity: 1;
+}
+.lightbox-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 8px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Diálogo de confirmación */

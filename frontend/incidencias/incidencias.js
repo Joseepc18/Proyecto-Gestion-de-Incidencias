@@ -17,6 +17,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
 
     aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+
+    // Esta tabla de gestión es solo para admin; el resto va a "Mis incidencias".
+    if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+      window.location.href = "../misIncidencias/misIncidencias.html";
+      return;
+    }
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";

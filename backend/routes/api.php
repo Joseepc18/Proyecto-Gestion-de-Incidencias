@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ComentarioController;
 use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas públicas (sin token)
@@ -47,5 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
+
+        // Gestión de usuarios (solo admin)
+        Route::get('/usuarios', [UserController::class, 'listado']);
+        Route::post('/usuarios', [UserController::class, 'crear']);
+        Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
+        Route::delete('/usuarios/{usuario}', [UserController::class, 'eliminar']);
+        Route::get('/roles', [UserController::class, 'roles']);
     });
 });

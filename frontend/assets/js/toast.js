@@ -78,16 +78,34 @@ function toastFlash(mensaje, tipo = "info") {
   sessionStorage.setItem("toastFlash", JSON.stringify({ mensaje, tipo }));
 }
 
-// Al cargar cada página, muestra el toast pendiente si lo hay.
+// Al cargar cada página, muestra el toast pendiente (flash) — pero esperando a
+// que la carga inicial termine (spinner oculto), para que no se solapen.
 document.addEventListener("DOMContentLoaded", function () {
   const pendiente = sessionStorage.getItem("toastFlash");
-  if (pendiente) {
-    sessionStorage.removeItem("toastFlash");
-    try {
-      const { mensaje, tipo } = JSON.parse(pendiente);
-      mostrarToast(mensaje, tipo);
-    } catch {
-      /* ignorar */
+  if (!pendiente) {
+    return;
+  }
+  sessionStorage.removeItem("toastFlash");
+
+  let datos;
+  try {
+    datos = JSON.parse(pendiente);
+  } catch {
+    return;
+  }
+
+  // Espera a que el spinner global se oculte antes de mostrar el toast.
+  let intentos = 0;
+  function mostrarCuandoListo() {
+    const sp = document.getElementById("globalSpinner");
+    const cargando = sp && !sp.classList.contains("d-none");
+    if (cargando && intentos < 60) {
+      intentos++;
+      setTimeout(mostrarCuandoListo, 100);
+    } else {
+      mostrarToast(datos.mensaje, datos.tipo);
     }
   }
+  // Margen inicial para que arranquen las peticiones de la página (spinner 300ms).
+  setTimeout(mostrarCuandoListo, 350);
 });

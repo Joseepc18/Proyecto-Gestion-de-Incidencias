@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
           password,
           password_confirmation: passwordConfirmation,
         }),
+        sinSpinner: true,
       });
       // Cuenta creada: ir al login
       toastFlash("Cuenta creada. Inicia sesión.", "success");

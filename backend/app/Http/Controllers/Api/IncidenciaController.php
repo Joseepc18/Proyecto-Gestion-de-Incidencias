@@ -99,8 +99,8 @@ class IncidenciaController extends Controller
         } catch (\Exception $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
-                'tipo_error' => 'IncidenciaController@crearIncidencia',
-                'descripcion_error' => $e->getMessage(),
+                'tipo_error' => 'SERVIDOR',
+                'descripcion_error' => 'IncidenciaController@crearIncidencia: '.$e->getMessage(),
             ]);
 
             return response()->json(['message' => 'Error al crear la incidencia'], 500);
@@ -172,8 +172,8 @@ class IncidenciaController extends Controller
         } catch (\Exception $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
-                'tipo_error' => 'IncidenciaController@eliminarIncidencia',
-                'descripcion_error' => $e->getMessage(),
+                'tipo_error' => 'SERVIDOR',
+                'descripcion_error' => 'IncidenciaController@eliminarIncidencia: '.$e->getMessage(),
             ]);
 
             return response()->json(['message' => 'Error al eliminar la incidencia'], 500);

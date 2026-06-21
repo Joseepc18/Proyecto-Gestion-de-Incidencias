@@ -17,7 +17,7 @@ class AsignacionController extends Controller
     public function tecnicos()
     {
         return response()->json(
-            User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'TECNICO'))
+            User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'tecnico'))
                 ->select('id', 'name', 'email')
                 ->orderBy('name')
                 ->get()
@@ -40,6 +40,18 @@ class AsignacionController extends Controller
             'rol_asignado' => 'required|in:RESPONSABLE,APOYO',
         ]);
 
+        // Validaciones con mensajes claros (la BD las repite como red de seguridad).
+        if ($incidencia->asignaciones()->where('id_usuario', $datos['id_usuario'])->exists()) {
+            return response()->json(['message' => 'Este técnico ya está asignado a esta incidencia.'], 422);
+        }
+
+        if ($datos['rol_asignado'] === 'RESPONSABLE'
+            && $incidencia->asignaciones()->where('rol_asignado', 'RESPONSABLE')->exists()) {
+            return response()->json([
+                'message' => 'Esta incidencia ya tiene un responsable. Quita el actual antes de asignar otro.',
+            ], 422);
+        }
+
         try {
             DB::statement('CALL asignar_tecnico(?, ?, ?)', [
                 $incidencia->id_incidencia,
@@ -52,11 +64,11 @@ class AsignacionController extends Controller
         } catch (QueryException $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
-                'tipo_error' => 'AsignacionController@asignar',
-                'descripcion_error' => $e->getMessage(),
+                'tipo_error' => 'BASE_DATOS',
+                'descripcion_error' => 'AsignacionController@asignar: '.$e->getMessage(),
             ]);
 
-            return response()->json(['message' => 'No se pudo asignar el técnico'], 422);
+            return response()->json(['message' => 'No se pudo asignar el técnico. Inténtalo de nuevo.'], 422);
         }
     }
 

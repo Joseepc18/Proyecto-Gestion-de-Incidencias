@@ -139,14 +139,11 @@ async function cargarDetalle(id) {
       contenedorFotos.innerHTML = inc.evidencias
         .map(function (ev) {
           return (
-            '<a href="/storage/' +
-            ev.url_evidencia +
-            '" target="_blank">' +
             '<img src="/storage/' +
             ev.url_evidencia +
-            '" class="rounded" ' +
-            'style="width:120px;height:120px;object-fit:cover" alt="Evidencia" />' +
-            "</a>"
+            '" class="evidencia-foto rounded" data-lightbox="/storage/' +
+            ev.url_evidencia +
+            '" style="width:120px;height:120px;object-fit:cover" alt="Evidencia" />'
           );
         })
         .join("");
@@ -220,8 +217,8 @@ async function quitarAsignacion(idAsignacion, idIncidencia) {
 
   try {
     await apiFetch("/asignaciones/" + idAsignacion, { method: "DELETE" });
+    await cargarAsignaciones(idIncidencia);
     mostrarToast("Asignación eliminada", "success");
-    cargarAsignaciones(idIncidencia);
   } catch (error) {
     mostrarToast(error.message, "error");
   }
@@ -259,9 +256,9 @@ async function prepararAsignacion(id) {
           rol_asignado: document.getElementById("selectRol").value,
         }),
       });
-      mostrarToast("Técnico asignado", "success");
       form.reset();
-      cargarAsignaciones(id);
+      await cargarAsignaciones(id);
+      mostrarToast("Técnico asignado", "success");
     } catch (error) {
       mostrarToast(error.message, "error");
     }
