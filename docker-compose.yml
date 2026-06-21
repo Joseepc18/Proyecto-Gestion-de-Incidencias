@@ -6,10 +6,16 @@ services:
     ports:
       - "127.0.0.1:5433:5432"
     restart: always
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: gestion_incidencias
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: Joseepc_1805
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -25,6 +31,12 @@ services:
     image: redis:alpine
     container_name: incidencias_redis
     restart: unless-stopped
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "127.0.0.1:6379:6379"
     networks:
@@ -33,6 +45,12 @@ services:
   # 2. Backend (Laravel API REST)
   backend:
     restart: unless-stopped
+    mem_limit: 768m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -62,6 +80,12 @@ services:
     image: nginx:alpine
     container_name: incidencias_frontend_lb
     restart: unless-stopped
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "80:80"
     volumes:
