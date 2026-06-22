@@ -162,20 +162,21 @@ class IncidenciaController extends Controller
         }
 
         try {
-            // Borramos los archivos físicos de las evidencias antes de borrar las filas
-            foreach ($incidencia->evidencias as $evidencia) {
-                Storage::disk('public')->delete($evidencia->url_evidencia);
-            }
+            // Guardamos las rutas antes de borrar (las evidencias se van por CASCADE)
+            $rutasEvidencias = $incidencia->evidencias->pluck('url_evidencia');
 
-            // comentarios/historial/asignaciones tienen FK RESTRICT: hay que borrarlos
-            // a mano (en una transacción) antes de la incidencia. evidencias y
-            // notificaciones se van solas por ON DELETE CASCADE.
+            // comentarios/historial/asignaciones son FK RESTRICT: se borran a mano
             DB::transaction(function () use ($incidencia) {
                 $incidencia->comentarios()->delete();
                 $incidencia->historialEstados()->delete();
                 $incidencia->asignaciones()->delete();
                 $incidencia->delete();
             });
+
+            // Los archivos del disco solo si la BD confirmó el borrado
+            foreach ($rutasEvidencias as $ruta) {
+                Storage::disk('public')->delete($ruta);
+            }
 
             return response()->json(['message' => 'Incidencia eliminada']);
         } catch (\Exception $e) {
