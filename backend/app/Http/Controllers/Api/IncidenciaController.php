@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class IncidenciaController extends Controller
@@ -161,12 +162,20 @@ class IncidenciaController extends Controller
         }
 
         try {
-            // La cascada borra las filas de evidencias, pero los archivos hay que borrarlos a mano
+            // Borramos los archivos físicos de las evidencias antes de borrar las filas
             foreach ($incidencia->evidencias as $evidencia) {
                 Storage::disk('public')->delete($evidencia->url_evidencia);
             }
 
-            $incidencia->delete();
+            // comentarios/historial/asignaciones tienen FK RESTRICT: hay que borrarlos
+            // a mano (en una transacción) antes de la incidencia. evidencias y
+            // notificaciones se van solas por ON DELETE CASCADE.
+            DB::transaction(function () use ($incidencia) {
+                $incidencia->comentarios()->delete();
+                $incidencia->historialEstados()->delete();
+                $incidencia->asignaciones()->delete();
+                $incidencia->delete();
+            });
 
             return response()->json(['message' => 'Incidencia eliminada']);
         } catch (\Exception $e) {
