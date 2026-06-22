@@ -9,9 +9,9 @@ use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Rutas públicas (sin token)
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // Rutas protegidas (requieren token Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
