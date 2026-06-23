@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AsignacionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ComentarioController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
+use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,12 +44,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
     Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar']);
 
+    // Apis de notificaciones (del usuario autenticado)
+    Route::get('/notificaciones', [NotificacionController::class, 'listado']);
+    Route::patch('/notificaciones/leer-todas', [NotificacionController::class, 'marcarTodas']);
+    Route::patch('/notificaciones/{notificacion}/leida', [NotificacionController::class, 'marcarLeida']);
+
     // Apis de asignaciones (responsable / apoyo)
     Route::get('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'listado']);
     Route::middleware('admin')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
+
+        // Métricas del dashboard (solo admin)
+        Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
 
         // Gestión de usuarios (solo admin)
         Route::get('/usuarios', [UserController::class, 'listado']);

@@ -228,7 +228,15 @@ class IncidenciaController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        $incidencia->update(['estado_incidencia' => $nuevo]);
+        // Al marcar RESUELTO usamos el procedimiento (crea las notificaciones al
+        // reportador y técnicos). Los demás cambios son un update directo; los
+        // triggers se encargan de la fecha de resolución y del historial.
+        if ($nuevo === 'RESUELTO' && $actual !== 'RESUELTO') {
+            DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
+            $incidencia->refresh();
+        } else {
+            $incidencia->update(['estado_incidencia' => $nuevo]);
+        }
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
