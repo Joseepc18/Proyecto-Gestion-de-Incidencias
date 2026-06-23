@@ -5,10 +5,16 @@ const js = require("@eslint/js");
 const globals = require("globals");
 
 module.exports = [
-  // 1) Archivos que NO revisamos: JS de terceros (plantilla / minificados)
+  // 1) Archivos que NO revisamos: JS de terceros (plantilla / librerías minificadas)
   //    y este mismo archivo de config (es de Node, no del navegador).
   {
-    ignores: ["assets/js/bootstrap.bundle.min.js", "assets/js/main.js", "eslint.config.js"],
+    ignores: [
+      "assets/js/bootstrap.bundle.min.js",
+      "assets/js/main.js",
+      "assets/js/browser-image-compression.js",
+      "assets/vendors/**",
+      "eslint.config.js",
+    ],
   },
 
   // 2) Reglas para NUESTRO JavaScript

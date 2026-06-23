@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression, crearMapaPicker */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -197,6 +197,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  // Mapa para elegir la ubicación (llena lat/long al hacer clic)
+  const picker = crearMapaPicker("mapaPicker", function (lat, lng) {
+    document.getElementById("crearLatitud").value = lat.toFixed(6);
+    document.getElementById("crearLongitud").value = lng.toFixed(6);
+    document.getElementById("ubicacionError").classList.add("d-none");
+  });
+  setTimeout(function () {
+    picker.map.invalidateSize();
+  }, 200);
+
+  document.getElementById("btnMiUbicacion").addEventListener("click", function () {
+    picker.usarMiUbicacion();
+  });
+
   // Envío del formulario
   document.getElementById("formCrear").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -209,6 +223,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (!form.checkValidity()) {
       form.classList.add("was-validated");
+      return;
+    }
+
+    // La ubicación se marca en el mapa (los campos son de solo lectura)
+    if (!document.getElementById("crearLatitud").value) {
+      document.getElementById("ubicacionError").classList.remove("d-none");
       return;
     }
 

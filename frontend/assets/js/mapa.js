@@ -80,3 +80,48 @@ function crearMapaIncidencias(idContenedor, opciones) {
 
   return { map, pintarPines, enfocar };
 }
+
+// Mapa para elegir una ubicación: el clic (o arrastrar el pin) avisa las coords.
+// eslint-disable-next-line no-unused-vars
+function crearMapaPicker(idContenedor, onCambio, opciones) {
+  const map = crearMapaBase(idContenedor, opciones);
+  map.setMaxBounds([
+    [-5.5, -82.0],
+    [1.8, -74.5],
+  ]); // Limitar el paneo a Ecuador
+  let marcador = null;
+
+  function poner(lat, lng) {
+    if (marcador) {
+      marcador.setLatLng([lat, lng]);
+    } else {
+      marcador = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marcador.on("dragend", function () {
+        const p = marcador.getLatLng();
+        if (onCambio) onCambio(p.lat, p.lng);
+      });
+    }
+    if (onCambio) onCambio(lat, lng);
+  }
+
+  map.on("click", function (e) {
+    poner(e.latlng.lat, e.latlng.lng);
+  });
+
+  // Centra y marca con el GPS del navegador
+  function usarMiUbicacion() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+      poner(pos.coords.latitude, pos.coords.longitude);
+    });
+  }
+
+  // Coloca el pin inicial (modo edición)
+  function setUbicacion(lat, lng) {
+    map.setView([lat, lng], 16);
+    poner(lat, lng);
+  }
+
+  return { map, usarMiUbicacion, setUbicacion };
+}

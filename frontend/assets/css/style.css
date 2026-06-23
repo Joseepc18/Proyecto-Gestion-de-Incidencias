@@ -2300,6 +2300,14 @@ html[data-theme="dark"] {
   margin-bottom: 10px;
 }
 
+/* Mapa para elegir la ubicación al registrar/editar */
+.mapa-picker {
+  height: 320px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+}
+
 /* En pantallas chicas los paneles se angostan */
 @media (max-width: 768px) {
   .mis-mapa-main {
