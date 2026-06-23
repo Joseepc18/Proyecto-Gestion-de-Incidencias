@@ -2171,3 +2171,69 @@ html[data-theme="dark"] {
     pointer-events: auto;
   }
 }
+
+/* Zona de carga de fotos (registrar incidencia) */
+.dropzone-fotos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  border: 2px dashed var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface-soft);
+  color: var(--admin-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.dropzone-fotos:hover,
+.dropzone-fotos--activo {
+  border-color: var(--admin-primary);
+  background: color-mix(in srgb, var(--admin-primary) 8%, transparent);
+  color: var(--admin-primary);
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--admin-primary);
+}
+
+.dropzone-titulo {
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.dropzone-sub {
+  font-size: 0.8rem;
+}
+
+/* Azulejo "+" para agregar más fotos (mismo tamaño que las miniaturas) */
+.foto-agregar {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-soft);
+  color: var(--admin-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.foto-agregar:hover {
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}

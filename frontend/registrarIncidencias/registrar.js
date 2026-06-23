@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
     return;
   }
+
+  // Fotos ya comprimidas, listas para enviar
+  let fotosSeleccionadas = [];
 
   // Cargar usuario
   let usuarioActual = null;
@@ -85,35 +88,114 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   });
 
-  // Preview de fotos
-  document.getElementById("crearFotos").addEventListener("change", function () {
-    const preview = document.getElementById("crearFotosPreview");
-    const errorDiv = document.getElementById("crearFotosError");
-    preview.innerHTML = "";
-    errorDiv.classList.add("d-none");
+  // Compresión de fotos: redimensiona a ~1920px y calidad 0.8 antes de subir
+  const opcionesCompresion = {
+    maxSizeMB: 0.5,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+    fileType: "image/jpeg",
+    initialQuality: 0.8,
+  };
 
-    if (this.files.length > 3) {
-      errorDiv.textContent = "Máximo 3 fotos permitidas.";
-      errorDiv.classList.remove("d-none");
-      this.value = "";
-      return;
-    }
+  const inputFotos = document.getElementById("crearFotos");
+  const previewFotos = document.getElementById("crearFotosPreview");
+  const errorFotos = document.getElementById("crearFotosError");
 
-    Array.from(this.files).forEach(function (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        errorDiv.textContent = '"' + file.name + '" supera los 2MB.';
-        errorDiv.classList.remove("d-none");
-        return;
+  // El <label for> abre el selector al hacer clic; aquí procesamos la selección
+  inputFotos.addEventListener("change", function () {
+    procesarFotos(this.files);
+    this.value = ""; // limpia el input para poder agregar más sin reemplazar
+  });
+
+  // Arrastrar y soltar sobre la zona de carga
+  const dropzone = document.getElementById("dropzoneFotos");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("dropzone-fotos--activo");
+    });
+  });
+  ["dragleave", "dragend"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function () {
+      dropzone.classList.remove("dropzone-fotos--activo");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropzone.classList.remove("dropzone-fotos--activo");
+    procesarFotos(e.dataTransfer.files);
+  });
+
+  // Comprime cada foto y la agrega al acumulador (máx. 3)
+  async function procesarFotos(lista) {
+    errorFotos.classList.add("d-none");
+    for (const file of Array.from(lista)) {
+      if (fotosSeleccionadas.length >= 3) {
+        mostrarErrorFotos("Máximo 3 fotos permitidas.");
+        break;
       }
+      try {
+        const comprimida = await imageCompression(file, opcionesCompresion);
+        // Forzar nombre .jpg para que calce con la validación del backend
+        const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
+          type: "image/jpeg",
+        });
+        fotosSeleccionadas.push(jpg);
+      } catch {
+        mostrarErrorFotos('No se pudo procesar "' + file.name + '".');
+      }
+    }
+    renderPreviews();
+  }
+
+  function mostrarErrorFotos(mensaje) {
+    errorFotos.textContent = mensaje;
+    errorFotos.classList.remove("d-none");
+  }
+
+  // Dibuja las miniaturas con un botón para quitar cada foto.
+  // El cuadro grande solo se ve sin fotos; con fotos aparece un azulejo "+".
+  function renderPreviews() {
+    previewFotos.innerHTML = "";
+    dropzone.classList.toggle("d-none", fotosSeleccionadas.length > 0);
+
+    fotosSeleccionadas.forEach(function (file, idx) {
+      const cont = document.createElement("div");
+      cont.className = "position-relative";
+
       const img = document.createElement("img");
       img.src = URL.createObjectURL(file);
       img.style.width = "80px";
       img.style.height = "80px";
       img.style.objectFit = "cover";
       img.style.borderRadius = "8px";
-      preview.appendChild(img);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
+      btn.innerHTML = "&times;";
+      btn.addEventListener("click", function () {
+        fotosSeleccionadas.splice(idx, 1);
+        renderPreviews();
+      });
+
+      cont.appendChild(img);
+      cont.appendChild(btn);
+      previewFotos.appendChild(cont);
     });
-  });
+
+    // Azulejo "+" para agregar más, hasta el tope de 3
+    if (fotosSeleccionadas.length > 0 && fotosSeleccionadas.length < 3) {
+      const agregar = document.createElement("button");
+      agregar.type = "button";
+      agregar.className = "foto-agregar";
+      agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
+      agregar.addEventListener("click", function () {
+        inputFotos.click();
+      });
+      previewFotos.appendChild(agregar);
+    }
+  }
 
   // Envío del formulario
   document.getElementById("formCrear").addEventListener("submit", async function (e) {
@@ -148,10 +230,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const direccion = document.getElementById("crearDireccion").value.trim();
     if (direccion) formData.append("direccion_incidencia", direccion);
 
-    const fotos = document.getElementById("crearFotos").files;
-    for (let i = 0; i < fotos.length; i++) {
-      formData.append("fotos[]", fotos[i]);
-    }
+    fotosSeleccionadas.forEach(function (file) {
+      formData.append("fotos[]", file);
+    });
 
     try {
       await apiFetch("/incidencias", { method: "POST", body: formData });
