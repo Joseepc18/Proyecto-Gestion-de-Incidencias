@@ -1,6 +1,6 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, confirmar */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
@@ -70,13 +70,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
     clearTimeout(timerBusqueda);
     timerBusqueda = setTimeout(cargarLista, 400);
-  });
-
-  // Botón "Editar Incidencia" → formulario de registro con ?id=
-  document.getElementById("btnEditar").addEventListener("click", function () {
-    if (incidenciaSeleccionada) {
-      window.location.href = "../registrarIncidencias/registrar.html?id=" + incidenciaSeleccionada;
-    }
   });
 
   // Enlace del aviso: lleva a la caja de comentarios
@@ -174,17 +167,34 @@ async function cargarLista() {
           texto: inc.estado_incidencia,
         };
         const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
+        const id = inc.id_incidencia;
+        // Solo se puede editar/eliminar mientras está PENDIENTE
+        const puede = inc.estado_incidencia === "PENDIENTE";
+
+        const itemEditar =
+          '<li><a class="dropdown-item' +
+          (puede ? "" : " text-muted") +
+          '" href="#" onclick="' +
+          (puede ? "editarMiIncidencia(" + id + ")" : "avisoNoModificable('editar')") +
+          '; return false;"><i class="bi bi-pencil-square me-2"></i>Editar</a></li>';
+        const itemEliminar =
+          '<li><a class="dropdown-item' +
+          (puede ? " text-danger" : " text-muted") +
+          '" href="#" onclick="' +
+          (puede ? "eliminarMiIncidencia(" + id + ")" : "avisoNoModificable('eliminar')") +
+          '; return false;"><i class="bi bi-trash me-2"></i>Eliminar</a></li>';
 
         return (
-          '<button type="button" class="incidencia-card" data-id="' +
-          inc.id_incidencia +
+          '<div class="incidencia-card" data-id="' +
+          id +
           '" onclick="seleccionarIncidencia(' +
-          inc.id_incidencia +
+          id +
           ')">' +
           '<div class="d-flex justify-content-between align-items-start gap-2">' +
           '<span class="card-codigo">' +
-          codigoIncidencia(inc.id_incidencia) +
+          codigoIncidencia(id) +
           "</span>" +
+          '<div class="d-flex align-items-center gap-1">' +
           '<span class="badge ' +
           est.clase +
           '"><i class="bi ' +
@@ -192,6 +202,14 @@ async function cargarLista() {
           ' me-1"></i>' +
           est.texto +
           "</span>" +
+          '<div class="dropdown" onclick="event.stopPropagation()">' +
+          '<button class="btn btn-light btn-sm py-0 px-1" data-bs-toggle="dropdown" aria-expanded="false">' +
+          '<i class="bi bi-three-dots-vertical"></i></button>' +
+          '<ul class="dropdown-menu dropdown-menu-end">' +
+          itemEditar +
+          itemEliminar +
+          "</ul></div>" +
+          "</div>" +
           "</div>" +
           '<p class="card-titulo">' +
           inc.nombre_incidencia +
@@ -199,7 +217,7 @@ async function cargarLista() {
           '<span class="card-ubicacion"><i class="bi bi-geo-alt me-1"></i>' +
           ciudad +
           "</span>" +
-          "</button>"
+          "</div>"
         );
       })
       .join("");
@@ -231,6 +249,42 @@ async function cargarLista() {
   }
 }
 
+// Acciones del menú de 3 puntos de cada tarjeta.
+
+// eslint-disable-next-line no-unused-vars
+function editarMiIncidencia(id) {
+  window.location.href = "../registrarIncidencias/registrar.html?id=" + id;
+}
+
+// Aviso cuando la incidencia ya no es PENDIENTE (no se puede editar/eliminar).
+// eslint-disable-next-line no-unused-vars
+function avisoNoModificable(accion) {
+  mostrarToast("No puedes " + accion + " esta incidencia porque ya está en proceso.", "warning");
+}
+
+// eslint-disable-next-line no-unused-vars
+async function eliminarMiIncidencia(id) {
+  const ok = await confirmar({
+    titulo: "Eliminar incidencia",
+    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+    textoConfirmar: "Eliminar",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/incidencias/" + id, { method: "DELETE" });
+    mostrarToast("Incidencia eliminada", "success");
+    // Limpiar el detalle si la borrada estaba seleccionada
+    incidenciaSeleccionada = null;
+    document.getElementById("detalleContenido").classList.add("d-none");
+    document.getElementById("detalleVacio").classList.remove("d-none");
+    cargarLista();
+  } catch (error) {
+    mostrarToast("Error al eliminar: " + error.message, "error");
+  }
+}
+
 // Paso 3 — Carga el detalle de una incidencia y lo muestra en el panel derecho.
 async function seleccionarIncidencia(id) {
   // Marcar la tarjeta activa
@@ -246,10 +300,9 @@ async function seleccionarIncidencia(id) {
     const inc = await apiFetch("/incidencias/" + id);
     incidenciaSeleccionada = id;
 
-    // El autor solo edita mientras está PENDIENTE; el admin siempre puede.
+    // El aviso "ya está en proceso" aparece cuando no es editable.
     const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
     const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
-    document.getElementById("btnEditar").disabled = !editable;
     document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
 
     // Cabecera
