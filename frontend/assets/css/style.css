@@ -2237,3 +2237,80 @@ html[data-theme="dark"] {
   border-color: var(--admin-primary);
   color: var(--admin-primary);
 }
+
+/* Mis incidencias — vista de mapa estilo centro de control */
+.mis-mapa-main {
+  position: relative;
+  height: calc(100vh - 72px);
+  padding: 0 !important;
+}
+
+.mis-mapa {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Paneles flotantes sobre el mapa */
+.mis-panel {
+  position: absolute;
+  z-index: 1100;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  box-shadow: var(--admin-shadow);
+}
+
+.mis-feed {
+  top: 16px;
+  left: 16px;
+  width: 320px;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+.mis-feed-lista {
+  overflow-y: auto;
+}
+
+.mis-detalle {
+  right: 16px;
+  bottom: 16px;
+  width: 350px;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.mis-detalle-seccion {
+  border-top: 1px solid var(--admin-border);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.mis-detalle-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* En pantallas chicas los paneles se angostan */
+@media (max-width: 768px) {
+  .mis-mapa-main {
+    height: calc(100vh - 64px);
+  }
+  .mis-feed {
+    width: calc(100% - 32px);
+    max-height: 42%;
+  }
+  .mis-detalle {
+    width: calc(100% - 32px);
+    max-height: 52%;
+  }
+}

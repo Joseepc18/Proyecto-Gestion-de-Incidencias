@@ -1,9 +1,17 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
+let mapa = null;
+
+// Color del pin según el estado de la incidencia
+const colorEstado = {
+  PENDIENTE: "#dc2626",
+  EN_PROCESO: "#d97706",
+  RESUELTO: "#16a34a",
+};
 
 // Config de badges (compartida entre lista y detalle).
 const estadoConfig = {
@@ -109,6 +117,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+  // Mapa de fondo
+  mapa = crearMapaIncidencias("mapaMisIncidencias");
+  setTimeout(function () {
+    mapa.map.invalidateSize();
+  }, 200);
+
+  // Botón "Expandir detalles" (despliega la sección de abajo)
+  document.getElementById("btnExpandir").addEventListener("click", function () {
+    const exp = document.getElementById("detalleExpandido");
+    const oculto = exp.classList.toggle("d-none");
+    this.setAttribute("aria-expanded", String(!oculto));
+    document.getElementById("btnExpandirIcono").className =
+      "bi me-1 " + (oculto ? "bi-chevron-up" : "bi-chevron-down");
+    document.getElementById("btnExpandirTexto").textContent = oculto
+      ? "Expandir detalles"
+      : "Ocultar detalles";
+
+    // La imagen compacta se oculta al expandir (la galería ya está abajo)
+    const imgCompacta = document.getElementById("detalleImagen");
+    if (imgCompacta.getAttribute("src")) {
+      imgCompacta.classList.toggle("d-none", !oculto);
+    }
+  });
+
   // Arranque
   cargarLista();
 });
@@ -130,6 +162,7 @@ async function cargarLista() {
       contenedor.innerHTML =
         '<p class="text-muted small text-center py-4 mb-0">No se encontraron incidencias.</p>';
       info.textContent = "";
+      if (mapa) mapa.pintarPines([], seleccionarIncidencia);
       return;
     }
 
@@ -173,6 +206,24 @@ async function cargarLista() {
 
     info.textContent =
       "Mostrando " + incidencias.length + " de " + respuesta.total + " incidencias";
+
+    // Pintar los pines de las incidencias en el mapa
+    if (mapa) {
+      const pines = incidencias
+        .filter(function (i) {
+          return i.latitud_incidencia != null && i.longitud_incidencia != null;
+        })
+        .map(function (i) {
+          return {
+            id: i.id_incidencia,
+            lat: Number(i.latitud_incidencia),
+            lng: Number(i.longitud_incidencia),
+            titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
+            color: colorEstado[i.estado_incidencia] || "#2563eb",
+          };
+        });
+      mapa.pintarPines(pines, seleccionarIncidencia);
+    }
   } catch (error) {
     contenedor.innerHTML =
       '<p class="text-danger small text-center py-4 mb-0">' + error.message + "</p>";
@@ -181,7 +232,6 @@ async function cargarLista() {
 }
 
 // Paso 3 — Carga el detalle de una incidencia y lo muestra en el panel derecho.
-// eslint-disable-next-line no-unused-vars
 async function seleccionarIncidencia(id) {
   // Marcar la tarjeta activa
   document.querySelectorAll(".incidencia-card").forEach(function (card) {
@@ -259,9 +309,28 @@ async function seleccionarIncidencia(id) {
       contenedorFotos.innerHTML = '<p class="text-muted small mb-0">Sin evidencias cargadas.</p>';
     }
 
+    // Imagen destacada de la tarjeta compacta (primera evidencia)
+    const imgCompacta = document.getElementById("detalleImagen");
+    if (inc.evidencias && inc.evidencias.length > 0) {
+      imgCompacta.src = "/storage/" + inc.evidencias[0].url_evidencia;
+      imgCompacta.classList.remove("d-none");
+    } else {
+      imgCompacta.removeAttribute("src");
+      imgCompacta.classList.add("d-none");
+    }
+
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
+
+    // Colapsar la sección expandible al cambiar de incidencia
+    document.getElementById("detalleExpandido").classList.add("d-none");
+    document.getElementById("btnExpandir").setAttribute("aria-expanded", "false");
+    document.getElementById("btnExpandirIcono").className = "bi bi-chevron-up me-1";
+    document.getElementById("btnExpandirTexto").textContent = "Expandir detalles";
+
+    // Enfocar el pin en el mapa
+    if (mapa) mapa.enfocar(id);
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
   }

@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
@@ -22,160 +23,130 @@
         <!-- Navbar -->
         <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
 
-        <!-- Contenido principal: layout maestro-detalle -->
-        <main class="dashboard-content">
-          <div class="container-fluid px-3 px-lg-4 py-4">
-            <div class="row g-3">
-              <!-- Columna izquierda: lista de incidencias (maestro) -->
-              <div class="col-12 col-lg-4">
-                <section class="panel h-100">
-                  <div class="p-3">
-                    <h2 class="h5 mb-3">Mis Incidencias</h2>
+        <!-- Contenido: mapa de fondo + paneles flotantes (estilo centro de control) -->
+        <main class="dashboard-content mis-mapa-main">
+          <!-- Mapa -->
+          <div id="mapaMisIncidencias" class="mis-mapa"></div>
 
-                    <!-- Buscador + filtro -->
-                    <div class="d-flex gap-2 mb-3">
-                      <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="filtroBusqueda"
-                          placeholder="Buscar incidencia..."
-                        />
-                      </div>
-                      <button class="btn btn-outline-secondary" type="button" id="btnFiltro">
-                        <i class="bi bi-funnel"></i>
-                      </button>
-                    </div>
-
-                    <!-- Lista de tarjetas (la llena el JS) -->
-                    <div id="listaIncidencias" class="d-flex flex-column gap-2"></div>
-
-                    <!-- Pie: conteo -->
-                    <p class="text-muted small mb-0 mt-3" id="listaInfo"></p>
-                  </div>
-                </section>
-              </div>
-
-              <!-- Columna derecha: detalle (detalle) -->
-              <div class="col-12 col-lg-8">
-                <!-- Estado vacío: nada seleccionado -->
-                <section class="panel h-100" id="detalleVacio">
-                  <div class="p-5 text-center text-muted">
-                    <i class="bi bi-hand-index-thumb fs-1 d-block mb-2"></i>
-                    <p class="mb-0">Selecciona una incidencia de la lista para ver su detalle.</p>
-                  </div>
-                </section>
-
-                <!-- Contenido del detalle (oculto hasta seleccionar) -->
-                <section class="panel h-100 d-none" id="detalleContenido">
-                  <div class="p-3 p-lg-4">
-                    <!-- Cabecera del detalle -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                      <div>
-                        <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
-                        <h1 class="h4 mb-2" id="detalleTitulo"></h1>
-                        <div class="d-flex gap-2 align-items-center flex-wrap">
-                          <span class="badge" id="detalleEstado"></span>
-                          <span class="text-muted small" id="detalleFecha"></span>
-                        </div>
-                      </div>
-                      <button class="btn btn-primary btn-sm" type="button" id="btnEditar">
-                        <i class="bi bi-pencil-square me-1"></i> Editar Incidencia
-                      </button>
-                    </div>
-
-                    <!-- Aviso cuando ya no se puede editar (estado distinto de PENDIENTE) -->
-                    <div id="avisoEdicion" class="alert alert-info py-2 px-3 small d-none">
-                      <i class="bi bi-info-circle me-1"></i>
-                      Esta incidencia ya está en proceso, por lo que no puedes editarla.
-                      <a href="#" id="linkComentarios" class="alert-link"
-                        >Comunícate con el equipo en los comentarios.</a
-                      >
-                    </div>
-
-                    <div class="row g-3">
-                      <!-- Información General -->
-                      <div class="col-12 col-xl-7">
-                        <div class="border rounded p-3 h-100">
-                          <h3 class="h6 text-primary mb-3">Información General</h3>
-
-                          <h6 class="text-muted mb-1">Descripción</h6>
-                          <p id="detalleDescripcion" class="mb-3"></p>
-
-                          <h6 class="text-muted mb-1">Tipo de Incidencia</h6>
-                          <p id="detalleTipo" class="mb-3 fw-semibold"></p>
-
-                          <h6 class="text-muted mb-1">Subtipo</h6>
-                          <p id="detalleSubtipo" class="mb-3 fw-semibold"></p>
-
-                          <h6 class="text-muted mb-1">Ubicación</h6>
-                          <p id="detalleUbicacion" class="mb-3"></p>
-
-                          <h6 class="text-muted mb-1">Prioridad</h6>
-                          <p class="mb-0"><span class="badge" id="detallePrioridad"></span></p>
-                        </div>
-                      </div>
-
-                      <!-- Mapa (placeholder, pendiente Leaflet) -->
-                      <div class="col-12 col-xl-5">
-                        <div
-                          class="border rounded h-100 d-flex align-items-center justify-content-center text-muted bg-light"
-                          style="min-height: 220px"
-                        >
-                          <span><i class="bi bi-map me-1"></i> Mapa (próximamente)</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Responsables (técnicos asignados a esta incidencia) -->
-                    <div class="border rounded p-3 mt-3">
-                      <h3 class="h6 text-primary mb-2">Responsables</h3>
-                      <div id="misResponsables"></div>
-                    </div>
-
-                    <!-- Evidencias -->
-                    <div class="border rounded p-3 mt-3" id="detalleEvidenciasBloque">
-                      <h3 class="h6 text-primary mb-3">Evidencias</h3>
-                      <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
-                    </div>
-
-                    <!-- Seguimiento / Comentarios -->
-                    <div class="border rounded p-3 mt-3">
-                      <h3 class="h6 text-primary mb-3">Seguimiento</h3>
-
-                      <!-- Lista de comentarios (la llena el JS) -->
-                      <div id="detalleComentarios" class="d-flex flex-column gap-2 mb-3"></div>
-
-                      <!-- Caja para escribir un comentario -->
-                      <form id="formComentario" class="d-flex flex-column gap-2">
-                        <textarea
-                          class="form-control"
-                          id="nuevoComentario"
-                          rows="2"
-                          placeholder="Escribe un comentario..."
-                          required
-                        ></textarea>
-                        <div class="d-flex justify-content-end">
-                          <button
-                            class="btn btn-primary btn-sm"
-                            type="submit"
-                            id="btnEnviarComentario"
-                          >
-                            <span
-                              id="comentarioSpinner"
-                              class="spinner-border spinner-border-sm d-none me-1"
-                            ></span>
-                            <i class="bi bi-send me-1"></i> Enviar comentario
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </section>
+          <!-- Panel flotante izquierdo: feed de incidencias -->
+          <section class="mis-panel mis-feed" id="feedPanel">
+            <div class="mis-feed-header">
+              <h2 class="h6 mb-2">Mis Incidencias</h2>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="filtroBusqueda"
+                  placeholder="Buscar incidencia..."
+                />
               </div>
             </div>
-          </div>
+
+            <!-- Lista de tarjetas (la llena el JS) -->
+            <div id="listaIncidencias" class="mis-feed-lista d-flex flex-column gap-2 mt-2"></div>
+
+            <p class="text-muted small mb-0 mt-2" id="listaInfo"></p>
+          </section>
+
+          <!-- Tarjeta flotante derecha: detalle (compacto + expandible hacia arriba) -->
+          <section class="mis-panel mis-detalle" id="detalleCard">
+            <!-- Estado vacío -->
+            <div id="detalleVacio" class="text-center text-muted p-3">
+              <i class="bi bi-geo-alt fs-3 d-block mb-2"></i>
+              <p class="small mb-0">Selecciona una incidencia para ver su detalle y ubicación.</p>
+            </div>
+
+            <!-- Contenido (oculto hasta seleccionar) -->
+            <div id="detalleContenido" class="d-none">
+              <!-- Cabecera compacta -->
+              <div class="mis-detalle-head">
+                <img id="detalleImagen" class="mis-detalle-img d-none" alt="Evidencia" />
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
+                    <h1 class="h6 mb-1" id="detalleTitulo"></h1>
+                  </div>
+                  <span class="badge" id="detalleEstado"></span>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
+                  <span class="badge" id="detallePrioridad"></span>
+                  <span class="text-muted small" id="detalleFecha"></span>
+                </div>
+
+                <p class="small text-muted mb-0 mt-2" id="detalleUbicacion"></p>
+
+                <div class="d-flex gap-2 mt-2">
+                  <button class="btn btn-primary btn-sm" type="button" id="btnEditar">
+                    <i class="bi bi-pencil-square me-1"></i> Editar
+                  </button>
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    id="btnExpandir"
+                    aria-expanded="false"
+                  >
+                    <i class="bi bi-chevron-up me-1" id="btnExpandirIcono"></i>
+                    <span id="btnExpandirTexto">Expandir detalles</span>
+                  </button>
+                </div>
+
+                <!-- Aviso cuando ya no se puede editar -->
+                <div id="avisoEdicion" class="alert alert-info py-1 px-2 small mt-2 mb-0 d-none">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Ya está en proceso, no puedes editarla.
+                  <a href="#" id="linkComentarios" class="alert-link">Usa los comentarios.</a>
+                </div>
+              </div>
+
+              <!-- Sección expandible -->
+              <div id="detalleExpandido" class="mis-detalle-expandido d-none">
+                <div class="mis-detalle-seccion">
+                  <h3 class="h6 text-primary mb-2">Información General</h3>
+                  <h6 class="text-muted mb-1 small">Descripción</h6>
+                  <p id="detalleDescripcion" class="mb-2 small"></p>
+                  <h6 class="text-muted mb-1 small">Tipo</h6>
+                  <p id="detalleTipo" class="mb-2 small fw-semibold"></p>
+                  <h6 class="text-muted mb-1 small">Subtipo</h6>
+                  <p id="detalleSubtipo" class="mb-0 small fw-semibold"></p>
+                </div>
+
+                <div class="mis-detalle-seccion">
+                  <h3 class="h6 text-primary mb-2">Responsables</h3>
+                  <div id="misResponsables"></div>
+                </div>
+
+                <div class="mis-detalle-seccion" id="detalleEvidenciasBloque">
+                  <h3 class="h6 text-primary mb-2">Evidencias</h3>
+                  <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
+                </div>
+
+                <div class="mis-detalle-seccion">
+                  <h3 class="h6 text-primary mb-2">Seguimiento</h3>
+                  <div id="detalleComentarios" class="d-flex flex-column gap-2 mb-2"></div>
+                  <form id="formComentario" class="d-flex flex-column gap-2">
+                    <textarea
+                      class="form-control form-control-sm"
+                      id="nuevoComentario"
+                      rows="2"
+                      placeholder="Escribe un comentario..."
+                      required
+                    ></textarea>
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary btn-sm" type="submit" id="btnEnviarComentario">
+                        <span
+                          id="comentarioSpinner"
+                          class="spinner-border spinner-border-sm d-none me-1"
+                        ></span>
+                        <i class="bi bi-send me-1"></i> Enviar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     </div>
@@ -188,6 +159,9 @@
     <script src="../assets/js/confirmar.js"></script>
     <script src="../assets/js/lightbox.js"></script>
     <script src="../assets/js/layout.js"></script>
+    <!-- Mapa -->
+    <script src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script src="../assets/js/mapa.js"></script>
     <!-- Lógica propia -->
     <script src="misIncidencias.js"></script>
   </body>
