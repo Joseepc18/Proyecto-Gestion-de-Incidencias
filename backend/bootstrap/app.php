@@ -20,5 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Las rutas /api/* siempre responden JSON: así una ruta protegida sin token
+        // devuelve un 401 limpio en vez de un 500 (al buscar la ruta 'login' inexistente).
+        $exceptions->shouldRenderJsonWhen(
+            fn ($request, $throwable) => $request->is('api/*') || $request->expectsJson()
+        );
     })->create();

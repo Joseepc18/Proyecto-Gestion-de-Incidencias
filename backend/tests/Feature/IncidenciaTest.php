@@ -34,16 +34,17 @@ class IncidenciaTest extends TestCase
         $usuario = $this->crearUsuario('normal');
         Sanctum::actingAs($usuario);
 
+        // La prioridad ya no es obligatoria (entra como MEDIA por defecto).
         $this->postJson('/api/incidencias', [])
             ->assertStatus(422)
             ->assertJsonValidationErrors([
                 'nombre_incidencia',
                 'latitud_incidencia',
                 'longitud_incidencia',
-                'prioridad_incidencia',
                 'id_ciudad',
                 'id_subtipo_incidencia',
-            ]);
+            ])
+            ->assertJsonMissingValidationErrors('prioridad_incidencia');
     }
 
     public function test_eliminar_incidencia_con_comentarios_e_historial(): void

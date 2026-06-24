@@ -19,7 +19,7 @@ class ActualizarIncidenciaRequest extends FormRequest
     {
         return [
             'nombre_incidencia' => 'sometimes|string|min:5|max:255',
-            'descripcion_incidencia' => 'sometimes|nullable|string',
+            'descripcion_incidencia' => 'sometimes|nullable|string|max:1000',
             'direccion_incidencia' => 'sometimes|nullable|string|max:500',
             'latitud_incidencia' => 'sometimes|numeric|between:-5.5,1.8',
             'longitud_incidencia' => 'sometimes|numeric|between:-82.0,-74.5',

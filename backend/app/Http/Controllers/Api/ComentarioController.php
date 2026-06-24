@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CrearComentarioRequest;
+use App\Http\Requests\EditarComentarioRequest;
 use App\Models\BitacoraError;
+use App\Models\Comentario;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
 
@@ -45,5 +47,13 @@ class ComentarioController extends Controller
 
             return response()->json(['message' => 'Error al crear el comentario'], 500);
         }
+    }
+
+    // Editar un comentario propio (la autorización la resuelve el FormRequest).
+    public function actualizarComentario(EditarComentarioRequest $request, Comentario $comentario)
+    {
+        $comentario->update($request->validated());
+
+        return response()->json($comentario->load('usuario.rol'));
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AsignacionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CatalogoAdminController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ComentarioController;
 use App\Http\Controllers\Api\DashboardController;
@@ -23,6 +24,7 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 Route::middleware('auth:sanctum')->group(function () {
     // Apis de usuario
     Route::get('/user', [AuthController::class, 'me']);
+    Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Apis de catálogos para poblar los formularios
@@ -43,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Apis de comentarios
     Route::get('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'listadoComentarios']);
     Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario']);
+    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'actualizarComentario']);
 
     // Apis de evidencias (fotos)
     Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
@@ -59,6 +62,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
+
+        // CRUD de catálogos de tipos y subtipos (solo admin)
+        Route::post('/tipos-incidencia', [CatalogoAdminController::class, 'crearTipo']);
+        Route::put('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'actualizarTipo']);
+        Route::delete('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'eliminarTipo']);
+        Route::post('/subtipos-incidencia', [CatalogoAdminController::class, 'crearSubtipo']);
+        Route::put('/subtipos-incidencia/{subtipo}', [CatalogoAdminController::class, 'actualizarSubtipo']);
+        Route::delete('/subtipos-incidencia/{subtipo}', [CatalogoAdminController::class, 'eliminarSubtipo']);
 
         // Métricas del dashboard (solo admin)
         Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);

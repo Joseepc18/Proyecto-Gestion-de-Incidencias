@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActualizarPerfilRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\BitacoraError;
@@ -71,6 +72,25 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user()->load('rol'));
+    }
+
+    // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña).
+    public function actualizarPerfil(ActualizarPerfilRequest $request)
+    {
+        $datos = $request->validated();
+        $user = $request->user();
+
+        $user->name = $datos['name'];
+        $user->email = $datos['email'];
+
+        // Solo cambia la contraseña si se envió una nueva.
+        if (! empty($datos['password'])) {
+            $user->password = Hash::make($datos['password']);
+        }
+
+        $user->save();
+
+        return response()->json($user->load('rol'));
     }
 
     // Paso 1 del login con Google: manda al usuario a la pantalla de Google.

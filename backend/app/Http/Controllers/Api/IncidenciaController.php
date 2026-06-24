@@ -52,6 +52,8 @@ class IncidenciaController extends Controller
     {
         $datos = $request->validated();
         $datos['id_usuario'] = $request->user()->id;
+        // Si el ciudadano no eligió prioridad, entra como MEDIA (el admin la ajusta luego).
+        $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? 'MEDIA';
         unset($datos['fotos']);
 
         try {
