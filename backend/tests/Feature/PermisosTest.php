@@ -45,6 +45,22 @@ class PermisosTest extends TestCase
         ])->assertStatus(403);
     }
 
+    public function test_autorizacion_corre_antes_que_validacion(): void
+    {
+        $dueno = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($dueno);
+
+        // Otro ciudadano (sin permiso) intenta editar con datos inválidos (título muy corto).
+        $otro = $this->crearUsuario('normal');
+        Sanctum::actingAs($otro);
+
+        // Debe primar el 403 de autorización sobre el 422 de validación: la Policy
+        // corre antes que las reglas porque vive en el authorize() del FormRequest.
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
+            'nombre_incidencia' => 'ab',
+        ])->assertStatus(403);
+    }
+
     public function test_no_admin_no_accede_a_la_gestion_de_usuarios(): void
     {
         Sanctum::actingAs($this->crearUsuario('normal'));
