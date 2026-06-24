@@ -16,8 +16,8 @@ class CrearIncidenciaRequest extends FormRequest
     {
         // between de lat/long = rango geográfico de Ecuador
         return [
-            'nombre_incidencia' => 'required|string|min:5|max:255',
-            'descripcion_incidencia' => 'nullable|string|max:1000',
+            'nombre_incidencia' => 'required|string|min:5|max:100',
+            'descripcion_incidencia' => 'nullable|string|max:500',
             'direccion_incidencia' => 'nullable|string|max:500',
             'latitud_incidencia' => 'required|numeric|between:-5.5,1.8',
             'longitud_incidencia' => 'required|numeric|between:-82.0,-74.5',

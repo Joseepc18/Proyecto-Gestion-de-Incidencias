@@ -107,14 +107,19 @@
                           id="editTitulo"
                           type="text"
                           minlength="5"
-                          maxlength="255"
+                          maxlength="100"
                           required
                         />
                         <div class="invalid-feedback">Mínimo 5 caracteres.</div>
                       </div>
                       <div class="col-12">
                         <label class="form-label" for="editDescripcion">Descripción</label>
-                        <textarea class="form-control" id="editDescripcion" rows="3"></textarea>
+                        <textarea
+                          class="form-control"
+                          id="editDescripcion"
+                          rows="3"
+                          maxlength="500"
+                        ></textarea>
                       </div>
                       <div class="col-md-6">
                         <label class="form-label" for="editTipo"

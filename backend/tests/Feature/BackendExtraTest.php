@@ -34,7 +34,7 @@ class BackendExtraTest extends TestCase
         Sanctum::actingAs($this->crearUsuario('normal'));
 
         $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
-            'descripcion_incidencia' => str_repeat('a', 1001),
+            'descripcion_incidencia' => str_repeat('a', 501),
         ]))->assertStatus(422)->assertJsonValidationErrors('descripcion_incidencia');
     }
 

@@ -75,8 +75,8 @@ class IncidenciaTest extends TestCase
         $this->postJson('/api/incidencias', $this->datosIncidenciaValidos(['nombre_incidencia' => 'abc']))
             ->assertStatus(422)->assertJsonValidationErrors('nombre_incidencia');
 
-        // Muy largo (más de 255 caracteres).
-        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos(['nombre_incidencia' => str_repeat('a', 256)]))
+        // Muy largo (más de 100 caracteres).
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos(['nombre_incidencia' => str_repeat('a', 101)]))
             ->assertStatus(422)->assertJsonValidationErrors('nombre_incidencia');
     }
 }
