@@ -2,15 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 
-// H-02: el trigger de historial guardaba NEW.id_usuario (el DUEÑO de la incidencia)
-// como autor del cambio de estado, no quien realmente lo ejecutó. Ahora la aplicación
-// pone el id del usuario autenticado en la variable de sesión 'app.actor_id' antes del
-// UPDATE, y el trigger la lee. Si no está disponible, cae al dueño (compatibilidad).
+// H-02: el historial guardaba al dueño como autor del cambio. Ahora el trigger
+// lee al ejecutor desde la variable de sesión app.actor_id que pone la app.
 return new class extends Migration
 {
     public function up(): void
     {
-        // Trigger corregido: usa el actor de la variable de sesión.
+        // Trigger: usa el actor de la variable de sesión, o el dueño si no está.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
             RETURNS TRIGGER AS \$\$
@@ -18,8 +16,7 @@ return new class extends Migration
                 v_actor BIGINT;
             BEGIN
                 IF NEW.estado_incidencia <> OLD.estado_incidencia THEN
-                    -- La app deja aquí quién ejecuta el cambio; el segundo arg (true)
-                    -- evita error si la variable no fue seteada.
+                    -- true evita el error si la variable no fue seteada.
                     v_actor := NULLIF(current_setting('app.actor_id', true), '')::BIGINT;
                     IF v_actor IS NULL THEN
                         v_actor := NEW.id_usuario;
@@ -33,8 +30,7 @@ return new class extends Migration
             \$\$ LANGUAGE plpgsql;
         ");
 
-        // El procedimiento de resolución ya recibe el actor: lo publica en la variable
-        // de sesión antes del UPDATE para que el trigger lo registre.
+        // Procedimiento: publica el actor para el trigger antes del UPDATE.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,
@@ -64,7 +60,7 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % ya está resuelta.', p_id_incidencia;
             END IF;
 
-            -- Deja el actor para el trigger de historial (local a esta transacción).
+            -- Actor para el trigger de historial (local a la transacción).
             PERFORM set_config('app.actor_id', p_id_usuario::text, true);
 
             UPDATE incidencias

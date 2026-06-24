@@ -2,14 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 
-// H-07: la columna foto_incidencia quedó muerta (las fotos viven en la tabla
-// evidencias). La vista v_incidencias_completas todavía la arrastraba, así que
-// hay que recrear la vista sin esa columna ANTES de poder dropearla.
+// H-07: elimina la columna muerta foto_incidencia (las fotos viven en evidencias).
+// La vista v_incidencias_completas la usa, así que se recrea sin ella.
 return new class extends Migration
 {
     public function up(): void
     {
-        // La vista depende de la columna: se borra primero para liberarla.
+        // La vista depende de la columna: se borra primero.
         DB::unprepared('DROP VIEW IF EXISTS v_incidencias_completas;');
 
         DB::statement('ALTER TABLE incidencias DROP COLUMN IF EXISTS foto_incidencia;');

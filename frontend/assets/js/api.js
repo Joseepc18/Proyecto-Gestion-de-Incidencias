@@ -8,8 +8,7 @@ const API_BASE = "/api";
 // Clave única para el token (evita errores de tipeo).
 const TOKEN_KEY = "access_token";
 
-// ---- Helpers de token ----
-
+// Helpers de token
 function guardarToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -22,8 +21,7 @@ function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-// ---- Spinner global (solo aparece si la petición tarda más de 300ms) ----
-
+// Spinner global (solo aparece si la petición tarda más de 300ms)
 let peticionesActivas = 0;
 let mostrarTimer = null;
 let ocultarTimer = null;
