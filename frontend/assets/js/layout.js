@@ -86,6 +86,18 @@
     'aria-controls="adminSidebar" aria-expanded="true" aria-label="Mostrar/ocultar menú">' +
     "<span></span><span></span><span></span></button>" +
     '<div class="navbar-actions ms-auto">' +
+    '<div class="dropdown">' +
+    '<button class="icon-button" type="button" id="btnNotificaciones" ' +
+    'data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" ' +
+    'aria-label="Notificaciones" title="Notificaciones">' +
+    '<i class="bi bi-bell" aria-hidden="true"></i>' +
+    '<span class="notification-badge d-none" id="notifBadge">0</span></button>' +
+    '<div class="dropdown-menu dropdown-menu-end notification-menu p-0">' +
+    '<div class="notification-header">' +
+    '<span class="notification-title">Notificaciones</span>' +
+    '<button type="button" class="notification-clear d-none" id="btnMarcarTodas">' +
+    "Marcar todas</button></div>" +
+    '<div class="notification-list" id="notifLista"></div></div></div>' +
     '<button class="icon-button theme-toggle" type="button" data-theme-toggle ' +
     'aria-label="Cambiar tema" title="Cambiar tema">' +
     '<i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i></button>' +
