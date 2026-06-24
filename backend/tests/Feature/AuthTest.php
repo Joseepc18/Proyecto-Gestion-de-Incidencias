@@ -58,6 +58,13 @@ class AuthTest extends TestCase
         ])->assertStatus(401);
     }
 
+    public function test_ruta_protegida_sin_header_json_devuelve_401(): void
+    {
+        // Sin token y sin "Accept: application/json", la API debe dar 401 limpio
+        // (no un 500 por intentar redirigir a la ruta web 'login' inexistente).
+        $this->get('/api/user')->assertStatus(401);
+    }
+
     public function test_registro_rechaza_password_debil(): void
     {
         $this->postJson('/api/register', [

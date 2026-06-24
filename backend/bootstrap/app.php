@@ -1,9 +1,16 @@
 <?php
 
 use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Models\BitacoraError;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,14 +22,41 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Le indicamos a Laravel que confíe en todos los proxies (Cloudflare)
         $middleware->trustProxies(at: '*');
+
+        // Toda la API se trata como JSON (sin token → 401 limpio, no 500).
+        $middleware->api(prepend: [
+            ForceJsonResponse::class,
+        ]);
+
         $middleware->alias([
             'admin' => CheckAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Las rutas /api/* siempre responden JSON: así una ruta protegida sin token
-        // devuelve un 401 limpio en vez de un 500 (al buscar la ruta 'login' inexistente).
+        // Respaldo: cualquier error en /api/* se renderiza como JSON (no HTML).
         $exceptions->shouldRenderJsonWhen(
             fn ($request, $throwable) => $request->is('api/*') || $request->expectsJson()
         );
+
+        // Registro centralizado en bitacora_errores: cubre TODOS los controllers
+        // (no solo los que tienen try/catch). Solo errores reales de servidor:
+        // se ignoran validación (422), auth (401/403) y demás errores HTTP (404/429...).
+        $exceptions->report(function (Throwable $e) {
+            if ($e instanceof ValidationException
+                || $e instanceof AuthenticationException
+                || $e instanceof AuthorizationException
+                || $e instanceof HttpExceptionInterface) {
+                return;
+            }
+
+            try {
+                BitacoraError::create([
+                    'id_usuario' => auth()->id(),
+                    'tipo_error' => $e instanceof QueryException ? 'BASE_DATOS' : 'SERVIDOR',
+                    'descripcion_error' => substr(get_class($e).': '.$e->getMessage(), 0, 1000),
+                ]);
+            } catch (Throwable $ignorado) {
+                // El logging nunca debe romper la respuesta al usuario.
+            }
+        });
     })->create();
