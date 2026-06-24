@@ -18,7 +18,6 @@ class Incidencia extends Model
         'longitud_incidencia',
         'prioridad_incidencia',
         'estado_incidencia',
-        'foto_incidencia',
         'id_ciudad',
         'id_subtipo_incidencia',
         'id_usuario',

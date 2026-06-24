@@ -235,7 +235,13 @@ class IncidenciaController extends Controller
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {
-            $incidencia->update(['estado_incidencia' => $nuevo]);
+            // Dejamos el actor en la variable de sesión para que el trigger de
+            // historial registre quién ejecuta el cambio (no el dueño). El
+            // set_config(..., true) es local a la transacción que envuelve el update.
+            DB::transaction(function () use ($incidencia, $nuevo, $request) {
+                DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
+                $incidencia->update(['estado_incidencia' => $nuevo]);
+            });
         }
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));

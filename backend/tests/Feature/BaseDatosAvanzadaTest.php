@@ -17,20 +17,30 @@ class BaseDatosAvanzadaTest extends TestCase
 
     protected $seed = true;
 
-    // Trigger fn_registrar_cambio_estado: registra la transición en historial_estados.
+    // Trigger fn_registrar_cambio_estado: registra la transición en historial_estados,
+    // atribuyéndola a quien EJECUTA el cambio y no al dueño (H-02).
     public function test_cambiar_estado_registra_el_historial(): void
     {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        $dueno = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($dueno);
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
 
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertOk();
 
+        // El autor del cambio es el admin que lo ejecutó...
         $this->assertDatabaseHas('historial_estados', [
             'id_incidencia' => $incidencia->id_incidencia,
             'estado_anterior' => 'PENDIENTE',
             'estado_nuevo' => 'EN_PROCESO',
+            'id_usuario' => $admin->id,
+        ]);
+        // ...no el dueño de la incidencia.
+        $this->assertDatabaseMissing('historial_estados', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $dueno->id,
         ]);
     }
 
@@ -39,7 +49,8 @@ class BaseDatosAvanzadaTest extends TestCase
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
 
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'RESUELTO',
@@ -52,6 +63,13 @@ class BaseDatosAvanzadaTest extends TestCase
             'id_usuario' => $reportador->id,
             'id_incidencia' => $incidencia->id_incidencia,
             'tipo_notificacion' => 'CAMBIO_ESTADO',
+        ]);
+
+        // Al resolver vía procedimiento, el historial también atribuye al admin (H-02).
+        $this->assertDatabaseHas('historial_estados', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'estado_nuevo' => 'RESUELTO',
+            'id_usuario' => $admin->id,
         ]);
     }
 
