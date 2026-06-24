@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Detalle de mi incidencia - Sistema de Gestión de Incidencias"
+    />
+    <title>Detalle de incidencia | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="misIncidencias">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <!-- Encabezado -->
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-card-text" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
+                  <h1 class="h3 mb-1" id="detalleTitulo">Detalle de incidencia</h1>
+                  <p class="text-muted mb-0">Seguimiento de tu incidencia reportada.</p>
+                </div>
+              </div>
+              <div class="heading-actions d-flex gap-2">
+                <!-- Editar/Eliminar solo aparecen si es tuya y está PENDIENTE -->
+                <button class="btn btn-primary btn-sm d-none" type="button" id="btnEditar">
+                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                </button>
+                <button class="btn btn-outline-danger btn-sm d-none" type="button" id="btnEliminar">
+                  <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                </button>
+                <a
+                  class="btn btn-outline-secondary btn-sm"
+                  href="../misIncidencias/misIncidencias.html"
+                >
+                  <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al mapa
+                </a>
+              </div>
+            </div>
+
+            <!-- Spinner de carga -->
+            <div id="detalleCargando" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+
+            <!-- Contenido (oculto mientras carga) -->
+            <div id="detalleContenido" class="row g-3 d-none">
+              <!-- Columna izquierda: datos + mapa + evidencias -->
+              <div class="col-lg-7 d-flex flex-column gap-3">
+                <section class="panel">
+                  <div class="p-3 p-lg-4">
+                    <!-- Vista (solo lectura) -->
+                    <div id="datosVista">
+                      <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <span class="badge" id="detalleEstado"></span>
+                        <span class="badge" id="detallePrioridad"></span>
+                      </div>
+
+                      <h6 class="text-muted mb-1">Descripción</h6>
+                      <p id="detalleDescripcion" class="mb-3"></p>
+
+                      <div class="row g-3">
+                        <div class="col-sm-6">
+                          <h6 class="text-muted mb-1">Tipo / Subtipo</h6>
+                          <p id="detalleTipoSubtipo" class="mb-0 fw-semibold"></p>
+                        </div>
+                        <div class="col-sm-6">
+                          <h6 class="text-muted mb-1">Ubicación</h6>
+                          <p id="detalleUbicacion" class="mb-0 fw-semibold"></p>
+                        </div>
+                        <div class="col-sm-6">
+                          <h6 class="text-muted mb-1">Fecha de creación</h6>
+                          <p id="detalleFecha" class="mb-0"></p>
+                        </div>
+                        <div class="col-sm-6">
+                          <h6 class="text-muted mb-1">Responsable</h6>
+                          <p id="detalleResponsable" class="mb-0"></p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Edición (oculta hasta tocar "Editar") -->
+                    <form id="datosEdicion" class="row g-3 d-none needs-validation" novalidate>
+                      <div class="col-12">
+                        <label class="form-label" for="editTitulo"
+                          >Título <span class="text-danger">*</span></label
+                        >
+                        <input
+                          class="form-control"
+                          id="editTitulo"
+                          type="text"
+                          minlength="5"
+                          maxlength="255"
+                          required
+                        />
+                        <div class="invalid-feedback">Mínimo 5 caracteres.</div>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label" for="editDescripcion">Descripción</label>
+                        <textarea class="form-control" id="editDescripcion" rows="3"></textarea>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editTipo"
+                          >Tipo <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editTipo" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona un tipo.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editSubtipo"
+                          >Subtipo <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editSubtipo" required disabled>
+                          <option value="">Primero selecciona un tipo</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona un subtipo.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editCiudad"
+                          >Ciudad <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editCiudad" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona una ciudad.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editDireccion">Dirección</label>
+                        <input
+                          class="form-control"
+                          id="editDireccion"
+                          type="text"
+                          maxlength="500"
+                        />
+                      </div>
+                    </form>
+                  </div>
+                </section>
+
+                <section class="panel">
+                  <div class="p-3 p-lg-4">
+                    <h2 class="h6 mb-2"><i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa</h2>
+                    <!-- Controles solo en modo edición -->
+                    <div
+                      id="mapaEditControles"
+                      class="d-none justify-content-between align-items-center mb-2 flex-wrap gap-2"
+                    >
+                      <span class="text-muted small"
+                        >Haz clic en el mapa para cambiar el lugar.</span
+                      >
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        id="btnMiUbicacionEdit"
+                      >
+                        <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
+                      </button>
+                    </div>
+                    <div id="mapaDetalle" class="mapa-detalle"></div>
+                  </div>
+                </section>
+
+                <section class="panel" id="evidenciasBloque">
+                  <div class="p-3 p-lg-4">
+                    <h2 class="h6 mb-2"><i class="bi bi-images me-1"></i> Evidencias</h2>
+                    <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
+
+                    <!-- Zona para agregar fotos (solo en modo edición) -->
+                    <div id="evidenciasEdicion" class="d-none mt-2">
+                      <label class="dropzone-fotos" id="dropzoneFotos" for="editFotos">
+                        <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+                        <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
+                        <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
+                      </label>
+                      <input
+                        class="d-none"
+                        id="editFotos"
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        multiple
+                      />
+                      <div id="editFotosError" class="text-danger small mt-1 d-none"></div>
+                      <div id="editFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Barra de acciones de edición -->
+                <div id="edicionAcciones" class="d-none d-flex justify-content-end gap-2">
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    id="btnCancelarEdicion"
+                  >
+                    Cancelar
+                  </button>
+                  <button class="btn btn-primary btn-sm" type="button" id="btnGuardarEdicion">
+                    <span
+                      id="guardarSpinner"
+                      class="spinner-border spinner-border-sm d-none me-1"
+                    ></span>
+                    <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
+                  </button>
+                </div>
+              </div>
+
+              <!-- Columna derecha: chat -->
+              <div class="col-lg-5">
+                <section class="panel chat-panel">
+                  <div class="chat-cabecera">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    <span>Chat de la incidencia</span>
+                  </div>
+                  <div id="chatContenedor" class="chat-cuerpo"></div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- JS compartido -->
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/toast.js"></script>
+    <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/lightbox.js"></script>
+    <script src="../assets/js/layout.js"></script>
+    <script src="../assets/js/notificaciones.js"></script>
+    <!-- Compresión de fotos en el navegador -->
+    <script src="../assets/js/browser-image-compression.js"></script>
+    <!-- Mapa -->
+    <script src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script src="../assets/js/mapa.js"></script>
+    <!-- Chat reutilizable -->
+    <script src="../assets/js/chat.js"></script>
+    <!-- Lógica propia -->
+    <script src="detalle.js"></script>
+  </body>
+</html>

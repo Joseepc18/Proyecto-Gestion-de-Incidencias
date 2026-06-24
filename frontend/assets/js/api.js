@@ -139,15 +139,25 @@ async function apiFetch(endpoint, opciones = {}) {
 
 // Muestra/oculta los enlaces del menú según el rol del usuario.
 // Admin: tabla de incidencias + usuarios. Resto: "Mis incidencias".
+// El usuario normal no ve "Inicio": su pantalla de arranque es "Mis incidencias".
 function aplicarMenuRol(rol) {
   const esAdmin = rol === "admin";
+  const esNormal = rol === "normal";
 
   function mostrar(id, visible) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("d-none", !visible);
   }
 
+  mostrar("navInicio", !esNormal);
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
   mostrar("navMisIncidencias", !esAdmin);
+}
+
+// Devuelve la pantalla de arranque según el rol: el normal va a "Mis incidencias",
+// el resto (admin/técnico) al Inicio.
+/* exported inicioSegunRol */
+function inicioSegunRol(rol) {
+  return rol === "normal" ? "../misIncidencias/misIncidencias.html" : "../inicio/inicio.html";
 }

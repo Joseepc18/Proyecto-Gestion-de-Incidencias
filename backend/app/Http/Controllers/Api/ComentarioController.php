@@ -23,34 +23,40 @@ class ComentarioController extends Controller
         return $incidencia->id_usuario === $request->user()->id;
     }
 
-    private function esTecnicoAsignado(Request $request, Incidencia $incidencia): bool
+    // Solo el técnico RESPONSABLE participa del chat (el apoyo queda fuera).
+    private function esResponsable(Request $request, Incidencia $incidencia): bool
     {
-        return $incidencia->asignaciones()->where('id_usuario', $request->user()->id)->exists();
+        return $incidencia->asignaciones()
+            ->where('id_usuario', $request->user()->id)
+            ->where('rol_asignado', 'RESPONSABLE')
+            ->exists();
+    }
+
+    // El chat es entre el reportador, el admin y el técnico responsable.
+    private function puedeVerChat(Request $request, Incidencia $incidencia): bool
+    {
+        return $this->esAdmin($request)
+            || $this->esAutor($request, $incidencia)
+            || $this->esResponsable($request, $incidencia);
     }
 
     // Listar los comentarios de una incidencia (orden cronológico).
     public function listadoComentarios(Request $request, Incidencia $incidencia)
     {
-        // El "normal" solo ve los de sus propias incidencias
-        $user = $request->user();
-        if ($user->rol && $user->rol->nombre_rol === 'normal' && ! $this->esAutor($request, $incidencia)) {
+        if (! $this->puedeVerChat($request, $incidencia)) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
+        // Carga el rol del autor para etiquetar cada burbuja del chat.
         return response()->json(
-            $incidencia->comentarios()->with('usuario')->orderBy('created_at', 'asc')->get()
+            $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get()
         );
     }
 
     // Crear un comentario en una incidencia.
     public function crearComentario(Request $request, Incidencia $incidencia)
     {
-        // Pueden comentar: admin, autor o técnico asignado
-        $puede = $this->esAdmin($request)
-            || $this->esAutor($request, $incidencia)
-            || $this->esTecnicoAsignado($request, $incidencia);
-
-        if (! $puede) {
+        if (! $this->puedeVerChat($request, $incidencia)) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
@@ -65,7 +71,7 @@ class ComentarioController extends Controller
                 'comentario' => $datos['comentario'],
             ]);
 
-            return response()->json($comentario->load('usuario'), 201);
+            return response()->json($comentario->load('usuario.rol'), 201);
         } catch (\Exception $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,

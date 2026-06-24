@@ -49,7 +49,7 @@
             <p class="text-muted small mb-0 mt-2" id="listaInfo"></p>
           </section>
 
-          <!-- Tarjeta flotante derecha: detalle (compacto + expandible hacia arriba) -->
+          <!-- Tarjeta flotante derecha: resumen liviano + "Ver detalles" + chat -->
           <section class="mis-panel mis-detalle" id="detalleCard">
             <!-- Estado vacío -->
             <div id="detalleVacio" class="text-center text-muted p-3">
@@ -59,90 +59,54 @@
 
             <!-- Contenido (oculto hasta seleccionar) -->
             <div id="detalleContenido" class="d-none">
-              <!-- Cabecera compacta -->
-              <div class="mis-detalle-head">
-                <img id="detalleImagen" class="mis-detalle-img d-none" alt="Evidencia" />
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                  <div>
-                    <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
-                    <h1 class="h6 mb-1" id="detalleTitulo"></h1>
-                  </div>
-                  <span class="badge" id="detalleEstado"></span>
+              <img id="detalleImagen" class="mis-detalle-img d-none" alt="Evidencia" />
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
+                  <h1 class="h6 mb-1" id="detalleTitulo"></h1>
                 </div>
-
-                <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
-                  <span class="badge" id="detallePrioridad"></span>
-                  <span class="text-muted small" id="detalleFecha"></span>
-                </div>
-
-                <p class="small text-muted mb-0 mt-2" id="detalleUbicacion"></p>
-
-                <div class="d-flex gap-2 mt-2">
-                  <button
-                    class="btn btn-outline-secondary btn-sm"
-                    type="button"
-                    id="btnExpandir"
-                    aria-expanded="false"
-                  >
-                    <i class="bi bi-chevron-up me-1" id="btnExpandirIcono"></i>
-                    <span id="btnExpandirTexto">Expandir detalles</span>
-                  </button>
-                </div>
-
-                <!-- Aviso cuando ya no se puede editar -->
-                <div id="avisoEdicion" class="alert alert-info py-1 px-2 small mt-2 mb-0 d-none">
-                  <i class="bi bi-info-circle me-1"></i>
-                  Ya está en proceso, no puedes editarla.
-                  <a href="#" id="linkComentarios" class="alert-link">Usa los comentarios.</a>
-                </div>
+                <span class="badge" id="detalleEstado"></span>
               </div>
 
-              <!-- Sección expandible -->
-              <div id="detalleExpandido" class="mis-detalle-expandido d-none">
-                <div class="mis-detalle-seccion">
-                  <h3 class="h6 text-primary mb-2">Información General</h3>
-                  <h6 class="text-muted mb-1 small">Descripción</h6>
-                  <p id="detalleDescripcion" class="mb-2 small"></p>
-                  <h6 class="text-muted mb-1 small">Tipo</h6>
-                  <p id="detalleTipo" class="mb-2 small fw-semibold"></p>
-                  <h6 class="text-muted mb-1 small">Subtipo</h6>
-                  <p id="detalleSubtipo" class="mb-0 small fw-semibold"></p>
-                </div>
+              <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
+                <span class="badge" id="detallePrioridad"></span>
+                <span class="text-muted small" id="detalleFecha"></span>
+              </div>
 
-                <div class="mis-detalle-seccion">
-                  <h3 class="h6 text-primary mb-2">Responsables</h3>
-                  <div id="misResponsables"></div>
-                </div>
+              <p class="small text-muted mb-0 mt-2" id="detalleUbicacion"></p>
 
-                <div class="mis-detalle-seccion" id="detalleEvidenciasBloque">
-                  <h3 class="h6 text-primary mb-2">Evidencias</h3>
-                  <div id="detalleEvidencias" class="d-flex gap-2 flex-wrap"></div>
-                </div>
+              <div class="d-flex gap-2 mt-3">
+                <a class="btn btn-primary btn-sm flex-fill" id="btnVerDetalles" href="#">
+                  <i class="bi bi-eye me-1"></i> Ver detalles
+                </a>
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  type="button"
+                  id="btnAbrirChat"
+                  aria-label="Abrir chat"
+                >
+                  <i class="bi bi-chat-dots"></i>
+                </button>
+              </div>
 
-                <div class="mis-detalle-seccion">
-                  <h3 class="h6 text-primary mb-2">Seguimiento</h3>
-                  <div id="detalleComentarios" class="d-flex flex-column gap-2 mb-2"></div>
-                  <form id="formComentario" class="d-flex flex-column gap-2">
-                    <textarea
-                      class="form-control form-control-sm"
-                      id="nuevoComentario"
-                      rows="2"
-                      placeholder="Escribe un comentario..."
-                      required
-                    ></textarea>
-                    <div class="d-flex justify-content-end">
-                      <button class="btn btn-primary btn-sm" type="submit" id="btnEnviarComentario">
-                        <span
-                          id="comentarioSpinner"
-                          class="spinner-border spinner-border-sm d-none me-1"
-                        ></span>
-                        <i class="bi bi-send me-1"></i> Enviar
-                      </button>
-                    </div>
-                  </form>
-                </div>
+              <!-- Aviso cuando ya no se puede editar -->
+              <div id="avisoEdicion" class="alert alert-info py-1 px-2 small mt-2 mb-0 d-none">
+                <i class="bi bi-info-circle me-1"></i>
+                Ya está en proceso, no puedes editarla. Usa el chat para dar seguimiento.
               </div>
             </div>
+          </section>
+
+          <!-- Panel de chat flotante (se abre desde la tarjeta) -->
+          <section class="mis-panel mis-chat-panel d-none" id="chatPanel">
+            <div class="chat-cabecera">
+              <i class="bi bi-chat-dots me-2"></i>
+              <span id="chatPanelTitulo">Chat</span>
+              <button class="btn-cerrar-chat" id="btnCerrarChat" type="button" aria-label="Cerrar">
+                <i class="bi bi-chevron-down"></i>
+              </button>
+            </div>
+            <div id="chatContenedorFlotante" class="chat-cuerpo"></div>
           </section>
         </main>
       </div>
@@ -160,6 +124,7 @@
     <!-- Mapa -->
     <script src="../assets/vendors/leaflet/leaflet.js"></script>
     <script src="../assets/js/mapa.js"></script>
+    <script src="../assets/js/chat.js"></script>
     <!-- Lógica propia -->
     <script src="misIncidencias.js"></script>
   </body>

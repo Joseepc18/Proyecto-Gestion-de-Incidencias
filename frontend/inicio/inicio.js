@@ -12,6 +12,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Cargar el usuario autenticado y mostrar su nombre.
   try {
     const usuario = await apiFetch("/user");
+
+    // El usuario normal no tiene Inicio: su pantalla es "Mis incidencias".
+    if (usuario.rol && usuario.rol.nombre_rol === "normal") {
+      window.location.replace("../misIncidencias/misIncidencias.html");
+      return;
+    }
+
     document.getElementById("nombreUsuario").textContent = usuario.name;
     document.getElementById("saludoNombre").textContent = usuario.name;
 

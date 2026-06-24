@@ -1,6 +1,6 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken, mostrarToast, toastFlash */
+/* global apiFetch, guardarToken, mostrarToast, toastFlash, inicioSegunRol */
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("loginForm");
@@ -36,10 +36,11 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({ email, password }),
         sinSpinner: true,
       });
-      // Éxito: guardar token y entrar al inicio
+      // Éxito: guardar token y entrar a la pantalla de arranque según el rol
       guardarToken(data.access_token);
+      const usuario = await apiFetch("/user", { sinSpinner: true });
       toastFlash("Bienvenido de nuevo", "success");
-      window.location.href = "../inicio/inicio.html";
+      window.location.href = inicioSegunRol(usuario.rol ? usuario.rol.nombre_rol : "");
     } catch (error) {
       // Mostrar error del backend
       errorBox.textContent = error.message;

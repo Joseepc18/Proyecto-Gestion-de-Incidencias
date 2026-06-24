@@ -1,6 +1,6 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, confirmar */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
@@ -72,71 +72,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     timerBusqueda = setTimeout(cargarLista, 400);
   });
 
-  // Enlace del aviso: lleva a la caja de comentarios
-  document.getElementById("linkComentarios").addEventListener("click", function (e) {
-    e.preventDefault();
-    const textarea = document.getElementById("nuevoComentario");
-    textarea.scrollIntoView({ behavior: "smooth", block: "center" });
-    textarea.focus();
-  });
-
-  // Enviar un comentario nuevo
-  document.getElementById("formComentario").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    if (!incidenciaSeleccionada) return;
-
-    const textarea = document.getElementById("nuevoComentario");
-    const btn = document.getElementById("btnEnviarComentario");
-    const spinner = document.getElementById("comentarioSpinner");
-    const texto = textarea.value.trim();
-    if (!texto) return;
-
-    btn.disabled = true;
-    spinner.classList.remove("d-none");
-
-    try {
-      await apiFetch("/incidencias/" + incidenciaSeleccionada + "/comentarios", {
-        method: "POST",
-        body: JSON.stringify({ comentario: texto }),
-      });
-      textarea.value = "";
-      await cargarComentarios(incidenciaSeleccionada);
-      mostrarToast("Comentario enviado", "success");
-    } catch (error) {
-      mostrarToast("Error al enviar el comentario: " + error.message, "error");
-    } finally {
-      btn.disabled = false;
-      spinner.classList.add("d-none");
-    }
-  });
-
   // Mapa de fondo
   mapa = crearMapaIncidencias("mapaMisIncidencias");
   setTimeout(function () {
     mapa.map.invalidateSize();
   }, 200);
 
-  // Botón "Expandir detalles" (despliega la sección de abajo)
-  document.getElementById("btnExpandir").addEventListener("click", function () {
-    const exp = document.getElementById("detalleExpandido");
-    const oculto = exp.classList.toggle("d-none");
-    this.setAttribute("aria-expanded", String(!oculto));
-    document.getElementById("btnExpandirIcono").className =
-      "bi me-1 " + (oculto ? "bi-chevron-up" : "bi-chevron-down");
-    document.getElementById("btnExpandirTexto").textContent = oculto
-      ? "Expandir detalles"
-      : "Ocultar detalles";
-
-    // La imagen compacta se oculta al expandir (la galería ya está abajo)
-    const imgCompacta = document.getElementById("detalleImagen");
-    if (imgCompacta.getAttribute("src")) {
-      imgCompacta.classList.toggle("d-none", !oculto);
-    }
+  // Abrir el chat flotante de la incidencia seleccionada
+  document.getElementById("btnAbrirChat").addEventListener("click", abrirChat);
+  document.getElementById("btnCerrarChat").addEventListener("click", function () {
+    document.getElementById("chatPanel").classList.add("d-none");
   });
 
   // Arranque
   cargarLista();
 });
+
+// Abre el panel de chat flotante para la incidencia seleccionada.
+function abrirChat() {
+  if (!incidenciaSeleccionada) return;
+  document.getElementById("chatPanelTitulo").textContent =
+    "Chat · " + codigoIncidencia(incidenciaSeleccionada);
+  document.getElementById("chatPanel").classList.remove("d-none");
+  crearChat("chatContenedorFlotante", incidenciaSeleccionada, usuarioActual);
+}
 
 // Paso 2 — Trae las incidencias del usuario y pinta las tarjetas en #listaIncidencias.
 async function cargarLista() {
@@ -168,21 +127,6 @@ async function cargarLista() {
         };
         const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
         const id = inc.id_incidencia;
-        // Solo se puede editar/eliminar mientras está PENDIENTE
-        const puede = inc.estado_incidencia === "PENDIENTE";
-
-        const itemEditar =
-          '<li><a class="dropdown-item' +
-          (puede ? "" : " text-muted") +
-          '" href="#" onclick="' +
-          (puede ? "editarMiIncidencia(" + id + ")" : "avisoNoModificable('editar')") +
-          '; return false;"><i class="bi bi-pencil-square me-2"></i>Editar</a></li>';
-        const itemEliminar =
-          '<li><a class="dropdown-item' +
-          (puede ? " text-danger" : " text-muted") +
-          '" href="#" onclick="' +
-          (puede ? "eliminarMiIncidencia(" + id + ")" : "avisoNoModificable('eliminar')") +
-          '; return false;"><i class="bi bi-trash me-2"></i>Eliminar</a></li>';
 
         return (
           '<div class="incidencia-card" data-id="' +
@@ -194,7 +138,6 @@ async function cargarLista() {
           '<span class="card-codigo">' +
           codigoIncidencia(id) +
           "</span>" +
-          '<div class="d-flex align-items-center gap-1">' +
           '<span class="badge ' +
           est.clase +
           '"><i class="bi ' +
@@ -202,14 +145,6 @@ async function cargarLista() {
           ' me-1"></i>' +
           est.texto +
           "</span>" +
-          '<div class="dropdown" onclick="event.stopPropagation()">' +
-          '<button class="btn btn-light btn-sm py-0 px-1" data-bs-toggle="dropdown" aria-expanded="false">' +
-          '<i class="bi bi-three-dots-vertical"></i></button>' +
-          '<ul class="dropdown-menu dropdown-menu-end">' +
-          itemEditar +
-          itemEliminar +
-          "</ul></div>" +
-          "</div>" +
           "</div>" +
           '<p class="card-titulo">' +
           inc.nombre_incidencia +
@@ -249,54 +184,18 @@ async function cargarLista() {
   }
 }
 
-// Acciones del menú de 3 puntos de cada tarjeta.
-
-// eslint-disable-next-line no-unused-vars
-function editarMiIncidencia(id) {
-  window.location.href = "../registrarIncidencias/registrar.html?id=" + id;
-}
-
-// Aviso cuando la incidencia ya no es PENDIENTE (no se puede editar/eliminar).
-// eslint-disable-next-line no-unused-vars
-function avisoNoModificable(accion) {
-  mostrarToast("No puedes " + accion + " esta incidencia porque ya está en proceso.", "warning");
-}
-
-// eslint-disable-next-line no-unused-vars
-async function eliminarMiIncidencia(id) {
-  const ok = await confirmar({
-    titulo: "Eliminar incidencia",
-    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
-    textoConfirmar: "Eliminar",
-    peligro: true,
-  });
-  if (!ok) return;
-
-  try {
-    await apiFetch("/incidencias/" + id, { method: "DELETE" });
-    mostrarToast("Incidencia eliminada", "success");
-    // Limpiar el detalle si la borrada estaba seleccionada
-    incidenciaSeleccionada = null;
-    document.getElementById("detalleContenido").classList.add("d-none");
-    document.getElementById("detalleVacio").classList.remove("d-none");
-    cargarLista();
-  } catch (error) {
-    mostrarToast("Error al eliminar: " + error.message, "error");
-  }
-}
-
-// Paso 3 — Carga el detalle de una incidencia y lo muestra en el panel derecho.
+// Paso 3 — Carga el resumen liviano de la incidencia en la tarjeta derecha.
+// El detalle completo y el chat viven en la página "Ver detalles".
 async function seleccionarIncidencia(id) {
   // Marcar la tarjeta activa
   document.querySelectorAll(".incidencia-card").forEach(function (card) {
     card.classList.toggle("activa", Number(card.dataset.id) === id);
   });
 
-  try {
-    // Lanzar comentarios y responsables en paralelo con el detalle → un solo spinner
-    cargarComentarios(id);
-    cargarResponsables(id);
+  // Al cambiar de incidencia, cerrar el chat (era de otra incidencia).
+  document.getElementById("chatPanel").classList.add("d-none");
 
+  try {
     const inc = await apiFetch("/incidencias/" + id);
     incidenciaSeleccionada = id;
 
@@ -331,38 +230,12 @@ async function seleccionarIncidencia(id) {
     spanPri.className = "badge " + pri.clase;
     spanPri.innerHTML = '<i class="bi ' + pri.icono + ' me-1"></i>' + pri.texto;
 
-    // Información general
-    document.getElementById("detalleDescripcion").textContent =
-      inc.descripcion_incidencia || "Sin descripción.";
-    document.getElementById("detalleTipo").textContent =
-      inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
-    document.getElementById("detalleSubtipo").textContent = inc.subtipo
-      ? inc.subtipo.nombre_subtipo_incidencia
-      : "—";
-
+    // Ubicación
     const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ciudad";
     const direccion = inc.direccion_incidencia ? " — " + inc.direccion_incidencia : "";
     document.getElementById("detalleUbicacion").textContent = ciudad + direccion;
 
-    // Evidencias (fotos reales del backend)
-    const contenedorFotos = document.getElementById("detalleEvidencias");
-    if (inc.evidencias && inc.evidencias.length > 0) {
-      contenedorFotos.innerHTML = inc.evidencias
-        .map(function (ev) {
-          return (
-            '<img src="/storage/' +
-            ev.url_evidencia +
-            '" class="evidencia-foto rounded" data-lightbox="/storage/' +
-            ev.url_evidencia +
-            '" style="width:110px;height:110px;object-fit:cover" alt="Evidencia" />'
-          );
-        })
-        .join("");
-    } else {
-      contenedorFotos.innerHTML = '<p class="text-muted small mb-0">Sin evidencias cargadas.</p>';
-    }
-
-    // Imagen destacada de la tarjeta compacta (primera evidencia)
+    // Imagen destacada (primera evidencia)
     const imgCompacta = document.getElementById("detalleImagen");
     if (inc.evidencias && inc.evidencias.length > 0) {
       imgCompacta.src = "/storage/" + inc.evidencias[0].url_evidencia;
@@ -372,97 +245,16 @@ async function seleccionarIncidencia(id) {
       imgCompacta.classList.add("d-none");
     }
 
+    // "Ver detalles" → página de detalle del usuario
+    document.getElementById("btnVerDetalles").href = "../detalleMiIncidencia/detalle.html?id=" + id;
+
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
-
-    // Colapsar la sección expandible al cambiar de incidencia
-    document.getElementById("detalleExpandido").classList.add("d-none");
-    document.getElementById("btnExpandir").setAttribute("aria-expanded", "false");
-    document.getElementById("btnExpandirIcono").className = "bi bi-chevron-up me-1";
-    document.getElementById("btnExpandirTexto").textContent = "Expandir detalles";
 
     // Enfocar el pin en el mapa
     if (mapa) mapa.enfocar(id);
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
-  }
-}
-
-// Trae y pinta los comentarios de una incidencia.
-async function cargarComentarios(id) {
-  const contenedor = document.getElementById("detalleComentarios");
-
-  try {
-    const comentarios = await apiFetch("/incidencias/" + id + "/comentarios");
-
-    if (comentarios.length === 0) {
-      contenedor.innerHTML =
-        '<p class="text-muted small mb-0">Aún no hay comentarios. Sé el primero.</p>';
-      return;
-    }
-
-    contenedor.innerHTML = comentarios
-      .map(function (c) {
-        const autor = c.usuario ? c.usuario.name : "Usuario";
-        const fecha = new Date(c.created_at).toLocaleString("es-EC");
-        return (
-          '<div class="comentario-item mb-2">' +
-          '<div class="d-flex justify-content-between align-items-center mb-1">' +
-          '<span class="fw-semibold small">' +
-          autor +
-          "</span>" +
-          '<span class="comentario-meta small">' +
-          fecha +
-          "</span>" +
-          "</div>" +
-          '<p class="mb-0 small">' +
-          c.comentario +
-          "</p>" +
-          "</div>"
-        );
-      })
-      .join("");
-  } catch (error) {
-    contenedor.innerHTML =
-      '<p class="text-danger small mb-0">No se pudieron cargar los comentarios: ' +
-      error.message +
-      "</p>";
-  }
-}
-
-// Trae y muestra los técnicos asignados (solo lectura para el usuario).
-async function cargarResponsables(id) {
-  const cont = document.getElementById("misResponsables");
-
-  try {
-    const asignaciones = await apiFetch("/incidencias/" + id + "/asignaciones");
-
-    if (asignaciones.length === 0) {
-      cont.innerHTML = '<p class="text-muted small mb-0">Aún no hay técnicos asignados.</p>';
-      return;
-    }
-
-    cont.innerHTML = "";
-    asignaciones.forEach(function (asig) {
-      const fila = document.createElement("div");
-      fila.className = "d-flex align-items-center gap-2 mb-2";
-
-      const badge = document.createElement("span");
-      badge.className =
-        "badge " + (asig.rol_asignado === "RESPONSABLE" ? "text-bg-primary" : "text-bg-secondary");
-      badge.textContent = asig.rol_asignado === "RESPONSABLE" ? "Responsable" : "Apoyo";
-      fila.appendChild(badge);
-
-      const nombre = document.createElement("span");
-      nombre.className = "small";
-      nombre.textContent = asig.usuario ? asig.usuario.name : "—";
-      fila.appendChild(nombre);
-
-      cont.appendChild(fila);
-    });
-  } catch {
-    cont.innerHTML =
-      '<p class="text-danger small mb-0">No se pudieron cargar los responsables.</p>';
   }
 }

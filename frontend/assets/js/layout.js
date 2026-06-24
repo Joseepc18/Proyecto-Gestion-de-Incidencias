@@ -11,7 +11,13 @@
 
   // Enlaces del menú. "oculto" = empieza en d-none y lo revela aplicarMenuRol según el rol.
   const enlaces = [
-    { page: "inicio", href: "../inicio/inicio.html", icon: "bi-speedometer2", texto: "Inicio" },
+    {
+      page: "inicio",
+      id: "navInicio",
+      href: "../inicio/inicio.html",
+      icon: "bi-speedometer2",
+      texto: "Inicio",
+    },
     {
       page: "incidencias",
       id: "navIncidencias",
