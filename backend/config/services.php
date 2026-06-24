@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Login con Google (OAuth2 vía Socialite). Las llaves van en el .env.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

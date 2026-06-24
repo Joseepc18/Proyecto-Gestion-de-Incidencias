@@ -1,12 +1,18 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken, toastFlash */
+/* global apiFetch, guardarToken, mostrarToast, toastFlash */
 
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("loginForm");
   const errorBox = document.getElementById("loginError");
   const boton = document.getElementById("loginSubmit");
   const spinner = document.getElementById("loginSpinner");
+
+  // Si Google rebotó al usuario con un error, avisarle.
+  if (new URLSearchParams(window.location.search).get("error") === "google") {
+    mostrarToast("No se pudo iniciar sesión con Google. Intenta de nuevo.", "error");
+    window.history.replaceState({}, "", window.location.pathname);
+  }
 
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();

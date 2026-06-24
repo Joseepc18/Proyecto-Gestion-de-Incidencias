@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
+// Login con Google (OAuth) — navegación del navegador, devuelven redirecciones
+Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+
 // Rutas protegidas (requieren token Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
     // Apis de usuario
