@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActualizarUsuarioRequest;
+use App\Http\Requests\CrearUsuarioRequest;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -25,14 +27,9 @@ class UserController extends Controller
     }
 
     // Crear un usuario con su rol (el admin crea técnicos, otros admins, etc.).
-    public function crear(Request $request)
+    public function crear(CrearUsuarioRequest $request)
     {
-        $datos = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'id_rol' => 'required|exists:roles,id_rol',
-        ]);
+        $datos = $request->validated();
 
         $user = User::create([
             'name' => $datos['name'],
@@ -45,14 +42,9 @@ class UserController extends Controller
     }
 
     // Actualizar un usuario (nombre, correo, rol y, opcionalmente, contraseña).
-    public function actualizar(Request $request, User $usuario)
+    public function actualizar(ActualizarUsuarioRequest $request, User $usuario)
     {
-        $datos = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$usuario->id,
-            'id_rol' => 'required|exists:roles,id_rol',
-            'password' => 'nullable|string|min:8',
-        ]);
+        $datos = $request->validated();
 
         $usuario->name = $datos['name'];
         $usuario->email = $datos['email'];

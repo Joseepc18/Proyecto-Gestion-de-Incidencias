@@ -39,6 +39,22 @@ class User extends Authenticatable
         return $this->belongsTo(Rol::class, 'id_rol', 'id_rol');
     }
 
+    // Atajos de rol: centralizan el chequeo repetido nombre_rol === 'x'.
+    public function esAdmin(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === 'admin';
+    }
+
+    public function esTecnico(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === 'tecnico';
+    }
+
+    public function esNormal(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === 'normal';
+    }
+
     public function incidencias()
     {
         return $this->hasMany(Incidencia::class, 'id_usuario', 'id');

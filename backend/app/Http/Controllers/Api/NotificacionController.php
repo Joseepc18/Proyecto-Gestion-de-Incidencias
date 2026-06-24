@@ -32,9 +32,7 @@ class NotificacionController extends Controller
     // Marcar una notificación como leída (solo si es del usuario).
     public function marcarLeida(Request $request, Notificacion $notificacion)
     {
-        if ($notificacion->id_usuario !== $request->user()->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
+        $this->authorize('marcar', $notificacion);
 
         try {
             $notificacion->update([

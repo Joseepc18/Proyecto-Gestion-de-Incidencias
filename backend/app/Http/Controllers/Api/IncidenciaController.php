@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActualizarIncidenciaRequest;
+use App\Http\Requests\CambiarEstadoRequest;
+use App\Http\Requests\CrearIncidenciaRequest;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
@@ -11,22 +14,6 @@ use Illuminate\Support\Facades\Storage;
 
 class IncidenciaController extends Controller
 {
-    // Helpers de permisos
-
-    private function esAdmin(Request $request): bool
-    {
-        $user = $request->user();
-
-        return $user->rol && $user->rol->nombre_rol === 'admin';
-    }
-
-    private function esTecnicoAsignado(Request $request, Incidencia $incidencia): bool
-    {
-        return $incidencia->asignaciones()->where('id_usuario', $request->user()->id)->exists();
-    }
-
-    // Endpoints
-
     public function listadoIncidencias(Request $request)
     {
         $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
@@ -52,31 +39,18 @@ class IncidenciaController extends Controller
         // Visibilidad por rol: normal ve solo las suyas; técnico solo donde está asignado
         $user = $request->user();
 
-        if ($user->rol && $user->rol->nombre_rol === 'normal') {
+        if ($user->esNormal()) {
             $query->where('id_usuario', $user->id);
-        } elseif ($user->rol && $user->rol->nombre_rol === 'tecnico') {
+        } elseif ($user->esTecnico()) {
             $query->whereHas('asignaciones', fn ($q) => $q->where('id_usuario', $user->id));
         }
 
         return response()->json($query->paginate(10));
     }
 
-    public function crearIncidencia(Request $request)
+    public function crearIncidencia(CrearIncidenciaRequest $request)
     {
-        // between de lat/long = rango geográfico de Ecuador
-        $datos = $request->validate([
-            'nombre_incidencia' => 'required|string|min:5|max:255',
-            'descripcion_incidencia' => 'nullable|string',
-            'direccion_incidencia' => 'nullable|string|max:500',
-            'latitud_incidencia' => 'required|numeric|between:-5.5,1.8',
-            'longitud_incidencia' => 'required|numeric|between:-82.0,-74.5',
-            'prioridad_incidencia' => 'required|in:ALTA,MEDIA,BAJA',
-            'id_ciudad' => 'required|exists:ciudades,id_ciudad',
-            'id_subtipo_incidencia' => 'required|exists:subtipos_incidencia,id_subtipo_incidencia',
-            'fotos' => 'nullable|array|max:3',
-            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:2048',
-        ]);
-
+        $datos = $request->validated();
         $datos['id_usuario'] = $request->user()->id;
         unset($datos['fotos']);
 
@@ -110,56 +84,24 @@ class IncidenciaController extends Controller
 
     public function verIncidencia(Request $request, Incidencia $incidencia)
     {
-        // El "normal" solo puede ver las suyas
-        $user = $request->user();
-        if ($user->rol && $user->rol->nombre_rol === 'normal' && $incidencia->id_usuario !== $user->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
+        $this->authorize('ver', $incidencia);
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']));
     }
 
-    public function actualizarIncidencia(Request $request, Incidencia $incidencia)
+    public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
-        // Pueden editar: admin, autor o técnico asignado
-        $esAdmin = $this->esAdmin($request);
-        $esAutor = $incidencia->id_usuario === $request->user()->id;
-        $esTecnico = $this->esTecnicoAsignado($request, $incidencia);
+        // La Policy permite: admin/técnico asignado siempre; el autor solo si está PENDIENTE.
+        $this->authorize('actualizar', $incidencia);
 
-        if (! $esAdmin && ! $esAutor && ! $esTecnico) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
-
-        // El autor (ciudadano) solo puede editar mientras está PENDIENTE.
-        // Cuando el admin la pone EN_PROCESO o RESUELTO, ya no puede modificarla.
-        if ($esAutor && ! $esAdmin && ! $esTecnico && $incidencia->estado_incidencia !== 'PENDIENTE') {
-            return response()->json([
-                'message' => 'No puedes editar esta incidencia porque ya está en proceso. Usa los comentarios para comunicarte con el equipo.',
-            ], 403);
-        }
-
-        $datos = $request->validate([
-            'nombre_incidencia' => 'sometimes|string|min:5|max:255',
-            'descripcion_incidencia' => 'sometimes|nullable|string',
-            'direccion_incidencia' => 'sometimes|nullable|string|max:500',
-            'latitud_incidencia' => 'sometimes|numeric|between:-5.5,1.8',
-            'longitud_incidencia' => 'sometimes|numeric|between:-82.0,-74.5',
-            'prioridad_incidencia' => 'sometimes|in:ALTA,MEDIA,BAJA',
-            'id_ciudad' => 'sometimes|exists:ciudades,id_ciudad',
-            'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
-        ]);
-
-        $incidencia->update($datos);
+        $incidencia->update($request->validated());
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 
     public function eliminarIncidencia(Request $request, Incidencia $incidencia)
     {
-        // Eliminar: solo admin o autor
-        if (! $this->esAdmin($request) && $incidencia->id_usuario !== $request->user()->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
+        $this->authorize('eliminar', $incidencia);
 
         try {
             // Guardamos las rutas antes de borrar (las evidencias se van por CASCADE)
@@ -192,11 +134,7 @@ class IncidenciaController extends Controller
 
     public function historialIncidencia(Request $request, Incidencia $incidencia)
     {
-        // El usuario normal solo puede ver sus propias incidencias
-        $user = $request->user();
-        if ($user->rol && $user->rol->nombre_rol === 'normal' && $incidencia->id_usuario !== $user->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
+        $this->authorize('verHistorial', $incidencia);
 
         return response()->json(
             $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
@@ -204,19 +142,16 @@ class IncidenciaController extends Controller
     }
 
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
-    public function cambiarEstado(Request $request, Incidencia $incidencia)
+    public function cambiarEstado(CambiarEstadoRequest $request, Incidencia $incidencia)
     {
-        $request->validate([
-            'estado_incidencia' => 'required|in:PENDIENTE,EN_PROCESO,RESUELTO',
-        ]);
+        // La Policy permite solo a admin o técnico asignado.
+        $this->authorize('cambiarEstado', $incidencia);
 
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
-        if ($this->esAdmin($request)) {
-            // Admin: cualquier cambio, sin restricción
-        } elseif ($this->esTecnicoAsignado($request, $incidencia)) {
-            // Técnico: solo la transición "siguiente" permitida (avanzar)
+        // El admin cambia libremente; el técnico solo puede avanzar al estado siguiente.
+        if (! $request->user()->esAdmin()) {
             $siguientePermitido = [
                 'PENDIENTE' => 'EN_PROCESO',
                 'EN_PROCESO' => 'RESUELTO',
@@ -224,8 +159,6 @@ class IncidenciaController extends Controller
             if (($siguientePermitido[$actual] ?? null) !== $nuevo) {
                 return response()->json(['message' => 'Transición de estado no permitida'], 422);
             }
-        } else {
-            return response()->json(['message' => 'No autorizado'], 403);
         }
 
         // Al marcar RESUELTO usamos el procedimiento (crea las notificaciones al
