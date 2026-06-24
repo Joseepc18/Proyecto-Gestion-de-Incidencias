@@ -25,8 +25,7 @@ class ComentarioController extends Controller
     // Crear un comentario en una incidencia.
     public function crearComentario(CrearComentarioRequest $request, Incidencia $incidencia)
     {
-        $this->authorize('verChat', $incidencia);
-
+        // La autorización (chat: reportador, admin o responsable) la resuelve el FormRequest.
         $datos = $request->validated();
 
         try {

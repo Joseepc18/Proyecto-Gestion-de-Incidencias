@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class CrearComentarioRequest extends FormRequest
 {
-    // Quién puede comentar (chat) lo decide la IncidenciaPolicy en el controller.
+    // Autoriza antes de validar: reportador, admin o técnico responsable (chat).
     public function authorize(): bool
     {
+        Gate::authorize('verChat', $this->route('incidencia'));
+
         return true;
     }
 

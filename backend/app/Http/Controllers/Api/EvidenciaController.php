@@ -14,8 +14,7 @@ class EvidenciaController extends Controller
     // Agregar fotos a una incidencia (3 de REPORTE, 1 de RESOLUCION).
     public function subir(SubirEvidenciaRequest $request, Incidencia $incidencia)
     {
-        $this->authorize('subirEvidencia', $incidencia);
-
+        // La autorización (admin, autor o técnico asignado) la resuelve el FormRequest.
         $user = $request->user();
         $tipo = $request->input('tipo_evidencia', 'REPORTE');
         $limite = $tipo === 'RESOLUCION' ? 1 : 3;

@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class ActualizarIncidenciaRequest extends FormRequest
 {
-    // Quién puede editar lo decide la IncidenciaPolicy en el controller.
+    // Autoriza antes de validar: admin/técnico asignado siempre; el autor solo si PENDIENTE.
     public function authorize(): bool
     {
+        Gate::authorize('actualizar', $this->route('incidencia'));
+
         return true;
     }
 

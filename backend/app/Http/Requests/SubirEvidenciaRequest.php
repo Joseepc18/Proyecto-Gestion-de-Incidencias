@@ -3,12 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class SubirEvidenciaRequest extends FormRequest
 {
-    // Quién puede subir evidencias lo decide la IncidenciaPolicy en el controller.
+    // Autoriza antes de validar: admin, autor o técnico asignado.
     public function authorize(): bool
     {
+        Gate::authorize('subirEvidencia', $this->route('incidencia'));
+
         return true;
     }
 

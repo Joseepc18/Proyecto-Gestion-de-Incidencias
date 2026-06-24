@@ -91,9 +91,7 @@ class IncidenciaController extends Controller
 
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
-        // La Policy permite: admin/técnico asignado siempre; el autor solo si está PENDIENTE.
-        $this->authorize('actualizar', $incidencia);
-
+        // La autorización (IncidenciaPolicy) la resuelve el FormRequest antes de validar.
         $incidencia->update($request->validated());
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
@@ -144,9 +142,7 @@ class IncidenciaController extends Controller
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
     public function cambiarEstado(CambiarEstadoRequest $request, Incidencia $incidencia)
     {
-        // La Policy permite solo a admin o técnico asignado.
-        $this->authorize('cambiarEstado', $incidencia);
-
+        // La autorización (solo admin o técnico asignado) la resuelve el FormRequest.
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
