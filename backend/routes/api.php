@@ -20,8 +20,11 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
-// Rutas protegidas (requieren token Sanctum)
-Route::middleware('auth:sanctum')->group(function () {
+// Rutas protegidas (requieren token Sanctum).
+// throttle:120,1 = máx. 120 peticiones por minuto y POR USUARIO (autenticado,
+// Laravel keyea por id, no por IP → no se pisan entre usuarios tras Cloudflare).
+// Holgado para el polling de la campana (cada 30s = 2/min) + navegación normal.
+Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario
     Route::get('/user', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);

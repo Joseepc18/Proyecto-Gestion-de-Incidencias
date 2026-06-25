@@ -7,6 +7,8 @@ use App\Models\Comentario;
 use App\Models\Evidencia;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -135,6 +137,152 @@ class BaseDatosAvanzadaTest extends TestCase
             'id_usuario' => $reportador->id,
             'id_incidencia' => $incidencia->id_incidencia,
             'tipo_notificacion' => 'COMENTARIO',
+        ]);
+    }
+
+    // #1 — Trigger fn_notificar_nueva_incidencia: avisa a los administradores.
+    public function test_nueva_incidencia_notifica_a_los_admin(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $admin->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'NUEVA_INCIDENCIA',
+        ]);
+    }
+
+    // #2/#3 — Trigger fn_notificar_asignacion: al nombrar RESPONSABLE avisa al
+    // técnico asignado y al reportador.
+    public function test_asignar_responsable_notifica_tecnico_y_reportador(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $tecnico = $this->crearUsuario('tecnico');
+
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $tecnico->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'ASIGNACION',
+        ]);
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $reportador->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'ASIGNACION',
+        ]);
+    }
+
+    // #6 — Trigger fn_notificar_cambio_estado: avisa al reportador, nunca al actor.
+    public function test_cambio_a_en_proceso_notifica_reportador_no_actor(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $reportador->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'CAMBIO_ESTADO',
+        ]);
+        // El admin que ejecutó el cambio NO se notifica a sí mismo.
+        $this->assertDatabaseMissing('notificaciones', [
+            'id_usuario' => $admin->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'CAMBIO_ESTADO',
+        ]);
+    }
+
+    // #7 — Trigger ampliado: el comentario avisa a reportador, admins y
+    // responsable; nunca al autor del comentario.
+    public function test_comentario_notifica_a_chat_menos_autor(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $admin = $this->crearUsuario('admin');
+        $responsable = $this->crearUsuario('tecnico');
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        $autor = $this->crearUsuario('tecnico');
+
+        Comentario::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $autor->id,
+            'comentario' => 'En camino al sitio.',
+        ]);
+
+        foreach ([$reportador, $admin, $responsable] as $destino) {
+            $this->assertDatabaseHas('notificaciones', [
+                'id_usuario' => $destino->id,
+                'id_incidencia' => $incidencia->id_incidencia,
+                'tipo_notificacion' => 'COMENTARIO',
+            ]);
+        }
+        $this->assertDatabaseMissing('notificaciones', [
+            'id_usuario' => $autor->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'COMENTARIO',
+        ]);
+    }
+
+    // #8 — Evidencia subida por el ciudadano: avisa a los administradores.
+    public function test_evidencia_de_ciudadano_notifica_a_admin(): void
+    {
+        Storage::fake('public');
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($reportador);
+
+        $this->post("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('reporte.jpg')],
+            'tipo_evidencia' => 'REPORTE',
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $admin->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'EVIDENCIA',
+        ]);
+    }
+
+    // #9 — Evidencia subida por un técnico: avisa al reportador.
+    public function test_evidencia_de_tecnico_notifica_al_reportador(): void
+    {
+        Storage::fake('public');
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $tecnico = $this->crearUsuario('tecnico');
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        Sanctum::actingAs($tecnico);
+
+        $this->post("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('resuelto.jpg')],
+            'tipo_evidencia' => 'RESOLUCION',
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $reportador->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'EVIDENCIA',
         ]);
     }
 }
