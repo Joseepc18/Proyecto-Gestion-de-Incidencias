@@ -48,6 +48,12 @@
       texto: "Usuarios",
       oculto: true,
     },
+    {
+      page: "notificaciones",
+      href: "../notificaciones/notificaciones.html",
+      icon: "bi-mailbox",
+      texto: "Notificaciones",
+    },
   ];
 
   const navHtml = enlaces

@@ -429,6 +429,35 @@ a {
   text-align: center;
 }
 
+/* Bandeja de notificaciones (página completa) — reutiliza .notification-item */
+.notif-page-item {
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+}
+
+.notif-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.notif-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--admin-primary);
+}
+
+.notif-body {
+  display: grid;
+  gap: 0.15rem;
+}
+
 .profile-button {
   display: flex;
   align-items: center;
