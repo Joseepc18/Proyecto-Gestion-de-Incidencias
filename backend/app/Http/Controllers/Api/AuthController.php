@@ -46,9 +46,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // Borramos tokens viejos para no acumular sesiones.
-        $user->tokens()->delete();
-
+        // No borramos los tokens previos: así el usuario puede mantener varias
+        // sesiones abiertas a la vez (p. ej. laptop y celular) sin que un login
+        // nuevo mate las sesiones anteriores.
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -122,7 +122,7 @@ class AuthController extends Controller
                 ]
             );
 
-            $user->tokens()->delete();
+            // Igual que en login: no borramos tokens previos (sesiones concurrentes).
             $token = $user->createToken('auth_token')->plainTextToken;
 
             // El token viaja en el fragmento (#) para que no quede en logs ni en el historial del servidor.

@@ -96,6 +96,27 @@ class AuthTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
+    public function test_login_no_invalida_las_sesiones_anteriores(): void
+    {
+        // Regresión H-A: dos logins seguidos NO deben borrar el token previo,
+        // para permitir sesiones concurrentes (laptop + celular) sin "cerrarse sola".
+        $this->crearUsuario('normal')->forceFill([
+            'email' => 'multi@ejemplo.com',
+            'password' => 'Password123',
+        ])->save();
+
+        $credenciales = ['email' => 'multi@ejemplo.com', 'password' => 'Password123'];
+
+        $primerToken = $this->postJson('/api/login', $credenciales)->json('access_token');
+        $this->postJson('/api/login', $credenciales)->assertOk();
+
+        // Quedan los dos tokens en la base de datos.
+        $this->assertDatabaseCount('personal_access_tokens', 2);
+
+        // Y el primer token sigue siendo válido (la sesión anterior no murió).
+        $this->withToken($primerToken)->getJson('/api/user')->assertOk();
+    }
+
     public function test_login_se_bloquea_tras_demasiados_intentos(): void
     {
         $credenciales = ['email' => 'noexiste@ejemplo.com', 'password' => 'claveMala'];
