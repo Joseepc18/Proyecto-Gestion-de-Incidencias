@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\Facades\Socialite;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -115,6 +116,20 @@ class AuthTest extends TestCase
 
         // Y el primer token sigue siendo válido (la sesión anterior no murió).
         $this->withToken($primerToken)->getJson('/api/user')->assertOk();
+    }
+
+    public function test_callback_google_redirige_usando_la_url_del_frontend(): void
+    {
+        // Regresión H-C: el callback arma la URL de redirección con
+        // config('services.frontend_url'), no con env() (que sería null si se
+        // corre config:cache). Forzamos el camino de error mockeando Socialite.
+        config(['services.frontend_url' => 'https://example.test/']);
+
+        Socialite::shouldReceive('driver->stateless->user')
+            ->andThrow(new \Exception('fallo de google'));
+
+        $this->get('/api/auth/google/callback')
+            ->assertRedirect('https://example.test/login/login.html?error=google');
     }
 
     public function test_login_se_bloquea_tras_demasiados_intentos(): void

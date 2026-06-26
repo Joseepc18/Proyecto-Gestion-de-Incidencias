@@ -104,7 +104,7 @@ class AuthController extends Controller
     // si no existe lo creamos con rol 'normal', y lo mandamos al frontend ya logueado.
     public function handleGoogleCallback()
     {
-        $frontend = rtrim(env('FRONTEND_URL', 'http://localhost'), '/');
+        $frontend = rtrim(config('services.frontend_url'), '/');
 
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();

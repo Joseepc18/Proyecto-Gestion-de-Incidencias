@@ -42,4 +42,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    // URL del frontend (SPA). Se lee vía config() para que sobreviva a
+    // config:cache (env() devolvería null tras cachear y rompería el callback).
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost'),
+
 ];
