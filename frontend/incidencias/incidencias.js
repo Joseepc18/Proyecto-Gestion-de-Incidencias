@@ -1,6 +1,6 @@
 // incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml */
 
 let usuarioActual = null;
 
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         return (
           "<tr>" +
           "<td>" +
-          inc.nombre_incidencia +
+          escaparHtml(inc.nombre_incidencia) +
           "</td>" +
           '<td><span class="badge ' +
           est.clase +
@@ -195,10 +195,10 @@ document.addEventListener("DOMContentLoaded", async function () {
           pri.texto +
           "</span></td>" +
           "<td>" +
-          nombreTipo +
+          escaparHtml(nombreTipo) +
           "</td>" +
           "<td>" +
-          nombreCiudad +
+          escaparHtml(nombreCiudad) +
           "</td>" +
           "<td>" +
           fecha +

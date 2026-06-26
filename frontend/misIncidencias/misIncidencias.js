@@ -1,6 +1,6 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat, escaparHtml */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
@@ -147,10 +147,10 @@ async function cargarLista() {
           "</span>" +
           "</div>" +
           '<p class="card-titulo">' +
-          inc.nombre_incidencia +
+          escaparHtml(inc.nombre_incidencia) +
           "</p>" +
           '<span class="card-ubicacion"><i class="bi bi-geo-alt me-1"></i>' +
-          ciudad +
+          escaparHtml(ciudad) +
           "</span>" +
           "</div>"
         );
@@ -171,7 +171,7 @@ async function cargarLista() {
             id: i.id_incidencia,
             lat: Number(i.latitud_incidencia),
             lng: Number(i.longitud_incidencia),
-            titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
+            titulo: codigoIncidencia(i.id_incidencia) + " — " + escaparHtml(i.nombre_incidencia),
             color: colorEstado[i.estado_incidencia] || "#2563eb",
           };
         });

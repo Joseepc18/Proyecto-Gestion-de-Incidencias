@@ -1,10 +1,23 @@
 // api.js — Capa base de comunicación con el backend (Laravel).
 // nginx hace que front y back compartan origen, por eso la URL es relativa.
 
-/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol */
+/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml */
 /* global toastFlash */
 
 const API_BASE = "/api";
+
+// Escapa caracteres con significado en HTML para evitar XSS al meter texto del
+// usuario en innerHTML (o en popups de Leaflet, que también tratan el string
+// como HTML). Convierte < > & " ' en sus entidades; el & va primero a propósito.
+function escaparHtml(texto) {
+  if (texto == null) return "";
+  return String(texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 // Clave única para el token (evita errores de tipeo).
 const TOKEN_KEY = "access_token";
