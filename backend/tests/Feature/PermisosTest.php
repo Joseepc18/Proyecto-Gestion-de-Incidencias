@@ -61,6 +61,39 @@ class PermisosTest extends TestCase
         ])->assertStatus(403);
     }
 
+    // H-E: el autor ciudadano puede editar su PENDIENTE, pero no auto-asignarse prioridad.
+    public function test_ciudadano_no_puede_cambiar_la_prioridad(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor); // PENDIENTE, prioridad MEDIA
+        Sanctum::actingAs($autor);
+
+        // Edita un campo permitido y, de paso, intenta colar prioridad ALTA.
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
+            'nombre_incidencia' => 'Bache con prioridad inflada',
+            'prioridad_incidencia' => 'ALTA',
+        ])->assertOk();
+
+        $incidencia->refresh();
+        // El nombre sí cambió...
+        $this->assertSame('Bache con prioridad inflada', $incidencia->nombre_incidencia);
+        // ...pero la prioridad se ignoró: sigue en MEDIA.
+        $this->assertSame('MEDIA', $incidencia->prioridad_incidencia);
+    }
+
+    // H-E: el admin sí puede cambiar la prioridad de una incidencia.
+    public function test_admin_si_puede_cambiar_la_prioridad(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
+            'prioridad_incidencia' => 'ALTA',
+        ])->assertOk();
+
+        $this->assertSame('ALTA', $incidencia->fresh()->prioridad_incidencia);
+    }
+
     public function test_no_admin_no_accede_a_la_gestion_de_usuarios(): void
     {
         Sanctum::actingAs($this->crearUsuario('normal'));
