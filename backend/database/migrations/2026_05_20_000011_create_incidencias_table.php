@@ -19,7 +19,6 @@ return new class extends Migration
             longitud_incidencia NUMERIC(11,8) NOT NULL,
             prioridad_incidencia VARCHAR(50) NOT NULL DEFAULT 'MEDIA' CHECK(prioridad_incidencia IN ('ALTA','MEDIA','BAJA')),
             estado_incidencia VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE' CHECK(estado_incidencia IN ('PENDIENTE','EN_PROCESO','RESUELTO')),
-            foto_incidencia VARCHAR(500),
             id_ciudad BIGINT NOT NULL,
             id_subtipo_incidencia BIGINT NOT NULL,
             id_usuario BIGINT NOT NULL,

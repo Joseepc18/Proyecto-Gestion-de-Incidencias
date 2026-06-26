@@ -95,6 +95,9 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % ya está resuelta.', p_id_incidencia;
             END IF;
 
+            -- Publica el actor para el trigger de historial (local a la transacción).
+            PERFORM set_config('app.actor_id', p_id_usuario::text, true);
+
             -- Cambia el estado a RESUELTO
             -- El trigger tr_fecha_resolucion llena fecha_resolucion automáticamente
             -- El trigger tr_cambio_estado_incidencias guarda el historial automáticamente

@@ -22,7 +22,6 @@ return new class extends Migration
                 i.longitud_incidencia,
                 i.prioridad_incidencia,
                 i.estado_incidencia,
-                i.foto_incidencia,
                 i.fecha_resolucion,
                 i.created_at,
 
@@ -79,6 +78,28 @@ return new class extends Migration
             ORDER BY total DESC;
         ");
 
+        // Vista v_metricas_por_ubicacion: incidencias por ciudad y desglose por estado (solo ciudades con incidencias).
+        DB::unprepared("
+            CREATE OR REPLACE VIEW v_metricas_por_ubicacion AS
+            SELECT
+                -- Ubicación
+                c.id_ciudad,
+                c.nombre_ciudad,
+                p.nombre_provincia,
+
+                -- Conteos por estado
+                COUNT(i.id_incidencia)                                                   AS total,
+                COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'PENDIENTE')   AS total_pendientes,
+                COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'EN_PROCESO')  AS total_en_proceso,
+                COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'RESUELTO')    AS total_resueltas
+
+            FROM incidencias i
+            JOIN ciudades   c ON i.id_ciudad    = c.id_ciudad
+            JOIN provincias p ON c.id_provincia = p.id_provincia
+            GROUP BY c.id_ciudad, c.nombre_ciudad, p.nombre_provincia
+            ORDER BY total DESC;
+        ");
+
         // Función calcular_tiempo_resolucion: días que tardó en resolverse una incidencia (NULL si no está resuelta).
         DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
@@ -116,6 +137,7 @@ return new class extends Migration
     {
         DB::unprepared('DROP VIEW IF EXISTS v_incidencias_completas;');
         DB::unprepared('DROP VIEW IF EXISTS v_metricas_por_tipo;');
+        DB::unprepared('DROP VIEW IF EXISTS v_metricas_por_ubicacion;');
         DB::unprepared('DROP FUNCTION IF EXISTS calcular_tiempo_resolucion(BIGINT);');
         DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_estado;');
         DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_usuario;');
