@@ -9,9 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // TRIGGER 1: Auditoría de cambios de estado
-        // Guarda en historial_estados cada vez que el estado de una incidencia
-        // cambia, registrando el estado anterior y el nuevo para trazabilidad.
+        // Trigger fn_registrar_cambio_estado: guarda en historial_estados cada cambio de estado (anterior y nuevo).
         DB::unprepared('
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
             RETURNS TRIGGER AS $$
@@ -35,9 +33,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_registrar_cambio_estado();
         ');
 
-        // TRIGGER 2: Fecha de resolución automática
-        // Gestiona fecha_resolucion automáticamente según el estado. Usa BEFORE
-        // para poder modificar la fila antes de que se escriba en disco.
+        // Trigger fn_fecha_resolucion: setea fecha_resolucion según el estado (BEFORE, modifica la fila antes de escribir).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_fecha_resolucion()
             RETURNS TRIGGER AS \$\$
@@ -63,9 +59,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // TRIGGER 3: Notificación al ciudadano por nuevo comentario
-        // Al insertar un comentario notifica al reportador de la incidencia.
-        // No notifica si quien comenta es el mismo que reportó.
+        // Trigger fn_notificar_nuevo_comentario: al comentar notifica al reportador (salvo que sea él mismo).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_nuevo_comentario()
             RETURNS TRIGGER AS \$\$
@@ -99,9 +93,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_notificar_nuevo_comentario();
         ');
 
-        // TRIGGER 4: Límite máximo de evidencias por incidencia
-        // Antes de insertar una evidencia verifica que no supere el máximo de 5.
-        // Si ya tiene 5, cancela el INSERT con un error.
+        // Trigger fn_limite_evidencias: antes de insertar, cancela si la incidencia supera el tope de evidencias.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_limite_evidencias()
             RETURNS TRIGGER AS \$\$

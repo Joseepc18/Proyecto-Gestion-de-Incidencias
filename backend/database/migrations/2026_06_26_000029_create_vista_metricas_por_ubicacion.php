@@ -9,10 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // VISTA: v_metricas_por_ubicacion
-        // Estadísticas agrupadas por ciudad para el dashboard del admin: cuántas
-        // incidencias hay en cada ciudad y su desglose por estado. Solo aparecen
-        // las ciudades que tienen al menos una incidencia (JOIN, no LEFT JOIN).
+        // Vista v_metricas_por_ubicacion: incidencias por ciudad y desglose por estado (solo ciudades con incidencias; JOIN, no LEFT JOIN).
         DB::unprepared("
             CREATE OR REPLACE VIEW v_metricas_por_ubicacion AS
             SELECT

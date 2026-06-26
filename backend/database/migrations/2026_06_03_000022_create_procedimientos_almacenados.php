@@ -9,10 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // PROCEDIMIENTO 1: asignar_tecnico
-        // Valida y asigna un técnico a una incidencia. Verifica que la incidencia
-        // exista, que el usuario tenga rol válido, que no esté ya asignado y que
-        // el rol sea RESPONSABLE o APOYO antes de insertar la asignación.
+        // Procedimiento asignar_tecnico: valida (incidencia existe, rol válido, sin duplicado, RESPONSABLE/APOYO) y asigna el técnico.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE asignar_tecnico(
             p_id_incidencia BIGINT,
@@ -66,9 +63,7 @@ return new class extends Migration
         \$\$;
         ");
 
-        // PROCEDIMIENTO 2: resolver_incidencia
-        // Cambia el estado a RESUELTO y notifica al reportador y a todos los técnicos
-        // asignados. Los triggers de historial y fecha_resolucion actúan automáticamente.
+        // Procedimiento resolver_incidencia: pasa a RESUELTO y notifica a reportador y técnicos (los triggers hacen historial y fecha).
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,

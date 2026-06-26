@@ -10,7 +10,21 @@ use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\UserController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+
+// Healthcheck público (sin token ni throttle) para monitoreo y pruebas de carga; el SELECT 1 toca toda la cadena Nginx → PHP-FPM → PostgreSQL.
+Route::get('/health', function () {
+    try {
+        DB::select('select 1');
+        $db = true;
+    } catch (Throwable $e) {
+        $db = false;
+    }
+
+    // 'host' = réplica que atendió: evidencia de que el balanceador reparte.
+    return response()->json(['status' => 'ok', 'db' => $db, 'host' => gethostname()]);
+});
 
 // Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
@@ -20,10 +34,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
-// Rutas protegidas (requieren token Sanctum).
-// throttle:120,1 = máx. 120 peticiones por minuto y POR USUARIO (autenticado,
-// Laravel keyea por id, no por IP → no se pisan entre usuarios tras Cloudflare).
-// Holgado para el polling de la campana (cada 30s = 2/min) + navegación normal.
+// Rutas protegidas (token Sanctum). throttle:120,1 = 120 req/min por usuario (Laravel keyea por id, no por IP); holgado para el polling de la campana.
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario
     Route::get('/user', [AuthController::class, 'me']);

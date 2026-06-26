@@ -34,6 +34,14 @@ class AuthTest extends TestCase
         $this->assertSame('normal', $usuario->rol->nombre_rol);
     }
 
+    public function test_healthcheck_publico_responde_ok(): void
+    {
+        // Público, sin token: 200 con status ok y la BD respondiendo.
+        $this->getJson('/api/health')
+            ->assertOk()
+            ->assertJson(['status' => 'ok', 'db' => true]);
+    }
+
     public function test_login_con_credenciales_validas_devuelve_token(): void
     {
         $this->crearUsuario('normal')->forceFill([
@@ -121,9 +129,7 @@ class AuthTest extends TestCase
 
     public function test_callback_google_redirige_usando_la_url_del_frontend(): void
     {
-        // Regresión H-C: el callback arma la URL de redirección con
-        // config('services.frontend_url'), no con env() (que sería null si se
-        // corre config:cache). Forzamos el camino de error mockeando Socialite.
+        // Regresión H-C: el callback arma la URL con config('services.frontend_url'), no env() (null tras config:cache). Forzamos el error mockeando Socialite.
         config(['services.frontend_url' => 'https://example.test/']);
 
         Socialite::shouldReceive('driver->stateless->user')
@@ -159,9 +165,7 @@ class AuthTest extends TestCase
             'created_at' => now()->subMinutes($minutos + 1),
         ])->save();
 
-        // En tests la app vive entre llamadas y el guard memoriza al usuario de la
-        // 1.ª petición; lo olvidamos para que la 2.ª re-evalúe el token (como en
-        // HTTP real, donde cada petición trae un guard nuevo).
+        // El guard memoriza al usuario entre llamadas del test; lo olvidamos para que la 2.ª re-evalúe el token (como en HTTP real).
         $this->app['auth']->forgetGuards();
 
         // Pasado el plazo: el token caduca y la API responde 401.

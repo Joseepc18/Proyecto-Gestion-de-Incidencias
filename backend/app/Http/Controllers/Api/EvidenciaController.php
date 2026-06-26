@@ -34,16 +34,13 @@ class EvidenciaController extends Controller
             ]);
         }
 
-        // #8/#9 — Aviso de evidencia añadida (va aquí, no en un trigger: solo se
-        // notifica al AGREGAR fotos después, no por las fotos iniciales al crear).
+        // #8/#9 — Aviso de evidencia añadida (aquí y no en trigger: solo al agregar fotos después, no las iniciales).
         $this->notificarEvidencia($incidencia, $user);
 
         return response()->json($incidencia->load('evidencias'));
     }
 
-    // Notifica según quién sube la foto, nunca al propio actor:
-    // - el ciudadano (reportador) → avisa a admins + técnicos asignados.
-    // - un técnico/admin → avisa al ciudadano reportador.
+    // Notifica según quién sube la foto (nunca al actor): el ciudadano → admins+técnicos; el técnico/admin → reportador.
     private function notificarEvidencia(Incidencia $incidencia, User $user): void
     {
         $nombre = $incidencia->nombre_incidencia;

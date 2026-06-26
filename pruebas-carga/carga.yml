@@ -1,0 +1,46 @@
+# Prueba de carga con Artillery contra el healthcheck público /api/health.
+# El endpoint ejercita toda la cadena: Nginx (balanceador) → PHP-FPM → PostgreSQL.
+#
+# Local (2 réplicas, stack docker):   npx artillery@latest run pruebas-carga/carga.yml
+# Producción (corrida SUAVE):         npx artillery@latest run -e prod pruebas-carga/carga.yml
+#
+# Para guardar el reporte:            ... run --output pruebas-carga/resultado.json pruebas-carga/carga.yml
+# Y convertirlo a HTML:               npx artillery@latest report pruebas-carga/resultado.json
+
+config:
+  target: "http://localhost"
+  # Perfil local moderado: en Windows el bind-mount de Docker limita la I/O, así
+  # que se mantiene en un rango que queda verde y demuestra el balanceo. La
+  # capacidad real se mide en producción (Linux) con el entorno 'prod' de abajo.
+  phases:
+    - duration: 20
+      arrivalRate: 5
+      name: "Calentamiento (5/s)"
+    - duration: 40
+      arrivalRate: 5
+      rampTo: 20
+      name: "Rampa 5 → 20/s"
+    - duration: 40
+      arrivalRate: 20
+      name: "Sostenido 20/s"
+  # Entorno de producción: carga mucho más suave para no afectar el sitio en vivo
+  # ni disparar fail2ban. Solo para una evidencia corta del caso real.
+  environments:
+    prod:
+      target: "https://incidenciasupse.site"
+      phases:
+        - duration: 20
+          arrivalRate: 3
+          name: "Prod calentamiento (3/s)"
+        - duration: 40
+          arrivalRate: 5
+          rampTo: 15
+          name: "Prod rampa 5 → 15/s"
+
+scenarios:
+  - name: "Healthcheck"
+    flow:
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200

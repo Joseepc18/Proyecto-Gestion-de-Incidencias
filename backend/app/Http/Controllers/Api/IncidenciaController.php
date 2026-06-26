@@ -159,15 +159,12 @@ class IncidenciaController extends Controller
             }
         }
 
-        // Al marcar RESUELTO usamos el procedimiento (crea las notificaciones al
-        // reportador y técnicos). Los demás cambios son un update directo; los
-        // triggers se encargan de la fecha de resolución y del historial.
+        // RESUELTO usa el procedimiento (notifica a reportador y técnicos); el resto es update directo (triggers hacen fecha e historial).
         if ($nuevo === 'RESUELTO' && $actual !== 'RESUELTO') {
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {
-            // Dejamos el actor para que el trigger de historial registre quién
-            // ejecuta el cambio (no el dueño). Local a la transacción.
+            // Publica el actor para que el trigger de historial registre quién ejecuta (no el dueño).
             DB::transaction(function () use ($incidencia, $nuevo, $request) {
                 DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
                 $incidencia->update(['estado_incidencia' => $nuevo]);

@@ -38,9 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             fn ($request, $throwable) => $request->is('api/*') || $request->expectsJson()
         );
 
-        // Registro centralizado en bitacora_errores: cubre TODOS los controllers
-        // (no solo los que tienen try/catch). Solo errores reales de servidor:
-        // se ignoran validación (422), auth (401/403) y demás errores HTTP (404/429...).
+        // Registro centralizado en bitacora_errores (todos los controllers); solo errores de servidor: se ignoran validación/auth/HTTP.
         $exceptions->report(function (Throwable $e) {
             if ($e instanceof ValidationException
                 || $e instanceof AuthenticationException

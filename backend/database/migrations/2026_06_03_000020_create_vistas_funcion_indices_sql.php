@@ -9,9 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // VISTA 1: v_incidencias_completas
-        // Une incidencias con usuario, subtipo, tipo, ciudad y provincia en una
-        // sola consulta. Evita repetir los mismos JOINs en cada controlador.
+        // Vista v_incidencias_completas: une incidencias con usuario, subtipo/tipo, ciudad y provincia (evita repetir JOINs).
         DB::unprepared('
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
@@ -53,9 +51,7 @@ return new class extends Migration
             JOIN provincias          p ON c.id_provincia           = p.id_provincia;
         ');
 
-        // VISTA 2: v_metricas_por_tipo
-        // Estadísticas agrupadas por tipo para el dashboard: totales por estado
-        // y promedio de días de resolución de las incidencias ya resueltas.
+        // Vista v_metricas_por_tipo: totales por estado y promedio de días de resolución, agrupados por tipo (dashboard).
         DB::unprepared("
             CREATE OR REPLACE VIEW v_metricas_por_tipo AS
             SELECT
@@ -83,9 +79,7 @@ return new class extends Migration
             ORDER BY total DESC;
         ");
 
-        // FUNCIÓN: calcular_tiempo_resolucion
-        // Retorna los días exactos que tardó en resolverse una incidencia específica.
-        // Si aún no está resuelta, retorna NULL.
+        // Función calcular_tiempo_resolucion: días que tardó en resolverse una incidencia (NULL si no está resuelta).
         DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
             RETURNS NUMERIC AS $$
@@ -107,9 +101,7 @@ return new class extends Migration
             $$ LANGUAGE plpgsql;
         ');
 
-        // ÍNDICES DE RENDIMIENTO
-        // Aceleran las consultas más frecuentes del sistema evitando que PostgreSQL
-        // recorra toda la tabla fila por fila para encontrar los registros.
+        // Índices de rendimiento: aceleran las consultas más frecuentes evitando recorrer toda la tabla.
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);');

@@ -46,9 +46,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // No borramos los tokens previos: así el usuario puede mantener varias
-        // sesiones abiertas a la vez (p. ej. laptop y celular) sin que un login
-        // nuevo mate las sesiones anteriores.
+        // No borramos tokens previos: permite varias sesiones a la vez (laptop, celular).
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -93,15 +91,13 @@ class AuthController extends Controller
         return response()->json($user->load('rol'));
     }
 
-    // Paso 1 del login con Google: manda al usuario a la pantalla de Google.
-    // stateless() = sin sesión de servidor (somos una API por token).
+    // Paso 1 del login con Google: redirige a Google. stateless() = API por token, sin sesión.
     public function redirectToGoogle()
     {
         return Socialite::driver('google')->stateless()->redirect();
     }
 
-    // Paso 2: Google nos devuelve aquí. Buscamos el usuario por su correo;
-    // si no existe lo creamos con rol 'normal', y lo mandamos al frontend ya logueado.
+    // Paso 2: Google vuelve aquí. Busca el usuario por email o lo crea (rol 'normal') y lo loguea.
     public function handleGoogleCallback()
     {
         $frontend = rtrim(config('services.frontend_url'), '/');

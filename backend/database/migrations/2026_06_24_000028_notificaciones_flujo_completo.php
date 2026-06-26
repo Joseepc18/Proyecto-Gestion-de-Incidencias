@@ -2,13 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 
-// Flujo completo de notificaciones internas (alimentan la campana).
-// Regla de oro en todos: nunca se notifica al actor que originó el evento.
-// El actor del cambio de estado se lee de la variable de sesión app.actor_id
-// (la publica la app antes del UPDATE); si no está, se notifica a todos.
-// Las evidencias (#8/#9) NO van aquí: viven en EvidenciaController@subir porque
-// un trigger no puede distinguir las fotos iniciales (al crear) de las añadidas
-// después, y notificaría de más al crear la incidencia.
+// Notificaciones internas (campana). Regla: nunca se notifica al actor; el del cambio de estado se lee de app.actor_id (la publica la app antes del UPDATE).
+// Las evidencias (#8/#9) NO van aquí sino en EvidenciaController@subir (un trigger no distingue las fotos iniciales de las añadidas después).
 return new class extends Migration
 {
     public function up(): void
