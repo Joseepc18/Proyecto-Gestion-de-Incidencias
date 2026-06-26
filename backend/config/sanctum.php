@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Los tokens caducan a las 24h (1440 min). Antes era null (no caducaban
+    // nunca → token filtrado válido para siempre, H-D). Tunable por .env sin
+    // redeploy. El frontend maneja el 401 del token vencido (api.js).
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24),
 
     /*
     |--------------------------------------------------------------------------

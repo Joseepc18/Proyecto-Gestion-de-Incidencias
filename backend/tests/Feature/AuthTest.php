@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Socialite\Facades\Socialite;
 use Tests\TestCase;
 
@@ -130,6 +131,41 @@ class AuthTest extends TestCase
 
         $this->get('/api/auth/google/callback')
             ->assertRedirect('https://example.test/login/login.html?error=google');
+    }
+
+    public function test_el_token_caduca_tras_la_expiracion_configurada(): void
+    {
+        // H-D: los tokens caducan tras el plazo configurado en sanctum.expiration
+        // (1440 min por defecto). Leemos el valor real y viajamos justo más allá.
+        $minutos = (int) config('sanctum.expiration');
+        $this->assertGreaterThan(0, $minutos, 'sanctum.expiration debe ser > 0 (no null)');
+
+        $this->crearUsuario('normal')->forceFill([
+            'email' => 'caduca@ejemplo.com',
+            'password' => 'Password123',
+        ])->save();
+
+        $token = $this->postJson('/api/login', [
+            'email' => 'caduca@ejemplo.com',
+            'password' => 'Password123',
+        ])->json('access_token');
+
+        // Dentro de la ventana: el token funciona.
+        $this->withToken($token)->getJson('/api/user')->assertOk();
+
+        // Envejecemos el token más allá del plazo (su id es la parte antes del '|').
+        $id = explode('|', $token, 2)[0];
+        PersonalAccessToken::findOrFail($id)->forceFill([
+            'created_at' => now()->subMinutes($minutos + 1),
+        ])->save();
+
+        // En tests la app vive entre llamadas y el guard memoriza al usuario de la
+        // 1.ª petición; lo olvidamos para que la 2.ª re-evalúe el token (como en
+        // HTTP real, donde cada petición trae un guard nuevo).
+        $this->app['auth']->forgetGuards();
+
+        // Pasado el plazo: el token caduca y la API responde 401.
+        $this->withToken($token)->getJson('/api/user')->assertStatus(401);
     }
 
     public function test_login_se_bloquea_tras_demasiados_intentos(): void

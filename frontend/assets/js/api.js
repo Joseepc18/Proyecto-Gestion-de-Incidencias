@@ -2,6 +2,7 @@
 // nginx hace que front y back compartan origen, por eso la URL es relativa.
 
 /* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol */
+/* global toastFlash */
 
 const API_BASE = "/api";
 
@@ -114,6 +115,18 @@ async function apiFetch(endpoint, opciones = {}) {
   }
   try {
     const respuesta = await fetch(url, { ...fetchOpts, headers });
+
+    // Sesión expirada o token inválido: si mandamos un token y el backend lo
+    // rechaza con 401, lo limpiamos y volvemos al login con un aviso. En la
+    // propia página de login NO redirigimos (ahí el 401 = credenciales malas).
+    if (respuesta.status === 401 && token && !window.location.pathname.includes("/login/")) {
+      eliminarToken();
+      toastFlash("Tu sesión expiró. Vuelve a iniciar sesión.", "warning");
+      window.location.href = "../login/login.html";
+      // Promesa que nunca resuelve: corta el flujo del llamador mientras redirige.
+      return new Promise(function () {});
+    }
+
     const data = await respuesta.json();
 
     if (!respuesta.ok) {
