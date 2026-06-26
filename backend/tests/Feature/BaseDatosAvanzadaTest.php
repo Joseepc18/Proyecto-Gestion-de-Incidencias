@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
+use App\Models\Ciudad;
 use App\Models\Comentario;
 use App\Models\Evidencia;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -237,6 +239,33 @@ class BaseDatosAvanzadaTest extends TestCase
             'id_incidencia' => $incidencia->id_incidencia,
             'tipo_notificacion' => 'COMENTARIO',
         ]);
+    }
+
+    // H-B — Vista v_metricas_por_ubicacion: agrupa los conteos por ciudad y
+    // solo lista las ciudades que tienen al menos una incidencia.
+    public function test_vista_metricas_por_ubicacion_agrupa_por_ciudad(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $ciudades = Ciudad::take(2)->pluck('id_ciudad');
+        [$ciudadA, $ciudadB] = [$ciudades[0], $ciudades[1]];
+
+        // Dos incidencias en la ciudad A y una en la B.
+        $this->crearIncidencia($usuario, ['id_ciudad' => $ciudadA]);
+        $this->crearIncidencia($usuario, ['id_ciudad' => $ciudadA]);
+        $this->crearIncidencia($usuario, ['id_ciudad' => $ciudadB]);
+
+        $filaA = DB::table('v_metricas_por_ubicacion')->where('id_ciudad', $ciudadA)->first();
+        $filaB = DB::table('v_metricas_por_ubicacion')->where('id_ciudad', $ciudadB)->first();
+
+        $this->assertSame(2, (int) $filaA->total);
+        $this->assertSame(2, (int) $filaA->total_pendientes);
+        $this->assertSame(1, (int) $filaB->total);
+
+        // Una ciudad sin incidencias no aparece en la vista.
+        $ciudadVacia = Ciudad::whereNotIn('id_ciudad', [$ciudadA, $ciudadB])->value('id_ciudad');
+        $this->assertNull(
+            DB::table('v_metricas_por_ubicacion')->where('id_ciudad', $ciudadVacia)->first()
+        );
     }
 
     // #8 — Evidencia subida por el ciudadano: avisa a los administradores.

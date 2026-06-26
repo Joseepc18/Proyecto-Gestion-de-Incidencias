@@ -24,9 +24,13 @@ class DashboardController extends Controller
             // Métricas agrupadas por tipo (vista de BD)
             $porTipo = DB::table('v_metricas_por_tipo')->get();
 
+            // Métricas agrupadas por ubicación/ciudad (vista de BD)
+            $porUbicacion = DB::table('v_metricas_por_ubicacion')->get();
+
             return [
                 'totales' => $totales,
                 'por_tipo' => $porTipo,
+                'por_ubicacion' => $porUbicacion,
             ];
         });
 
