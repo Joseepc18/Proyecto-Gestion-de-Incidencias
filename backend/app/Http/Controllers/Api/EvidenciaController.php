@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Storage;
 
 class EvidenciaController extends Controller
 {
-    // Agregar fotos a una incidencia (3 de REPORTE, 1 de RESOLUCION).
+    // Agregar fotos a una incidencia (hasta 3 de REPORTE y hasta 3 de RESOLUCION).
     public function subir(SubirEvidenciaRequest $request, Incidencia $incidencia)
     {
-        // La autorización (admin, autor o técnico asignado) la resuelve el FormRequest.
+        // La autorización (admin, autor o técnico responsable) la resuelve el FormRequest.
         $user = $request->user();
         $tipo = $request->input('tipo_evidencia', 'REPORTE');
-        $limite = $tipo === 'RESOLUCION' ? 1 : 3;
+        $limite = 3;
 
         // No pasar del límite por tipo (las que ya hay + las nuevas)
         if ($incidencia->evidencias()->where('tipo_evidencia', $tipo)->count() + count($request->file('fotos')) > $limite) {

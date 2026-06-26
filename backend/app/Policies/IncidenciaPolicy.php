@@ -24,10 +24,11 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar: admin o técnico asignado siempre; el autor solo mientras esté PENDIENTE.
+    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE.
+    // Los técnicos (responsable incluido) NO editan los detalles de la incidencia.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
-        if ($user->esAdmin() || $this->esTecnicoAsignado($user, $incidencia)) {
+        if ($user->esAdmin()) {
             return Response::allow();
         }
 
@@ -48,20 +49,22 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Cambiar de estado: admin (libre) o técnico asignado (la transición la valida el controller).
+    // Cambiar de estado: admin (libre) o el técnico RESPONSABLE (la transición la valida el controller).
+    // El técnico de APOYO no cambia estados (solo puede ver el detalle).
     public function cambiarEstado(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() || $this->esTecnicoAsignado($user, $incidencia)
+        return $user->esAdmin() || $this->esResponsable($user, $incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
 
-    // Subir evidencias: admin, autor o técnico asignado.
+    // Subir evidencias: admin, autor (fotos de REPORTE) o el técnico RESPONSABLE (foto de RESOLUCION).
+    // El técnico de APOYO no sube evidencias.
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
         return $user->esAdmin()
         || $incidencia->id_usuario === $user->id
-        || $this->esTecnicoAsignado($user, $incidencia)
+        || $this->esResponsable($user, $incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
@@ -69,19 +72,17 @@ class IncidenciaPolicy
     // Ver/escribir el chat: reportador, admin y técnico RESPONSABLE (el apoyo queda fuera).
     public function verChat(User $user, Incidencia $incidencia): Response
     {
-        $esResponsable = $incidencia->asignaciones()
-            ->where('id_usuario', $user->id)
-            ->where('rol_asignado', 'RESPONSABLE')
-            ->exists();
-
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $esResponsable
+        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $this->esResponsable($user, $incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
 
-    // Un técnico asignado (responsable o apoyo) a la incidencia.
-    private function esTecnicoAsignado(User $user, Incidencia $incidencia): bool
+    // El técnico RESPONSABLE de la incidencia (el de APOYO no cuenta: solo puede ver).
+    private function esResponsable(User $user, Incidencia $incidencia): bool
     {
-        return $incidencia->asignaciones()->where('id_usuario', $user->id)->exists();
+        return $incidencia->asignaciones()
+            ->where('id_usuario', $user->id)
+            ->where('rol_asignado', 'RESPONSABLE')
+            ->exists();
     }
 }
