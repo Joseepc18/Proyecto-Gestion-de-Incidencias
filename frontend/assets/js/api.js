@@ -1,14 +1,11 @@
-// api.js — Capa base de comunicación con el backend (Laravel).
-// nginx hace que front y back compartan origen, por eso la URL es relativa.
+// api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
 /* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml */
 /* global toastFlash */
 
 const API_BASE = "/api";
 
-// Escapa caracteres con significado en HTML para evitar XSS al meter texto del
-// usuario en innerHTML (o en popups de Leaflet, que también tratan el string
-// como HTML). Convierte < > & " ' en sus entidades; el & va primero a propósito.
+// Escapa < > & " ' a entidades HTML para evitar XSS al meter texto en innerHTML/popups.
 function escaparHtml(texto) {
   if (texto == null) return "";
   return String(texto)
@@ -93,8 +90,7 @@ function spinnerFin() {
     clearTimeout(mostrarTimer);
     mostrarTimer = null;
   }
-  // Oculta con un margen de gracia: si otra petición arranca enseguida,
-  // spinnerInicio cancela esta ocultación y el spinner no parpadea
+  // Oculta con margen de gracia: si otra petición arranca enseguida, no parpadea.
   if (spinnerVisible()) {
     ocultarTimer = setTimeout(function () {
       obtenerSpinner().classList.add("d-none");
@@ -106,8 +102,7 @@ function spinnerFin() {
 async function apiFetch(endpoint, opciones = {}) {
   const url = API_BASE + endpoint;
 
-  // sinSpinner: omite el spinner global (útil en login/registro, que ya muestran
-  // su propio spinner en el botón). El resto de opciones van directo a fetch.
+  // sinSpinner: omite el spinner global (login/registro ya muestran el suyo en el botón).
   const { sinSpinner = false, ...fetchOpts } = opciones;
 
   const headers = { Accept: "application/json" };
@@ -129,9 +124,7 @@ async function apiFetch(endpoint, opciones = {}) {
   try {
     const respuesta = await fetch(url, { ...fetchOpts, headers });
 
-    // Sesión expirada o token inválido: si mandamos un token y el backend lo
-    // rechaza con 401, lo limpiamos y volvemos al login con un aviso. En la
-    // propia página de login NO redirigimos (ahí el 401 = credenciales malas).
+    // Token vencido/inválido (401 con token): limpia y vuelve al login; en la página de login no.
     if (respuesta.status === 401 && token && !window.location.pathname.includes("/login/")) {
       eliminarToken();
       toastFlash("Tu sesión expiró. Vuelve a iniciar sesión.", "warning");
@@ -143,8 +136,7 @@ async function apiFetch(endpoint, opciones = {}) {
     const data = await respuesta.json();
 
     if (!respuesta.ok) {
-      // En errores de validación, muestra el primer mensaje (ya traducido),
-      // no el resumen "(and N more errors)" que Laravel arma en inglés.
+      // Muestra el primer mensaje de validación (ya traducido), no el resumen en inglés.
       let mensaje = data.message || "Error en la petición";
       if (data.errors) {
         const primero = Object.values(data.errors)[0];
@@ -163,9 +155,7 @@ async function apiFetch(endpoint, opciones = {}) {
   }
 }
 
-// Muestra/oculta los enlaces del menú según el rol del usuario.
-// Admin: tabla de incidencias + usuarios. Resto: "Mis incidencias".
-// El usuario normal no ve "Inicio": su pantalla de arranque es "Mis incidencias".
+// Muestra/oculta los enlaces del menú según el rol (el normal arranca en "Mis incidencias").
 function aplicarMenuRol(rol) {
   const esAdmin = rol === "admin";
   const esNormal = rol === "normal";
@@ -179,10 +169,11 @@ function aplicarMenuRol(rol) {
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
   mostrar("navMisIncidencias", !esAdmin);
+  // El técnico no registra incidencias; solo admin y ciudadano ven el enlace.
+  mostrar("navRegistrar", esAdmin || esNormal);
 }
 
-// Devuelve la pantalla de arranque según el rol: el normal va a "Mis incidencias",
-// el resto (admin/técnico) al Inicio.
+// Pantalla de arranque según el rol: normal → "Mis incidencias"; resto → Inicio.
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
   return rol === "normal" ? "../misIncidencias/misIncidencias.html" : "../inicio/inicio.html";

@@ -67,6 +67,35 @@ class IncidenciaTest extends TestCase
         $this->assertDatabaseMissing('incidencias', ['id_incidencia' => $incidencia->id_incidencia]);
     }
 
+    public function test_admin_puede_fijar_estado_al_crear(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
+            'estado_incidencia' => 'EN_PROCESO',
+        ]))->assertCreated();
+
+        $this->assertDatabaseHas('incidencias', [
+            'nombre_incidencia' => 'Bache peligroso en la avenida principal',
+            'estado_incidencia' => 'EN_PROCESO',
+        ]);
+    }
+
+    public function test_ciudadano_no_puede_fijar_estado_al_crear(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('normal'));
+
+        // Aunque mande estado RESUELTO, se ignora y entra como PENDIENTE.
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
+            'estado_incidencia' => 'RESUELTO',
+        ]))->assertCreated();
+
+        $this->assertDatabaseHas('incidencias', [
+            'nombre_incidencia' => 'Bache peligroso en la avenida principal',
+            'estado_incidencia' => 'PENDIENTE',
+        ]);
+    }
+
     public function test_titulo_respeta_longitud_minima_y_maxima(): void
     {
         Sanctum::actingAs($this->crearUsuario('normal'));

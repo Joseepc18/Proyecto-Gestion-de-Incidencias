@@ -44,30 +44,23 @@
               </div>
             </div>
 
-            <section class="row g-3">
-              <!-- Columna izquierda: formulario -->
-              <div class="col-12 col-xl-8">
-                <form id="formCrear" class="panel needs-validation" novalidate>
-                  <div class="panel-header">
-                    <div>
-                      <h2 class="h5 mb-1 section-title">
-                        <i class="bi bi-clipboard-plus" aria-hidden="true"></i>
-                        <span>Datos de la incidencia</span>
-                      </h2>
-                      <p class="text-muted mb-0">
-                        Los campos con <span class="text-danger">*</span> son obligatorios.
-                      </p>
-                    </div>
-                  </div>
+            <form id="formCrear" class="panel needs-validation" novalidate>
+              <div id="crearError" class="alert alert-danger d-none"></div>
 
-                  <div id="crearError" class="alert alert-danger d-none mx-3"></div>
-
+              <div class="row g-3 g-lg-4">
+                <!-- Columna izquierda: campos de texto -->
+                <div class="col-12 col-lg-7">
                   <div class="row g-3">
                     <!-- Título -->
                     <div class="col-12">
-                      <label class="form-label" for="crearTitulo"
-                        >Título <span class="text-danger">*</span></label
-                      >
+                      <label class="form-label" for="crearTitulo">
+                        Título <span class="text-danger">*</span>
+                        <i
+                          class="bi bi-info-circle text-muted"
+                          data-bs-toggle="tooltip"
+                          title="Describe el problema en pocas palabras. Ej: Bache en Av. Principal."
+                        ></i>
+                      </label>
                       <input
                         class="form-control"
                         id="crearTitulo"
@@ -86,31 +79,22 @@
                       <textarea
                         class="form-control"
                         id="crearDescripcion"
-                        rows="3"
+                        rows="2"
                         maxlength="500"
                         placeholder="Describe el problema con detalle..."
                       ></textarea>
                     </div>
 
-                    <!-- Prioridad -->
-                    <div class="col-md-4">
-                      <label class="form-label" for="crearPrioridad"
-                        >Prioridad <span class="text-danger">*</span></label
-                      >
-                      <select class="form-select" id="crearPrioridad" required>
-                        <option value="">Seleccionar...</option>
-                        <option value="ALTA">Alta</option>
-                        <option value="MEDIA">Media</option>
-                        <option value="BAJA">Baja</option>
-                      </select>
-                      <div class="invalid-feedback">Selecciona una prioridad.</div>
-                    </div>
-
                     <!-- Tipo -->
-                    <div class="col-md-4">
-                      <label class="form-label" for="crearTipo"
-                        >Tipo <span class="text-danger">*</span></label
-                      >
+                    <div class="col-sm-6">
+                      <label class="form-label" for="crearTipo">
+                        Tipo <span class="text-danger">*</span>
+                        <i
+                          class="bi bi-info-circle text-muted"
+                          data-bs-toggle="tooltip"
+                          title="Elige primero el tipo para ver los subtipos disponibles."
+                        ></i>
+                      </label>
                       <select class="form-select" id="crearTipo" required>
                         <option value="">Seleccionar...</option>
                       </select>
@@ -118,7 +102,7 @@
                     </div>
 
                     <!-- Subtipo -->
-                    <div class="col-md-4">
+                    <div class="col-sm-6">
                       <label class="form-label" for="crearSubtipo"
                         >Subtipo <span class="text-danger">*</span></label
                       >
@@ -129,7 +113,7 @@
                     </div>
 
                     <!-- Ciudad -->
-                    <div class="col-md-4">
+                    <div class="col-sm-6">
                       <label class="form-label" for="crearCiudad"
                         >Ciudad <span class="text-danger">*</span></label
                       >
@@ -139,32 +123,39 @@
                       <div class="invalid-feedback">Selecciona una ciudad.</div>
                     </div>
 
-                    <!-- Ubicación en el mapa -->
-                    <div class="col-12">
-                      <label class="form-label">Ubicación <span class="text-danger">*</span></label>
-                      <div
-                        class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2"
-                      >
-                        <span class="text-muted small">
-                          Haz clic en el mapa para marcar el lugar de la incidencia.
-                        </span>
-                        <button
-                          type="button"
-                          class="btn btn-outline-primary btn-sm"
-                          id="btnMiUbicacion"
-                        >
-                          <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
-                        </button>
-                      </div>
-                      <div id="mapaPicker" class="mapa-picker"></div>
-                      <div id="ubicacionError" class="text-danger small mt-1 d-none">
-                        Marca la ubicación en el mapa.
-                      </div>
+                    <!-- Prioridad (solo admin) -->
+                    <div class="col-sm-3 solo-admin d-none">
+                      <label class="form-label" for="crearPrioridad">
+                        Prioridad
+                        <i
+                          class="bi bi-info-circle text-muted"
+                          data-bs-toggle="tooltip"
+                          title="Alta = riesgo inmediato. Media = molestia importante. Baja = puede esperar."
+                        ></i>
+                      </label>
+                      <select class="form-select" id="crearPrioridad">
+                        <option value="ALTA">Alta</option>
+                        <option value="MEDIA" selected>Media</option>
+                        <option value="BAJA">Baja</option>
+                      </select>
                     </div>
 
-                    <!-- Coordenadas: ocultas, se llenan desde el mapa -->
-                    <input type="hidden" id="crearLatitud" />
-                    <input type="hidden" id="crearLongitud" />
+                    <!-- Estado (solo admin) -->
+                    <div class="col-sm-3 solo-admin d-none">
+                      <label class="form-label" for="crearEstado">
+                        Estado
+                        <i
+                          class="bi bi-info-circle text-muted"
+                          data-bs-toggle="tooltip"
+                          title="En qué estado nace la incidencia. Normalmente Pendiente."
+                        ></i>
+                      </label>
+                      <select class="form-select" id="crearEstado">
+                        <option value="PENDIENTE" selected>Pendiente</option>
+                        <option value="EN_PROCESO">En proceso</option>
+                        <option value="RESUELTO">Resuelto</option>
+                      </select>
+                    </div>
 
                     <!-- Dirección -->
                     <div class="col-12">
@@ -177,10 +168,51 @@
                         placeholder="Ej: Av. Principal y calle 10 de Agosto"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <!-- Columna derecha: ubicación + fotos -->
+                <div class="col-12 col-lg-5">
+                  <div class="row g-3">
+                    <!-- Ubicación en el mapa -->
+                    <div class="col-12">
+                      <label class="form-label d-flex justify-content-between align-items-center">
+                        <span>
+                          Ubicación <span class="text-danger">*</span>
+                          <i
+                            class="bi bi-info-circle text-muted"
+                            data-bs-toggle="tooltip"
+                            title="Haz clic en el mapa para marcar el lugar exacto de la incidencia."
+                          ></i>
+                        </span>
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm"
+                          id="btnMiUbicacion"
+                        >
+                          <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
+                        </button>
+                      </label>
+                      <div id="mapaPicker" class="mapa-picker"></div>
+                      <div id="ubicacionError" class="text-danger small mt-1 d-none">
+                        Marca la ubicación en el mapa.
+                      </div>
+                    </div>
+
+                    <!-- Coordenadas: ocultas, se llenan desde el mapa -->
+                    <input type="hidden" id="crearLatitud" />
+                    <input type="hidden" id="crearLongitud" />
 
                     <!-- Fotos -->
                     <div class="col-12">
-                      <label class="form-label">Fotos de evidencia</label>
+                      <label class="form-label">
+                        Fotos de evidencia
+                        <i
+                          class="bi bi-info-circle text-muted"
+                          data-bs-toggle="tooltip"
+                          title="Hasta 3 fotos (JPG/PNG). Se optimizan solas antes de subir."
+                        ></i>
+                      </label>
                       <label class="dropzone-fotos" id="dropzoneFotos" for="crearFotos">
                         <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
                         <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
@@ -197,80 +229,22 @@
                       <div id="crearFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
                     </div>
                   </div>
-
-                  <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
-                    <a class="btn btn-outline-secondary" href="../incidencias/incidencias.html"
-                      >Cancelar</a
-                    >
-                    <button type="submit" class="btn btn-primary" id="btnCrearIncidencia">
-                      <span
-                        id="crearSpinner"
-                        class="spinner-border spinner-border-sm d-none me-1"
-                      ></span>
-                      <i class="bi bi-send" aria-hidden="true"></i> Registrar incidencia
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Columna derecha: guía -->
-              <div class="col-12 col-xl-4">
-                <div class="panel h-100">
-                  <h2 class="h5 mb-3 section-title">
-                    <i class="bi bi-list-check" aria-hidden="true"></i>
-                    <span>Guía de registro</span>
-                  </h2>
-                  <div class="activity-list">
-                    <div class="activity-item">
-                      <span class="activity-dot bg-danger"></span>
-                      <div>
-                        <p class="mb-1 fw-semibold">Título claro</p>
-                        <p class="text-muted small mb-0">
-                          Describe el problema en pocas palabras. Ej: "Bache en Av. Principal".
-                        </p>
-                      </div>
-                    </div>
-                    <div class="activity-item">
-                      <span class="activity-dot bg-warning"></span>
-                      <div>
-                        <p class="mb-1 fw-semibold">Prioridad correcta</p>
-                        <p class="text-muted small mb-0">
-                          Alta = riesgo inmediato. Media = molestia importante. Baja = puede
-                          esperar.
-                        </p>
-                      </div>
-                    </div>
-                    <div class="activity-item">
-                      <span class="activity-dot bg-primary"></span>
-                      <div>
-                        <p class="mb-1 fw-semibold">Tipo y subtipo</p>
-                        <p class="text-muted small mb-0">
-                          Selecciona primero el tipo para ver los subtipos disponibles.
-                        </p>
-                      </div>
-                    </div>
-                    <div class="activity-item">
-                      <span class="activity-dot bg-success"></span>
-                      <div>
-                        <p class="mb-1 fw-semibold">Ubicación precisa</p>
-                        <p class="text-muted small mb-0">
-                          La latitud y longitud ayudan a localizar la incidencia en el mapa.
-                        </p>
-                      </div>
-                    </div>
-                    <div class="activity-item">
-                      <span class="activity-dot bg-info"></span>
-                      <div>
-                        <p class="mb-1 fw-semibold">Fotos de evidencia</p>
-                        <p class="text-muted small mb-0">
-                          Sube hasta 3 fotos (JPG/PNG). Se optimizan solas antes de subir.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
-            </section>
+
+              <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                <a class="btn btn-outline-secondary" href="../incidencias/incidencias.html"
+                  >Cancelar</a
+                >
+                <button type="submit" class="btn btn-primary" id="btnCrearIncidencia">
+                  <span
+                    id="crearSpinner"
+                    class="spinner-border spinner-border-sm d-none me-1"
+                  ></span>
+                  <i class="bi bi-send" aria-hidden="true"></i> Registrar incidencia
+                </button>
+              </div>
+            </form>
           </div>
         </main>
       </div>

@@ -27,10 +27,10 @@ class CrearIncidenciaRequest extends FormRequest
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ];
 
-        // El ciudadano siempre crea en MEDIA; solo el admin puede fijar la prioridad
-        // al crear. Si la manda otro rol, no se valida y el controller la deja en MEDIA.
+        // Solo el admin fija prioridad y estado al crear; al resto se les ignora.
         if ($this->user()?->esAdmin()) {
             $reglas['prioridad_incidencia'] = 'nullable|in:ALTA,MEDIA,BAJA';
+            $reglas['estado_incidencia'] = 'nullable|in:PENDIENTE,EN_PROCESO,RESUELTO';
         }
 
         return $reglas;

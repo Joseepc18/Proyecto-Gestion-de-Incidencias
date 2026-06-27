@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression, crearMapaPicker */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression, crearMapaPicker, bootstrap */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -35,6 +35,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     eliminarToken();
     window.location.href = "../login/login.html";
+  });
+
+  // El admin ve y fija prioridad/estado al crear; el ciudadano no (van por defecto).
+  const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+  if (esAdmin) {
+    document.querySelectorAll(".solo-admin").forEach(function (el) {
+      el.classList.remove("d-none");
+    });
+  }
+
+  // Tooltips de ayuda (iconos ⓘ junto a las etiquetas).
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+    bootstrap.Tooltip.getOrCreateInstance(el);
   });
 
   // Catálogos
@@ -104,7 +117,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // El <label for> abre el selector al hacer clic; aquí procesamos la selección
   inputFotos.addEventListener("change", function () {
     procesarFotos(this.files);
-    this.value = ""; // limpia el input para poder agregar más sin reemplazar
+    // Limpia el input para poder agregar más sin reemplazar.
+    this.value = "";
   });
 
   // Arrastrar y soltar sobre la zona de carga
@@ -153,8 +167,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     errorFotos.classList.remove("d-none");
   }
 
-  // Dibuja las miniaturas con un botón para quitar cada foto.
-  // El cuadro grande solo se ve sin fotos; con fotos aparece un azulejo "+".
+  // Miniaturas con botón de quitar; con fotos el cuadro grande pasa a un azulejo "+".
   function renderPreviews() {
     previewFotos.innerHTML = "";
     dropzone.classList.toggle("d-none", fotosSeleccionadas.length > 0);
@@ -241,7 +254,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       "descripcion_incidencia",
       document.getElementById("crearDescripcion").value.trim(),
     );
-    formData.append("prioridad_incidencia", document.getElementById("crearPrioridad").value);
+    // Prioridad y estado solo las manda el admin; al ciudadano se las ignora.
+    if (esAdmin) {
+      formData.append("prioridad_incidencia", document.getElementById("crearPrioridad").value);
+      formData.append("estado_incidencia", document.getElementById("crearEstado").value);
+    }
     formData.append("id_subtipo_incidencia", document.getElementById("crearSubtipo").value);
     formData.append("id_ciudad", document.getElementById("crearCiudad").value);
     formData.append("latitud_incidencia", document.getElementById("crearLatitud").value);
@@ -258,7 +275,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       await apiFetch("/incidencias", { method: "POST", body: formData });
       toastFlash("Incidencia registrada", "success");
       // El admin va a la tabla de gestión; el resto, a "Mis incidencias".
-      const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
       window.location.href = esAdmin
         ? "../incidencias/incidencias.html"
         : "../misIncidencias/misIncidencias.html";

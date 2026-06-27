@@ -1,6 +1,4 @@
-// layout.js — Inyecta el sidebar y el navbar compartidos en las páginas del panel.
-// Evita repetir ese HTML en cada página. El enlace activo se marca con el
-// atributo data-page del <body>. Se carga ANTES del script propio de la página.
+// layout.js — Inyecta el sidebar y navbar compartidos; el enlace activo se marca con data-page del <body>.
 
 (function () {
   const sidebar = document.getElementById("adminSidebar");
@@ -36,9 +34,11 @@
     },
     {
       page: "registrar",
+      id: "navRegistrar",
       href: "../registrarIncidencias/registrar.html",
       icon: "bi-plus-circle",
       texto: "Registrar incidencia",
+      oculto: true,
     },
     {
       page: "usuarios",
