@@ -148,7 +148,14 @@ class RolesYCoberturaTest extends TestCase
         Sanctum::actingAs($this->crearUsuario('admin'));
         $this->getJson('/api/dashboard/metricas')
             ->assertOk()
-            ->assertJsonStructure(['totales', 'por_tipo', 'por_ubicacion']);
+            ->assertJsonStructure([
+                'totales',
+                'promedio_dias',
+                'por_prioridad' => ['alta', 'media', 'baja'],
+                'por_tipo',
+                'por_ubicacion',
+                'por_provincia',
+            ]);
     }
 
     // El técnico RESPONSABLE puede borrar una evidencia (reemplazar su foto).

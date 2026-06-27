@@ -7,6 +7,7 @@ package-lock.json
 assets/css/
 assets/vendors/
 assets/images/
+assets/geo/
 assets/js/bootstrap.bundle.min.js
 assets/js/main.js
 assets/js/browser-image-compression.js

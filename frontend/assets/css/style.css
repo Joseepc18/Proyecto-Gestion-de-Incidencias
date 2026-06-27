@@ -686,6 +686,73 @@ html[data-theme="dark"] .profile-button .avatar-sm {
   font-size: 0.92rem;
 }
 
+.chart-wrap {
+  position: relative;
+  height: 300px;
+}
+
+.map-wrap {
+  position: relative;
+  height: 520px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+}
+
+#mapaProvincias {
+  height: 100%;
+  width: 100%;
+  background: var(--admin-surface-soft);
+}
+
+#mapaProvincias .leaflet-interactive {
+  cursor: pointer;
+}
+
+#mapaProvincias .leaflet-interactive:focus {
+  outline: none;
+}
+
+.leyenda-mapa {
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-sm);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.leyenda-mapa i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -2px;
+}
+
+.tabla-metricas-wrap {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tabla-metricas {
+  font-size: 0.9rem;
+}
+
+.tabla-metricas thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--admin-surface-soft);
+  color: var(--admin-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--admin-border);
+}
+
 .chart-bars {
   height: 292px;
   display: grid;
