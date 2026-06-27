@@ -7,11 +7,14 @@ use App\Models\Evidencia;
 use App\Models\Notificacion;
 use App\Models\Rol;
 use App\Models\TipoIncidencia;
+use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use Tests\TestCase;
 
 // Reglas de acceso de los técnicos (apoyo vs responsable) y cobertura de
@@ -108,6 +111,28 @@ class RolesYCoberturaTest extends TestCase
             ],
             'tipo_evidencia' => 'REPORTE',
         ], ['Accept' => 'application/json'])->assertStatus(422);
+    }
+
+    // Si store() falla (como en prod por permisos), no se crea evidencia fantasma y se avisa el error.
+    public function test_subir_evidencia_falla_si_no_se_guarda_la_foto(): void
+    {
+        $disco = Mockery::mock(Filesystem::class);
+        $disco->shouldReceive('putFileAs')->andReturn(false);
+        $fabrica = Mockery::mock(FilesystemFactory::class);
+        $fabrica->shouldReceive('disk')->andReturn($disco);
+        $this->app->instance(FilesystemFactory::class, $fabrica);
+
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        Sanctum::actingAs($autor);
+
+        $this->post("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('foto.jpg')],
+            'tipo_evidencia' => 'REPORTE',
+        ], ['Accept' => 'application/json'])->assertStatus(500);
+
+        $this->assertDatabaseMissing('evidencias', ['url_evidencia' => '0']);
+        $this->assertDatabaseHas('bitacora_errores', ['tipo_error' => 'ARCHIVO']);
     }
 
     // El dashboard de métricas es solo para admin y trae los tres bloques.

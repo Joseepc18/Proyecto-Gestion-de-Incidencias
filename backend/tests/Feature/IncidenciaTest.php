@@ -3,8 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Comentario;
+use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
+use Mockery;
 use Tests\TestCase;
 
 class IncidenciaTest extends TestCase
@@ -94,6 +98,27 @@ class IncidenciaTest extends TestCase
             'nombre_incidencia' => 'Bache peligroso en la avenida principal',
             'estado_incidencia' => 'PENDIENTE',
         ]);
+    }
+
+    public function test_si_la_foto_no_se_guarda_no_crea_evidencia_fantasma(): void
+    {
+        // Forzamos que store() falle (como en prod por permisos): putFileAs devuelve false.
+        $disco = Mockery::mock(Filesystem::class);
+        $disco->shouldReceive('putFileAs')->andReturn(false);
+        $fabrica = Mockery::mock(FilesystemFactory::class);
+        $fabrica->shouldReceive('disk')->andReturn($disco);
+        $this->app->instance(FilesystemFactory::class, $fabrica);
+
+        Sanctum::actingAs($this->crearUsuario('normal'));
+
+        $this->post('/api/incidencias', $this->datosIncidenciaValidos([
+            'fotos' => [UploadedFile::fake()->image('foto.jpg')],
+        ]), ['Accept' => 'application/json'])->assertStatus(500);
+
+        // No queda incidencia ni evidencia a medias y se registró el error de ARCHIVO.
+        $this->assertDatabaseMissing('evidencias', ['url_evidencia' => '0']);
+        $this->assertDatabaseMissing('incidencias', ['nombre_incidencia' => 'Bache peligroso en la avenida principal']);
+        $this->assertDatabaseHas('bitacora_errores', ['tipo_error' => 'ARCHIVO']);
     }
 
     public function test_titulo_respeta_longitud_minima_y_maxima(): void

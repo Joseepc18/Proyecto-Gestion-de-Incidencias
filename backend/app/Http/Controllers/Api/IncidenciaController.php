@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
@@ -57,22 +58,40 @@ class IncidenciaController extends Controller
         unset($datos['fotos']);
 
         try {
-            $incidencia = Incidencia::create($datos);
+            // Todo o nada: si una foto no se guarda, se revierte la incidencia.
+            $incidencia = DB::transaction(function () use ($request, $datos) {
+                $incidencia = Incidencia::create($datos);
 
-            // Cada foto se guarda como una evidencia ligada a la incidencia
-            if ($request->hasFile('fotos')) {
-                foreach ($request->file('fotos') as $foto) {
-                    $incidencia->evidencias()->create([
-                        'url_evidencia' => $foto->store('incidencias', 'public'),
-                        'id_usuario' => $request->user()->id,
-                    ]);
+                // Cada foto se guarda como una evidencia ligada a la incidencia
+                if ($request->hasFile('fotos')) {
+                    foreach ($request->file('fotos') as $foto) {
+                        $ruta = $foto->store('incidencias', 'public');
+                        // store() devuelve false si la escritura falla (permisos/disco): no creamos evidencia fantasma
+                        if ($ruta === false) {
+                            throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
+                        }
+                        $incidencia->evidencias()->create([
+                            'url_evidencia' => $ruta,
+                            'id_usuario' => $request->user()->id,
+                        ]);
+                    }
                 }
-            }
+
+                return $incidencia;
+            });
 
             return response()->json(
                 $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']),
                 201
             );
+        } catch (AlmacenamientoException $e) {
+            BitacoraError::create([
+                'id_usuario' => $request->user()->id,
+                'tipo_error' => 'ARCHIVO',
+                'descripcion_error' => 'IncidenciaController@crearIncidencia: '.$e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Exception $e) {
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,

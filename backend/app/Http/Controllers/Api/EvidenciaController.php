@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubirEvidenciaRequest;
+use App\Models\BitacoraError;
 use App\Models\Evidencia;
 use App\Models\Incidencia;
 use App\Models\Notificacion;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class EvidenciaController extends Controller
@@ -26,12 +29,30 @@ class EvidenciaController extends Controller
             return response()->json(['message' => "Máximo $limite foto(s) de tipo $tipo"], 422);
         }
 
-        foreach ($request->file('fotos') as $foto) {
-            $incidencia->evidencias()->create([
-                'url_evidencia' => $foto->store('incidencias', 'public'),
+        try {
+            // Todo o nada: si una foto no se guarda, no queda ninguna a medias.
+            DB::transaction(function () use ($request, $incidencia, $user, $tipo) {
+                foreach ($request->file('fotos') as $foto) {
+                    $ruta = $foto->store('incidencias', 'public');
+                    // store() devuelve false si la escritura falla (permisos/disco): no creamos evidencia fantasma
+                    if ($ruta === false) {
+                        throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
+                    }
+                    $incidencia->evidencias()->create([
+                        'url_evidencia' => $ruta,
+                        'id_usuario' => $user->id,
+                        'tipo_evidencia' => $tipo,
+                    ]);
+                }
+            });
+        } catch (AlmacenamientoException $e) {
+            BitacoraError::create([
                 'id_usuario' => $user->id,
-                'tipo_evidencia' => $tipo,
+                'tipo_error' => 'ARCHIVO',
+                'descripcion_error' => 'EvidenciaController@subir: '.$e->getMessage(),
             ]);
+
+            return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         }
 
         // #8/#9 — Aviso de evidencia añadida (aquí y no en trigger: solo al agregar fotos después, no las iniciales).
