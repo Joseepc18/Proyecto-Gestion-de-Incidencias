@@ -17,6 +17,19 @@ function colorVar(nombre) {
   return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 }
 
+// Devuelve los últimos n meses como { clave: 'YYYY-MM', etiqueta: 'ene 26' }.
+function ultimosMeses(n) {
+  const hoy = new Date();
+  const meses = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const f = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    const clave = f.getFullYear() + "-" + String(f.getMonth() + 1).padStart(2, "0");
+    const etiqueta = f.toLocaleDateString("es", { month: "short", year: "2-digit" });
+    meses.push({ clave, etiqueta });
+  }
+  return meses;
+}
+
 // Normaliza un nombre de provincia (sin tildes, minúsculas) para cruzar BD y GeoJSON.
 function normalizar(texto) {
   return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -106,7 +119,6 @@ async function cargarDashboard() {
   // Mostrar el panel antes de pintar: el mapa y los canvas necesitan tener tamaño.
   document.getElementById("adminDashboard").classList.remove("d-none");
   pintarGraficas(datos);
-  pintarTablaUbicacion(datos.por_ubicacion || []);
   await pintarMapa(datos.por_provincia || []);
 }
 
@@ -269,38 +281,45 @@ function pintarGraficas(datos) {
       },
     }),
   );
-}
 
-// Rellena la tabla de incidencias por ubicación (ciudad + provincia + desglose).
-function pintarTablaUbicacion(porUbicacion) {
-  const tbody = document.getElementById("tablaUbicacion");
-  if (!porUbicacion.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="6" class="text-center text-muted py-3">Sin datos de ubicación.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = "";
-  porUbicacion.forEach(function (u) {
-    const fila = document.createElement("tr");
-    const celdas = [
-      u.nombre_ciudad,
-      u.nombre_provincia,
-      Number(u.total || 0),
-      Number(u.total_pendientes || 0),
-      Number(u.total_en_proceso || 0),
-      Number(u.total_resueltas || 0),
-    ];
-    celdas.forEach(function (valor, indice) {
-      const td = document.createElement("td");
-      td.textContent = valor;
-      // Las columnas numéricas van centradas; el total en negrita.
-      if (indice >= 2) td.classList.add("text-center");
-      if (indice === 2) td.classList.add("fw-bold");
-      fila.appendChild(td);
-    });
-    tbody.appendChild(fila);
+  // Gráfica 5: línea con la tendencia de incidencias por mes (últimos 12 meses).
+  const meses = ultimosMeses(12);
+  const conteoMes = {};
+  (datos.por_mes || []).forEach(function (m) {
+    conteoMes[m.mes] = Number(m.total || 0);
   });
+  graficos.push(
+    new Chart(document.getElementById("graficoMes"), {
+      type: "line",
+      data: {
+        labels: meses.map((m) => m.etiqueta),
+        datasets: [
+          {
+            label: "Incidencias",
+            data: meses.map((m) => conteoMes[m.clave] || 0),
+            borderColor: colorPrimary,
+            backgroundColor: colorPrimary,
+            tension: 0.3,
+            pointRadius: 3,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: colorTexto } },
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0, color: colorTexto },
+            grid: { color: colorGrid },
+          },
+        },
+      },
+    }),
+  );
 }
 
 // Devuelve un azul más intenso mientras mayor sea el conteo respecto al máximo.

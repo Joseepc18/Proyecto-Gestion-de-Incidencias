@@ -155,6 +155,7 @@ class RolesYCoberturaTest extends TestCase
                 'por_tipo',
                 'por_ubicacion',
                 'por_provincia',
+                'por_mes',
             ]);
     }
 

@@ -176,23 +176,11 @@
                 <div class="col-lg-7">
                   <article class="panel h-100">
                     <div class="panel-header">
-                      <h2 class="h6 mb-1">Incidencias por ubicación</h2>
-                      <p class="text-muted mb-0">Ciudades con más reportes y su estado.</p>
+                      <h2 class="h6 mb-1">Incidencias por mes</h2>
+                      <p class="text-muted mb-0">Reportes registrados en los últimos 12 meses.</p>
                     </div>
-                    <div class="tabla-metricas-wrap">
-                      <table class="table tabla-metricas align-middle mb-0">
-                        <thead>
-                          <tr>
-                            <th>Ciudad</th>
-                            <th>Provincia</th>
-                            <th class="text-center">Total</th>
-                            <th class="text-center">Pend.</th>
-                            <th class="text-center">Proc.</th>
-                            <th class="text-center">Resu.</th>
-                          </tr>
-                        </thead>
-                        <tbody id="tablaUbicacion"></tbody>
-                      </table>
+                    <div class="chart-wrap">
+                      <canvas id="graficoMes"></canvas>
                     </div>
                   </article>
                 </div>

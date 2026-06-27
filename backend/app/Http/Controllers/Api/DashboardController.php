@@ -49,6 +49,14 @@ class DashboardController extends Controller
                 ->selectRaw('p.nombre_provincia, COUNT(i.id_incidencia) AS total')
                 ->get();
 
+            // Conteo por mes de los últimos 12 meses (tendencia temporal)
+            $porMes = DB::table('incidencias')
+                ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+                ->groupByRaw("date_trunc('month', created_at)")
+                ->orderByRaw("date_trunc('month', created_at)")
+                ->selectRaw("to_char(date_trunc('month', created_at), 'YYYY-MM') AS mes, COUNT(*) AS total")
+                ->get();
+
             return [
                 'totales' => $totales,
                 'promedio_dias' => $promedioGlobal,
@@ -56,6 +64,7 @@ class DashboardController extends Controller
                 'por_tipo' => $porTipo,
                 'por_ubicacion' => $porUbicacion,
                 'por_provincia' => $porProvincia,
+                'por_mes' => $porMes,
             ];
         });
 
