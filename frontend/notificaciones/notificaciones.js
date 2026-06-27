@@ -1,11 +1,11 @@
-// notificaciones.js — Bandeja completa (lista, filtra y abre la incidencia).
-// OJO: distinto de assets/js/notificaciones.js, que es la campana del navbar.
+// notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
 /* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
 
 let usuarioActual = null;
 let notificaciones = [];
-let filtroActual = "todas"; // "todas" | "no_leidas"
+// "todas" | "no_leidas"
+let filtroActual = "todas";
 
 // Icono de Bootstrap Icons según el tipo de notificación.
 function iconoTipo(tipo) {
@@ -46,8 +46,7 @@ function actualizarContador(noLeidas) {
   btnTodas.disabled = noLeidas === 0;
 }
 
-// Dibuja la lista según el filtro activo. Se construye con createElement +
-// textContent (sin innerHTML con datos) para no abrir un XSS.
+// Dibuja la lista con createElement + textContent (sin innerHTML) para no abrir un XSS.
 function render() {
   const cont = document.getElementById("listaNotificaciones");
   cont.innerHTML = "";

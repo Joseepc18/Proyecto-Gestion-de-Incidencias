@@ -1,6 +1,4 @@
-// lightbox.js — Visor de imágenes a pantalla completa (para las evidencias).
-// Cualquier elemento con [data-lightbox="url"] abre el visor al hacer clic.
-// Se cierra con la X, clic en el fondo o tecla Esc.
+// lightbox.js — Visor de imágenes a pantalla completa; se abre con [data-lightbox="url"].
 
 /* exported abrirLightbox */
 

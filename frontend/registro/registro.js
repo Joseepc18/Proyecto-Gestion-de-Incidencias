@@ -11,9 +11,9 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     if (!form.checkValidity()) {
-      return; // form inválido: no enviar
+      return;
     }
-    errorBox.classList.add("d-none"); // ocultar error anterior
+    errorBox.classList.add("d-none");
 
     // Datos del formulario (trim quita espacios sobrantes)
     const name = document.getElementById("registerName").value.trim();

@@ -1,12 +1,10 @@
-// eslint.config.js — Reglas de revisión del JavaScript del frontend.
-// Solo corre en CI (GitHub Actions), nunca en el navegador.
+// eslint.config.js — Reglas de ESLint para el JS del frontend; solo corre en CI.
 
 const js = require("@eslint/js");
 const globals = require("globals");
 
 module.exports = [
-  // 1) Archivos que NO revisamos: JS de terceros (plantilla / librerías minificadas)
-  //    y este mismo archivo de config (es de Node, no del navegador).
+  // 1) Archivos que NO revisamos: vendors minificados y este propio config (Node).
   {
     ignores: [
       "assets/js/bootstrap.bundle.min.js",
@@ -22,9 +20,11 @@ module.exports = [
     files: ["**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "script", // usamos <script> globales, no módulos import/export
+      // usamos <script> globales, no módulos import/export
+      sourceType: "script",
       globals: {
-        ...globals.browser, // document, window, localStorage, fetch, JSON, etc.
+        // document, window, localStorage, fetch, JSON, etc.
+        ...globals.browser,
       },
     },
     rules: {

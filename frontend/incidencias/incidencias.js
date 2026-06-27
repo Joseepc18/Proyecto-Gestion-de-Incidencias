@@ -274,8 +274,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   cargarIncidencias();
 });
 
-// Funciones globales (se llaman desde onclick en el HTML)
-// Antes abría un modal; ahora navega a la página de detalle (detalle.html?id=).
+// Funciones globales (se llaman desde onclick en el HTML).
 // eslint-disable-next-line no-unused-vars
 function verDetalle(id) {
   window.location.href = "../detalleIncidencia/detalle.html?id=" + id;

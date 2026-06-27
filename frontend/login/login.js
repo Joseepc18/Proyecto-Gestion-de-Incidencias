@@ -17,9 +17,9 @@ document.addEventListener("DOMContentLoaded", function () {
   form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     if (!form.checkValidity()) {
-      return; // form inválido: no enviar
+      return;
     }
-    errorBox.classList.add("d-none"); // ocultar error anterior
+    errorBox.classList.add("d-none");
 
     // Bloquear botón y mostrar spinner mientras procesa
     boton.disabled = true;

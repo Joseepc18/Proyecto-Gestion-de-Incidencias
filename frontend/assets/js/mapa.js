@@ -5,7 +5,8 @@
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};
-  const centro = opciones.centro || [-2.2267, -80.9012]; // La Libertad / UPSE
+  // Centro por defecto: La Libertad / UPSE
+  const centro = opciones.centro || [-2.2267, -80.9012];
   const zoom = opciones.zoom || 13;
 
   // Zoom a la derecha: la esquina superior izquierda la ocupa el feed
@@ -85,10 +86,11 @@ function crearMapaIncidencias(idContenedor, opciones) {
 // eslint-disable-next-line no-unused-vars
 function crearMapaPicker(idContenedor, onCambio, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
+  // Limitar el paneo a Ecuador
   map.setMaxBounds([
     [-5.5, -82.0],
     [1.8, -74.5],
-  ]); // Limitar el paneo a Ecuador
+  ]);
   let marcador = null;
 
   function poner(lat, lng) {

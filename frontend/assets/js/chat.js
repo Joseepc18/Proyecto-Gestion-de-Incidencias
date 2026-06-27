@@ -1,7 +1,4 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
-// Pinta el hilo como burbujas (las tuyas a la derecha) y la caja para escribir.
-// Reusa los endpoints de comentarios. Se monta en la página de detalle y en el
-// panel flotante de "Mis incidencias".
 
 /* global apiFetch */
 /* exported crearChat */
@@ -12,8 +9,7 @@ function etiquetaRol(rol) {
   return mapa[rol] || "Usuario";
 }
 
-// idContenedor: div vacío donde se arma el chat.
-// idIncidencia: incidencia del hilo. usuario: el usuario autenticado (para "Tú").
+// idContenedor: div del chat; idIncidencia: hilo; usuario: autenticado (para "Tú").
 function crearChat(idContenedor, idIncidencia, usuario) {
   const cont = document.getElementById(idContenedor);
   if (!cont) return null;

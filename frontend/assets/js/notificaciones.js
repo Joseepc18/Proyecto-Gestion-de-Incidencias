@@ -1,6 +1,4 @@
-// notificaciones.js — Campana del navbar. Lista las notificaciones del usuario,
-// muestra el contador sin leer y permite marcarlas como leídas. Se carga en las
-// páginas del panel, después de layout.js (que inyecta el botón en el navbar).
+// notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
 /* global apiFetch, obtenerToken */
 

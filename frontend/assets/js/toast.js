@@ -78,8 +78,7 @@ function toastFlash(mensaje, tipo = "info") {
   sessionStorage.setItem("toastFlash", JSON.stringify({ mensaje, tipo }));
 }
 
-// Al cargar cada página, muestra el toast pendiente (flash) — pero esperando a
-// que la carga inicial termine (spinner oculto), para que no se solapen.
+// Al cargar la página, muestra el toast pendiente (flash) cuando el spinner ya se ocultó.
 document.addEventListener("DOMContentLoaded", function () {
   const pendiente = sessionStorage.getItem("toastFlash");
   if (!pendiente) {

@@ -185,7 +185,6 @@ async function cargarLista() {
 }
 
 // Paso 3 — Carga el resumen liviano de la incidencia en la tarjeta derecha.
-// El detalle completo y el chat viven en la página "Ver detalles".
 async function seleccionarIncidencia(id) {
   // Marcar la tarjeta activa
   document.querySelectorAll(".incidencia-card").forEach(function (card) {

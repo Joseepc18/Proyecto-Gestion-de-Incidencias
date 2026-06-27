@@ -21,12 +21,16 @@ const prioridadConfig = {
 let incActual = null;
 let usuarioActual = null;
 let catalogoTipos = [];
-let mapaVista = null; // instancia de solo-lectura (crearMapaIncidencias)
-let picker = null; // instancia del modo edición (crearMapaPicker)
+// instancia de solo-lectura (crearMapaIncidencias)
+let mapaVista = null;
+// instancia del modo edición (crearMapaPicker)
+let picker = null;
 let latEdit = null;
 let lngEdit = null;
-const fotosNuevas = []; // fotos comprimidas pendientes de subir
-const evidenciasAEliminar = new Set(); // ids de evidencias marcadas para borrar
+// fotos comprimidas pendientes de subir
+const fotosNuevas = [];
+// ids de evidencias marcadas para borrar
+const evidenciasAEliminar = new Set();
 
 // Compresión: redimensiona a ~1920px y calidad 0.8 antes de subir
 const opcionesCompresion = {
@@ -379,7 +383,8 @@ function renderEvidenciasEdit() {
     btn.addEventListener("click", function () {
       evidenciasAEliminar.add(ev.id_evidencia);
       renderEvidenciasEdit();
-      renderFotosNuevas(); // el cupo disponible cambió
+      // el cupo disponible cambió
+      renderFotosNuevas();
     });
 
     wrap.appendChild(img);
