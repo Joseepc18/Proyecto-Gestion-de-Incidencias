@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Catálogos - Sistema de Gestión de Incidencias" />
+    <title>Catálogos | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="catalogos">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <!-- Encabezado de página -->
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-tags" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1">Gestión</p>
+                  <h1 class="h3 mb-1">Catálogos</h1>
+                  <p class="text-muted mb-0">
+                    Administra los tipos y subtipos de incidencia del sistema.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel: tipos de incidencia -->
+            <section class="panel mb-4">
+              <div class="panel-header">
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-tag" aria-hidden="true"></i>
+                  <span id="tituloFormTipo">Nuevo tipo</span>
+                </h2>
+              </div>
+              <div class="p-3">
+                <form id="formTipo" class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label for="tipoNombre" class="form-label">Nombre</label>
+                    <input
+                      class="form-control form-control-sm"
+                      type="text"
+                      id="tipoNombre"
+                      maxlength="255"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="tipoDescripcion" class="form-label">Descripción (opcional)</label>
+                    <input
+                      class="form-control form-control-sm"
+                      type="text"
+                      id="tipoDescripcion"
+                      maxlength="500"
+                    />
+                  </div>
+                  <div class="col-md-2">
+                    <button class="btn btn-primary btn-sm w-100" type="submit" id="btnGuardarTipo">
+                      <span
+                        class="spinner-border spinner-border-sm me-1 d-none"
+                        id="tipoSpinner"
+                        role="status"
+                      ></span>
+                      <span id="btnTipoTexto"
+                        ><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear</span
+                      >
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary btn-sm w-100 mt-1 d-none"
+                      type="button"
+                      id="btnCancelarTipo"
+                    >
+                      <i class="bi bi-x-lg" aria-hidden="true"></i> Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Descripción</th>
+                      <th class="text-center">Subtipos</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyTipos">
+                    <!-- catalogos.js llena esto dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <!-- Panel: subtipos de incidencia -->
+            <section class="panel">
+              <div
+                class="panel-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+              >
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-tags" aria-hidden="true"></i>
+                  <span id="tituloFormSubtipo">Nuevo subtipo</span>
+                </h2>
+                <div class="d-flex align-items-center gap-2">
+                  <label for="filtroSubtipoTipo" class="form-label mb-0 small text-muted"
+                    >Filtrar por tipo</label
+                  >
+                  <select
+                    class="form-select form-select-sm w-auto"
+                    id="filtroSubtipoTipo"
+                    aria-label="Filtrar subtipos por tipo"
+                  >
+                    <option value="">Todos los tipos</option>
+                  </select>
+                </div>
+              </div>
+              <div class="p-3">
+                <form id="formSubtipo" class="row g-2 align-items-end">
+                  <div class="col-md-3">
+                    <label for="subtipoTipo" class="form-label">Tipo</label>
+                    <select class="form-select form-select-sm" id="subtipoTipo" required>
+                      <option value="">Seleccionar...</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="subtipoNombre" class="form-label">Nombre</label>
+                    <input
+                      class="form-control form-control-sm"
+                      type="text"
+                      id="subtipoNombre"
+                      maxlength="255"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-4">
+                    <label for="subtipoDescripcion" class="form-label"
+                      >Descripción (opcional)</label
+                    >
+                    <input
+                      class="form-control form-control-sm"
+                      type="text"
+                      id="subtipoDescripcion"
+                      maxlength="500"
+                    />
+                  </div>
+                  <div class="col-md-2">
+                    <button
+                      class="btn btn-primary btn-sm w-100"
+                      type="submit"
+                      id="btnGuardarSubtipo"
+                    >
+                      <span
+                        class="spinner-border spinner-border-sm me-1 d-none"
+                        id="subtipoSpinner"
+                        role="status"
+                      ></span>
+                      <span id="btnSubtipoTexto"
+                        ><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear</span
+                      >
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary btn-sm w-100 mt-1 d-none"
+                      type="button"
+                      id="btnCancelarSubtipo"
+                    >
+                      <i class="bi bi-x-lg" aria-hidden="true"></i> Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Subtipo</th>
+                      <th>Tipo padre</th>
+                      <th>Descripción</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodySubtipos">
+                    <!-- catalogos.js llena esto dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- JS compartido -->
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/toast.js"></script>
+    <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/layout.js"></script>
+    <script src="../assets/js/notificaciones.js"></script>
+    <!-- Lógica propia -->
+    <script src="catalogos.js"></script>
+  </body>
+</html>

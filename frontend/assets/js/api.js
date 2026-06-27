@@ -168,6 +168,7 @@ function aplicarMenuRol(rol) {
   mostrar("navInicio", !esNormal);
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
+  mostrar("navCatalogos", esAdmin);
   mostrar("navMisIncidencias", !esAdmin);
   // El técnico no registra incidencias; solo admin y ciudadano ven el enlace.
   mostrar("navRegistrar", esAdmin || esNormal);

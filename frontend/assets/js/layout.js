@@ -49,6 +49,14 @@
       oculto: true,
     },
     {
+      page: "catalogos",
+      id: "navCatalogos",
+      href: "../catalogos/catalogos.html",
+      icon: "bi-tags",
+      texto: "Catálogos",
+      oculto: true,
+    },
+    {
       page: "notificaciones",
       href: "../notificaciones/notificaciones.html",
       icon: "bi-mailbox",
