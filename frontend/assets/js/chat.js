@@ -79,6 +79,14 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     }
   }
 
+  // Enter envía; Shift+Enter hace salto de línea.
+  texto.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
   // Enviar un mensaje.
   form.addEventListener("submit", async function (e) {
     e.preventDefault();

@@ -2567,3 +2567,375 @@ html[data-theme="dark"] {
     max-height: 52%;
   }
 }
+
+/* Franja lateral de la tarjeta de detalles según la prioridad */
+.panel-acento {
+  border-left-width: 4px;
+}
+
+.panel-acento.acento-alta {
+  border-left-color: var(--admin-danger);
+}
+
+.panel-acento.acento-media {
+  border-left-color: var(--admin-warning);
+}
+
+.panel-acento.acento-baja {
+  border-left-color: var(--admin-success);
+}
+
+/* Detalle admin: herramientas de gestión (columna derecha) */
+.panel-titulo-tool {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-muted);
+  margin-bottom: 12px;
+}
+
+/* Selector de prioridad: 3 botones lado a lado */
+.btn-grupo-tool {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-tool {
+  flex: 1;
+  padding: 7px 4px;
+  border: 2px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  font-weight: 700;
+  font-size: 0.82rem;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+.btn-tool:hover:not(:disabled) {
+  background: var(--admin-surface-soft);
+}
+
+.btn-tool.activa-alta {
+  border-color: var(--admin-danger);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--admin-danger);
+}
+
+.btn-tool.activa-media {
+  border-color: var(--admin-warning);
+  background: rgba(217, 119, 6, 0.08);
+  color: var(--admin-warning);
+}
+
+.btn-tool.activa-baja {
+  border-color: var(--admin-success);
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--admin-success);
+}
+
+/* Botones de cambio de estado (apilados) */
+.btn-estado-tool {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 9px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-weight: 600;
+  font-size: 0.84rem;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.btn-estado-tool:hover:not(:disabled) {
+  background: var(--admin-surface-soft);
+  border-color: var(--admin-primary);
+}
+
+.btn-estado-tool .marca {
+  opacity: 0;
+}
+
+.btn-estado-tool.activo {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
+
+.btn-estado-tool.activo .marca {
+  opacity: 1;
+}
+
+/* Filas de técnicos asignados (avatar de iniciales + nombre) */
+.tecnico-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.tecnico-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.tecnico-avatar-primary {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--admin-primary);
+}
+
+.tecnico-avatar-secondary {
+  background: rgba(15, 118, 110, 0.15);
+  color: var(--admin-success);
+}
+
+.tecnico-nombre {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Timeline del historial de estados */
+.timeline {
+  position: relative;
+  padding-left: 22px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--admin-border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 18px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-punto {
+  position: absolute;
+  left: -22px;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--admin-primary);
+  border: 3px solid var(--admin-surface);
+}
+
+.timeline-titulo {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.timeline-meta {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+  margin: 2px 0 0;
+}
+
+/* Rejilla de 3 columnas del detalle (apila en móvil, una sola pantalla en escritorio) */
+.detalle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detalle-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Mapa más bajo en este layout */
+.detalle-grid .mapa-detalle {
+  height: 200px;
+}
+
+@media (min-width: 1200px) {
+  /* La pantalla del detalle se ancla al alto de la ventana: no scrollea la página */
+  .detalle-shell {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detalle-main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detalle-main > .container-fluid {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detalle-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .detalle-col {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Panel que crece y scrollea por dentro (fotos, historial) */
+  .detalle-fill {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detalle-fill-cuerpo {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Evita el salto del hover de panel en este layout apretado */
+  .detalle-grid .panel:hover {
+    transform: none;
+  }
+}
+
+/* Burbuja flotante que abre el chat */
+.chat-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--admin-primary);
+  color: #ffffff;
+  font-size: 1.4rem;
+  box-shadow: var(--admin-shadow);
+  z-index: 1190;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-fab:hover {
+  background: var(--admin-primary-dark);
+}
+
+/* Panel del chat flotante (anclado abajo-derecha) */
+.chat-flotante {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 360px;
+  max-width: calc(100% - 40px);
+  height: min(70vh, 520px);
+  max-height: none;
+  z-index: 1200;
+  box-shadow: var(--admin-shadow-lg);
+}
+
+/* Contactos/participantes del chat */
+.chat-participantes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface-soft);
+}
+
+.chat-participantes-vacio {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+}
+
+.chat-contacto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  background: var(--admin-surface);
+}
+
+.chat-ava {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.chat-ava-primary {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--admin-primary);
+}
+
+.chat-ava-success {
+  background: rgba(15, 118, 110, 0.15);
+  color: var(--admin-success);
+}
+
+.chat-ava-secondary {
+  background: rgba(107, 114, 128, 0.18);
+  color: var(--admin-muted);
+}
+
+.chat-contacto-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.chat-contacto-nombre {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chat-contacto-rol {
+  font-size: 0.65rem;
+  color: var(--admin-muted);
+}

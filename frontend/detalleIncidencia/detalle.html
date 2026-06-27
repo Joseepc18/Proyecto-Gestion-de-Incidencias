@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
@@ -18,21 +19,21 @@
       <!-- Sidebar (igual que incidencias.html) -->
       <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
 
-      <div class="admin-main">
+      <div class="admin-main detalle-shell">
         <!-- Navbar (igual que incidencias.html) -->
         <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
 
         <!-- Contenido principal -->
-        <main class="dashboard-content">
+        <main class="dashboard-content detalle-main">
           <div class="container-fluid px-3 px-lg-4 py-4">
             <!-- Encabezado de página -->
             <div class="page-heading">
               <div class="page-heading-copy">
                 <span class="page-icon"><i class="bi bi-card-text" aria-hidden="true"></i></span>
                 <div>
-                  <p class="eyebrow mb-1">Incidencia</p>
+                  <p class="eyebrow mb-1" id="detalleCodigo">Incidencia</p>
                   <h1 class="h3 mb-1" id="detalleTitulo">Detalle de incidencia</h1>
-                  <p class="text-muted mb-0">Información completa de la incidencia reportada.</p>
+                  <p class="text-muted mb-0">Gestión completa de la incidencia reportada.</p>
                 </div>
               </div>
               <a class="btn btn-outline-secondary btn-sm" href="../incidencias/incidencias.html">
@@ -40,99 +41,188 @@
               </a>
             </div>
 
-            <!-- Panel: detalle -->
-            <section class="panel">
-              <div class="p-3 p-lg-4">
-                <!-- Spinner de carga -->
-                <div id="detalleCargando" class="text-center py-4">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                  </div>
-                </div>
-
-                <!-- Contenido (oculto mientras carga) -->
-                <div id="detalleContenido" class="d-none">
-                  <!-- Badges estado y prioridad -->
-                  <div class="d-flex gap-2 mb-3">
-                    <span class="badge" id="detalleEstado"></span>
-                    <span class="badge" id="detallePrioridad"></span>
-                  </div>
-
-                  <!-- Descripción -->
-                  <div id="detalleDescripcionBloque" class="mb-3">
-                    <h6 class="text-muted mb-1">Descripción</h6>
-                    <p id="detalleDescripcion" class="mb-0"></p>
-                  </div>
-
-                  <!-- Datos en 2 columnas -->
-                  <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Tipo / Subtipo</h6>
-                      <p id="detalleTipoSubtipo" class="mb-0 fw-semibold"></p>
-                    </div>
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Ciudad</h6>
-                      <p id="detalleCiudad" class="mb-0 fw-semibold"></p>
-                    </div>
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Coordenadas</h6>
-                      <p id="detalleCoordenadas" class="mb-0"></p>
-                    </div>
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Dirección</h6>
-                      <p id="detalleDireccion" class="mb-0"></p>
-                    </div>
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Reportado por</h6>
-                      <p id="detalleUsuario" class="mb-0"></p>
-                    </div>
-                    <div class="col-md-6">
-                      <h6 class="text-muted mb-1">Fecha de creación</h6>
-                      <p id="detalleFecha" class="mb-0"></p>
-                    </div>
-                  </div>
-
-                  <!-- Fotos -->
-                  <div id="detalleFotosBloque" class="d-none">
-                    <h6 class="text-muted mb-2">Evidencia fotográfica</h6>
-                    <div id="detalleFotos" class="d-flex gap-2 flex-wrap"></div>
-                  </div>
-                </div>
+            <!-- Spinner de carga -->
+            <div id="detalleCargando" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
               </div>
-            </section>
+            </div>
 
-            <!-- Panel: técnicos asignados (responsable / apoyo) -->
-            <section class="panel mt-4">
-              <div class="p-3 p-lg-4">
-                <h2 class="h5 mb-3">
-                  <i class="bi bi-people me-1" aria-hidden="true"></i> Técnicos asignados
-                </h2>
+            <!-- Contenido (oculto mientras carga): 3 columnas que entran en una pantalla -->
+            <div id="detalleContenido" class="detalle-grid d-none">
+              <!-- Columna 1: info + fotos -->
+              <div class="detalle-col">
+                <!-- Tarjeta principal -->
+                <section class="panel panel-acento" id="panelDetalle">
+                  <div class="p-3">
+                    <!-- Badges estado / prioridad / tipo -->
+                    <div class="d-flex gap-2 mb-2 flex-wrap">
+                      <span class="badge" id="detalleEstado"></span>
+                      <span class="badge" id="detallePrioridad"></span>
+                      <span class="badge text-bg-light border" id="detalleTipoBadge"></span>
+                    </div>
 
-                <!-- Lista de asignaciones actuales (se llena por JS) -->
-                <div id="asignacionesLista" class="mb-3"></div>
+                    <!-- Línea meta: tipo → subtipo · reportado por · fecha -->
+                    <p class="text-muted small mb-2" id="detalleMeta"></p>
 
-                <!-- Formulario de asignación (solo admin; JS le quita d-none) -->
-                <form id="formAsignar" class="row g-2 align-items-end d-none">
-                  <div class="col-sm-6">
-                    <label for="selectTecnico" class="form-label">Técnico</label>
-                    <select id="selectTecnico" class="form-select" required>
-                      <option value="">Selecciona un técnico…</option>
-                    </select>
+                    <!-- Descripción -->
+                    <div id="detalleDescripcionBloque" class="mb-2">
+                      <h6 class="text-muted mb-1">Descripción</h6>
+                      <p id="detalleDescripcion" class="mb-0"></p>
+                    </div>
+
+                    <!-- Datos en 2 columnas -->
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <h6 class="text-muted mb-0 small">Reportado por</h6>
+                        <p id="detalleUsuario" class="mb-0 fw-semibold small"></p>
+                      </div>
+                      <div class="col-6">
+                        <h6 class="text-muted mb-0 small">Ciudad</h6>
+                        <p id="detalleCiudad" class="mb-0 fw-semibold small"></p>
+                      </div>
+                      <div class="col-6">
+                        <h6 class="text-muted mb-0 small">Dirección</h6>
+                        <p id="detalleDireccion" class="mb-0 small"></p>
+                      </div>
+                      <div class="col-6">
+                        <h6 class="text-muted mb-0 small">Fecha de creación</h6>
+                        <p id="detalleFecha" class="mb-0 small"></p>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-sm-3">
-                    <label for="selectRol" class="form-label">Rol</label>
-                    <select id="selectRol" class="form-select" required>
-                      <option value="RESPONSABLE">Responsable</option>
-                      <option value="APOYO">Apoyo</option>
-                    </select>
+                </section>
+
+                <!-- Historial de estados -->
+                <section class="panel detalle-fill">
+                  <div class="p-3 detalle-fill-cuerpo">
+                    <h3 class="panel-titulo-tool">
+                      <i class="bi bi-clock-history me-1"></i> Historial de estados
+                    </h3>
+                    <div id="historialTimeline" class="timeline"></div>
                   </div>
-                  <div class="col-sm-3">
-                    <button type="submit" class="btn btn-primary w-100">
-                      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Asignar
-                    </button>
-                  </div>
-                </form>
+                </section>
               </div>
+
+              <!-- Columna 2: mapa + fotos -->
+              <div class="detalle-col">
+                <!-- Mapa (solo lectura) -->
+                <section class="panel">
+                  <div class="p-3">
+                    <h2 class="h6 mb-2"><i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa</h2>
+                    <div id="mapaDetalle" class="mapa-detalle"></div>
+                  </div>
+                </section>
+
+                <!-- Fotos del reporte -->
+                <section class="panel detalle-fill" id="fotosReporteBloque">
+                  <div class="p-3 detalle-fill-cuerpo">
+                    <h2 class="h6 mb-2"><i class="bi bi-images me-1"></i> Fotos del reporte</h2>
+                    <div id="fotosReporte" class="d-flex gap-2 flex-wrap"></div>
+
+                    <!-- Fotos de la resolución (dentro del mismo panel) -->
+                    <div id="fotosResolucionBloque" class="d-none mt-3">
+                      <h2 class="h6 mb-2">
+                        <i class="bi bi-tools me-1"></i> Fotos de la resolución
+                      </h2>
+                      <div id="fotosResolucion" class="d-flex gap-2 flex-wrap"></div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <!-- Columna 3: herramientas de gestión (solo admin) + historial -->
+              <div class="detalle-col">
+                <!-- Prioridad -->
+                <section class="panel solo-admin d-none">
+                  <div class="p-3">
+                    <h3 class="panel-titulo-tool">
+                      <i class="bi bi-flag-fill me-1"></i> Prioridad
+                    </h3>
+                    <div class="btn-grupo-tool" id="prioridadBotones">
+                      <button type="button" class="btn-tool" data-prioridad="ALTA">Alta</button>
+                      <button type="button" class="btn-tool" data-prioridad="MEDIA">Media</button>
+                      <button type="button" class="btn-tool" data-prioridad="BAJA">Baja</button>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Asignación de técnicos -->
+                <section class="panel solo-admin d-none">
+                  <div class="p-3">
+                    <!-- Responsable -->
+                    <h3 class="panel-titulo-tool">
+                      <i class="bi bi-person-badge me-1"></i> Responsable
+                    </h3>
+                    <div id="responsableLista" class="mb-2"></div>
+                    <div class="input-group input-group-sm mb-3" id="responsableForm">
+                      <select id="selectResponsable" class="form-select">
+                        <option value="">Selecciona un técnico…</option>
+                      </select>
+                      <button type="button" class="btn btn-primary" id="btnAsignarResponsable">
+                        <i class="bi bi-plus-lg"></i>
+                      </button>
+                    </div>
+
+                    <!-- Ayudantes -->
+                    <h3 class="panel-titulo-tool"><i class="bi bi-people me-1"></i> Ayudantes</h3>
+                    <div id="ayudantesLista" class="mb-2"></div>
+                    <div class="input-group input-group-sm" id="ayudanteForm">
+                      <select id="selectAyudante" class="form-select">
+                        <option value="">Selecciona un técnico…</option>
+                      </select>
+                      <button type="button" class="btn btn-primary" id="btnAsignarAyudante">
+                        <i class="bi bi-plus-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Cambiar estado -->
+                <section class="panel solo-admin d-none">
+                  <div class="p-3">
+                    <h3 class="panel-titulo-tool">
+                      <i class="bi bi-arrow-repeat me-1"></i> Cambiar estado
+                    </h3>
+                    <div class="d-flex flex-column gap-2" id="estadoBotones">
+                      <button type="button" class="btn-estado-tool" data-estado="PENDIENTE">
+                        <span><i class="bi bi-clock-history me-1"></i> Pendiente</span>
+                        <i class="bi bi-check-lg marca"></i>
+                      </button>
+                      <button type="button" class="btn-estado-tool" data-estado="EN_PROCESO">
+                        <span><i class="bi bi-gear-wide-connected me-1"></i> En proceso</span>
+                        <i class="bi bi-check-lg marca"></i>
+                      </button>
+                      <button type="button" class="btn-estado-tool" data-estado="RESUELTO">
+                        <span><i class="bi bi-check2-circle me-1"></i> Resuelto</span>
+                        <i class="bi bi-check-lg marca"></i>
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <!-- Chat flotante (burbuja) -->
+            <button class="chat-fab" id="btnChatFab" type="button" aria-label="Abrir chat">
+              <i class="bi bi-chat-dots"></i>
+            </button>
+            <section class="panel chat-panel chat-flotante d-none" id="chatPanel">
+              <div class="chat-cabecera">
+                <i class="bi bi-chat-dots me-2"></i>
+                <span>Comentarios y seguimiento</span>
+                <button
+                  class="btn-cerrar-chat"
+                  id="btnCerrarChat"
+                  type="button"
+                  aria-label="Cerrar"
+                >
+                  <i class="bi bi-chevron-down"></i>
+                </button>
+              </div>
+              <!-- Otros participantes del chat (según el rol que mira) -->
+              <div id="chatParticipantes" class="chat-participantes"></div>
+              <div id="chatContenedor" class="chat-cuerpo"></div>
             </section>
           </div>
         </main>
@@ -148,6 +238,11 @@
     <script src="../assets/js/lightbox.js"></script>
     <script src="../assets/js/layout.js"></script>
     <script src="../assets/js/notificaciones.js"></script>
+    <!-- Mapa -->
+    <script src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script src="../assets/js/mapa.js"></script>
+    <!-- Chat reutilizable -->
+    <script src="../assets/js/chat.js"></script>
     <!-- Lógica propia -->
     <script src="detalle.js"></script>
   </body>
