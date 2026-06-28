@@ -53,7 +53,7 @@
       id: "navCatalogos",
       href: "../catalogos/catalogos.html",
       icon: "bi-tags",
-      texto: "Catálogos",
+      texto: "Tipos de incidencia",
       oculto: true,
     },
     {
