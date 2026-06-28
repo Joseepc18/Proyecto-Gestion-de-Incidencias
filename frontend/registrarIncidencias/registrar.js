@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Catálogos
   let catalogoTipos = [];
+  let catalogoCiudades = [];
 
   try {
     catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
@@ -63,17 +64,45 @@ document.addEventListener("DOMContentLoaded", async function () {
       selectTipo.appendChild(op);
     });
 
-    const ciudades = await apiFetch("/catalogos/ciudades");
-    const selectCiudad = document.getElementById("crearCiudad");
-    ciudades.forEach(function (ciudad) {
+    // Las ciudades se guardan para filtrarlas luego por la provincia elegida.
+    catalogoCiudades = await apiFetch("/catalogos/ciudades");
+    const provincias = await apiFetch("/catalogos/provincias");
+    const selectProvincia = document.getElementById("crearProvincia");
+    provincias.forEach(function (provincia) {
       const op = document.createElement("option");
-      op.value = ciudad.id_ciudad;
-      op.textContent = ciudad.nombre_ciudad;
-      selectCiudad.appendChild(op);
+      op.value = provincia.id_provincia;
+      op.textContent = provincia.nombre_provincia;
+      selectProvincia.appendChild(op);
     });
   } catch (error) {
     console.error("Error cargando catálogos:", error);
   }
+
+  // Cascada provincia → ciudad
+  document.getElementById("crearProvincia").addEventListener("change", function () {
+    const selectCiudad = document.getElementById("crearCiudad");
+    const provinciaId = parseInt(this.value);
+    selectCiudad.innerHTML = "";
+
+    if (!provinciaId) {
+      selectCiudad.disabled = true;
+      selectCiudad.innerHTML = '<option value="">Primero selecciona una provincia</option>';
+      return;
+    }
+
+    selectCiudad.disabled = false;
+    selectCiudad.innerHTML = '<option value="">Seleccionar...</option>';
+    catalogoCiudades
+      .filter(function (ciudad) {
+        return ciudad.id_provincia === provinciaId;
+      })
+      .forEach(function (ciudad) {
+        const op = document.createElement("option");
+        op.value = ciudad.id_ciudad;
+        op.textContent = ciudad.nombre_ciudad;
+        selectCiudad.appendChild(op);
+      });
+  });
 
   // Cascada tipo → subtipo
   document.getElementById("crearTipo").addEventListener("change", function () {

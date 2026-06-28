@@ -140,11 +140,20 @@
                         <div class="invalid-feedback">Selecciona un subtipo.</div>
                       </div>
                       <div class="col-md-6">
+                        <label class="form-label" for="editProvincia"
+                          >Provincia <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editProvincia" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona una provincia.</div>
+                      </div>
+                      <div class="col-md-6">
                         <label class="form-label" for="editCiudad"
                           >Ciudad <span class="text-danger">*</span></label
                         >
-                        <select class="form-select" id="editCiudad" required>
-                          <option value="">Seleccionar...</option>
+                        <select class="form-select" id="editCiudad" required disabled>
+                          <option value="">Primero selecciona una provincia</option>
                         </select>
                         <div class="invalid-feedback">Selecciona una ciudad.</div>
                       </div>

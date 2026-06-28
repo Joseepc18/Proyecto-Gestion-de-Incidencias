@@ -156,12 +156,32 @@ async function cargarDetalle(id) {
   }
 }
 
+// Solo ven el chat el admin, el reportador y el técnico responsable (el de apoyo queda fuera, igual que la policy verChat).
+function puedeUsarChat() {
+  if (!usuarioActual) return false;
+  if (esAdmin) return true;
+  if (incActual && incActual.usuario && incActual.usuario.id === usuarioActual.id) return true;
+  return (
+    responsableActual &&
+    responsableActual.usuario &&
+    responsableActual.usuario.id === usuarioActual.id
+  );
+}
+
+// Muestra u oculta la burbuja del chat según quién mira (se reevalúa al cargar las asignaciones).
+function actualizarChatFab() {
+  const fab = document.getElementById("btnChatFab");
+  if (fab) fab.classList.toggle("d-none", !puedeUsarChat());
+}
+
 // Chat flotante: la burbuja abre/cierra el chat (se crea la primera vez que se abre).
 let chatCreado = false;
 function configurarChatFlotante(id) {
   const fab = document.getElementById("btnChatFab");
   const panel = document.getElementById("chatPanel");
   const cerrar = document.getElementById("btnCerrarChat");
+
+  actualizarChatFab();
 
   fab.addEventListener("click", function () {
     panel.classList.remove("d-none");
@@ -406,6 +426,8 @@ async function cargarAsignaciones(id) {
     // Guardar el responsable para los contactos del chat
     responsableActual = responsable || null;
     pintarParticipantes();
+    // Ya se sabe quién es el responsable: reevaluar si esta persona puede ver el chat.
+    actualizarChatFab();
 
     // Responsable
     responsableLista.innerHTML = "";

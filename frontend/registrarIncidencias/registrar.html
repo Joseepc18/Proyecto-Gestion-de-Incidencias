@@ -112,13 +112,24 @@
                       <div class="invalid-feedback">Selecciona un subtipo.</div>
                     </div>
 
+                    <!-- Provincia -->
+                    <div class="col-sm-6">
+                      <label class="form-label" for="crearProvincia"
+                        >Provincia <span class="text-danger">*</span></label
+                      >
+                      <select class="form-select" id="crearProvincia" required>
+                        <option value="">Seleccionar...</option>
+                      </select>
+                      <div class="invalid-feedback">Selecciona una provincia.</div>
+                    </div>
+
                     <!-- Ciudad -->
                     <div class="col-sm-6">
                       <label class="form-label" for="crearCiudad"
                         >Ciudad <span class="text-danger">*</span></label
                       >
-                      <select class="form-select" id="crearCiudad" required>
-                        <option value="">Seleccionar...</option>
+                      <select class="form-select" id="crearCiudad" required disabled>
+                        <option value="">Primero selecciona una provincia</option>
                       </select>
                       <div class="invalid-feedback">Selecciona una ciudad.</div>
                     </div>

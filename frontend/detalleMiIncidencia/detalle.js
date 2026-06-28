@@ -6,6 +6,7 @@
 let incActual = null;
 let usuarioActual = null;
 let catalogoTipos = [];
+let catalogoCiudades = [];
 // instancia de solo-lectura (crearMapaIncidencias)
 let mapaVista = null;
 // instancia del modo edición (crearMapaPicker)
@@ -241,6 +242,13 @@ async function entrarEdicion() {
   if (incActual.subtipo) {
     document.getElementById("editSubtipo").value = incActual.subtipo.id_subtipo_incidencia;
   }
+  // Deriva la provincia desde la ciudad actual y encadena el select de ciudad.
+  const ciudadActual = catalogoCiudades.find(function (c) {
+    return c.id_ciudad === incActual.id_ciudad;
+  });
+  const idProvincia = ciudadActual ? ciudadActual.id_provincia : "";
+  document.getElementById("editProvincia").value = idProvincia || "";
+  poblarCiudades(idProvincia);
   document.getElementById("editCiudad").value = incActual.id_ciudad || "";
 
   // Alternar vista → edición
@@ -271,18 +279,25 @@ async function cargarCatalogos() {
       selectTipo.appendChild(op);
     });
 
-    const ciudades = await apiFetch("/catalogos/ciudades");
-    const selectCiudad = document.getElementById("editCiudad");
-    ciudades.forEach(function (c) {
+    // Las ciudades se guardan para filtrarlas luego por la provincia elegida.
+    catalogoCiudades = await apiFetch("/catalogos/ciudades");
+    const provincias = await apiFetch("/catalogos/provincias");
+    const selectProvincia = document.getElementById("editProvincia");
+    provincias.forEach(function (p) {
       const op = document.createElement("option");
-      op.value = c.id_ciudad;
-      op.textContent = c.nombre_ciudad;
-      selectCiudad.appendChild(op);
+      op.value = p.id_provincia;
+      op.textContent = p.nombre_provincia;
+      selectProvincia.appendChild(op);
     });
 
     // Cascada tipo → subtipo
     selectTipo.addEventListener("change", function () {
       poblarSubtipos(parseInt(this.value));
+    });
+
+    // Cascada provincia → ciudad
+    selectProvincia.addEventListener("change", function () {
+      poblarCiudades(parseInt(this.value));
     });
   } catch (error) {
     mostrarToast("No se pudieron cargar los catálogos: " + error.message, "error");
@@ -309,6 +324,29 @@ function poblarSubtipos(idTipo) {
     op.textContent = sub.nombre_subtipo_incidencia;
     selectSubtipo.appendChild(op);
   });
+}
+
+// Llena el select de ciudades según la provincia elegida.
+function poblarCiudades(idProvincia) {
+  const selectCiudad = document.getElementById("editCiudad");
+  selectCiudad.innerHTML = "";
+  if (!idProvincia) {
+    selectCiudad.disabled = true;
+    selectCiudad.innerHTML = '<option value="">Primero selecciona una provincia</option>';
+    return;
+  }
+  selectCiudad.disabled = false;
+  selectCiudad.innerHTML = '<option value="">Seleccionar...</option>';
+  catalogoCiudades
+    .filter(function (c) {
+      return c.id_provincia === parseInt(idProvincia);
+    })
+    .forEach(function (c) {
+      const op = document.createElement("option");
+      op.value = c.id_ciudad;
+      op.textContent = c.nombre_ciudad;
+      selectCiudad.appendChild(op);
+    });
 }
 
 // Convierte el mapa de solo-lectura en un selector de ubicación.
