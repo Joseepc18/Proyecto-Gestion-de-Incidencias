@@ -21,13 +21,11 @@ const opcionesCompresion = {
 };
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard de sesión
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar el usuario y precargar el formulario
   try {
     const usuario = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuario.name;
@@ -45,7 +43,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -57,7 +54,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Foto: abrir el selector, procesar la selección y quitar
   const inputFoto = document.getElementById("perfilFoto");
   document.getElementById("btnCambiarFoto").addEventListener("click", function () {
     inputFoto.click();

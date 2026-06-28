@@ -52,12 +52,10 @@ function mostrarToast(mensaje, tipo = "info", duracion = 4000) {
 
   cont.appendChild(toast);
 
-  // Entrada con animación
   requestAnimationFrame(function () {
     toast.classList.add("toast-visible");
   });
 
-  // La barra de progreso dura lo mismo que el toast
   toast.querySelector(".toast-progress").style.animationDuration = duracion + "ms";
 
   function cerrar() {

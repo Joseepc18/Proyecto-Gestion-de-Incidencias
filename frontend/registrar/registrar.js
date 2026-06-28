@@ -3,7 +3,6 @@
 /* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, mostrarToast, imageCompression, crearMapaPicker, bootstrap */
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
@@ -12,7 +11,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Fotos ya comprimidas, listas para enviar
   let fotosSeleccionadas = [];
 
-  // Cargar usuario
   let usuarioActual = null;
   try {
     usuarioActual = await apiFetch("/user");
@@ -25,7 +23,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -50,7 +47,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     bootstrap.Tooltip.getOrCreateInstance(el);
   });
 
-  // Catálogos
   let catalogoTipos = [];
   let catalogoCiudades = [];
 

@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Cargar el usuario autenticado y mostrar su nombre.
   try {
     const usuario = await apiFetch("/user");
 
@@ -64,7 +63,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // LOGOUT
   document.getElementById("btnLogout").addEventListener("click", async (evento) => {
     evento.preventDefault();
     try {

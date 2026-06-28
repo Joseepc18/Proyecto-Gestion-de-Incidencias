@@ -27,22 +27,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     errorBox.classList.add("d-none");
 
-    // Bloquear botón y mostrar spinner mientras procesa
     boton.disabled = true;
     spinner.classList.remove("d-none");
 
-    // Datos del formulario
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
     try {
-      // Pedir login al backend
       const data = await apiFetch("/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
         sinSpinner: true,
       });
-      // Éxito: guardar token y entrar a la pantalla de arranque según el rol
       guardarToken(data.access_token);
       const usuario = await apiFetch("/user", { sinSpinner: true });
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
@@ -51,11 +47,9 @@ document.addEventListener("DOMContentLoaded", function () {
       toastFlash("Bienvenido", "success");
       window.location.href = inicioSegunRol(rol);
     } catch (error) {
-      // Mostrar error del backend
       errorBox.textContent = error.message;
       errorBox.classList.remove("d-none");
     } finally {
-      // Reactivar botón y ocultar spinner pase lo que pase
       boton.disabled = false;
       spinner.classList.add("d-none");
     }

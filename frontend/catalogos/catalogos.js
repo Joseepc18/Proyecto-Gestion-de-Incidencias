@@ -9,13 +9,11 @@ let tipoEditandoId = null;
 let subtipoEditandoId = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard de sesión
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar usuario y verificar que sea admin (esta página es solo para admin)
   try {
     const usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
@@ -31,7 +29,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -43,7 +40,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Guardar (crear o actualizar) y cancelar la edición de cada formulario
   document.getElementById("formTipo").addEventListener("submit", guardarTipo);
   document.getElementById("btnCancelarTipo").addEventListener("click", salirModoEdicionTipo);
   document.getElementById("formSubtipo").addEventListener("submit", guardarSubtipo);
@@ -70,8 +66,6 @@ async function cargarCatalogos() {
     document.getElementById("tbodySubtipos").innerHTML = msg;
   }
 }
-
-// Tipos
 
 // Pinta la tabla de tipos.
 function pintarTipos() {
@@ -197,8 +191,6 @@ async function eliminarTipo(t) {
   }
 }
 
-// Subtipos
-
 // Llena el desplegable de tipos del formulario de subtipo (conserva la selección si sigue existiendo).
 function llenarSelectTipos() {
   const select = document.getElementById("subtipoTipo");
@@ -239,7 +231,6 @@ function pintarSubtipos() {
   // Cada fila lleva el nombre del tipo padre para mostrarlo en la tabla.
   const filas = [];
   tipos.forEach(function (t) {
-    // Si hay filtro activo, solo se incluyen los subtipos de ese tipo.
     if (filtro && String(t.id_tipo_incidencia) !== filtro) return;
     (t.subtipos || []).forEach(function (s) {
       filas.push({ subtipo: s, nombreTipo: t.nombre_tipo_incidencia });

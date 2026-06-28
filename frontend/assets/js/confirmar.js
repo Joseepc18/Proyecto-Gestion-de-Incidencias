@@ -50,7 +50,6 @@ function confirmar(opciones = {}) {
     overlay.querySelector("[data-cancelar]").addEventListener("click", function () {
       cerrar(false);
     });
-    // Clic fuera de la caja = cancelar
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) cerrar(false);
     });

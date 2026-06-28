@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Usuario (navbar + menú por rol + chat)
   let rol = "";
   try {
     usuarioActual = await apiFetch("/user");
@@ -104,11 +103,9 @@ async function cargarDetalle(id) {
     const inc = await apiFetch("/incidencias/" + id);
     incActual = inc;
 
-    // Encabezado
     document.getElementById("detalleCodigo").textContent = codigoIncidencia(inc.id_incidencia);
     document.getElementById("detalleTitulo").textContent = inc.nombre_incidencia;
 
-    // Badges estado / prioridad / tipo
     pintarBadgeEstado(inc.estado_incidencia);
     pintarBadgePrioridad(inc.prioridad_incidencia);
 
@@ -116,13 +113,11 @@ async function cargarDetalle(id) {
     const subtipo = inc.subtipo ? inc.subtipo.nombre_subtipo_incidencia : "—";
     document.getElementById("detalleTipoBadge").textContent = tipo;
 
-    // Línea meta
     const fecha = new Date(inc.created_at).toLocaleString("es-EC");
     const reporta = inc.usuario ? inc.usuario.name : "—";
     document.getElementById("detalleMeta").textContent =
       tipo + " → " + subtipo + " · Reportado por " + reporta + " · " + fecha;
 
-    // Descripción
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
     if (inc.descripcion_incidencia) {
       bloqueDesc.classList.remove("d-none");
@@ -131,7 +126,6 @@ async function cargarDetalle(id) {
       bloqueDesc.classList.add("d-none");
     }
 
-    // Datos
     document.getElementById("detalleUsuario").textContent = reporta;
     document.getElementById("detalleCiudad").textContent = inc.ciudad
       ? inc.ciudad.nombre_ciudad
@@ -140,18 +134,19 @@ async function cargarDetalle(id) {
       inc.direccion_incidencia || "No especificada";
     document.getElementById("detalleFecha").textContent = fecha;
 
-    // Fotos (reporte + resolución, solo lectura)
     pintarFotos();
 
     cargando.classList.add("d-none");
     contenido.classList.remove("d-none");
 
-    // Mapa con el pin de la incidencia (solo lectura)
     pintarMapaLectura();
 
     // Hooks de los módulos por rol (si están cargados).
     if (typeof gestionAlCargarDetalle === "function") gestionAlCargarDetalle(id);
     if (typeof edicionAlCargarDetalle === "function") edicionAlCargarDetalle(id);
+
+    // Si la columna de gestión quedó vacía, colapsar a 2 columnas.
+    ajustarLayout();
   } catch (error) {
     cargando.innerHTML =
       '<p class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' +
@@ -279,12 +274,24 @@ async function cargarAsignaciones(id) {
     if (typeof gestionAlCargarAsignaciones === "function") {
       gestionAlCargarAsignaciones(asignaciones, id);
     }
+
+    // El responsable se sabe ahora: puede haber aparecido su columna de gestión.
+    ajustarLayout();
   } catch {
     if (typeof gestionAsignacionesError === "function") gestionAsignacionesError();
   }
 }
 
-// Bloque: Historial de estados
+// Si la columna de gestión no tiene ningún panel visible (ciudadano / técnico de apoyo),
+// se oculta y la grilla pasa de 3 a 2 columnas para no desperdiciar el ancho.
+function ajustarLayout() {
+  const col = document.getElementById("colGestion");
+  const grid = document.querySelector(".detalle-grid");
+  if (!col || !grid) return;
+  const tieneContenido = Array.from(col.children).some((el) => !el.classList.contains("d-none"));
+  col.classList.toggle("d-none", !tieneContenido);
+  grid.classList.toggle("detalle-grid--2col", !tieneContenido);
+}
 
 async function cargarHistorial(id) {
   const cont = document.getElementById("historialTimeline");
@@ -334,8 +341,6 @@ async function cargarHistorial(id) {
     cont.innerHTML = '<p class="text-danger small mb-0">No se pudo cargar el historial.</p>';
   }
 }
-
-// Bloque: Chat flotante
 
 // Solo ven el chat el admin, el reportador y el técnico responsable (el apoyo queda fuera).
 function puedeUsarChat() {

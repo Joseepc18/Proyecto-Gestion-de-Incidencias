@@ -21,25 +21,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     errorBox.classList.add("d-none");
 
-    // Datos del formulario (trim quita espacios sobrantes)
     const name = document.getElementById("registerName").value.trim();
     const email = document.getElementById("registerEmail").value.trim();
     const password = document.getElementById("registerPassword").value;
     const passwordConfirmation = document.getElementById("registerPasswordConfirmation").value;
 
-    // Las contraseñas deben coincidir
     if (password !== passwordConfirmation) {
       errorBox.textContent = "Las contraseñas no coinciden.";
       errorBox.classList.remove("d-none");
       return;
     }
 
-    // Bloquear botón y mostrar spinner mientras procesa
     boton.disabled = true;
     spinner.classList.remove("d-none");
 
     try {
-      // Registrar
       await apiFetch("/register", {
         method: "POST",
         body: JSON.stringify({
@@ -50,15 +46,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }),
         sinSpinner: true,
       });
-      // Cuenta creada: ir al login
       toastFlash("Cuenta creada. Inicia sesión.", "success");
       window.location.href = "../login/login.html";
     } catch (error) {
-      // Mostrar error del backend
       errorBox.textContent = error.message;
       errorBox.classList.remove("d-none");
     } finally {
-      // Reactivar botón y ocultar spinner pase lo que pase
       boton.disabled = false;
       spinner.classList.add("d-none");
     }

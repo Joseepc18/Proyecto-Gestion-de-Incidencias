@@ -116,13 +116,11 @@ async function cargar() {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar usuario
   try {
     usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;

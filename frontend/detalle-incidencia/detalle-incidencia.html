@@ -281,7 +281,8 @@
               </div>
 
               <!-- Columna 3: herramientas de gestión (admin) + estado/fotos (técnico) -->
-              <div class="detalle-col">
+              <!-- Si queda vacía (ciudadano / técnico de apoyo), el JS la colapsa y deja 2 columnas -->
+              <div class="detalle-col" id="colGestion">
                 <!-- Prioridad (solo admin) -->
                 <section class="panel solo-admin d-none">
                   <div class="p-3">

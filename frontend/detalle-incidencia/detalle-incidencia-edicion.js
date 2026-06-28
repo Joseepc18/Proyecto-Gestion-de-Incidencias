@@ -23,7 +23,6 @@ function edicionAlCargarDetalle() {
   latEdit = incActual.latitud_incidencia != null ? Number(incActual.latitud_incidencia) : null;
   lngEdit = incActual.longitud_incidencia != null ? Number(incActual.longitud_incidencia) : null;
 
-  // Botones de editar / eliminar
   const btnEditar = document.getElementById("btnEditar");
   const btnEliminar = document.getElementById("btnEliminar");
   btnEditar.classList.remove("d-none");
@@ -36,7 +35,6 @@ function edicionAlCargarDetalle() {
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
   document.getElementById("btnSubirFotos").addEventListener("click", subirFotosNuevas);
 
-  // Fotos nuevas: input + arrastrar/soltar
   const inputFotos = document.getElementById("editFotos");
   inputFotos.addEventListener("change", function () {
     procesarFotos(this.files);

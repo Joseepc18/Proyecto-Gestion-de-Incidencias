@@ -2902,6 +2902,11 @@ html[data-theme="dark"] {
     grid-template-columns: repeat(3, 1fr);
   }
 
+  /* Sin columna de gestión (ciudadano / técnico de apoyo): 2 columnas que ocupan todo el ancho */
+  .detalle-grid--2col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .detalle-col {
     min-height: 0;
     overflow-y: auto;

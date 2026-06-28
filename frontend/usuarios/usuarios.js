@@ -7,13 +7,11 @@ let usuarioActualId = null;
 let usuarioEditandoId = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard de sesión
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar usuario y verificar que sea admin (esta página es solo para admin)
   try {
     const usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
@@ -30,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -42,11 +39,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Guardar (crear o actualizar) y cancelar la edición
   document.getElementById("formUsuario").addEventListener("submit", guardarUsuario);
   document.getElementById("btnCancelarEdicion").addEventListener("click", salirModoEdicion);
 
-  // Carga inicial: roles (para el select) + usuarios (tabla)
   cargarRoles();
   cargarUsuarios();
 });

@@ -5,13 +5,11 @@
 let usuarioActual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar usuario
   try {
     usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
@@ -29,7 +27,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -41,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Catálogos
   async function cargarCatalogos() {
     try {
       const tipos = await apiFetch("/catalogos/tipos-incidencia");
@@ -66,7 +62,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // Incidencias
   let paginaActual = 1;
 
   async function cargarIncidencias() {
@@ -97,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // Tabla
   function renderizarTabla(incidencias) {
     const tbody = document.getElementById("tbodyIncidencias");
 
@@ -190,7 +184,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       .join("");
   }
 
-  // Paginación
   function actualizarPaginacion(respuesta) {
     document.getElementById("infoPaginacion").textContent =
       "Página " +
@@ -207,7 +200,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     btnSig.disabled = respuesta.current_page >= respuesta.last_page;
   }
 
-  // Filtros
   document.getElementById("filtroEstado").addEventListener("change", function () {
     paginaActual = 1;
     cargarIncidencias();
@@ -235,7 +227,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }, 400);
   });
 
-  // Botones paginación
   document.getElementById("btnAnterior").addEventListener("click", function () {
     if (paginaActual > 1) {
       paginaActual--;
@@ -247,7 +238,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     cargarIncidencias();
   });
 
-  // Arranque
   cargarCatalogos();
   cargarIncidencias();
 });

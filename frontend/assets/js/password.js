@@ -6,7 +6,6 @@ document.addEventListener("click", function (e) {
   if (!boton) return;
   const input = document.getElementById(boton.dataset.target);
   if (!input) return;
-  // Estaba oculta (password): este clic la va a revelar.
   const revelar = input.type === "password";
   input.type = revelar ? "text" : "password";
   const icono = boton.querySelector("i");

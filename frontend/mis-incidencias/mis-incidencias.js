@@ -18,13 +18,11 @@ function codigoIncidencia(id) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Guard de sesión
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Cargar usuario (nombre en navbar + mostrar Usuarios si es admin)
   try {
     usuarioActual = await apiFetch("/user");
     document.getElementById("nombreUsuario").textContent = usuarioActual.name;
@@ -36,7 +34,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     try {
@@ -55,13 +52,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     timerBusqueda = setTimeout(cargarLista, 400);
   });
 
-  // Mapa de fondo
   mapa = crearMapaIncidencias("mapaMisIncidencias");
   setTimeout(function () {
     mapa.map.invalidateSize();
   }, 200);
 
-  // Arranque
   cargarLista();
 });
 
@@ -128,7 +123,6 @@ async function cargarLista() {
     info.textContent =
       "Mostrando " + incidencias.length + " de " + respuesta.total + " incidencias";
 
-    // Pintar los pines de las incidencias en el mapa
     if (mapa) {
       const pines = incidencias
         .filter(function (i) {
@@ -154,7 +148,6 @@ async function cargarLista() {
 
 // Paso 3 — Carga el resumen liviano de la incidencia en la tarjeta derecha.
 async function seleccionarIncidencia(id) {
-  // Marcar la tarjeta activa
   document.querySelectorAll(".incidencia-card").forEach(function (card) {
     card.classList.toggle("activa", Number(card.dataset.id) === id);
   });
@@ -167,13 +160,11 @@ async function seleccionarIncidencia(id) {
     const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
     document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
 
-    // Cabecera
     document.getElementById("detalleCodigo").textContent = codigoIncidencia(inc.id_incidencia);
     document.getElementById("detalleTitulo").textContent = inc.nombre_incidencia;
     document.getElementById("detalleFecha").textContent =
       "Creada: " + new Date(inc.created_at).toLocaleString("es-EC");
 
-    // Estado
     const est = estadoConfig[inc.estado_incidencia] || {
       clase: "",
       icono: "",
@@ -183,7 +174,6 @@ async function seleccionarIncidencia(id) {
     spanEstado.className = "badge " + est.clase;
     spanEstado.innerHTML = '<i class="bi ' + est.icono + ' me-1"></i>' + est.texto;
 
-    // Prioridad
     const pri = prioridadConfig[inc.prioridad_incidencia] || {
       clase: "",
       icono: "",
@@ -193,12 +183,10 @@ async function seleccionarIncidencia(id) {
     spanPri.className = "badge " + pri.clase;
     spanPri.innerHTML = '<i class="bi ' + pri.icono + ' me-1"></i>' + pri.texto;
 
-    // Ubicación
     const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ciudad";
     const direccion = inc.direccion_incidencia ? " — " + inc.direccion_incidencia : "";
     document.getElementById("detalleUbicacion").textContent = ciudad + direccion;
 
-    // Imagen destacada (primera evidencia)
     const imgCompacta = document.getElementById("detalleImagen");
     if (inc.evidencias && inc.evidencias.length > 0) {
       imgCompacta.src = "/storage/" + inc.evidencias[0].url_evidencia;
@@ -212,11 +200,9 @@ async function seleccionarIncidencia(id) {
     const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
     document.getElementById("btnVerDetalles").href = rutaDetalleIncidencia(id, rol);
 
-    // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
 
-    // Enfocar el pin en el mapa
     if (mapa) mapa.enfocar(id);
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");

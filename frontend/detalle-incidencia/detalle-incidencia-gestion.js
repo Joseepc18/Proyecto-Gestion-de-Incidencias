@@ -48,8 +48,6 @@ function gestionAsignacionesError() {
   }
 }
 
-// Bloque: Prioridad
-
 function prepararPrioridad(id) {
   const cont = document.getElementById("prioridadBotones");
   marcarPrioridadActiva();
@@ -86,8 +84,6 @@ function marcarPrioridadActiva() {
     b.classList.toggle("activa-" + b.dataset.prioridad.toLowerCase(), activa);
   });
 }
-
-// Bloque: Cambiar estado
 
 let gestionEstadoLista = false;
 function habilitarGestionEstado(id) {
@@ -150,8 +146,6 @@ function marcarEstadoActivo() {
     }
   });
 }
-
-// Bloque: Subir fotos de la resolución (solo técnico responsable)
 
 let gestionFotosLista = false;
 function habilitarFotosResolucion(id) {
@@ -308,8 +302,6 @@ async function subirResolucion(id) {
     spinner.classList.add("d-none");
   }
 }
-
-// Bloque: Asignación de técnicos (solo admin)
 
 // Pinta las listas de responsable y ayudantes a partir de las asignaciones.
 function renderAsignaciones(asignaciones, id) {
