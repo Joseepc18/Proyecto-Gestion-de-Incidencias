@@ -1,6 +1,8 @@
 // perfil.js — Edición del perfil propio: nombre, correo, contraseña y foto.
 
 // Ruta de la foto guardada en el servidor (relativa); null si no tiene.
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar */
+
 let fotoActual = null;
 // Foto nueva ya comprimida lista para subir; null si no se cambió.
 let fotoSeleccionada = null;

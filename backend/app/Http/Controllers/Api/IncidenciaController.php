@@ -7,13 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
+use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Resources\IncidenciaResource;
 
 class IncidenciaController extends Controller
 {
@@ -82,11 +82,12 @@ class IncidenciaController extends Controller
             });
 
             Cache::forget('dashboard_metricas');
+
             return response()->json(
                 new IncidenciaResource($incidencia->load([
-                    'usuario', 
-                    'subtipo.tipo', 
-                    'ciudad', 
+                    'usuario',
+                    'subtipo.tipo',
+                    'ciudad',
                     'evidencias',
                     'historialEstados.usuario',
                     'asignaciones.usuario',
@@ -126,7 +127,7 @@ class IncidenciaController extends Controller
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
         $incidencia->update($request->validated());
-            Cache::forget('dashboard_metricas');
+        Cache::forget('dashboard_metricas');
 
         return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
     }
@@ -157,6 +158,7 @@ class IncidenciaController extends Controller
             }
 
             Cache::forget('dashboard_metricas');
+
             return response()->json(['message' => 'Incidencia eliminada']);
         } catch (\Exception $e) {
             BitacoraError::create([
@@ -209,6 +211,7 @@ class IncidenciaController extends Controller
         }
 
         Cache::forget('dashboard_metricas');
+
         return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
     }
 }

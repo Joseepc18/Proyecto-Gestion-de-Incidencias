@@ -5,6 +5,8 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
+/* global apiFetch, mostrarToast, toastFlash, confirmar, imageCompression, opcionesCompresion, incActual, usuarioActual, idActual, activarMapaPicker */
+
 let catalogoTipos = [];
 let catalogoCiudades = [];
 // Ubicación elegida en el picker (arranca con la de la incidencia).

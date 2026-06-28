@@ -1,5 +1,7 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, mostrarToast, imageCompression, crearMapaPicker, bootstrap */
+
 document.addEventListener("DOMContentLoaded", async function () {
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";

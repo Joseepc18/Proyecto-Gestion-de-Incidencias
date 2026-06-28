@@ -1,6 +1,8 @@
 // mapa.js — Helper reutilizable de Leaflet: mapa con satélite/calles y pines de incidencias.
 
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
+/* global L */
+
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};
   const centro = opciones.centro || [-2.2267, -80.9012];

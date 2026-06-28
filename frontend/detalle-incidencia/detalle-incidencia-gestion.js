@@ -6,6 +6,8 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
+/* global apiFetch, mostrarToast, confirmar, imageCompression, opcionesCompresion, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
 

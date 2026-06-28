@@ -1,5 +1,7 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, renderizarPaginacion */
+
 let usuarioActual = null;
 let mapa = null;
 
@@ -88,9 +90,16 @@ async function cargarLista() {
     renderizarPaginacion({
       respuesta: respuesta,
       idContenedor: "contenedorPaginacion",
-      onPageChange: (p) => { paginaActual = p; cargarLista(); },
-      onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarLista(); },
-      perPage: porPagina
+      onPageChange: (p) => {
+        paginaActual = p;
+        cargarLista();
+      },
+      onPerPageChange: (pp) => {
+        porPagina = pp;
+        paginaActual = 1;
+        cargarLista();
+      },
+      perPage: porPagina,
     });
 
     contenedor.innerHTML = incidencias

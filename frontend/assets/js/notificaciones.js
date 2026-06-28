@@ -1,5 +1,7 @@
 // notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
+/* global apiFetch, obtenerToken, rutaDetalleIncidencia */
+
 document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btnNotificaciones");
   const badge = document.getElementById("notifBadge");
@@ -109,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  document.addEventListener("visibilitychange", function() {
+  document.addEventListener("visibilitychange", function () {
     if (!document.hidden) {
       cargar();
       programarRefresco();

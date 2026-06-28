@@ -2,6 +2,8 @@
 
 /* exported mostrarToast, toastFlash */
 // Crea (una sola vez) el contenedor donde se apilan los toasts.
+/* global hayCargaActiva, escaparHtml */
+
 function obtenerContenedorToasts() {
   let cont = document.getElementById("toastContainer");
   if (!cont) {

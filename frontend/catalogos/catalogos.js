@@ -1,6 +1,8 @@
 // catalogos.js — Gestión de tipos y subtipos de incidencia (solo admin): listar, crear, editar y eliminar.
 
 // Cache del último listado (tipos con sus subtipos anidados) para no pedirlo de más.
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
+
 let tipos = [];
 // Si es null estamos creando; si tiene un id estamos editando ese registro.
 let tipoEditandoId = null;

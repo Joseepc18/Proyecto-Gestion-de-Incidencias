@@ -1,6 +1,8 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, Chart, L */
+
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
 let metricasCache = null;

@@ -5,6 +5,8 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, opcionesCompresion, codigoIncidencia, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
 
 // Estado compartido (los módulos por rol lo leen).
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, badgeEstadoHtml, badgePrioridadHtml, escaparHtml, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+
 let incActual = null;
 let usuarioActual = null;
 let esAdmin = false;
@@ -194,13 +196,19 @@ function activarMapaPicker(lat, lng, onCambio) {
 // Pinta el badge de estado a partir del código.
 function pintarBadgeEstado(estado) {
   const span = document.getElementById("detalleEstado");
-  span.outerHTML = badgeEstadoHtml(estado).replace('<span class="badge', '<span id="detalleEstado" class="badge');
+  span.outerHTML = badgeEstadoHtml(estado).replace(
+    '<span class="badge',
+    '<span id="detalleEstado" class="badge',
+  );
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
 function pintarBadgePrioridad(prioridad) {
   const span = document.getElementById("detallePrioridad");
-  span.outerHTML = badgePrioridadHtml(prioridad).replace('<span class="badge', '<span id="detallePrioridad" class="badge');
+  span.outerHTML = badgePrioridadHtml(prioridad).replace(
+    '<span class="badge',
+    '<span id="detallePrioridad" class="badge',
+  );
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {

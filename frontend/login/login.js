@@ -1,5 +1,7 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
+/* global apiFetch, guardarToken, obtenerToken, mostrarToast, toastFlash, inicioSegunRol */
+
 document.addEventListener("DOMContentLoaded", function () {
   if (obtenerToken()) {
     window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));
@@ -61,8 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// Alterna entre login y registro (animación deslizante). Se llama desde el HTML.
-// eslint-disable-next-line no-unused-vars
+// Alterna entre login y registro (animación deslizante).
 function toggleAuth(registrando) {
   document.getElementById("authSlider").classList.toggle("is-registering", registrando);
 }

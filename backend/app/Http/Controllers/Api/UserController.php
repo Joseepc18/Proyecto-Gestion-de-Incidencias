@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarUsuarioRequest;
 use App\Http\Requests\CrearUsuarioRequest;
+use App\Http\Resources\UserResource;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {

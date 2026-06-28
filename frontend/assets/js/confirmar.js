@@ -1,6 +1,8 @@
 // confirmar.js — Diálogo de confirmación (reemplaza a confirm()). Retorna una Promise<boolean>.
 
 /* exported confirmar */
+/* global escaparHtml */
+
 function confirmar(opciones = {}) {
   const {
     titulo = "¿Estás seguro?",

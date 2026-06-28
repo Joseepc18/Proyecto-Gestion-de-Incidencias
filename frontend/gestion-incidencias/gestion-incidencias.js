@@ -1,5 +1,7 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion */
+
 let usuarioActual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -89,9 +91,16 @@ document.addEventListener("DOMContentLoaded", async function () {
       renderizarPaginacion({
         respuesta: respuesta,
         idContenedor: "contenedorPaginacion",
-        onPageChange: (p) => { paginaActual = p; cargarIncidencias(); },
-        onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarIncidencias(); },
-        perPage: porPagina
+        onPageChange: (p) => {
+          paginaActual = p;
+          cargarIncidencias();
+        },
+        onPerPageChange: (pp) => {
+          porPagina = pp;
+          paginaActual = 1;
+          cargarIncidencias();
+        },
+        perPage: porPagina,
       });
     } catch (error) {
       console.error("Error cargando incidencias:", error);
@@ -110,7 +119,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     tbody.innerHTML = incidencias
       .map(function (inc) {
-
         const nombreTipo =
           inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
 

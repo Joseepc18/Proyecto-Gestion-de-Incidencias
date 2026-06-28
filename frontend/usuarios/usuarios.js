@@ -1,5 +1,7 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y eliminar.
 
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion */
+
 let usuarioActualId = null;
 // Si es null estamos creando; si tiene un id estamos editando ese usuario.
 let usuarioEditandoId = null;
@@ -114,9 +116,16 @@ async function cargarUsuarios() {
     renderizarPaginacion({
       respuesta: respuesta,
       idContenedor: "contenedorPaginacion",
-      onPageChange: (p) => { paginaActual = p; cargarUsuarios(); },
-      onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarUsuarios(); },
-      perPage: porPagina
+      onPageChange: (p) => {
+        paginaActual = p;
+        cargarUsuarios();
+      },
+      onPerPageChange: (pp) => {
+        porPagina = pp;
+        paginaActual = 1;
+        cargarUsuarios();
+      },
+      perPage: porPagina,
     });
   } catch (error) {
     tbody.innerHTML =

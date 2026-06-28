@@ -1,6 +1,8 @@
 // api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
 /* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml, hayCargaActiva */
+/* global toastFlash */
+
 const API_BASE = "/api";
 
 // Escapa < > & " ' a entidades HTML para evitar XSS al meter texto en innerHTML/popups.

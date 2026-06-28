@@ -1,5 +1,7 @@
 // registro.js — Lógica del registro. Usa apiFetch de api.js.
 
+/* global apiFetch, obtenerToken, toastFlash, inicioSegunRol */
+
 document.addEventListener("DOMContentLoaded", function () {
   if (obtenerToken()) {
     window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));

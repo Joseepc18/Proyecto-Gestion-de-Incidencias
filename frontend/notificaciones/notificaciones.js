@@ -1,5 +1,7 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, rutaDetalleIncidencia */
+
 let usuarioActual = null;
 let notificaciones = [];
 // "todas" | "no_leidas"
