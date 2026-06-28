@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // El id viene en la URL (?id=). Sin id, de vuelta al mapa.
   const id = new URLSearchParams(window.location.search).get("id");
   if (!id) {
-    window.location.replace("../misIncidencias/misIncidencias.html");
+    window.location.replace("../mis-incidencias/mis-incidencias.html");
     return;
   }
 
@@ -577,7 +577,7 @@ async function eliminarIncidencia() {
   try {
     await apiFetch("/incidencias/" + incActual.id_incidencia, { method: "DELETE" });
     toastFlash("Incidencia eliminada", "success");
-    window.location.href = "../misIncidencias/misIncidencias.html";
+    window.location.href = "../mis-incidencias/mis-incidencias.html";
   } catch (error) {
     mostrarToast("No se pudo eliminar: " + error.message, "error");
   }

@@ -1,4 +1,4 @@
-// incidencias.js — Listado, filtros, paginación y acciones.
+// gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
 /* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, estadoConfig, prioridadConfig */
 
@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Esta tabla de gestión es solo para admin; el resto va a "Mis incidencias".
     if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
-      window.location.href = "../misIncidencias/misIncidencias.html";
+      window.location.href = "../mis-incidencias/mis-incidencias.html";
       return;
     }
   } catch {
@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 // Funciones globales (se llaman desde onclick en el HTML).
 // eslint-disable-next-line no-unused-vars
 function verDetalle(id) {
-  window.location.href = "../detalleIncidencia/detalle.html?id=" + id;
+  window.location.href = "../detalle-gestion/detalle.html?id=" + id;
 }
 
 // eslint-disable-next-line no-unused-vars

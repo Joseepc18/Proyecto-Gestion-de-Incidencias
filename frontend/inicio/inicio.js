@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // El usuario normal no tiene Inicio: su pantalla es "Mis incidencias".
     if (usuario.rol && usuario.rol.nombre_rol === "normal") {
-      window.location.replace("../misIncidencias/misIncidencias.html");
+      window.location.replace("../mis-incidencias/mis-incidencias.html");
       return;
     }
 

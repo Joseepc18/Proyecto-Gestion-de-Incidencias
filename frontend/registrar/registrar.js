@@ -308,8 +308,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       toastFlash("Incidencia registrada", "success");
       // El admin va a la tabla de gestión; el resto, a "Mis incidencias".
       window.location.href = esAdmin
-        ? "../incidencias/incidencias.html"
-        : "../misIncidencias/misIncidencias.html";
+        ? "../gestion-incidencias/gestion-incidencias.html"
+        : "../mis-incidencias/mis-incidencias.html";
     } catch (error) {
       errorDiv.textContent = error.message;
       errorDiv.classList.remove("d-none");

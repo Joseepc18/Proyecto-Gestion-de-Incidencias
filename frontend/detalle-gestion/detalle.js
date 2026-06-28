@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Leer el id de la incidencia desde la URL (?id=5)
   const id = new URLSearchParams(window.location.search).get("id");
   if (!id) {
-    window.location.href = "../incidencias/incidencias.html";
+    window.location.href = "../gestion-incidencias/gestion-incidencias.html";
     return;
   }
 

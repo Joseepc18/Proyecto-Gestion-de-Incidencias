@@ -193,7 +193,7 @@ function aplicarMenuRol(rol) {
 // Pantalla de arranque según el rol: normal → "Mis incidencias"; resto → Inicio.
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
-  return rol === "normal" ? "../misIncidencias/misIncidencias.html" : "../inicio/inicio.html";
+  return rol === "normal" ? "../mis-incidencias/mis-incidencias.html" : "../inicio/inicio.html";
 }
 
 // Página de detalle de una incidencia según el rol: el ciudadano ve la suya; admin y técnico, la de gestión.
@@ -201,6 +201,6 @@ function inicioSegunRol(rol) {
 /* exported rutaDetalleIncidencia */
 function rutaDetalleIncidencia(id, rol, abrirChat = false) {
   const base =
-    rol === "normal" ? "../detalleMiIncidencia/detalle.html" : "../detalleIncidencia/detalle.html";
+    rol === "normal" ? "../detalle-reporte/detalle.html" : "../detalle-gestion/detalle.html";
   return base + "?id=" + id + (abrirChat ? "&chat=1" : "");
 }

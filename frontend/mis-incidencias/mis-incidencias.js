@@ -1,9 +1,8 @@
-// misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
+// mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat, escaparHtml, estadoConfig, prioridadConfig */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, estadoConfig, prioridadConfig */
 
 let usuarioActual = null;
-let incidenciaSeleccionada = null;
 let mapa = null;
 
 // Color del pin según el estado de la incidencia
@@ -61,7 +60,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   setTimeout(function () {
     mapa.map.invalidateSize();
   }, 200);
-
 
   // Arranque
   cargarLista();
@@ -161,10 +159,8 @@ async function seleccionarIncidencia(id) {
     card.classList.toggle("activa", Number(card.dataset.id) === id);
   });
 
-
   try {
     const inc = await apiFetch("/incidencias/" + id);
-    incidenciaSeleccionada = id;
 
     // El aviso "ya está en proceso" aparece cuando no es editable.
     const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
@@ -213,7 +209,7 @@ async function seleccionarIncidencia(id) {
     }
 
     // "Ver detalles" → página de detalle del usuario
-    document.getElementById("btnVerDetalles").href = "../detalleMiIncidencia/detalle.html?id=" + id;
+    document.getElementById("btnVerDetalles").href = "../detalle-reporte/detalle.html?id=" + id;
 
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
