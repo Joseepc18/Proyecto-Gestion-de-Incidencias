@@ -107,6 +107,8 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   cargar();
-  // Refresco periódico para enterarse de novedades sin recargar la página.
-  setInterval(cargar, 30000);
+  // Refresco periódico; se pausa cuando la pestaña está oculta (ahorra peticiones inútiles).
+  setInterval(function () {
+    if (!document.hidden) cargar();
+  }, 30000);
 });

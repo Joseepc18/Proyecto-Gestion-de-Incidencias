@@ -26,11 +26,12 @@ function crearChat(idContenedor, idIncidencia, usuario) {
   const mensajes = cont.querySelector("#chatMensajes");
   const form = cont.querySelector("#chatForm");
   const texto = cont.querySelector("#chatTexto");
+  const botonEnviar = cont.querySelector(".chat-enviar");
   const spinner = cont.querySelector("#chatSpinner");
   const icono = cont.querySelector("#chatIcono");
 
-  // Trae el hilo y lo pinta como burbujas.
-  async function recargar() {
+  // Trae el hilo y lo pinta como burbujas. suave: scroll animado (solo al enviar, no al cargar).
+  async function recargar(suave) {
     try {
       const comentarios = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
         sinSpinner: true,
@@ -72,10 +73,12 @@ function crearChat(idContenedor, idIncidencia, usuario) {
         mensajes.appendChild(fila);
       });
 
-      // Baja el scroll al último mensaje.
-      mensajes.scrollTop = mensajes.scrollHeight;
+      mensajes.scrollTo({ top: mensajes.scrollHeight, behavior: suave ? "smooth" : "instant" });
     } catch (error) {
-      mensajes.innerHTML = '<p class="chat-vacio text-danger">' + error.message + "</p>";
+      const p = document.createElement("p");
+      p.className = "chat-vacio text-danger";
+      p.textContent = error.message;
+      mensajes.replaceChildren(p);
     }
   }
 
@@ -94,6 +97,7 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     if (!valor) return;
 
     texto.disabled = true;
+    botonEnviar.disabled = true;
     spinner.classList.remove("d-none");
     icono.classList.add("d-none");
 
@@ -104,14 +108,15 @@ function crearChat(idContenedor, idIncidencia, usuario) {
         sinSpinner: true,
       });
       texto.value = "";
-      await recargar();
+      await recargar(true);
     } catch (error) {
-      mensajes.insertAdjacentHTML(
-        "beforeend",
-        '<p class="chat-vacio text-danger">No se pudo enviar: ' + error.message + "</p>",
-      );
+      const p = document.createElement("p");
+      p.className = "chat-vacio text-danger";
+      p.textContent = "No se pudo enviar: " + error.message;
+      mensajes.appendChild(p);
     } finally {
       texto.disabled = false;
+      botonEnviar.disabled = false;
       spinner.classList.add("d-none");
       icono.classList.remove("d-none");
       texto.focus();

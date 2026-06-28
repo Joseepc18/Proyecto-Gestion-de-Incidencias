@@ -31,9 +31,10 @@ function tiempoRelativo(iso) {
 }
 
 // Ruta del detalle según el rol (helper compartido en api.js).
-function rutaDetalle(idIncidencia) {
+// tipo: si es COMENTARIO, pasa &chat=1 para que el detalle abra el chat directamente.
+function rutaDetalle(idIncidencia, tipo) {
   const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
-  return rutaDetalleIncidencia(idIncidencia, rol);
+  return rutaDetalleIncidencia(idIncidencia, rol, tipo === "COMENTARIO");
 }
 
 // Pinta el contador "N sin leer" y habilita/inhabilita "Marcar todas".
@@ -73,6 +74,7 @@ function render() {
     item.className = "notification-item notif-page-item" + (n.estado_lectura ? "" : " no-leida");
     item.dataset.id = n.id_notificacion;
     item.dataset.incidencia = n.id_incidencia;
+    item.dataset.tipo = n.tipo_notificacion;
 
     const linea = document.createElement("div");
     linea.className = "notif-line";
@@ -179,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         /* aunque falle el marcado, seguimos a la incidencia */
       }
     }
-    window.location.href = rutaDetalle(item.dataset.incidencia);
+    window.location.href = rutaDetalle(item.dataset.incidencia, item.dataset.tipo);
   });
 
   cargar();

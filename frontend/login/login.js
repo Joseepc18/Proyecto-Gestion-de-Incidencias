@@ -1,8 +1,14 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken, mostrarToast, toastFlash, inicioSegunRol */
+/* global apiFetch, guardarToken, obtenerToken, mostrarToast, toastFlash, inicioSegunRol */
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Si ya hay sesión activa, ir directo a la pantalla de arranque sin mostrar el form.
+  if (obtenerToken()) {
+    window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));
+    return;
+  }
+
   const form = document.getElementById("loginForm");
   const errorBox = document.getElementById("loginError");
   const boton = document.getElementById("loginSubmit");
