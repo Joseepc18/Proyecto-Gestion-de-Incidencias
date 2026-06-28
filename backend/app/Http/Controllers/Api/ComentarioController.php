@@ -33,6 +33,8 @@ class ComentarioController extends Controller
                 'comentario' => $datos['comentario'],
             ]);
 
+            event(new \App\Events\ComentarioCreado($comentario));
+
             return response()->json($comentario->load('usuario.rol'), 201);
         } catch (\Exception $e) {
             BitacoraError::create([

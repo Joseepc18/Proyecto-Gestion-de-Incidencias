@@ -58,12 +58,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   cargarLista();
 });
 
+let paginaActual = 1;
+let porPagina = 10;
+
 // Paso 2 — Trae las incidencias del usuario y pinta las tarjetas en #listaIncidencias.
 async function cargarLista() {
   const contenedor = document.getElementById("listaIncidencias");
   const info = document.getElementById("listaInfo");
 
   const params = new URLSearchParams();
+  params.set("page", paginaActual);
+  params.set("per_page", porPagina);
   const busqueda = document.getElementById("filtroBusqueda").value.trim();
   if (busqueda) params.set("busqueda", busqueda);
 
@@ -75,9 +80,18 @@ async function cargarLista() {
       contenedor.innerHTML =
         '<p class="text-muted small text-center py-4 mb-0">No se encontraron incidencias.</p>';
       info.textContent = "";
+      document.getElementById("contenedorPaginacion").innerHTML = "";
       if (mapa) mapa.pintarPines([], seleccionarIncidencia);
       return;
     }
+
+    renderizarPaginacion({
+      respuesta: respuesta,
+      idContenedor: "contenedorPaginacion",
+      onPageChange: (p) => { paginaActual = p; cargarLista(); },
+      onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarLista(); },
+      perPage: porPagina
+    });
 
     contenedor.innerHTML = incidencias
       .map(function (inc) {

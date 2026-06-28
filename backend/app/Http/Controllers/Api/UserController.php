@@ -12,10 +12,10 @@ use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
-    public function listado()
+    public function listado(Request $request)
     {
         return response()->json(
-            UserResource::collection(User::with('rol')->orderBy('name')->get())
+            User::with('rol')->orderBy('name')->paginate((int) $request->input('per_page', 10))
         );
     }
 

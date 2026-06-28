@@ -101,6 +101,24 @@ services:
     networks:
       - incidencias_network
 
+  # 4. Servidor de WebSockets (Laravel Reverb)
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: incidencias_reverb
+    command: php artisan reverb:start --host="0.0.0.0" --port=8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secreto}
+    depends_on:
+      - redis
+    networks:
+      - incidencias_network
+
 
 networks:
   incidencias_network:

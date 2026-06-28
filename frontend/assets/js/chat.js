@@ -120,5 +120,42 @@ function crearChat(idContenedor, idIncidencia, usuario) {
   });
 
   recargar();
-  return { recargar };
+
+  // Inicializar Echo si Pusher está disponible y aún no se inicializó
+  if (typeof window.Echo === "undefined" && typeof window.Pusher !== "undefined") {
+    // window.Pusher.logToConsole = true; // Descomentar para debug
+    window.Echo = new Echo({
+      broadcaster: "reverb",
+      key: "reverb_key",
+      wsHost: window.location.hostname,
+      wsPort: 8080,
+      wssPort: 8080,
+      forceTLS: false,
+      enabledTransports: ["ws", "wss"],
+      authEndpoint: API_URL + "/broadcasting/auth",
+      auth: {
+        headers: {
+          Authorization: "Bearer " + obtenerToken(),
+        },
+      },
+    });
+  }
+
+  let echoChannel = null;
+  if (window.Echo) {
+    echoChannel = window.Echo.private("incidencia." + idIncidencia)
+      .listen("ComentarioCreado", (e) => {
+        // e contiene el comentario creado; recargamos para pintarlo
+        // Solo recargamos si no fuimos nosotros mismos los que acabamos de enviar (para evitar doble scroll)
+        recargar(true);
+      });
+  }
+
+  function detener() {
+    if (echoChannel) {
+      window.Echo.leave("incidencia." + idIncidencia);
+    }
+  }
+
+  return { recargar, detener };
 }

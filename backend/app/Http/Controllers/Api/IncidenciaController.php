@@ -47,7 +47,7 @@ class IncidenciaController extends Controller
             $query->whereHas('asignaciones', fn ($q) => $q->where('id_usuario', $user->id));
         }
 
-        return response()->json($query->paginate(10));
+        return response()->json($query->paginate((int) $request->input('per_page', 10)));
     }
 
     // Crear una nueva incidencia adjuntando opcionalmente fotos (evidencias).

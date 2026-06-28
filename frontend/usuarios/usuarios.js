@@ -61,15 +61,24 @@ async function cargarRoles() {
   }
 }
 
+let paginaActual = 1;
+let porPagina = 10;
+
 // Trae y pinta la tabla de usuarios.
 async function cargarUsuarios() {
   const tbody = document.getElementById("tbodyUsuarios");
   try {
-    const usuarios = await apiFetch("/usuarios");
+    const params = new URLSearchParams();
+    params.set("page", paginaActual);
+    params.set("per_page", porPagina);
+
+    const respuesta = await apiFetch("/usuarios?" + params.toString());
+    const usuarios = respuesta.data;
 
     if (usuarios.length === 0) {
       tbody.innerHTML =
         '<tr><td colspan="4" class="text-center text-muted py-4">Sin usuarios.</td></tr>';
+      document.getElementById("contenedorPaginacion").innerHTML = "";
       return;
     }
 
@@ -100,6 +109,14 @@ async function cargarUsuarios() {
       tr.appendChild(tdAcciones);
 
       tbody.appendChild(tr);
+    });
+
+    renderizarPaginacion({
+      respuesta: respuesta,
+      idContenedor: "contenedorPaginacion",
+      onPageChange: (p) => { paginaActual = p; cargarUsuarios(); },
+      onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarUsuarios(); },
+      perPage: porPagina
     });
   } catch (error) {
     tbody.innerHTML =

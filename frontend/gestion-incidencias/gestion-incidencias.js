@@ -61,10 +61,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   let paginaActual = 1;
+  let porPagina = 10;
 
   async function cargarIncidencias() {
     const params = new URLSearchParams();
     params.set("page", paginaActual);
+    params.set("per_page", porPagina);
 
     const busqueda = document.getElementById("filtroBusqueda").value.trim();
     if (busqueda) params.set("busqueda", busqueda);
@@ -84,7 +86,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       const respuesta = await apiFetch("/incidencias?" + params.toString());
       renderizarTabla(respuesta.data);
-      actualizarPaginacion(respuesta);
+      renderizarPaginacion({
+        respuesta: respuesta,
+        idContenedor: "contenedorPaginacion",
+        onPageChange: (p) => { paginaActual = p; cargarIncidencias(); },
+        onPerPageChange: (pp) => { porPagina = pp; paginaActual = 1; cargarIncidencias(); },
+        perPage: porPagina
+      });
     } catch (error) {
       console.error("Error cargando incidencias:", error);
     }
@@ -162,21 +170,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       .join("");
   }
 
-  function actualizarPaginacion(respuesta) {
-    document.getElementById("infoPaginacion").textContent =
-      "Página " +
-      respuesta.current_page +
-      " de " +
-      respuesta.last_page +
-      " (" +
-      respuesta.total +
-      " incidencias)";
-
-    const btnAnt = document.getElementById("btnAnterior");
-    const btnSig = document.getElementById("btnSiguiente");
-    btnAnt.disabled = respuesta.current_page <= 1;
-    btnSig.disabled = respuesta.current_page >= respuesta.last_page;
-  }
+  // actualizarPaginacion ya no se usa, usar renderizarPaginacion en su lugar
 
   document.getElementById("filtroEstado").addEventListener("change", function () {
     paginaActual = 1;
@@ -204,16 +198,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }, 400);
   });
 
-  document.getElementById("btnAnterior").addEventListener("click", function () {
-    if (paginaActual > 1) {
-      paginaActual--;
-      cargarIncidencias();
-    }
-  });
-  document.getElementById("btnSiguiente").addEventListener("click", function () {
-    paginaActual++;
-    cargarIncidencias();
-  });
+  // Botones de paginación anteriores eliminados
 
   cargarCatalogos();
   cargarIncidencias();
