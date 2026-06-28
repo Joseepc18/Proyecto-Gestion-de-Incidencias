@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 // Funciones globales (se llaman desde onclick en el HTML).
 // eslint-disable-next-line no-unused-vars
 function verDetalle(id) {
-  window.location.href = "../detalle-gestion/detalle.html?id=" + id;
+  window.location.href = "../detalle-gestion/detalle-gestion.html?id=" + id;
 }
 
 // eslint-disable-next-line no-unused-vars

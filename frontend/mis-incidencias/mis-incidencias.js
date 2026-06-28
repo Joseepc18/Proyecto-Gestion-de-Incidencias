@@ -209,7 +209,8 @@ async function seleccionarIncidencia(id) {
     }
 
     // "Ver detalles" → página de detalle del usuario
-    document.getElementById("btnVerDetalles").href = "../detalle-reporte/detalle.html?id=" + id;
+    document.getElementById("btnVerDetalles").href =
+      "../detalle-reporte/detalle-reporte.html?id=" + id;
 
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");

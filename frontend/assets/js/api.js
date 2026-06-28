@@ -201,6 +201,8 @@ function inicioSegunRol(rol) {
 /* exported rutaDetalleIncidencia */
 function rutaDetalleIncidencia(id, rol, abrirChat = false) {
   const base =
-    rol === "normal" ? "../detalle-reporte/detalle.html" : "../detalle-gestion/detalle.html";
+    rol === "normal"
+      ? "../detalle-reporte/detalle-reporte.html"
+      : "../detalle-gestion/detalle-gestion.html";
   return base + "?id=" + id + (abrirChat ? "&chat=1" : "");
 }
