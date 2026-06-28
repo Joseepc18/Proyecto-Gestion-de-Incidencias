@@ -31,11 +31,16 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
             END IF;
 
-            -- Validación 2: ¿el usuario tiene rol técnico o admin?
+            -- Validación 2: ¿el usuario existe (no borrado) y tiene rol técnico o admin?
             SELECT r.nombre_rol INTO v_rol_usuario
             FROM users u
             JOIN roles r ON u.id_rol = r.id_rol
-            WHERE u.id = p_id_usuario;
+            WHERE u.id = p_id_usuario AND u.deleted_at IS NULL;
+
+            -- Si no encontró fila, v_rol_usuario es NULL (NULL NOT IN ... no dispara, hay que chequearlo aparte).
+            IF v_rol_usuario IS NULL THEN
+                RAISE EXCEPTION 'El usuario % no existe o fue eliminado.', p_id_usuario;
+            END IF;
 
             IF v_rol_usuario NOT IN ('tecnico', 'admin') THEN
                 RAISE EXCEPTION 'El usuario % no tiene permisos para ser asignado.', p_id_usuario;

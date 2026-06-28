@@ -128,6 +128,8 @@ return new class extends Migration
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_historial_incidencia ON historial_estados(id_incidencia);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);');
+        // Acelera el conteo de evidencias por incidencia (trigger fn_limite_evidencias y EvidenciaController@subir).
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_evidencias_incidencia ON evidencias(id_incidencia);');
     }
 
     /**
@@ -144,5 +146,6 @@ return new class extends Migration
         DB::unprepared('DROP INDEX IF EXISTS idx_comentarios_incidencia;');
         DB::unprepared('DROP INDEX IF EXISTS idx_historial_incidencia;');
         DB::unprepared('DROP INDEX IF EXISTS idx_notificaciones_usuario;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_evidencias_incidencia;');
     }
 };
