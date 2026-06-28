@@ -49,7 +49,6 @@ class UserController extends Controller
         $usuario->email = $datos['email'];
         $usuario->id_rol = $datos['id_rol'];
 
-        // Solo cambia la contraseña si se envió una nueva.
         if (! empty($datos['password'])) {
             $usuario->password = $datos['password'];
         }
@@ -62,7 +61,6 @@ class UserController extends Controller
     // Eliminar (borrado lógico) un usuario.
     public function eliminar(Request $request, User $usuario)
     {
-        // El admin no puede eliminar su propia cuenta.
         if ($usuario->id === $request->user()->id) {
             return response()->json(['message' => 'No puedes eliminar tu propia cuenta'], 422);
         }

@@ -14,7 +14,6 @@ class CrearIncidenciaRequest extends FormRequest
 
     public function rules(): array
     {
-        // between de lat/long = rango geográfico de Ecuador
         $reglas = [
             'nombre_incidencia' => 'required|string|min:5|max:100',
             'descripcion_incidencia' => 'nullable|string|max:500',
@@ -27,7 +26,6 @@ class CrearIncidenciaRequest extends FormRequest
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:3072',
         ];
 
-        // Solo el admin fija prioridad y estado al crear; al resto se les ignora.
         if ($this->user()?->esAdmin()) {
             $reglas['prioridad_incidencia'] = 'nullable|in:ALTA,MEDIA,BAJA';
             $reglas['estado_incidencia'] = 'nullable|in:PENDIENTE,EN_PROCESO,RESUELTO';

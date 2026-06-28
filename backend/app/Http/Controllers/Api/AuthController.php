@@ -49,7 +49,6 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
-        // No borramos tokens previos: permite varias sesiones a la vez (laptop, celular).
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -84,13 +83,11 @@ class AuthController extends Controller
         $user->name = $datos['name'];
         $user->email = $datos['email'];
 
-        // Solo cambia la contraseña si se envió una nueva.
         if (! empty($datos['password'])) {
             $user->password = $datos['password'];
         }
 
         try {
-            // Foto nueva: la guarda y borra la anterior; o "quitar_foto" la elimina sin reemplazo.
             if ($request->hasFile('foto')) {
                 $ruta = $request->file('foto')->store('perfiles', 'public');
                 if ($ruta === false) {
@@ -141,21 +138,17 @@ class AuthController extends Controller
 
             $rolNormal = Rol::where('nombre_rol', 'normal')->first();
 
-            // Si ya existía (registro normal o Google previo) lo reutiliza por su email.
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],
                 [
                     'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Usuario Google',
-                    // Sin contraseña real: clave aleatoria para cumplir el NOT NULL de la columna.
                     'password' => Str::random(32),
                     'id_rol' => $rolNormal->id_rol,
                 ]
             );
 
-            // Igual que en login: no borramos tokens previos (sesiones concurrentes).
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // El token viaja en el fragmento (#) para que no quede en logs ni en el historial del servidor.
             return redirect($frontend.'/login/oauth.html#token='.$token);
         } catch (\Exception $e) {
             BitacoraError::create([

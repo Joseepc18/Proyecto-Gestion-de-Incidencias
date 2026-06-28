@@ -29,7 +29,6 @@ class CatalogoAdminController extends Controller
 
     public function eliminarTipo(TipoIncidencia $tipo)
     {
-        // No se puede borrar un tipo que todavía tiene subtipos.
         if ($tipo->subtipos()->exists()) {
             return response()->json(['message' => 'No puedes eliminar un tipo con subtipos. Elimina primero sus subtipos.'], 422);
         }
@@ -57,7 +56,6 @@ class CatalogoAdminController extends Controller
 
     public function eliminarSubtipo(SubtipoIncidencia $subtipo)
     {
-        // No se puede borrar un subtipo con incidencias asociadas.
         if ($subtipo->incidencias()->exists()) {
             return response()->json(['message' => 'No puedes eliminar un subtipo con incidencias registradas.'], 422);
         }

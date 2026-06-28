@@ -22,7 +22,6 @@ Route::get('/health', function () {
         $db = false;
     }
 
-    // 'host' = réplica que atendió: evidencia de que el balanceador reparte.
     return response()->json(['status' => 'ok', 'db' => $db, 'host' => gethostname()]);
 })->middleware('throttle:60,1');
 

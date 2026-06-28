@@ -27,7 +27,6 @@ class ActualizarIncidenciaRequest extends FormRequest
             'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
         ];
 
-        // Solo el admin puede tocar la prioridad; si la manda otro rol no se valida y update() la ignora.
         if ($this->user()?->esAdmin()) {
             $reglas['prioridad_incidencia'] = 'sometimes|in:ALTA,MEDIA,BAJA';
         }

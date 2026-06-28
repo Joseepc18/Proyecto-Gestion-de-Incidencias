@@ -19,25 +19,20 @@ class EvidenciaController extends Controller
     // Agregar fotos a una incidencia (hasta 3 de REPORTE y hasta 3 de RESOLUCION).
     public function subir(SubirEvidenciaRequest $request, Incidencia $incidencia)
     {
-        // La autorización (autor para REPORTE o técnico responsable para RESOLUCION) la resuelve el FormRequest.
         $user = $request->user();
         $tipo = $request->input('tipo_evidencia', 'REPORTE');
         $limite = 3;
 
-        // No pasar del límite por tipo (las que ya hay + las nuevas)
         if ($incidencia->evidencias()->where('tipo_evidencia', $tipo)->count() + count($request->file('fotos')) > $limite) {
             return response()->json(['message' => "Máximo $limite foto(s) de tipo $tipo"], 422);
         }
 
-        // Rutas ya escritas al disco; si la transacción falla las borramos a mano (el rollback no toca el disco).
         $rutasGuardadas = [];
 
         try {
-            // Todo o nada: si una foto no se guarda, no queda ninguna a medias.
             DB::transaction(function () use ($request, $incidencia, $user, $tipo, &$rutasGuardadas) {
                 foreach ($request->file('fotos') as $foto) {
                     $ruta = $foto->store('incidencias', 'public');
-                    // store() devuelve false si la escritura falla (permisos/disco): no creamos evidencia fantasma
                     if ($ruta === false) {
                         throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
                     }
@@ -59,12 +54,10 @@ class EvidenciaController extends Controller
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Throwable $e) {
-            // Si la transacción falla por otra causa (p.ej. el trigger de límite), limpiamos las fotos ya escritas y dejamos que el handler global registre.
             Storage::disk('public')->delete($rutasGuardadas);
             throw $e;
         }
 
-        // #8/#9 — Aviso de evidencia añadida (aquí y no en trigger: solo al agregar fotos después, no las iniciales).
         $this->notificarEvidencia($incidencia, $user);
 
         return response()->json($incidencia->load('evidencias'));

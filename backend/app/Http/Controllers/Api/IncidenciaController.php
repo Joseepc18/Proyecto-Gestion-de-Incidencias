@@ -17,12 +17,12 @@ use App\Http\Resources\IncidenciaResource;
 
 class IncidenciaController extends Controller
 {
+    // Listar las incidencias aplicando filtros y permisos de visibilidad.
     public function listadoIncidencias(Request $request)
     {
         $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
             ->orderBy('created_at', 'desc');
 
-        // Filtros opcionales
         if ($request->filled('estado')) {
             $query->where('estado_incidencia', $request->estado);
         }
@@ -39,7 +39,6 @@ class IncidenciaController extends Controller
             $query->whereHas('subtipo', fn ($q) => $q->where('id_tipo_incidencia', $request->tipo_id));
         }
 
-        // Visibilidad por rol: normal ve solo las suyas; técnico solo donde está asignado
         $user = $request->user();
 
         if ($user->esNormal()) {
@@ -51,27 +50,23 @@ class IncidenciaController extends Controller
         return response()->json($query->paginate(10));
     }
 
+    // Crear una nueva incidencia adjuntando opcionalmente fotos (evidencias).
     public function crearIncidencia(CrearIncidenciaRequest $request)
     {
         $datos = $request->validated();
         $datos['id_usuario'] = $request->user()->id;
-        // Si el ciudadano no eligió prioridad, entra como MEDIA (el admin la ajusta luego).
         $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? 'MEDIA';
         unset($datos['fotos']);
 
-        // Rutas ya escritas al disco; si la transacción falla las borramos a mano (el rollback no toca el disco).
         $rutasGuardadas = [];
 
         try {
-            // Todo o nada: si una foto no se guarda, se revierte la incidencia.
             $incidencia = DB::transaction(function () use ($request, $datos, &$rutasGuardadas) {
                 $incidencia = Incidencia::create($datos);
 
-                // Cada foto se guarda como una evidencia ligada a la incidencia
                 if ($request->hasFile('fotos')) {
                     foreach ($request->file('fotos') as $foto) {
                         $ruta = $foto->store('incidencias', 'public');
-                        // store() devuelve false si la escritura falla (permisos/disco): no creamos evidencia fantasma
                         if ($ruta === false) {
                             throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
                         }
@@ -119,6 +114,7 @@ class IncidenciaController extends Controller
         }
     }
 
+    // Obtener el detalle completo de una incidencia.
     public function verIncidencia(Request $request, Incidencia $incidencia)
     {
         $this->authorize('ver', $incidencia);
@@ -126,24 +122,23 @@ class IncidenciaController extends Controller
         return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias'])));
     }
 
+    // Actualizar datos básicos de la incidencia (solo autor si está PENDIENTE).
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
-        // La autorización (IncidenciaPolicy) la resuelve el FormRequest antes de validar.
         $incidencia->update($request->validated());
             Cache::forget('dashboard_metricas');
 
         return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
     }
 
+    // Eliminar una incidencia junto con todas sus relaciones y fotos físicas.
     public function eliminarIncidencia(Request $request, Incidencia $incidencia)
     {
         $this->authorize('eliminar', $incidencia);
 
         try {
-            // Guardamos las rutas antes de borrar (las evidencias se van por CASCADE)
             $rutasEvidencias = $incidencia->evidencias->pluck('url_evidencia');
 
-            // comentarios/historial/asignaciones son FK RESTRICT: se borran a mano
             DB::transaction(function () use ($incidencia) {
                 $incidencia->comentarios()->delete();
                 $incidencia->historialEstados()->delete();
@@ -151,7 +146,6 @@ class IncidenciaController extends Controller
                 $incidencia->delete();
             });
 
-            // Los archivos del disco solo si la BD confirmó el borrado
             foreach ($rutasEvidencias as $ruta) {
                 if (! Storage::disk('public')->delete($ruta)) {
                     BitacoraError::create([
@@ -175,6 +169,7 @@ class IncidenciaController extends Controller
         }
     }
 
+    // Ver el historial de cambios de estado de una incidencia.
     public function historialIncidencia(Request $request, Incidencia $incidencia)
     {
         $this->authorize('verHistorial', $incidencia);
@@ -187,7 +182,6 @@ class IncidenciaController extends Controller
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
     public function cambiarEstado(CambiarEstadoRequest $request, Incidencia $incidencia)
     {
-        // La autorización (solo admin o técnico asignado) la resuelve el FormRequest.
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
@@ -195,7 +189,6 @@ class IncidenciaController extends Controller
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
         }
 
-        // El admin cambia libremente; el técnico solo puede avanzar al estado siguiente.
         if (! $request->user()->esAdmin()) {
             $siguientePermitido = [
                 'EN_PROCESO' => 'RESUELTO',
@@ -205,12 +198,10 @@ class IncidenciaController extends Controller
             }
         }
 
-        // RESUELTO usa el procedimiento (notifica a reportador y técnicos); el resto es update directo (triggers hacen fecha e historial).
         if ($nuevo === 'RESUELTO' && $actual !== 'RESUELTO') {
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {
-            // Publica el actor para que el trigger de historial registre quién ejecuta (no el dueño).
             DB::transaction(function () use ($incidencia, $nuevo, $request) {
                 DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
                 $incidencia->update(['estado_incidencia' => $nuevo]);

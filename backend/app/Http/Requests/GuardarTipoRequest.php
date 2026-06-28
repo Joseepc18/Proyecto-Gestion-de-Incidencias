@@ -15,7 +15,6 @@ class GuardarTipoRequest extends FormRequest
 
     public function rules(): array
     {
-        // Nombre único (ignorando el propio tipo cuando se edita).
         $id = $this->route('tipo')?->id_tipo_incidencia;
 
         return [

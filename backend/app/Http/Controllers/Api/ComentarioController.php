@@ -15,10 +15,8 @@ class ComentarioController extends Controller
     // Listar los comentarios de una incidencia (orden cronológico).
     public function listadoComentarios(Request $request, Incidencia $incidencia)
     {
-        // El chat es del reportador, el admin y el técnico responsable (ver IncidenciaPolicy).
         $this->authorize('verChat', $incidencia);
 
-        // Carga el rol del autor para etiquetar cada burbuja del chat.
         return response()->json(
             $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get()
         );
@@ -27,11 +25,9 @@ class ComentarioController extends Controller
     // Crear un comentario en una incidencia.
     public function crearComentario(CrearComentarioRequest $request, Incidencia $incidencia)
     {
-        // La autorización (chat: reportador, admin o responsable) la resuelve el FormRequest.
         $datos = $request->validated();
 
         try {
-            // El trigger tr_notificar_nuevo_comentario avisa al reportador automáticamente
             $comentario = $incidencia->comentarios()->create([
                 'id_usuario' => $request->user()->id,
                 'comentario' => $datos['comentario'],

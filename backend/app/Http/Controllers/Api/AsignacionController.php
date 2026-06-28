@@ -37,7 +37,6 @@ class AsignacionController extends Controller
     {
         $datos = $request->validated();
 
-        // Validaciones con mensajes claros (la BD las repite como red de seguridad).
         if ($incidencia->asignaciones()->where('id_usuario', $datos['id_usuario'])->exists()) {
             return response()->json(['message' => 'Este técnico ya está asignado a esta incidencia.'], 422);
         }
@@ -56,7 +55,6 @@ class AsignacionController extends Controller
                 $datos['rol_asignado'],
             ]);
 
-            // Cargar asignaciones y retornar
             return response()->json($incidencia->load('asignaciones.usuario'), 201);
         } catch (QueryException $e) {
             BitacoraError::create([
