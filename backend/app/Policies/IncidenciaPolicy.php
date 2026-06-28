@@ -58,12 +58,11 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Subir evidencias: admin, autor (fotos de REPORTE) o el técnico RESPONSABLE (foto de RESOLUCION).
-    // El técnico de APOYO no sube evidencias.
+    // Subir evidencias: autor (fotos de REPORTE) o el técnico RESPONSABLE (foto de RESOLUCION).
+    // El administrador y el técnico de APOYO no suben evidencias.
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin()
-        || $incidencia->id_usuario === $user->id
+        return $incidencia->id_usuario === $user->id
         || $this->esResponsable($user, $incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');

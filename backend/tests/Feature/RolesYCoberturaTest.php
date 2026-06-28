@@ -54,7 +54,7 @@ class RolesYCoberturaTest extends TestCase
     public function test_responsable_cambia_estado_pero_no_edita_detalles(): void
     {
         $reportador = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia = $this->crearIncidencia($reportador, ['estado_incidencia' => 'EN_PROCESO']);
         $responsable = $this->crearUsuario('tecnico');
         AsignacionIncidencia::create([
             'id_incidencia' => $incidencia->id_incidencia,
@@ -67,7 +67,7 @@ class RolesYCoberturaTest extends TestCase
 
         // Puede ver el chat y avanzar el estado.
         $this->getJson("/api/incidencias/{$id}/comentarios")->assertOk();
-        $this->patchJson("/api/incidencias/{$id}/estado", ['estado_incidencia' => 'EN_PROCESO'])->assertOk();
+        $this->patchJson("/api/incidencias/{$id}/estado", ['estado_incidencia' => 'RESUELTO'])->assertOk();
 
         // Pero NO puede editar los detalles de la incidencia.
         $this->putJson("/api/incidencias/{$id}", ['nombre_incidencia' => 'Detalle cambiado por el técnico'])

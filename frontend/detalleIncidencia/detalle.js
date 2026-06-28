@@ -1,6 +1,6 @@
-// detalle.js — Página de detalle de una incidencia (vista admin con herramientas de gestión).
+// detalle.js — Página de detalle de una incidencia (vista de gestión: admin y técnico responsable).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, crearMapaIncidencias, crearChat, estadoConfig, prioridadConfig */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, crearMapaIncidencias, crearChat, estadoConfig, prioridadConfig, imageCompression */
 
 // Estado de la página.
 let esAdmin = false;
@@ -66,14 +66,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   cargarHistorial(id);
   configurarChatFlotante(id);
 
-  // Herramientas de gestión: solo admin
+  // Prioridad y asignación de técnicos: solo admin.
   if (esAdmin) {
     document.querySelectorAll(".solo-admin").forEach(function (el) {
       el.classList.remove("d-none");
     });
     prepararPrioridad(id);
-    prepararEstado(id);
     prepararAsignacion(id);
+    // El admin gestiona el estado (no sube fotos de resolución, solo las ve).
+    habilitarGestionResolucion(id);
   }
 });
 
@@ -156,16 +157,22 @@ async function cargarDetalle(id) {
   }
 }
 
+// ¿Quien mira es el técnico RESPONSABLE de esta incidencia? (el de apoyo no cuenta)
+function esResponsableActual() {
+  return !!(
+    responsableActual &&
+    responsableActual.usuario &&
+    usuarioActual &&
+    responsableActual.usuario.id === usuarioActual.id
+  );
+}
+
 // Solo ven el chat el admin, el reportador y el técnico responsable (el de apoyo queda fuera, igual que la policy verChat).
 function puedeUsarChat() {
   if (!usuarioActual) return false;
   if (esAdmin) return true;
   if (incActual && incActual.usuario && incActual.usuario.id === usuarioActual.id) return true;
-  return (
-    responsableActual &&
-    responsableActual.usuario &&
-    responsableActual.usuario.id === usuarioActual.id
-  );
+  return esResponsableActual();
 }
 
 // Muestra u oculta la burbuja del chat según quién mira (se reevalúa al cargar las asignaciones).
@@ -364,6 +371,27 @@ function marcarPrioridadActiva() {
   });
 }
 
+// Revela y cablea (una sola vez) el cambio de estado (admin y responsable) y la subida de fotos (solo responsable).
+let gestionResolucionLista = false;
+function habilitarGestionResolucion(id) {
+  if (gestionResolucionLista) return;
+  gestionResolucionLista = true;
+
+  // Cambiar estado: lo usan el admin (libre) y el técnico responsable (solo EN_PROCESO → RESUELTO).
+  document.querySelectorAll(".gestion-estado").forEach(function (el) {
+    el.classList.remove("d-none");
+  });
+  prepararEstado(id);
+
+  // Subir fotos de resolución: solo el técnico responsable (el admin las ve, pero no las sube).
+  if (!esAdmin && esResponsableActual()) {
+    document.querySelectorAll(".gestion-fotos").forEach(function (el) {
+      el.classList.remove("d-none");
+    });
+    prepararSubidaResolucion(id);
+  }
+}
+
 // Bloque: Cambiar estado
 
 function prepararEstado(id) {
@@ -403,13 +431,188 @@ function prepararEstado(id) {
   });
 }
 
-// Resalta el estado actual y deshabilita el botón correspondiente.
+// Resalta el estado actual; el admin habilita cualquier otro, el técnico solo EN_PROCESO → RESUELTO.
 function marcarEstadoActivo() {
+  const actual = incActual.estado_incidencia;
   document.querySelectorAll("#estadoBotones .btn-estado-tool").forEach(function (b) {
-    const activo = b.dataset.estado === incActual.estado_incidencia;
+    const estado = b.dataset.estado;
+    const activo = estado === actual;
     b.classList.toggle("activo", activo);
-    b.disabled = activo;
+    if (activo) {
+      b.disabled = true;
+    } else if (esAdmin) {
+      b.disabled = false;
+    } else {
+      b.disabled = !(actual === "EN_PROCESO" && estado === "RESUELTO");
+    }
   });
+}
+
+// Bloque: Subir fotos de la resolución
+
+// Compresión: redimensiona a ~1920px y calidad 0.8 antes de subir.
+const opcionesCompresion = {
+  maxSizeMB: 0.5,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  fileType: "image/jpeg",
+  initialQuality: 0.8,
+};
+
+// Fotos de resolución ya comprimidas, pendientes de subir.
+let fotosResolucion = [];
+
+function prepararSubidaResolucion(id) {
+  const input = document.getElementById("inputResolucion");
+  const dropzone = document.getElementById("dropzoneResolucion");
+
+  // El <label for> abre el selector; aquí procesamos la selección.
+  input.addEventListener("change", function () {
+    procesarFotosResolucion(this.files);
+    // Limpia el input para poder agregar más sin reemplazar.
+    this.value = "";
+  });
+
+  // Arrastrar y soltar sobre la zona de carga.
+  ["dragenter", "dragover"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("dropzone-fotos--activo");
+    });
+  });
+  ["dragleave", "dragend"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function () {
+      dropzone.classList.remove("dropzone-fotos--activo");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropzone.classList.remove("dropzone-fotos--activo");
+    procesarFotosResolucion(e.dataTransfer.files);
+  });
+
+  document.getElementById("btnSubirResolucion").addEventListener("click", function () {
+    subirResolucion(id);
+  });
+
+  renderResolucionPreview();
+}
+
+// Cupo de fotos de resolución que aún se pueden subir (máx. 3 en total).
+function cupoResolucion() {
+  const existentes = (incActual.evidencias || []).filter(
+    (ev) => ev.tipo_evidencia === "RESOLUCION",
+  ).length;
+  return 3 - existentes;
+}
+
+// Comprime cada foto y la agrega al acumulador, sin pasar del cupo.
+async function procesarFotosResolucion(lista) {
+  const error = document.getElementById("resolucionError");
+  error.classList.add("d-none");
+  for (const file of Array.from(lista)) {
+    if (fotosResolucion.length >= cupoResolucion()) {
+      error.textContent = "Máximo 3 fotos de resolución.";
+      error.classList.remove("d-none");
+      break;
+    }
+    try {
+      const comprimida = await imageCompression(file, opcionesCompresion);
+      // Forzar nombre .jpg para que calce con la validación del backend.
+      const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
+        type: "image/jpeg",
+      });
+      fotosResolucion.push(jpg);
+    } catch {
+      error.textContent = 'No se pudo procesar "' + file.name + '".';
+      error.classList.remove("d-none");
+    }
+  }
+  renderResolucionPreview();
+}
+
+// Dibuja las miniaturas de las fotos elegidas (con botón para quitarlas).
+function renderResolucionPreview() {
+  const preview = document.getElementById("resolucionPreview");
+  const dropzone = document.getElementById("dropzoneResolucion");
+  const input = document.getElementById("inputResolucion");
+  const btnSubir = document.getElementById("btnSubirResolucion");
+  preview.innerHTML = "";
+
+  const cupo = cupoResolucion();
+  // El dropzone grande se oculta si ya hay fotos elegidas o si no queda cupo.
+  dropzone.classList.toggle("d-none", fotosResolucion.length > 0 || cupo <= 0);
+
+  fotosResolucion.forEach(function (file, idx) {
+    const cont = document.createElement("div");
+    cont.className = "position-relative";
+
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:8px";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
+    btn.innerHTML = "&times;";
+    btn.addEventListener("click", function () {
+      fotosResolucion.splice(idx, 1);
+      renderResolucionPreview();
+    });
+
+    cont.appendChild(img);
+    cont.appendChild(btn);
+    preview.appendChild(cont);
+  });
+
+  // Azulejo "+" para seguir agregando mientras quede cupo.
+  if (fotosResolucion.length > 0 && fotosResolucion.length < cupo) {
+    const agregar = document.createElement("button");
+    agregar.type = "button";
+    agregar.className = "foto-agregar";
+    agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
+    agregar.addEventListener("click", function () {
+      input.click();
+    });
+    preview.appendChild(agregar);
+  }
+
+  // El botón de subir solo aparece si hay fotos elegidas.
+  btnSubir.classList.toggle("d-none", fotosResolucion.length === 0);
+}
+
+// Sube las fotos al backend (tipo RESOLUCION) y repinta las galerías con la respuesta.
+async function subirResolucion(id) {
+  if (fotosResolucion.length === 0) return;
+
+  const btnSubir = document.getElementById("btnSubirResolucion");
+  const spinner = document.getElementById("resolucionSpinner");
+  btnSubir.disabled = true;
+  spinner.classList.remove("d-none");
+
+  try {
+    const formData = new FormData();
+    fotosResolucion.forEach(function (file) {
+      formData.append("fotos[]", file);
+    });
+    formData.append("tipo_evidencia", "RESOLUCION");
+
+    const actualizada = await apiFetch("/incidencias/" + id + "/evidencias", {
+      method: "POST",
+      body: formData,
+    });
+    // El backend devuelve la incidencia con sus evidencias: repintamos las galerías.
+    incActual.evidencias = actualizada.evidencias || [];
+    pintarFotos(incActual.evidencias);
+    fotosResolucion = [];
+    renderResolucionPreview();
+    mostrarToast("Fotos de resolución subidas", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  } finally {
+    btnSubir.disabled = false;
+    spinner.classList.add("d-none");
+  }
 }
 
 // Bloque: Asignación de técnicos
@@ -428,6 +631,8 @@ async function cargarAsignaciones(id) {
     pintarParticipantes();
     // Ya se sabe quién es el responsable: reevaluar si esta persona puede ver el chat.
     actualizarChatFab();
+    // Si quien mira es el responsable, habilitar sus herramientas (cambiar estado + fotos de resolución).
+    if (esResponsableActual()) habilitarGestionResolucion(id);
 
     // Responsable
     responsableLista.innerHTML = "";

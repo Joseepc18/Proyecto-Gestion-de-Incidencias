@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Gate;
 
 class SubirEvidenciaRequest extends FormRequest
 {
-    // Autoriza antes de validar: admin, autor o técnico asignado.
+    // Autoriza antes de validar: autor (REPORTE) o técnico responsable (RESOLUCION).
     public function authorize(): bool
     {
         Gate::authorize('subirEvidencia', $this->route('incidencia'));

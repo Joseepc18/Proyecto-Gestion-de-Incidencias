@@ -170,7 +170,6 @@ class IncidenciaController extends Controller
         // El admin cambia libremente; el técnico solo puede avanzar al estado siguiente.
         if (! $request->user()->esAdmin()) {
             $siguientePermitido = [
-                'PENDIENTE' => 'EN_PROCESO',
                 'EN_PROCESO' => 'RESUELTO',
             ];
             if (($siguientePermitido[$actual] ?? null) !== $nuevo) {

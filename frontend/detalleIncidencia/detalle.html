@@ -178,8 +178,8 @@
                   </div>
                 </section>
 
-                <!-- Cambiar estado -->
-                <section class="panel solo-admin d-none">
+                <!-- Cambiar estado (admin y técnico responsable) -->
+                <section class="panel gestion-estado d-none">
                   <div class="p-3">
                     <h3 class="panel-titulo-tool">
                       <i class="bi bi-arrow-repeat me-1"></i> Cambiar estado
@@ -198,6 +198,43 @@
                         <i class="bi bi-check-lg marca"></i>
                       </button>
                     </div>
+                  </div>
+                </section>
+
+                <!-- Fotos de la resolución (solo técnico responsable; el admin las ve pero no las sube) -->
+                <section class="panel gestion-fotos d-none">
+                  <div class="p-3">
+                    <h3 class="panel-titulo-tool">
+                      <i class="bi bi-camera me-1"></i> Fotos de la resolución
+                    </h3>
+                    <p class="text-muted small mb-2">Sube hasta 3 fotos del trabajo realizado.</p>
+                    <label class="dropzone-fotos" id="dropzoneResolucion" for="inputResolucion">
+                      <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+                      <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
+                      <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
+                    </label>
+                    <input
+                      class="d-none"
+                      id="inputResolucion"
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      multiple
+                    />
+                    <div id="resolucionError" class="text-danger small mt-1 d-none"></div>
+                    <div id="resolucionPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm mt-2 d-none"
+                      id="btnSubirResolucion"
+                    >
+                      <span
+                        class="spinner-border spinner-border-sm me-1 d-none"
+                        id="resolucionSpinner"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Subir fotos
+                    </button>
                   </div>
                 </section>
               </div>
@@ -245,6 +282,8 @@
     <script src="../assets/js/mapa.js"></script>
     <!-- Chat reutilizable -->
     <script src="../assets/js/chat.js"></script>
+    <!-- Compresión de fotos antes de subir -->
+    <script src="../assets/js/browser-image-compression.js"></script>
     <!-- Lógica propia -->
     <script src="detalle.js"></script>
   </body>
