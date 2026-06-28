@@ -52,7 +52,7 @@
       page: "catalogos",
       id: "navCatalogos",
       href: "../catalogos/catalogos.html",
-      icon: "bi-tags",
+      icon: "bi-diagram-3",
       texto: "Tipos de incidencia",
       oculto: true,
     },
