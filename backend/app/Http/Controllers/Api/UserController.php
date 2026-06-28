@@ -8,15 +8,14 @@ use App\Http\Requests\CrearUsuarioRequest;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
-    // Listar todos los usuarios con su rol.
     public function listado()
     {
         return response()->json(
-            User::with('rol')->orderBy('name')->get()
+            UserResource::collection(User::with('rol')->orderBy('name')->get())
         );
     }
 
@@ -38,7 +37,7 @@ class UserController extends Controller
             'id_rol' => $datos['id_rol'],
         ]);
 
-        return response()->json($user->load('rol'), 201);
+        return response()->json(new UserResource($user->load('rol')), 201);
     }
 
     // Actualizar un usuario (nombre, correo, rol y, opcionalmente, contraseña).
@@ -57,7 +56,7 @@ class UserController extends Controller
 
         $usuario->save();
 
-        return response()->json($usuario->load('rol'));
+        return response()->json(new UserResource($usuario->load('rol')));
     }
 
     // Eliminar (borrado lógico) un usuario.
@@ -68,6 +67,7 @@ class UserController extends Controller
             return response()->json(['message' => 'No puedes eliminar tu propia cuenta'], 422);
         }
 
+        $usuario->tokens()->delete();
         $usuario->delete();
 
         return response()->json(['message' => 'Usuario eliminado']);

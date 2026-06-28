@@ -1,7 +1,5 @@
 // perfil.js — Edición del perfil propio: nombre, correo, contraseña y foto.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar */
-
 // Ruta de la foto guardada en el servidor (relativa); null si no tiene.
 let fotoActual = null;
 // Foto nueva ya comprimida lista para subir; null si no se cambió.
@@ -85,7 +83,6 @@ async function procesarFoto() {
 // Marca la foto para borrarse (si había en el servidor) y vuelve al icono por defecto.
 function quitarLaFoto() {
   fotoSeleccionada = null;
-  // Solo hay que pedir el borrado al backend si existía una foto guardada.
   quitarFoto = fotoActual !== null;
   mostrarAvatar(null);
 }
@@ -95,7 +92,6 @@ function mostrarAvatar(src) {
   const cont = document.getElementById("perfilAvatar");
   const btnQuitar = document.getElementById("btnQuitarFoto");
 
-  // Libera el objectURL anterior para no acumular memoria.
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
@@ -145,7 +141,6 @@ async function guardarPerfil(e) {
   try {
     const usuario = await apiFetch("/perfil", { method: "POST", body: datos });
 
-    // Sincroniza el estado y el navbar con lo que devolvió el servidor.
     fotoActual = usuario.foto_perfil || null;
     fotoSeleccionada = null;
     quitarFoto = false;

@@ -10,8 +10,10 @@ use App\Http\Requests\CrearIncidenciaRequest;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\IncidenciaResource;
 
 class IncidenciaController extends Controller
 {
@@ -86,7 +88,14 @@ class IncidenciaController extends Controller
 
             Cache::forget('dashboard_metricas');
             return response()->json(
-                $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']),
+                new IncidenciaResource($incidencia->load([
+                    'usuario', 
+                    'subtipo.tipo', 
+                    'ciudad', 
+                    'evidencias',
+                    'historialEstados.usuario',
+                    'asignaciones.usuario',
+                ])),
                 201
             );
         } catch (AlmacenamientoException $e) {
@@ -114,16 +123,16 @@ class IncidenciaController extends Controller
     {
         $this->authorize('ver', $incidencia);
 
-        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']));
+        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias'])));
     }
 
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
         // La autorización (IncidenciaPolicy) la resuelve el FormRequest antes de validar.
         $incidencia->update($request->validated());
-        \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
+            Cache::forget('dashboard_metricas');
 
-        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
     }
 
     public function eliminarIncidencia(Request $request, Incidencia $incidencia)
@@ -153,7 +162,7 @@ class IncidenciaController extends Controller
                 }
             }
 
-            \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
+            Cache::forget('dashboard_metricas');
             return response()->json(['message' => 'Incidencia eliminada']);
         } catch (\Exception $e) {
             BitacoraError::create([
@@ -208,7 +217,7 @@ class IncidenciaController extends Controller
             });
         }
 
-        \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
-        return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+        Cache::forget('dashboard_metricas');
+        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
     }
 }

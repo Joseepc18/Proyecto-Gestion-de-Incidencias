@@ -1,8 +1,6 @@
 // toast.js — Notificaciones tipo "toast" (reemplazan a alert()).
 
 /* exported mostrarToast, toastFlash */
-/* global hayCargaActiva, escaparHtml */
-
 // Crea (una sola vez) el contenedor donde se apilan los toasts.
 function obtenerContenedorToasts() {
   let cont = document.getElementById("toastContainer");
@@ -92,14 +90,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Espera a que terminen las peticiones de la página antes de mostrar el toast,
-  // para que aparezca después del spinner y no encima.
   let intentos = 0;
   let sinCargaSeguidas = 0;
   function mostrarCuandoListo() {
     const cargando = typeof hayCargaActiva === "function" && hayCargaActiva();
-    // Solo damos por terminada la carga si lleva varios ciclos seguidos sin peticiones,
-    // para no colarnos en el hueco entre dos rondas (ej. usuario y luego el dashboard).
     sinCargaSeguidas = cargando ? 0 : sinCargaSeguidas + 1;
     if (sinCargaSeguidas < 3 && intentos < 60) {
       intentos++;
@@ -108,6 +102,5 @@ document.addEventListener("DOMContentLoaded", function () {
       mostrarToast(datos.mensaje, datos.tipo);
     }
   }
-  // Margen inicial para que arranquen las peticiones de la página (spinner 300ms).
   setTimeout(mostrarCuandoListo, 350);
 });

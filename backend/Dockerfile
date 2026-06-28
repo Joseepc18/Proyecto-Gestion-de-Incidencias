@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y \
     && pecl install redis \
     && docker-php-ext-enable redis
 
-# Límites de subida de PHP (alineados con client_max_body_size 10M de Nginx)
+# Límites de subida de PHP (alineados con client_max_body_size 15M de Nginx)
 RUN { \
-    echo 'upload_max_filesize=12M'; \
+    echo 'upload_max_filesize=15M'; \
     echo 'post_max_size=20M'; \
   } > /usr/local/etc/php/conf.d/uploads.ini
 

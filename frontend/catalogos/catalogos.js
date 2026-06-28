@@ -1,7 +1,5 @@
 // catalogos.js — Gestión de tipos y subtipos de incidencia (solo admin): listar, crear, editar y eliminar.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
-
 // Cache del último listado (tipos con sus subtipos anidados) para no pedirlo de más.
 let tipos = [];
 // Si es null estamos creando; si tiene un id estamos editando ese registro.
@@ -46,7 +44,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("formSubtipo").addEventListener("submit", guardarSubtipo);
   document.getElementById("btnCancelarSubtipo").addEventListener("click", salirModoEdicionSubtipo);
 
-  // Filtra la tabla de subtipos por tipo (solo en cliente, no recarga datos).
   document.getElementById("filtroSubtipoTipo").addEventListener("change", pintarSubtipos);
 
   cargarCatalogos();
@@ -231,7 +228,6 @@ function pintarSubtipos() {
   const tbody = document.getElementById("tbodySubtipos");
   const filtro = document.getElementById("filtroSubtipoTipo").value;
 
-  // Cada fila lleva el nombre del tipo padre para mostrarlo en la tabla.
   const filas = [];
   tipos.forEach(function (t) {
     if (filtro && String(t.id_tipo_incidencia) !== filtro) return;

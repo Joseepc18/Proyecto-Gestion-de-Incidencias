@@ -1,7 +1,5 @@
 // layout.js — Inyecta el sidebar y navbar compartidos; el enlace activo se marca con data-page del <body>.
 
-/* global aplicarMenuRol */
-
 (function () {
   const sidebar = document.getElementById("adminSidebar");
   const navbar = document.getElementById("adminNavbar");
@@ -9,7 +7,6 @@
 
   const paginaActual = document.body.dataset.page || "";
 
-  // Enlaces del menú. "oculto" = empieza en d-none y lo revela aplicarMenuRol según el rol.
   const enlaces = [
     {
       page: "inicio",
@@ -134,7 +131,6 @@
     '<li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li></ul>' +
     "</div></div></div>";
 
-  // Pinta el avatar del navbar: foto del usuario si la hay, o el icono por defecto.
   window.pintarAvatarNavbar = function (foto) {
     const cont = document.getElementById("navbarAvatar");
     if (!cont) return;
@@ -146,10 +142,6 @@
     }
   };
 
-  // Al cargar cualquier página usa la foto cacheada (se actualiza al editar el perfil).
   window.pintarAvatarNavbar(localStorage.getItem("perfil_foto") || "");
 
-  // Pinta el menú con el rol cacheado antes de pedir /user, para que no parpadee el default.
-  const rolCacheado = localStorage.getItem("rol_usuario");
-  if (rolCacheado && typeof aplicarMenuRol === "function") aplicarMenuRol(rolCacheado);
 })();

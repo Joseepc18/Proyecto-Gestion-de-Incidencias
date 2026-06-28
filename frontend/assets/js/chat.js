@@ -1,6 +1,5 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch */
 /* exported crearChat */
 
 // Etiqueta legible del rol del autor de un mensaje.
@@ -30,7 +29,6 @@ function crearChat(idContenedor, idIncidencia, usuario) {
   const spinner = cont.querySelector("#chatSpinner");
   const icono = cont.querySelector("#chatIcono");
 
-  // Trae el hilo y lo pinta como burbujas. suave: scroll animado (solo al enviar, no al cargar).
   async function recargar(suave) {
     try {
       const comentarios = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {

@@ -1,8 +1,6 @@
 // api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
 /* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml, hayCargaActiva */
-/* global toastFlash */
-
 const API_BASE = "/api";
 
 // Escapa < > & " ' a entidades HTML para evitar XSS al meter texto en innerHTML/popups.
@@ -30,9 +28,7 @@ function obtenerToken() {
 
 function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
-  // Olvida la foto cacheada del navbar para no mostrar la del usuario anterior.
   localStorage.removeItem("perfil_foto");
-  // Olvida el rol cacheado para no pintar el menú del usuario anterior.
   localStorage.removeItem("rol_usuario");
 }
 
@@ -73,16 +69,13 @@ function hayCargaActiva() {
 
 function spinnerInicio() {
   peticionesActivas++;
-  // Si había una ocultación pendiente, cancélala: seguimos cargando (sin parpadeo)
   if (ocultarTimer) {
     clearTimeout(ocultarTimer);
     ocultarTimer = null;
   }
-  // Si ya está visible o hay un "mostrar" en cola, no reprogramamos
   if (spinnerVisible() || mostrarTimer) {
     return;
   }
-  // Solo aparece si la petición tarda más de 300ms
   mostrarTimer = setTimeout(function () {
     obtenerSpinner().classList.remove("d-none");
     mostrarTimer = null;
@@ -94,12 +87,10 @@ function spinnerFin() {
   if (peticionesActivas > 0) {
     return;
   }
-  // No quedan peticiones: cancela un "mostrar" que aún no ocurrió
   if (mostrarTimer) {
     clearTimeout(mostrarTimer);
     mostrarTimer = null;
   }
-  // Oculta con margen de gracia: si otra petición arranca enseguida, no parpadea.
   if (spinnerVisible()) {
     ocultarTimer = setTimeout(function () {
       obtenerSpinner().classList.add("d-none");
@@ -111,12 +102,10 @@ function spinnerFin() {
 async function apiFetch(endpoint, opciones = {}) {
   const url = API_BASE + endpoint;
 
-  // sinSpinner: omite el spinner global (login/registro ya muestran el suyo en el botón).
   const { sinSpinner = false, ...fetchOpts } = opciones;
 
   const headers = { Accept: "application/json" };
 
-  // FormData: el navegador pone Content-Type automáticamente (multipart)
   const esFormData = fetchOpts.body instanceof FormData;
   if (!esFormData) {
     headers["Content-Type"] = "application/json";
@@ -133,19 +122,16 @@ async function apiFetch(endpoint, opciones = {}) {
   try {
     const respuesta = await fetch(url, { ...fetchOpts, headers });
 
-    // Token vencido/inválido (401 con token): limpia y vuelve al login; en la página de login no.
     if (respuesta.status === 401 && token && !window.location.pathname.includes("/login/")) {
       eliminarToken();
       toastFlash("Tu sesión expiró. Vuelve a iniciar sesión.", "warning");
       window.location.href = "../login/login.html";
-      // Promesa que nunca resuelve: corta el flujo del llamador mientras redirige.
       return new Promise(function () {});
     }
 
     const data = await respuesta.json();
 
     if (!respuesta.ok) {
-      // Muestra el primer mensaje de validación (ya traducido), no el resumen en inglés.
       let mensaje = data.message || "Error en la petición";
       if (data.errors) {
         const primero = Object.values(data.errors)[0];
@@ -166,7 +152,6 @@ async function apiFetch(endpoint, opciones = {}) {
 
 // Muestra/oculta los enlaces del menú según el rol (el normal arranca en "Mis incidencias").
 function aplicarMenuRol(rol) {
-  // Cachea el rol para que layout.js pinte el menú correcto antes de pedir /user (sin parpadeo).
   if (rol) localStorage.setItem("rol_usuario", rol);
   const esAdmin = rol === "admin";
   const esNormal = rol === "normal";
@@ -176,16 +161,13 @@ function aplicarMenuRol(rol) {
     if (el) el.classList.toggle("d-none", !visible);
   }
 
-  // Inicio es solo del admin; el técnico arranca en "Mis asignaciones".
   mostrar("navInicio", esAdmin);
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
   mostrar("navCatalogos", esAdmin);
   mostrar("navMisIncidencias", !esAdmin);
-  // El técnico no registra incidencias; solo admin y ciudadano ven el enlace.
   mostrar("navRegistrar", esAdmin || esNormal);
 
-  // "Mis incidencias" se renombra según el rol: el técnico ve asignaciones; el ciudadano, sus reportes.
   const navMis = document.getElementById("navMisIncidencias");
   const textoMis = navMis ? navMis.querySelector(".nav-text") : null;
   if (textoMis) textoMis.textContent = rol === "tecnico" ? "Mis asignaciones" : "Mis reportes";

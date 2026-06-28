@@ -1,15 +1,11 @@
 // mapa.js — Helper reutilizable de Leaflet: mapa con satélite/calles y pines de incidencias.
 
-/* global L */
-
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};
-  // Centro por defecto: La Libertad / UPSE
   const centro = opciones.centro || [-2.2267, -80.9012];
   const zoom = opciones.zoom || 13;
 
-  // Zoom a la derecha: la esquina superior izquierda la ocupa el feed
   const map = L.map(idContenedor, { zoomControl: false }).setView(centro, zoom);
   L.control.zoom({ position: "topright" }).addTo(map);
 
@@ -37,7 +33,6 @@ function crearMapaIncidencias(idContenedor, opciones) {
   const capaPines = L.layerGroup().addTo(map);
   let marcadores = {};
 
-  // items: [{ id, lat, lng, titulo, color }]
   function pintarPines(items, onSelect) {
     capaPines.clearLayers();
     marcadores = {};
@@ -71,7 +66,6 @@ function crearMapaIncidencias(idContenedor, opciones) {
     }
   }
 
-  // Centra el mapa en un pin y abre su popup.
   function enfocar(id) {
     const marcador = marcadores[id];
     if (!marcador) return;
@@ -86,7 +80,6 @@ function crearMapaIncidencias(idContenedor, opciones) {
 // eslint-disable-next-line no-unused-vars
 function crearMapaPicker(idContenedor, onCambio, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
-  // Limitar el paneo a Ecuador
   map.setMaxBounds([
     [-5.5, -82.0],
     [1.8, -74.5],
@@ -110,7 +103,6 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
     poner(e.latlng.lat, e.latlng.lng);
   });
 
-  // Centra y marca con el GPS del navegador
   function usarMiUbicacion() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function (pos) {
@@ -119,7 +111,6 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
     });
   }
 
-  // Coloca el pin inicial (modo edición)
   function setUbicacion(lat, lng) {
     map.setView([lat, lng], 16);
     poner(lat, lng);

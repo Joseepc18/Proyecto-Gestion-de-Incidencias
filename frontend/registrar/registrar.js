@@ -1,14 +1,11 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, mostrarToast, imageCompression, crearMapaPicker, bootstrap */
-
 document.addEventListener("DOMContentLoaded", async function () {
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
   }
 
-  // Fotos ya comprimidas, listas para enviar
   let fotosSeleccionadas = [];
 
   let usuarioActual = null;
@@ -35,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // El admin ve y fija prioridad/estado al crear; el ciudadano no (van por defecto).
   const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
   if (esAdmin) {
     document.querySelectorAll(".solo-admin").forEach(function (el) {
@@ -43,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 
-  // Tooltips de ayuda (iconos ⓘ junto a las etiquetas).
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
     bootstrap.Tooltip.getOrCreateInstance(el);
   });
@@ -61,7 +56,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       selectTipo.appendChild(op);
     });
 
-    // Las ciudades se guardan para filtrarlas luego por la provincia elegida.
     catalogoCiudades = await apiFetch("/catalogos/ciudades");
     const provincias = await apiFetch("/catalogos/provincias");
     const selectProvincia = document.getElementById("crearProvincia");
@@ -75,7 +69,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     mostrarToast("No se pudieron cargar los catálogos. Recarga la página.", "error");
   }
 
-  // Cascada provincia → ciudad
   document.getElementById("crearProvincia").addEventListener("change", function () {
     const selectCiudad = document.getElementById("crearCiudad");
     const provinciaId = parseInt(this.value);
@@ -101,7 +94,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       });
   });
 
-  // Cascada tipo → subtipo
   document.getElementById("crearTipo").addEventListener("change", function () {
     const selectSubtipo = document.getElementById("crearSubtipo");
     selectSubtipo.innerHTML = "";
@@ -127,7 +119,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   });
 
-  // Compresión de fotos: redimensiona a ~1920px y calidad 0.8 antes de subir
   const opcionesCompresion = {
     maxSizeMB: 0.5,
     maxWidthOrHeight: 1920,
@@ -140,14 +131,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   const previewFotos = document.getElementById("crearFotosPreview");
   const errorFotos = document.getElementById("crearFotosError");
 
-  // El <label for> abre el selector al hacer clic; aquí procesamos la selección
   inputFotos.addEventListener("change", function () {
     procesarFotos(this.files);
-    // Limpia el input para poder agregar más sin reemplazar.
     this.value = "";
   });
 
-  // Arrastrar y soltar sobre la zona de carga
   const dropzone = document.getElementById("dropzoneFotos");
   ["dragenter", "dragover"].forEach(function (ev) {
     dropzone.addEventListener(ev, function (e) {
@@ -166,7 +154,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     procesarFotos(e.dataTransfer.files);
   });
 
-  // Comprime cada foto y la agrega al acumulador (máx. 3)
   async function procesarFotos(lista) {
     errorFotos.classList.add("d-none");
     for (const file of Array.from(lista)) {
@@ -176,7 +163,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
       try {
         const comprimida = await imageCompression(file, opcionesCompresion);
-        // Forzar nombre .jpg para que calce con la validación del backend
         const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
           type: "image/jpeg",
         });
@@ -193,7 +179,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     errorFotos.classList.remove("d-none");
   }
 
-  // Miniaturas con botón de quitar; con fotos el cuadro grande pasa a un azulejo "+".
   function renderPreviews() {
     previewFotos.innerHTML = "";
     dropzone.classList.toggle("d-none", fotosSeleccionadas.length > 0);
@@ -205,7 +190,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       const img = document.createElement("img");
       img.loading = "lazy";
       const url = URL.createObjectURL(file);
-      // Libera el objectURL una vez que la miniatura ya cargó.
       img.onload = () => URL.revokeObjectURL(url);
       img.src = url;
       img.style.width = "80px";
@@ -227,7 +211,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       previewFotos.appendChild(cont);
     });
 
-    // Azulejo "+" para agregar más, hasta el tope de 3
     if (fotosSeleccionadas.length > 0 && fotosSeleccionadas.length < 3) {
       const agregar = document.createElement("button");
       agregar.type = "button";
@@ -240,7 +223,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // Mapa para elegir la ubicación (llena lat/long al hacer clic)
   const picker = crearMapaPicker("mapaPicker", function (lat, lng) {
     document.getElementById("crearLatitud").value = lat.toFixed(6);
     document.getElementById("crearLongitud").value = lng.toFixed(6);
@@ -254,7 +236,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     picker.usarMiUbicacion();
   });
 
-  // Envío del formulario
   document.getElementById("formCrear").addEventListener("submit", async function (e) {
     e.preventDefault();
     const form = this;
@@ -269,7 +250,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       return;
     }
 
-    // La ubicación se marca en el mapa (los campos son de solo lectura)
     if (!document.getElementById("crearLatitud").value) {
       document.getElementById("ubicacionError").classList.remove("d-none");
       return;
@@ -284,7 +264,6 @@ document.addEventListener("DOMContentLoaded", async function () {
       "descripcion_incidencia",
       document.getElementById("crearDescripcion").value.trim(),
     );
-    // Prioridad y estado solo las manda el admin; al ciudadano se las ignora.
     if (esAdmin) {
       formData.append("prioridad_incidencia", document.getElementById("crearPrioridad").value);
       formData.append("estado_incidencia", document.getElementById("crearEstado").value);
@@ -304,7 +283,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await apiFetch("/incidencias", { method: "POST", body: formData });
       toastFlash("Incidencia registrada", "success");
-      // El admin va a la tabla de gestión; el resto, a "Mis incidencias".
       window.location.href = esAdmin
         ? "../gestion-incidencias/gestion-incidencias.html"
         : "../mis-incidencias/mis-incidencias.html";

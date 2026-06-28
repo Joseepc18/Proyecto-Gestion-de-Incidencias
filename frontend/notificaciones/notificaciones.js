@@ -1,7 +1,5 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, rutaDetalleIncidencia */
-
 let usuarioActual = null;
 let notificaciones = [];
 // "todas" | "no_leidas"
@@ -131,7 +129,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Logout
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
     this.classList.add("pe-none", "opacity-50");
@@ -144,7 +141,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Filtro Todas / No leídas
   document.querySelectorAll("[data-filtro]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       filtroActual = btn.dataset.filtro;
@@ -155,7 +151,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   });
 
-  // Marcar todas como leídas
   document.getElementById("btnMarcarTodasPag").addEventListener("click", async function () {
     try {
       await apiFetch("/notificaciones/leer-todas", { method: "PATCH" });
@@ -165,7 +160,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
-  // Clic en una notificación: la marca leída (si no lo estaba) y va a la incidencia.
   document.getElementById("listaNotificaciones").addEventListener("click", async function (evento) {
     const item = evento.target.closest(".notification-item");
     if (!item) return;

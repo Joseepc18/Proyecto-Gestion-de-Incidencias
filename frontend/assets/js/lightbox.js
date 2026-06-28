@@ -37,7 +37,6 @@ function abrirLightbox(url) {
     }
   }
 
-  // Cierra al hacer clic en el fondo o en la X (no al clic sobre la imagen).
   overlay.addEventListener("click", function (e) {
     if (e.target === overlay || e.target === btnCerrar) {
       cerrar();

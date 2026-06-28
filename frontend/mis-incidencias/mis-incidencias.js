@@ -1,7 +1,5 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, estadoConfig, prioridadConfig, rutaDetalleIncidencia */
-
 let usuarioActual = null;
 let mapa = null;
 
@@ -46,7 +44,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Búsqueda con debounce 400ms
   let timerBusqueda = null;
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
     clearTimeout(timerBusqueda);
@@ -84,11 +81,6 @@ async function cargarLista() {
 
     contenedor.innerHTML = incidencias
       .map(function (inc) {
-        const est = estadoConfig[inc.estado_incidencia] || {
-          clase: "",
-          icono: "",
-          texto: inc.estado_incidencia,
-        };
         const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
         const id = inc.id_incidencia;
 
@@ -102,13 +94,7 @@ async function cargarLista() {
           '<span class="card-codigo">' +
           codigoIncidencia(id) +
           "</span>" +
-          '<span class="badge ' +
-          est.clase +
-          '"><i class="bi ' +
-          est.icono +
-          ' me-1"></i>' +
-          est.texto +
-          "</span>" +
+          badgeEstadoHtml(inc.estado_incidencia) +
           "</div>" +
           '<p class="card-titulo">' +
           escaparHtml(inc.nombre_incidencia) +
@@ -156,7 +142,6 @@ async function seleccionarIncidencia(id) {
   try {
     const inc = await apiFetch("/incidencias/" + id);
 
-    // El aviso "ya está en proceso" aparece cuando no es editable.
     const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
     const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
     document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
@@ -166,14 +151,8 @@ async function seleccionarIncidencia(id) {
     document.getElementById("detalleFecha").textContent =
       "Creada: " + new Date(inc.created_at).toLocaleString("es-EC");
 
-    const est = estadoConfig[inc.estado_incidencia] || {
-      clase: "",
-      icono: "",
-      texto: inc.estado_incidencia,
-    };
     const spanEstado = document.getElementById("detalleEstado");
-    spanEstado.className = "badge " + est.clase;
-    spanEstado.innerHTML = '<i class="bi ' + est.icono + ' me-1"></i>' + est.texto;
+    spanEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
 
     const pri = prioridadConfig[inc.prioridad_incidencia] || {
       clase: "",
@@ -197,7 +176,6 @@ async function seleccionarIncidencia(id) {
       imgCompacta.classList.add("d-none");
     }
 
-    // "Ver detalles" → pantalla de detalle única (según el rol de quien mira)
     const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
     document.getElementById("btnVerDetalles").href = rutaDetalleIncidencia(id, rol);
 

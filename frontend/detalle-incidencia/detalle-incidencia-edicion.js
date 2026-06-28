@@ -2,7 +2,6 @@
 // Editar texto + ubicación (botón "Editar") y subir/borrar fotos del reporte (en todo momento).
 // El núcleo (detalle-incidencia.js) llama a edicionAlCargarDetalle cuando hay datos.
 
-/* global apiFetch, mostrarToast, toastFlash, confirmar, imageCompression, opcionesCompresion, incActual, usuarioActual, idActual, activarMapaPicker */
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
@@ -58,7 +57,6 @@ function edicionAlCargarDetalle() {
     procesarFotos(e.dataTransfer.files);
   });
 
-  // Fotos del reporte: editables desde el inicio (sin tocar "Editar").
   renderEvidenciasReporteEditable();
   document.getElementById("evidenciasReporteEdicion").classList.remove("d-none");
   renderFotosNuevas();
@@ -93,7 +91,6 @@ async function entrarEdicion() {
   document.getElementById("btnEditar").classList.add("d-none");
   document.getElementById("btnEliminar").classList.add("d-none");
 
-  // Mapa: pasar de solo-lectura a selector (el núcleo gestiona la instancia).
   const p = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
     latEdit = lat;
     lngEdit = lng;
@@ -129,12 +126,10 @@ async function cargarCatalogos() {
       selectProvincia.appendChild(op);
     });
 
-    // Cascada tipo → subtipo
     selectTipo.addEventListener("change", function () {
       poblarSubtipos(parseInt(this.value));
     });
 
-    // Cascada provincia → ciudad
     selectProvincia.addEventListener("change", function () {
       poblarCiudades(parseInt(this.value));
     });
@@ -303,7 +298,6 @@ function renderFotosNuevas() {
     preview.appendChild(cont);
   });
 
-  // Azulejo "+" para seguir agregando mientras quede cupo.
   if (fotosEnCola.length > 0 && fotosEnCola.length < cupo) {
     const agregar = document.createElement("button");
     agregar.type = "button";

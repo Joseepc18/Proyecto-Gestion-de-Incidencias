@@ -1,7 +1,5 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, Chart, L */
-
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -36,7 +34,6 @@ function normalizar(texto) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // GUARD: si no hay token, no puede estar aquí -> al login.
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
     return;
@@ -45,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   try {
     const usuario = await apiFetch("/user");
 
-    // Inicio es solo del admin; ciudadano y técnico arrancan en "Mis incidencias".
     if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
       window.location.replace("../mis-incidencias/mis-incidencias.html");
       return;
@@ -57,7 +53,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     aplicarMenuRol("admin");
     await cargarDashboard();
   } catch {
-    // Token inválido o expirado -> limpiar y al login.
     eliminarToken();
     window.location.href = "../login/login.html";
     return;
@@ -75,7 +70,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Repinta las gráficas y el mapa cuando se alterna el tema (los colores cambian).
   observarCambioDeTema();
 });
 
@@ -92,14 +86,12 @@ async function cargarDashboard() {
   metricasCache = datos;
   const totales = datos.totales || {};
 
-  // Sin incidencias todavía: mostrar el estado vacío en lugar de gráficas en cero.
   if (Number(totales.total || 0) === 0) {
     document.getElementById("inicioVacio").classList.remove("d-none");
     return;
   }
 
   pintarKpis(totales, datos.promedio_dias);
-  // Mostrar el panel antes de pintar: el mapa y los canvas necesitan tener tamaño.
   document.getElementById("adminDashboard").classList.remove("d-none");
   pintarGraficas(datos);
   await pintarMapa(datos.por_provincia || []);
@@ -111,18 +103,15 @@ function pintarKpis(totales, promedioDias) {
   document.getElementById("kpiPendientes").textContent = Number(totales.pendientes || 0);
   document.getElementById("kpiEnProceso").textContent = Number(totales.en_proceso || 0);
   document.getElementById("kpiResueltas").textContent = Number(totales.resueltas || 0);
-  // Si aún no hay nada resuelto, el promedio viene nulo.
   document.getElementById("kpiPromedio").textContent =
     promedioDias == null ? "—" : Number(promedioDias);
 }
 
 // Crea (o recrea) las gráficas a partir de las métricas cacheadas.
 function pintarGraficas(datos) {
-  // Destruir las anteriores para no duplicar al repintar por cambio de tema.
   graficos.forEach((g) => g.destroy());
   graficos = [];
 
-  // Paleta de estados tomada de las variables del tema (se adapta a claro/oscuro).
   const colorPendiente = colorVar("--admin-danger");
   const colorProceso = colorVar("--admin-warning");
   const colorResuelto = colorVar("--admin-success");
@@ -131,16 +120,13 @@ function pintarGraficas(datos) {
   const colorGrid = colorVar("--admin-border");
   const colorSurface = colorVar("--admin-surface");
 
-  // Colores por defecto de Chart.js para que ejes y leyendas combinen con el tema.
   Chart.defaults.color = colorTexto;
   Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 
   const totales = datos.totales || {};
-  // La vista trae todos los tipos del catálogo; para las barras solo los que tienen incidencias.
   const porTipo = (datos.por_tipo || []).filter((t) => Number(t.total || 0) > 0);
   const prioridad = datos.por_prioridad || {};
 
-  // Gráfica 1: dona con la distribución global por estado.
   graficos.push(
     new Chart(document.getElementById("graficoEstado"), {
       type: "doughnut",
@@ -168,7 +154,6 @@ function pintarGraficas(datos) {
     }),
   );
 
-  // Gráfica 2: barras apiladas por tipo, desglosadas por estado.
   graficos.push(
     new Chart(document.getElementById("graficoTipo"), {
       type: "bar",
@@ -209,7 +194,6 @@ function pintarGraficas(datos) {
     }),
   );
 
-  // Gráfica 3: dona por prioridad (ALTA/MEDIA/BAJA).
   graficos.push(
     new Chart(document.getElementById("graficoPrioridad"), {
       type: "doughnut",
@@ -237,7 +221,6 @@ function pintarGraficas(datos) {
     }),
   );
 
-  // Gráfica 4: promedio de días para resolver, por tipo (solo tipos con resueltas).
   const conPromedio = porTipo.filter((t) => t.promedio_dias_resolucion !== null);
   graficos.push(
     new Chart(document.getElementById("graficoPromedio"), {
@@ -265,7 +248,6 @@ function pintarGraficas(datos) {
     }),
   );
 
-  // Gráfica 5: línea con la tendencia de incidencias por mes (últimos 12 meses).
   const meses = ultimosMeses(12);
   const conteoMes = {};
   (datos.por_mes || []).forEach(function (m) {
@@ -346,7 +328,6 @@ function quitarResaltado(e) {
 
 // Dibuja el mapa de coropletas del Ecuador coloreando cada provincia por su conteo.
 async function pintarMapa(porProvincia) {
-  // Cargar el GeoJSON de provincias una sola vez (y acercar Galápagos).
   if (!geojsonProv) {
     try {
       const resp = await fetch("../assets/geo/ecuador-provincias.geojson");
@@ -358,7 +339,6 @@ async function pintarMapa(porProvincia) {
     }
   }
 
-  // Conteo por provincia normalizado (sin tildes) para cruzar con el GeoJSON.
   const conteo = {};
   porProvincia.forEach(function (p) {
     conteo[normalizar(p.nombre_provincia)] = Number(p.total || 0);
@@ -375,7 +355,6 @@ async function pintarMapa(porProvincia) {
     };
   }
 
-  // Crear el mapa la primera vez (sin tiles; zoom con la rueda y con botones).
   if (!mapaProv) {
     mapaProv = L.map("mapaProvincias", {
       attributionControl: false,
@@ -395,7 +374,6 @@ async function pintarMapa(porProvincia) {
   }).addTo(mapaProv);
 
   mapaProv.fitBounds(capaProv.getBounds(), { padding: [6, 6] });
-  // El contenedor acababa de hacerse visible; recalcular su tamaño.
   setTimeout(() => mapaProv.invalidateSize(), 0);
 
   dibujarLeyenda(maximo);
@@ -413,7 +391,6 @@ function dibujarLeyenda(maximo) {
     tramos.forEach(function (t, i) {
       const desde = Math.round(t * maximo);
       const hasta = i < tramos.length - 1 ? Math.round(tramos[i + 1] * maximo) : maximo;
-      // Con pocos datos varios tramos colapsan al mismo rango: se omiten.
       const rango = i === 0 ? "0–" + hasta : desde + "–" + hasta;
       if (rango === anterior) return;
       anterior = rango;
@@ -431,7 +408,6 @@ function observarCambioDeTema() {
   const observador = new MutationObserver(function () {
     if (!metricasCache) return;
     if (graficos.length) pintarGraficas(metricasCache);
-    // Solo cambian el borde (color del tema) y la leyenda; el relleno es fijo.
     if (capaProv) {
       capaProv.setStyle({ color: colorVar("--admin-surface") });
       const maximo = Math.max(

@@ -1,7 +1,5 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y eliminar.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
-
 let usuarioActualId = null;
 // Si es null estamos creando; si tiene un id estamos editando ese usuario.
 let usuarioEditandoId = null;
@@ -96,7 +94,6 @@ async function cargarUsuarios() {
 
       const tdAcciones = document.createElement("td");
       tdAcciones.className = "text-end";
-      // No mostramos acciones sobre la propia cuenta.
       if (u.id !== usuarioActualId) {
         tdAcciones.appendChild(crearMenuAcciones(u));
       }
@@ -145,7 +142,6 @@ function editarUsuario(u) {
   document.getElementById("usuarioEmail").value = u.email;
   document.getElementById("usuarioRol").value = u.id_rol;
 
-  // La contraseña NO se puede traer (está cifrada y oculta). Vacío = no cambiarla.
   const pass = document.getElementById("usuarioPassword");
   pass.value = "";
   pass.required = false;

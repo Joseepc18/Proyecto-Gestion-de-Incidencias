@@ -2,7 +2,6 @@
 // Carga la incidencia, pinta lo compartido (info, mapa, fotos, historial, chat) y
 // dispara los "hooks" de los módulos por rol (gestión y edición) cuando hay datos.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, estadoConfig, prioridadConfig, escaparHtml, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, opcionesCompresion, codigoIncidencia, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
 
 // Estado compartido (los módulos por rol lo leen).
@@ -64,7 +63,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Botón "Volver" según el rol (destino + texto).
   const btnVolver = document.getElementById("btnVolver");
   btnVolver.href = rutaLista(rol);
   const textoVolver = rol === "admin" ? "Volver a incidencias" : "Volver a la lista";
@@ -82,7 +80,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  // Id de la incidencia (?id=). Sin id, de vuelta a la lista del rol.
   const id = new URLSearchParams(window.location.search).get("id");
   if (!id) {
     window.location.replace(rutaLista(rol));
@@ -142,11 +139,9 @@ async function cargarDetalle(id) {
 
     pintarMapaLectura();
 
-    // Hooks de los módulos por rol (si están cargados).
     if (typeof gestionAlCargarDetalle === "function") gestionAlCargarDetalle(id);
     if (typeof edicionAlCargarDetalle === "function") edicionAlCargarDetalle(id);
 
-    // Si la columna de gestión quedó vacía, colapsar a 2 columnas.
     ajustarLayout();
   } catch (error) {
     cargando.innerHTML =
@@ -198,18 +193,14 @@ function activarMapaPicker(lat, lng, onCambio) {
 
 // Pinta el badge de estado a partir del código.
 function pintarBadgeEstado(estado) {
-  const est = estadoConfig[estado] || { clase: "", icono: "", texto: estado };
   const span = document.getElementById("detalleEstado");
-  span.className = "badge " + est.clase;
-  span.innerHTML = '<i class="bi ' + est.icono + ' me-1"></i>' + est.texto;
+  span.outerHTML = badgeEstadoHtml(estado).replace('<span class="badge', '<span id="detalleEstado" class="badge');
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
 function pintarBadgePrioridad(prioridad) {
-  const pri = prioridadConfig[prioridad] || { clase: "", icono: "", texto: prioridad };
   const span = document.getElementById("detallePrioridad");
-  span.className = "badge " + pri.clase;
-  span.innerHTML = '<i class="bi ' + pri.icono + ' me-1"></i>' + pri.texto;
+  span.outerHTML = badgePrioridadHtml(prioridad).replace('<span class="badge', '<span id="detallePrioridad" class="badge');
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {
@@ -268,7 +259,6 @@ async function cargarAsignaciones(id) {
     const responsable = asignaciones.find((a) => a.rol_asignado === "RESPONSABLE");
     responsableActual = responsable || null;
 
-    // El responsable ya se conoce: reevaluar chat y participantes.
     pintarParticipantes();
     actualizarChatFab();
 
@@ -276,7 +266,6 @@ async function cargarAsignaciones(id) {
       gestionAlCargarAsignaciones(asignaciones, id);
     }
 
-    // El responsable se sabe ahora: puede haber aparecido su columna de gestión.
     ajustarLayout();
   } catch {
     if (typeof gestionAsignacionesError === "function") gestionAsignacionesError();
@@ -299,7 +288,6 @@ async function cargarHistorial(id) {
   try {
     const historial = await apiFetch("/incidencias/" + id + "/historial", { sinSpinner: true });
 
-    // El historial viene de más nuevo a más viejo; al final se agrega la creación (PENDIENTE).
     const eventos = historial.map(function (h) {
       return {
         estado: h.estado_nuevo,
@@ -324,10 +312,9 @@ async function cargarHistorial(id) {
       punto.className = "timeline-punto";
       item.appendChild(punto);
 
-      const est = estadoConfig[ev.estado] || { texto: ev.estado };
       const titulo = document.createElement("p");
       titulo.className = "timeline-titulo";
-      titulo.textContent = est.texto;
+      titulo.innerHTML = badgeEstadoHtml(ev.estado);
       item.appendChild(titulo);
 
       const meta = document.createElement("p");
@@ -408,11 +395,9 @@ function pintarParticipantes() {
   const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
   const contactos = [];
 
-  // Reportador (dueño de la incidencia)
   if (incActual.usuario && incActual.usuario.id !== usuarioActual.id) {
     contactos.push({ nombre: incActual.usuario.name, rol: "Reportador", color: "secondary" });
   }
-  // Técnico responsable (si hay)
   if (
     responsableActual &&
     responsableActual.usuario &&
@@ -424,7 +409,6 @@ function pintarParticipantes() {
       color: "success",
     });
   }
-  // Administración (genérica) — solo si quien mira no es admin
   if (rol !== "admin") {
     contactos.push({ nombre: "Administración", rol: "Administrador", color: "primary" });
   }

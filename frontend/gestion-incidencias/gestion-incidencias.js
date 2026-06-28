@@ -1,7 +1,5 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, estadoConfig, prioridadConfig, rutaDetalleIncidencia */
-
 let usuarioActual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -16,7 +14,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
 
-    // Esta tabla de gestión es solo para admin; el resto va a "Mis incidencias".
     if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
       window.location.href = "../mis-incidencias/mis-incidencias.html";
       return;
@@ -105,16 +102,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     tbody.innerHTML = incidencias
       .map(function (inc) {
-        const est = estadoConfig[inc.estado_incidencia] || {
-          clase: "",
-          icono: "",
-          texto: inc.estado_incidencia,
-        };
-        const pri = prioridadConfig[inc.prioridad_incidencia] || {
-          clase: "",
-          icono: "",
-          texto: inc.prioridad_incidencia,
-        };
 
         const nombreTipo =
           inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
@@ -151,22 +138,12 @@ document.addEventListener("DOMContentLoaded", async function () {
           "<td>" +
           escaparHtml(inc.nombre_incidencia) +
           "</td>" +
-          '<td><span class="badge ' +
-          est.clase +
-          '">' +
-          '<i class="bi ' +
-          est.icono +
-          ' me-1"></i>' +
-          est.texto +
-          "</span></td>" +
-          '<td><span class="badge ' +
-          pri.clase +
-          '">' +
-          '<i class="bi ' +
-          pri.icono +
-          ' me-1"></i>' +
-          pri.texto +
-          "</span></td>" +
+          "<td>" +
+          badgeEstadoHtml(inc.estado_incidencia) +
+          "</td>" +
+          "<td>" +
+          badgePrioridadHtml(inc.prioridad_incidencia) +
+          "</td>" +
           "<td>" +
           escaparHtml(nombreTipo) +
           "</td>" +
@@ -218,7 +195,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     cargarIncidencias();
   });
 
-  // Búsqueda con debounce 400ms
   let timerBusqueda = null;
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
     clearTimeout(timerBusqueda);

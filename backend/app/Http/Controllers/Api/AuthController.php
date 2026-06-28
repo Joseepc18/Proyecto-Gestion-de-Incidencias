@@ -11,6 +11,7 @@ use App\Models\BitacoraError;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,7 +36,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'user' => new UserResource($user),
         ], 201);
     }
 
@@ -54,7 +55,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'user' => new UserResource($user),
         ], 200);
     }
 
@@ -71,7 +72,7 @@ class AuthController extends Controller
     // Perfil del usuario autenticado (con su rol).
     public function me(Request $request)
     {
-        return response()->json($request->user()->load('rol'));
+        return response()->json(new UserResource($request->user()->load('rol')));
     }
 
     // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña y foto).
@@ -113,7 +114,7 @@ class AuthController extends Controller
 
         $user->save();
 
-        return response()->json($user->load('rol'));
+        return response()->json(new UserResource($user->load('rol')));
     }
 
     // Borra del disco la foto de perfil actual (si la hay) para no dejar archivos huérfanos.

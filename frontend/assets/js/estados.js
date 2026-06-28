@@ -1,6 +1,6 @@
 // estados.js — Mapas compartidos de estado y prioridad de incidencias (clase, icono y etiqueta).
 
-/* exported estadoConfig, prioridadConfig */
+/* exported estadoConfig, prioridadConfig, badgeEstadoHtml, badgePrioridadHtml */
 
 const estadoConfig = {
   PENDIENTE: { clase: "badge-estado-pendiente", icono: "bi-clock-history", texto: "Pendiente" },
@@ -17,3 +17,13 @@ const prioridadConfig = {
   MEDIA: { clase: "text-bg-warning", icono: "bi-shield-exclamation", texto: "Media" },
   BAJA: { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
 };
+
+function badgeEstadoHtml(estado) {
+  const cfg = estadoConfig[estado] || estadoConfig.PENDIENTE;
+  return `<span class="badge ${cfg.clase}"><i class="bi ${cfg.icono} me-1"></i>${cfg.texto}</span>`;
+}
+
+function badgePrioridadHtml(prioridad) {
+  const cfg = prioridadConfig[prioridad] || prioridadConfig.BAJA;
+  return `<span class="badge ${cfg.clase} px-2 py-1"><i class="bi ${cfg.icono} me-1"></i>${cfg.texto}</span>`;
+}

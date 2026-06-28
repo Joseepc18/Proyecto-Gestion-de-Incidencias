@@ -3,7 +3,6 @@
 // El técnico responsable: cambio de estado EN_PROCESO→RESUELTO y fotos de la resolución.
 // El núcleo (detalle-incidencia.js) llama a los hooks gestion* cuando hay datos.
 
-/* global apiFetch, mostrarToast, confirmar, imageCompression, opcionesCompresion, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
@@ -19,7 +18,6 @@ function gestionAlCargarDetalle(id) {
   document.querySelectorAll(".solo-admin").forEach((el) => el.classList.remove("d-none"));
   prepararPrioridad(id);
   prepararAsignacion(id);
-  // El admin gestiona el estado libremente (no sube fotos de resolución, solo las ve).
   habilitarGestionEstado(id);
 }
 
@@ -27,13 +25,11 @@ function gestionAlCargarDetalle(id) {
 function gestionAlCargarAsignaciones(asignaciones, id) {
   ultimasAsignaciones = asignaciones;
 
-  // Herramientas del técnico responsable (aunque no sea admin).
   if (esResponsableActual()) {
     habilitarGestionEstado(id);
     habilitarFotosResolucion(id);
   }
 
-  // Las listas y selects de técnicos son solo del admin.
   if (!esAdmin) return;
   renderAsignaciones(asignaciones, id);
   refrescarSelectsTecnicos();
@@ -256,7 +252,6 @@ function renderResolucionPreview() {
     preview.appendChild(cont);
   });
 
-  // Azulejo "+" para seguir agregando mientras quede cupo.
   if (fotosResolucion.length > 0 && fotosResolucion.length < cupo) {
     const agregar = document.createElement("button");
     agregar.type = "button";
@@ -325,7 +320,6 @@ function renderAsignaciones(asignaciones, id) {
     ayudantesLista.innerHTML = '<p class="text-muted small mb-0">Sin ayudantes asignados.</p>';
   }
 
-  // El select del responsable se oculta si ya hay uno.
   const formResp = document.getElementById("responsableForm");
   if (formResp) formResp.classList.toggle("d-none", !!responsable);
 }
@@ -368,7 +362,6 @@ async function quitarAsignacion(idAsignacion, idIncidencia) {
 
   try {
     await apiFetch("/asignaciones/" + idAsignacion, { method: "DELETE" });
-    // El núcleo recarga asignaciones y vuelve a llamar a gestionAlCargarAsignaciones.
     await cargarAsignaciones(idIncidencia);
     mostrarToast("Asignación eliminada", "success");
   } catch (error) {

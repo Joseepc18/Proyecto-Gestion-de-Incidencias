@@ -4,7 +4,6 @@ const js = require("@eslint/js");
 const globals = require("globals");
 
 module.exports = [
-  // 1) Archivos que NO revisamos: vendors minificados y este propio config (Node).
   {
     ignores: [
       "assets/js/bootstrap.bundle.min.js",
@@ -15,15 +14,12 @@ module.exports = [
     ],
   },
 
-  // 2) Reglas para NUESTRO JavaScript
   {
     files: ["**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
-      // usamos <script> globales, no módulos import/export
       sourceType: "script",
       globals: {
-        // document, window, localStorage, fetch, JSON, etc.
         ...globals.browser,
       },
     },

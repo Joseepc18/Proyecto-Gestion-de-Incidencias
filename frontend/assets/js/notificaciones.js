@@ -1,7 +1,5 @@
 // notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
-/* global apiFetch, obtenerToken, rutaDetalleIncidencia */
-
 document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btnNotificaciones");
   const badge = document.getElementById("notifBadge");
@@ -9,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const btnTodas = document.getElementById("btnMarcarTodas");
   if (!boton || !lista || !obtenerToken()) return;
 
-  // Convierte una fecha ISO en texto relativo ("hace 5 min", "hace 2 h"...).
   function tiempoRelativo(iso) {
     const fecha = new Date(iso);
     const seg = Math.floor((Date.now() - fecha.getTime()) / 1000);
@@ -20,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
     return fecha.toLocaleDateString("es-EC");
   }
 
-  // Pinta el contador del badge (se oculta en 0, muestra "9+" si pasa de 9).
   function pintarBadge(noLeidas) {
     if (noLeidas > 0) {
       badge.textContent = noLeidas > 9 ? "9+" : String(noLeidas);
@@ -32,7 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Dibuja la lista. Cada item es un botón para poder marcarlo como leído.
   function pintarLista(notificaciones) {
     lista.innerHTML = "";
 
@@ -65,7 +60,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Trae las notificaciones del backend. sinSpinner: el polling no debe mover la ruedita.
   async function cargar() {
     try {
       const data = await apiFetch("/notificaciones", { sinSpinner: true });
@@ -76,7 +70,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Click en un item: si no estaba leído lo marca, y siempre navega al detalle de la incidencia.
   lista.addEventListener("click", async function (evento) {
     const item = evento.target.closest(".notification-item");
     if (!item) return;
@@ -92,7 +85,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
     const rol = localStorage.getItem("rol_usuario") || "";
-    // Si es notificación de comentario, abre el chat directamente al llegar al detalle.
     const abrirChat = item.dataset.tipo === "COMENTARIO";
     window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);
   });

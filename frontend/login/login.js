@@ -1,9 +1,6 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken, obtenerToken, mostrarToast, toastFlash, inicioSegunRol */
-
 document.addEventListener("DOMContentLoaded", function () {
-  // Si ya hay sesión activa, ir directo a la pantalla de arranque sin mostrar el form.
   if (obtenerToken()) {
     window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));
     return;
@@ -14,7 +11,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("loginSubmit");
   const spinner = document.getElementById("loginSpinner");
 
-  // Si Google rebotó al usuario con un error, avisarle.
   if (new URLSearchParams(window.location.search).get("error") === "google") {
     mostrarToast("No se pudo iniciar sesión con Google. Intenta de nuevo.", "error");
     window.history.replaceState({}, "", window.location.pathname);
@@ -42,7 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
       guardarToken(data.access_token);
       const usuario = await apiFetch("/user", { sinSpinner: true });
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
-      // Cachea el rol para que la página de arranque pinte el menú sin parpadeo.
       if (rol) localStorage.setItem("rol_usuario", rol);
       toastFlash("Bienvenido", "success");
       window.location.href = inicioSegunRol(rol);
