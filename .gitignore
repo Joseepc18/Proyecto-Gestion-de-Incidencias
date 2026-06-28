@@ -32,3 +32,4 @@ auth.json
 # Documentación / Guías privadas (Ignorar toda la carpeta docs)
 docs/
 CLAUDE.md
+database/*.sqlite

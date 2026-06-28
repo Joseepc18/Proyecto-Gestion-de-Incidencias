@@ -1824,15 +1824,15 @@ html[data-theme="dark"] {
 }
 .badge-estado-pendiente {
   color: #fff;
-  background-color: #e74c3c;
+  background-color: var(--admin-danger, #e74c3c);
 }
 .badge-estado-proceso {
   color: #fff;
-  background-color: #2980d0;
+  background-color: var(--admin-primary, #2980d0);
 }
 .badge-estado-resuelto {
   color: #fff;
-  background-color: #6c757d;
+  background-color: var(--admin-secondary, #6c757d);
 }
 
 /* Tarjetas de la lista maestro-detalle (Mis incidencias) */

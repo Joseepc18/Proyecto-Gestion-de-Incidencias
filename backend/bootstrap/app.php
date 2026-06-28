@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 BitacoraError::create([
                     'id_usuario' => auth()->id(),
                     'tipo_error' => $e instanceof QueryException ? 'BASE_DATOS' : 'SERVIDOR',
-                    'descripcion_error' => substr(get_class($e).': '.$e->getMessage(), 0, 1000),
+                    'descripcion_error' => $e instanceof QueryException ? 'Error de base de datos (SQL oculto por seguridad)' : substr(get_class($e).': '.$e->getMessage(), 0, 1000),
                 ]);
             } catch (Throwable $ignorado) {
                 // El logging nunca debe romper la respuesta al usuario.

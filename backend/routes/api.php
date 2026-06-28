@@ -24,7 +24,7 @@ Route::get('/health', function () {
 
     // 'host' = réplica que atendió: evidencia de que el balanceador reparte.
     return response()->json(['status' => 'ok', 'db' => $db, 'host' => gethostname()]);
-});
+})->middleware('throttle:60,1');
 
 // Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');

@@ -34,7 +34,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $datos['name'],
             'email' => $datos['email'],
-            'password' => Hash::make($datos['password']),
+            'password' => $datos['password'],
             'id_rol' => $datos['id_rol'],
         ]);
 
@@ -52,7 +52,7 @@ class UserController extends Controller
 
         // Solo cambia la contraseña si se envió una nueva.
         if (! empty($datos['password'])) {
-            $usuario->password = Hash::make($datos['password']);
+            $usuario->password = $datos['password'];
         }
 
         $usuario->save();

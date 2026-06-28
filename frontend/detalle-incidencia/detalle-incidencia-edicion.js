@@ -89,6 +89,7 @@ async function entrarEdicion() {
   document.getElementById("datosVista").classList.add("d-none");
   document.getElementById("datosEdicion").classList.remove("d-none");
   document.getElementById("edicionAcciones").classList.remove("d-none");
+  document.getElementById("edicionAcciones").classList.add("d-flex");
   document.getElementById("btnEditar").classList.add("d-none");
   document.getElementById("btnEliminar").classList.add("d-none");
 
@@ -205,6 +206,7 @@ function renderEvidenciasReporteEditable() {
     wrap.className = "position-relative";
 
     const img = document.createElement("img");
+    img.loading = "lazy";
     img.src = "/storage/" + ev.url_evidencia;
     img.className = "evidencia-foto rounded";
     img.style.cssText = "width:130px;height:130px;object-fit:cover";
@@ -281,6 +283,7 @@ function renderFotosNuevas() {
     cont.className = "position-relative";
 
     const img = document.createElement("img");
+    img.loading = "lazy";
     const url = URL.createObjectURL(file);
     img.onload = () => URL.revokeObjectURL(url);
     img.src = url;

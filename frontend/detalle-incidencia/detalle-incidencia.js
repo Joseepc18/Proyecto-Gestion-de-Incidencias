@@ -247,7 +247,7 @@ function miniaturaFoto(ev) {
     ev.url_evidencia +
     '" class="evidencia-foto rounded" data-lightbox="/storage/' +
     ev.url_evidencia +
-    '" style="width:130px;height:130px;object-fit:cover" alt="Evidencia" />'
+    '" style="width:130px;height:130px;object-fit:cover" alt="Evidencia" loading="lazy" />'
   );
 }
 

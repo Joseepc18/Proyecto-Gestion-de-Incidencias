@@ -26,7 +26,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
             'id_rol' => $rolNormal->id_rol,
         ]);
 
@@ -85,7 +85,7 @@ class AuthController extends Controller
 
         // Solo cambia la contraseña si se envió una nueva.
         if (! empty($datos['password'])) {
-            $user->password = Hash::make($datos['password']);
+            $user->password = $datos['password'];
         }
 
         try {
@@ -146,7 +146,7 @@ class AuthController extends Controller
                 [
                     'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Usuario Google',
                     // Sin contraseña real: clave aleatoria para cumplir el NOT NULL de la columna.
-                    'password' => Hash::make(Str::random(32)),
+                    'password' => Str::random(32),
                     'id_rol' => $rolNormal->id_rol,
                 ]
             );
@@ -160,7 +160,7 @@ class AuthController extends Controller
             BitacoraError::create([
                 'id_usuario' => null,
                 'tipo_error' => 'AUTENTICACION',
-                'descripcion_error' => 'AuthController@handleGoogleCallback: '.$e->getMessage(),
+                'descripcion_error' => 'AuthController@handleGoogleCallback: '.get_class($e).' (detalles omitidos por seguridad)',
             ]);
 
             return redirect($frontend.'/login/login.html?error=google');

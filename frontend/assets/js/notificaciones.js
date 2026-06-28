@@ -106,9 +106,26 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  let timerNotif;
+  function programarRefresco() {
+    clearTimeout(timerNotif);
+    if (!document.hidden) {
+      timerNotif = setTimeout(async function () {
+        await cargar();
+        programarRefresco();
+      }, 30000);
+    }
+  }
+
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden) {
+      cargar();
+      programarRefresco();
+    } else {
+      clearTimeout(timerNotif);
+    }
+  });
+
   cargar();
-  // Refresco periódico; se pausa cuando la pestaña está oculta (ahorra peticiones inútiles).
-  setInterval(function () {
-    if (!document.hidden) cargar();
-  }, 30000);
+  programarRefresco();
 });

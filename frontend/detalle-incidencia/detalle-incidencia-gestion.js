@@ -236,6 +236,7 @@ function renderResolucionPreview() {
     cont.className = "position-relative";
 
     const img = document.createElement("img");
+    img.loading = "lazy";
     const url = URL.createObjectURL(file);
     img.onload = () => URL.revokeObjectURL(url);
     img.src = url;

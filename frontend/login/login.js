@@ -54,6 +54,16 @@ document.addEventListener("DOMContentLoaded", function () {
       spinner.classList.add("d-none");
     }
   });
+
+  const btnIrRegistro = document.getElementById("btnIrRegistro");
+  if (btnIrRegistro) {
+    btnIrRegistro.addEventListener("click", () => toggleAuth(true));
+  }
+
+  const btnIrLogin = document.getElementById("btnIrLogin");
+  if (btnIrLogin) {
+    btnIrLogin.addEventListener("click", () => toggleAuth(false));
+  }
 });
 
 // Alterna entre login y registro (animación deslizante). Se llama desde el HTML.

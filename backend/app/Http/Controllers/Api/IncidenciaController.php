@@ -84,6 +84,7 @@ class IncidenciaController extends Controller
                 return $incidencia;
             });
 
+            Cache::forget('dashboard_metricas');
             return response()->json(
                 $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']),
                 201
@@ -120,6 +121,7 @@ class IncidenciaController extends Controller
     {
         // La autorización (IncidenciaPolicy) la resuelve el FormRequest antes de validar.
         $incidencia->update($request->validated());
+        \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
 
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
@@ -151,6 +153,7 @@ class IncidenciaController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
             return response()->json(['message' => 'Incidencia eliminada']);
         } catch (\Exception $e) {
             BitacoraError::create([
@@ -179,6 +182,10 @@ class IncidenciaController extends Controller
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
+        if ($actual === 'RESUELTO') {
+            return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
+        }
+
         // El admin cambia libremente; el técnico solo puede avanzar al estado siguiente.
         if (! $request->user()->esAdmin()) {
             $siguientePermitido = [
@@ -201,6 +208,7 @@ class IncidenciaController extends Controller
             });
         }
 
+        \Illuminate\Support\Facades\Cache::forget('dashboard_metricas');
         return response()->json($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 }

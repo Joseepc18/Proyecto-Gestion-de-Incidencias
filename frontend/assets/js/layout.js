@@ -140,7 +140,7 @@
     if (!cont) return;
     if (foto) {
       cont.innerHTML =
-        '<img src="/storage/' + foto + '" alt="Foto de perfil" class="navbar-avatar-img" />';
+        '<img src="/storage/' + foto + '" alt="Foto de perfil" class="navbar-avatar-img" loading="lazy" />';
     } else {
       cont.innerHTML = '<i class="bi bi-person-circle" aria-hidden="true"></i>';
     }

@@ -203,6 +203,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       cont.className = "position-relative";
 
       const img = document.createElement("img");
+      img.loading = "lazy";
       const url = URL.createObjectURL(file);
       // Libera el objectURL una vez que la miniatura ya cargó.
       img.onload = () => URL.revokeObjectURL(url);

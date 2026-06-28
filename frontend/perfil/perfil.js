@@ -104,6 +104,7 @@ function mostrarAvatar(src) {
   if (src) {
     if (src.startsWith("blob:")) previewUrl = src;
     const img = document.createElement("img");
+    img.loading = "lazy";
     img.src = src;
     img.alt = "Foto de perfil";
     cont.replaceChildren(img);
