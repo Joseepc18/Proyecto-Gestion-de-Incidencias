@@ -58,14 +58,27 @@
 
               <div class="mb-3">
                 <label class="form-label" for="loginPassword">Contraseña</label>
-                <input
-                  class="form-control"
-                  id="loginPassword"
-                  type="password"
-                  minlength="8"
-                  required
-                />
-                <div class="invalid-feedback">La contraseña debe tener al menos 8 caracteres.</div>
+                <div class="input-group has-validation">
+                  <input
+                    class="form-control"
+                    id="loginPassword"
+                    type="password"
+                    minlength="8"
+                    required
+                  />
+                  <button
+                    class="btn toggle-password"
+                    type="button"
+                    data-target="loginPassword"
+                    aria-label="Mostrar contraseña"
+                    aria-pressed="false"
+                  >
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                  </button>
+                  <div class="invalid-feedback">
+                    La contraseña debe tener al menos 8 caracteres.
+                  </div>
+                </div>
               </div>
 
               <button id="loginSubmit" class="btn btn-primary w-100" type="submit">
@@ -122,25 +135,47 @@
               <div class="row g-2">
                 <div class="col-md-6 mb-3">
                   <label class="form-label" for="registerPassword">Contraseña</label>
-                  <input
-                    class="form-control"
-                    id="registerPassword"
-                    type="password"
-                    minlength="8"
-                    required
-                  />
-                  <div class="invalid-feedback">Mínimo 8 caracteres.</div>
+                  <div class="input-group has-validation">
+                    <input
+                      class="form-control"
+                      id="registerPassword"
+                      type="password"
+                      minlength="8"
+                      required
+                    />
+                    <button
+                      class="btn toggle-password"
+                      type="button"
+                      data-target="registerPassword"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                    >
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <div class="invalid-feedback">Mínimo 8 caracteres.</div>
+                  </div>
                 </div>
                 <div class="col-md-6 mb-3">
                   <label class="form-label" for="registerPasswordConfirmation">Confirmar</label>
-                  <input
-                    class="form-control"
-                    id="registerPasswordConfirmation"
-                    type="password"
-                    minlength="8"
-                    required
-                  />
-                  <div class="invalid-feedback">Repite la contraseña.</div>
+                  <div class="input-group has-validation">
+                    <input
+                      class="form-control"
+                      id="registerPasswordConfirmation"
+                      type="password"
+                      minlength="8"
+                      required
+                    />
+                    <button
+                      class="btn toggle-password"
+                      type="button"
+                      data-target="registerPasswordConfirmation"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                    >
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <div class="invalid-feedback">Repite la contraseña.</div>
+                  </div>
                 </div>
               </div>
 
@@ -171,6 +206,7 @@
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/password.js"></script>
     <!-- Lógica de login y de registro (cada una se engancha a su formulario) -->
     <script src="login.js"></script>
     <script src="../registro/registro.js"></script>

@@ -1485,6 +1485,20 @@ html[data-theme="dark"] .auth-body {
   color: var(--admin-muted);
 }
 
+/* Botón de mostrar/ocultar contraseña (input-group) */
+.toggle-password {
+  border: 1px solid var(--admin-border);
+  border-left: 0;
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+}
+
+.toggle-password:hover,
+.toggle-password:focus {
+  background: var(--admin-surface-soft);
+  color: var(--admin-text);
+}
+
 .text-muted {
   color: var(--admin-muted) !important;
 }

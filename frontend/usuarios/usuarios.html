@@ -64,13 +64,24 @@
                   </div>
                   <div class="col-md-2">
                     <label for="usuarioPassword" class="form-label">Contraseña</label>
-                    <input
-                      class="form-control form-control-sm"
-                      type="password"
-                      id="usuarioPassword"
-                      minlength="8"
-                      required
-                    />
+                    <div class="input-group input-group-sm">
+                      <input
+                        class="form-control form-control-sm"
+                        type="password"
+                        id="usuarioPassword"
+                        minlength="8"
+                        required
+                      />
+                      <button
+                        class="btn toggle-password"
+                        type="button"
+                        data-target="usuarioPassword"
+                        aria-label="Mostrar contraseña"
+                        aria-pressed="false"
+                      >
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                      </button>
+                    </div>
                   </div>
                   <div class="col-md-2">
                     <label for="usuarioRol" class="form-label">Rol</label>
@@ -136,6 +147,7 @@
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/password.js"></script>
     <script src="../assets/js/layout.js"></script>
     <script src="../assets/js/notificaciones.js"></script>
     <!-- Lógica propia -->

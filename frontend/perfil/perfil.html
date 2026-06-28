@@ -84,14 +84,25 @@
                     </div>
                     <div class="mb-3">
                       <label for="perfilPassword" class="form-label">Nueva contraseña</label>
-                      <input
-                        class="form-control"
-                        type="password"
-                        id="perfilPassword"
-                        minlength="8"
-                        placeholder="Dejar vacío para no cambiar"
-                        autocomplete="new-password"
-                      />
+                      <div class="input-group">
+                        <input
+                          class="form-control"
+                          type="password"
+                          id="perfilPassword"
+                          minlength="8"
+                          placeholder="Dejar vacío para no cambiar"
+                          autocomplete="new-password"
+                        />
+                        <button
+                          class="btn toggle-password"
+                          type="button"
+                          data-target="perfilPassword"
+                          aria-label="Mostrar contraseña"
+                          aria-pressed="false"
+                        >
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
                       <div class="form-text">
                         Mínimo 8 caracteres. Déjala vacía para conservarla.
                       </div>
@@ -121,6 +132,7 @@
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/password.js"></script>
     <script src="../assets/js/layout.js"></script>
     <script src="../assets/js/notificaciones.js"></script>
     <script src="../assets/js/browser-image-compression.js"></script>
