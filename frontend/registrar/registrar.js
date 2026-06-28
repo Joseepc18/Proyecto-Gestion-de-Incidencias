@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
+    this.classList.add("pe-none", "opacity-50");
     try {
       await apiFetch("/logout", { method: "POST" });
     } catch {

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AsignarTecnicoRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ class AsignarTecnicoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_usuario' => 'required|exists:users,id',
+            'id_usuario' => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
             'rol_asignado' => 'required|in:RESPONSABLE,APOYO',
         ];
     }

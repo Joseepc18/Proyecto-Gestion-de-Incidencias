@@ -2,7 +2,7 @@
 // Carga la incidencia, pinta lo compartido (info, mapa, fotos, historial, chat) y
 // dispara los "hooks" de los módulos por rol (gestión y edición) cuando hay datos.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, estadoConfig, prioridadConfig, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, estadoConfig, prioridadConfig, escaparHtml, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, opcionesCompresion, codigoIncidencia, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
 
 // Estado compartido (los módulos por rol lo leen).
@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
+    this.classList.add("pe-none", "opacity-50");
     try {
       await apiFetch("/logout", { method: "POST" });
     } catch {
@@ -150,7 +151,7 @@ async function cargarDetalle(id) {
   } catch (error) {
     cargando.innerHTML =
       '<p class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' +
-      error.message +
+      escaparHtml(error.message) +
       "</p>";
   }
 }

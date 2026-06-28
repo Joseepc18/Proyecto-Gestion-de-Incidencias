@@ -142,7 +142,13 @@ class IncidenciaController extends Controller
 
             // Los archivos del disco solo si la BD confirmó el borrado
             foreach ($rutasEvidencias as $ruta) {
-                Storage::disk('public')->delete($ruta);
+                if (! Storage::disk('public')->delete($ruta)) {
+                    BitacoraError::create([
+                        'id_usuario' => $request->user()->id,
+                        'tipo_error' => 'ARCHIVO',
+                        'descripcion_error' => 'IncidenciaController@eliminarIncidencia: no se pudo borrar '.$ruta,
+                    ]);
+                }
             }
 
             return response()->json(['message' => 'Incidencia eliminada']);

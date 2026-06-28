@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
+    this.classList.add("pe-none", "opacity-50");
     try {
       await apiFetch("/logout", { method: "POST" });
     } catch {
@@ -141,7 +142,7 @@ async function cargarLista() {
     }
   } catch (error) {
     contenedor.innerHTML =
-      '<p class="text-danger small text-center py-4 mb-0">' + error.message + "</p>";
+      '<p class="text-danger small text-center py-4 mb-0">' + escaparHtml(error.message) + "</p>";
     info.textContent = "";
   }
 }

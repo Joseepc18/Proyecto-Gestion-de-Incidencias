@@ -1,6 +1,6 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y eliminar.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
 
 let usuarioActualId = null;
 // Si es null estamos creando; si tiene un id estamos editando ese usuario.
@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
+    this.classList.add("pe-none", "opacity-50");
     try {
       await apiFetch("/logout", { method: "POST" });
     } catch {
@@ -105,7 +106,9 @@ async function cargarUsuarios() {
     });
   } catch (error) {
     tbody.innerHTML =
-      '<tr><td colspan="4" class="text-center text-danger py-4">' + error.message + "</td></tr>";
+      '<tr><td colspan="4" class="text-center text-danger py-4">' +
+      escaparHtml(error.message) +
+      "</td></tr>";
   }
 }
 

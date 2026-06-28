@@ -1,6 +1,6 @@
 // catalogos.js — Gestión de tipos y subtipos de incidencia (solo admin): listar, crear, editar y eliminar.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
 
 // Cache del último listado (tipos con sus subtipos anidados) para no pedirlo de más.
 let tipos = [];
@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("btnLogout").addEventListener("click", async function (e) {
     e.preventDefault();
+    this.classList.add("pe-none", "opacity-50");
     try {
       await apiFetch("/logout", { method: "POST" });
     } catch {
@@ -61,7 +62,9 @@ async function cargarCatalogos() {
     pintarSubtipos();
   } catch (error) {
     const msg =
-      '<tr><td colspan="4" class="text-center text-danger py-4">' + error.message + "</td></tr>";
+      '<tr><td colspan="4" class="text-center text-danger py-4">' +
+      escaparHtml(error.message) +
+      "</td></tr>";
     document.getElementById("tbodyTipos").innerHTML = msg;
     document.getElementById("tbodySubtipos").innerHTML = msg;
   }
