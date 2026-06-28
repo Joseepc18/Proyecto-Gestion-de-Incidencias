@@ -1,7 +1,7 @@
 // toast.js — Notificaciones tipo "toast" (reemplazan a alert()).
 
 /* exported mostrarToast, toastFlash */
-/* global hayCargaActiva */
+/* global hayCargaActiva, escaparHtml */
 
 // Crea (una sola vez) el contenedor donde se apilan los toasts.
 function obtenerContenedorToasts() {
@@ -44,7 +44,7 @@ function mostrarToast(mensaje, tipo = "info", duracion = 4000) {
     (titulos[tipo] || titulos.info) +
     "</p>" +
     '<p class="toast-msg">' +
-    mensaje +
+    escaparHtml(mensaje) +
     "</p>" +
     "</div>" +
     '<button class="toast-close" aria-label="Cerrar">&times;</button>' +

@@ -67,7 +67,8 @@ class IncidenciaTest extends TestCase
             'comentario' => 'Comentario de prueba.',
         ]);
 
-        Sanctum::actingAs($autor);
+        // El admin puede eliminar en cualquier estado; aquí probamos el cascade de hijos.
+        Sanctum::actingAs($this->crearUsuario('admin'));
 
         $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
 
@@ -196,7 +197,7 @@ class IncidenciaTest extends TestCase
         ]);
         Sanctum::actingAs($responsable);
 
-        // Desde PENDIENTE el técnico solo puede ir a EN_PROCESO; saltar a RESUELTO se rechaza.
+        // El técnico responsable solo puede cerrar EN_PROCESO→RESUELTO; saltar a RESUELTO desde PENDIENTE se rechaza.
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'RESUELTO'])
             ->assertStatus(422)
             ->assertJson(['message' => 'Transición de estado no permitida']);

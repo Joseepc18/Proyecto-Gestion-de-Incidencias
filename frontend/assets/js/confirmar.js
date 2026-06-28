@@ -1,6 +1,7 @@
 // confirmar.js — Diálogo de confirmación (reemplaza a confirm()). Retorna una Promise<boolean>.
 
 /* exported confirmar */
+/* global escaparHtml */
 
 function confirmar(opciones = {}) {
   const {
@@ -17,17 +18,17 @@ function confirmar(opciones = {}) {
     overlay.innerHTML =
       '<div class="confirm-box">' +
       '<h3 class="confirm-titulo">' +
-      titulo +
+      escaparHtml(titulo) +
       "</h3>" +
-      (mensaje ? '<p class="confirm-mensaje">' + mensaje + "</p>" : "") +
+      (mensaje ? '<p class="confirm-mensaje">' + escaparHtml(mensaje) + "</p>" : "") +
       '<div class="confirm-acciones">' +
       '<button class="btn btn-outline-secondary btn-sm" data-cancelar>' +
-      textoCancelar +
+      escaparHtml(textoCancelar) +
       "</button>" +
       '<button class="btn btn-sm ' +
       (peligro ? "btn-danger" : "btn-primary") +
       '" data-confirmar>' +
-      textoConfirmar +
+      escaparHtml(textoConfirmar) +
       "</button>" +
       "</div></div>";
 
