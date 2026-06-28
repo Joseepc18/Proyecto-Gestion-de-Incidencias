@@ -1,6 +1,6 @@
 // api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
-/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml */
+/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml, hayCargaActiva */
 /* global toastFlash */
 
 const API_BASE = "/api";
@@ -64,6 +64,11 @@ function obtenerSpinner() {
 
 function spinnerVisible() {
   return !obtenerSpinner().classList.contains("d-none");
+}
+
+// Indica si hay alguna petición en curso (aunque el spinner aún no se haya pintado).
+function hayCargaActiva() {
+  return peticionesActivas > 0;
 }
 
 function spinnerInicio() {

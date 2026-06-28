@@ -1,6 +1,7 @@
 // toast.js — Notificaciones tipo "toast" (reemplazan a alert()).
 
 /* exported mostrarToast, toastFlash */
+/* global hayCargaActiva */
 
 // Crea (una sola vez) el contenedor donde se apilan los toasts.
 function obtenerContenedorToasts() {
@@ -93,12 +94,16 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Espera a que el spinner global se oculte antes de mostrar el toast.
+  // Espera a que terminen las peticiones de la página antes de mostrar el toast,
+  // para que aparezca después del spinner y no encima.
   let intentos = 0;
+  let sinCargaSeguidas = 0;
   function mostrarCuandoListo() {
-    const sp = document.getElementById("globalSpinner");
-    const cargando = sp && !sp.classList.contains("d-none");
-    if (cargando && intentos < 60) {
+    const cargando = typeof hayCargaActiva === "function" && hayCargaActiva();
+    // Solo damos por terminada la carga si lleva varios ciclos seguidos sin peticiones,
+    // para no colarnos en el hueco entre dos rondas (ej. usuario y luego el dashboard).
+    sinCargaSeguidas = cargando ? 0 : sinCargaSeguidas + 1;
+    if (sinCargaSeguidas < 3 && intentos < 60) {
       intentos++;
       setTimeout(mostrarCuandoListo, 100);
     } else {

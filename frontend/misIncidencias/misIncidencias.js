@@ -1,6 +1,6 @@
 // misIncidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat, escaparHtml */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, crearChat, escaparHtml, estadoConfig, prioridadConfig */
 
 let usuarioActual = null;
 let incidenciaSeleccionada = null;
@@ -11,22 +11,6 @@ const colorEstado = {
   PENDIENTE: "#dc2626",
   EN_PROCESO: "#d97706",
   RESUELTO: "#16a34a",
-};
-
-// Config de badges (compartida entre lista y detalle).
-const estadoConfig = {
-  PENDIENTE: { clase: "badge-estado-pendiente", icono: "bi-clock-history", texto: "Pendiente" },
-  EN_PROCESO: {
-    clase: "badge-estado-proceso",
-    icono: "bi-gear-wide-connected",
-    texto: "En proceso",
-  },
-  RESUELTO: { clase: "badge-estado-resuelto", icono: "bi-check2-circle", texto: "Resuelto" },
-};
-const prioridadConfig = {
-  ALTA: { clase: "text-bg-danger", icono: "bi-fire", texto: "Alta" },
-  MEDIA: { clase: "text-bg-warning", icono: "bi-shield-exclamation", texto: "Media" },
-  BAJA: { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
 };
 
 // Genera un código legible a partir del id (INC-0001).
