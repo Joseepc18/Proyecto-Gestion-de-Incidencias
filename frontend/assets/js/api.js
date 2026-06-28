@@ -183,10 +183,23 @@ function aplicarMenuRol(rol) {
   mostrar("navMisIncidencias", !esAdmin);
   // El técnico no registra incidencias; solo admin y ciudadano ven el enlace.
   mostrar("navRegistrar", esAdmin || esNormal);
+
+  // "Mis incidencias" se renombra según el rol: el técnico ve asignaciones; el ciudadano, sus reportes.
+  const navMis = document.getElementById("navMisIncidencias");
+  const textoMis = navMis ? navMis.querySelector(".nav-text") : null;
+  if (textoMis) textoMis.textContent = rol === "tecnico" ? "Mis asignaciones" : "Mis reportes";
 }
 
 // Pantalla de arranque según el rol: normal → "Mis incidencias"; resto → Inicio.
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
   return rol === "normal" ? "../misIncidencias/misIncidencias.html" : "../inicio/inicio.html";
+}
+
+// Página de detalle de una incidencia según el rol: el ciudadano ve la suya; admin y técnico, la de gestión.
+/* exported rutaDetalleIncidencia */
+function rutaDetalleIncidencia(id, rol) {
+  const base =
+    rol === "normal" ? "../detalleMiIncidencia/detalle.html" : "../detalleIncidencia/detalle.html";
+  return base + "?id=" + id;
 }

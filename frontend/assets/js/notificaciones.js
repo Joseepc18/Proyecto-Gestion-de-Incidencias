@@ -1,6 +1,6 @@
 // notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
-/* global apiFetch, obtenerToken */
+/* global apiFetch, obtenerToken, rutaDetalleIncidencia */
 
 document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btnNotificaciones");
@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
       item.type = "button";
       item.className = "notification-item" + (n.estado_lectura ? "" : " no-leida");
       item.dataset.id = n.id_notificacion;
+      item.dataset.incidencia = n.id_incidencia;
 
       const msg = document.createElement("span");
       msg.className = "notification-msg";
@@ -74,20 +75,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Click en un item: si no estaba leído, lo marca en el backend y refresca.
+  // Click en un item: si no estaba leído lo marca, y siempre navega al detalle de la incidencia.
   lista.addEventListener("click", async function (evento) {
     const item = evento.target.closest(".notification-item");
-    if (!item || !item.classList.contains("no-leida")) return;
+    if (!item) return;
 
-    try {
-      await apiFetch("/notificaciones/" + item.dataset.id + "/leida", {
-        method: "PATCH",
-        sinSpinner: true,
-      });
-      cargar();
-    } catch {
-      /* silencioso */
+    if (item.classList.contains("no-leida")) {
+      try {
+        await apiFetch("/notificaciones/" + item.dataset.id + "/leida", {
+          method: "PATCH",
+          sinSpinner: true,
+        });
+      } catch {
+        /* aunque falle el marcado, igual vamos a la incidencia */
+      }
     }
+    const rol = localStorage.getItem("rol_usuario") || "";
+    window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol);
   });
 
   btnTodas.addEventListener("click", async function () {

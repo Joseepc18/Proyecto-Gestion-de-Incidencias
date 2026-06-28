@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, imageCompression, crearMapaPicker, bootstrap */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, mostrarToast, imageCompression, crearMapaPicker, bootstrap */
 
 document.addEventListener("DOMContentLoaded", async function () {
   // Guard
@@ -74,8 +74,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       op.textContent = provincia.nombre_provincia;
       selectProvincia.appendChild(op);
     });
-  } catch (error) {
-    console.error("Error cargando catálogos:", error);
+  } catch {
+    mostrarToast("No se pudieron cargar los catálogos. Recarga la página.", "error");
   }
 
   // Cascada provincia → ciudad

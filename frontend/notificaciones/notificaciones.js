@@ -1,6 +1,6 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, rutaDetalleIncidencia */
 
 let usuarioActual = null;
 let notificaciones = [];
@@ -30,12 +30,10 @@ function tiempoRelativo(iso) {
   return fecha.toLocaleDateString("es-EC");
 }
 
-// Ruta del detalle de la incidencia según el rol (el admin usa otra página).
+// Ruta del detalle según el rol (helper compartido en api.js).
 function rutaDetalle(idIncidencia) {
   const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
-  const base =
-    rol === "admin" ? "../detalleIncidencia/detalle.html" : "../detalleMiIncidencia/detalle.html";
-  return base + "?id=" + idIncidencia;
+  return rutaDetalleIncidencia(idIncidencia, rol);
 }
 
 // Pinta el contador "N sin leer" y habilita/inhabilita "Marcar todas".
