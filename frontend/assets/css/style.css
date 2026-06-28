@@ -523,9 +523,11 @@ html[data-theme="dark"] .profile-button .avatar-sm {
   display: inline-grid;
   place-items: center;
   overflow: hidden;
+  width: 240px;
+  height: 240px;
   background: linear-gradient(135deg, #2563eb, #0f766e);
   color: #ffffff;
-  font-size: 2.4rem;
+  font-size: 3.4rem;
 }
 
 .perfil-avatar img {
