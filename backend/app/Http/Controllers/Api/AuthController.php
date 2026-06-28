@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarPerfilRequest;
 use App\Http\Requests\LoginRequest;
@@ -11,6 +12,7 @@ use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -72,7 +74,7 @@ class AuthController extends Controller
         return response()->json($request->user()->load('rol'));
     }
 
-    // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña).
+    // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña y foto).
     public function actualizarPerfil(ActualizarPerfilRequest $request)
     {
         $datos = $request->validated();
@@ -86,9 +88,40 @@ class AuthController extends Controller
             $user->password = Hash::make($datos['password']);
         }
 
+        try {
+            // Foto nueva: la guarda y borra la anterior; o "quitar_foto" la elimina sin reemplazo.
+            if ($request->hasFile('foto')) {
+                $ruta = $request->file('foto')->store('perfiles', 'public');
+                if ($ruta === false) {
+                    throw new AlmacenamientoException('No se pudo guardar la foto de perfil en el disco');
+                }
+                $this->borrarFotoAnterior($user);
+                $user->foto_perfil = $ruta;
+            } elseif (! empty($datos['quitar_foto'])) {
+                $this->borrarFotoAnterior($user);
+                $user->foto_perfil = null;
+            }
+        } catch (AlmacenamientoException $e) {
+            BitacoraError::create([
+                'id_usuario' => $user->id,
+                'tipo_error' => 'ARCHIVO',
+                'descripcion_error' => 'AuthController@actualizarPerfil: '.$e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'No se pudo guardar la foto. Intenta de nuevo.'], 500);
+        }
+
         $user->save();
 
         return response()->json($user->load('rol'));
+    }
+
+    // Borra del disco la foto de perfil actual (si la hay) para no dejar archivos huérfanos.
+    private function borrarFotoAnterior(User $user): void
+    {
+        if ($user->foto_perfil) {
+            Storage::disk('public')->delete($user->foto_perfil);
+        }
     }
 
     // Paso 1 del login con Google: redirige a Google. stateless() = API por token, sin sesión.

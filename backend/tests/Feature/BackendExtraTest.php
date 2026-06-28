@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Comentario;
 use App\Models\SubtipoIncidencia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -70,6 +72,23 @@ class BackendExtraTest extends TestCase
             'name' => 'Nombre Actualizado',
             'email' => $usuario->email,
         ])->assertOk()->assertJsonFragment(['name' => 'Nombre Actualizado']);
+    }
+
+    public function test_usuario_sube_su_foto_de_perfil(): void
+    {
+        Storage::fake('public');
+        $usuario = $this->crearUsuario('normal');
+        Sanctum::actingAs($usuario);
+
+        $this->put('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'foto' => UploadedFile::fake()->image('avatar.jpg'),
+        ])->assertOk();
+
+        $usuario->refresh();
+        $this->assertNotNull($usuario->foto_perfil);
+        Storage::disk('public')->assertExists($usuario->foto_perfil);
     }
 
     public function test_admin_crea_tipo_y_no_puede_borrarlo_con_subtipos(): void

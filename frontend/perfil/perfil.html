@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mi perfil - Sistema de Gestión de Incidencias" />
+    <title>Mi perfil | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="perfil">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <!-- Encabezado de página -->
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"
+                  ><i class="bi bi-person-circle" aria-hidden="true"></i
+                ></span>
+                <div>
+                  <p class="eyebrow mb-1">Cuenta</p>
+                  <h1 class="h3 mb-1">Mi perfil</h1>
+                  <p class="text-muted mb-0">Actualiza tus datos personales y tu contraseña.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel: datos del perfil -->
+            <section class="panel">
+              <div class="panel-header">
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-person-gear" aria-hidden="true"></i>
+                  <span>Datos de la cuenta</span>
+                </h2>
+              </div>
+              <div class="p-3 p-lg-4">
+                <form id="formPerfil" class="row g-4">
+                  <!-- Columna de la foto -->
+                  <div class="col-12 col-lg-4 text-center">
+                    <label class="form-label d-block">Foto de perfil</label>
+                    <span class="perfil-avatar avatar-xl mx-auto mb-3" id="perfilAvatar">
+                      <i class="bi bi-person" aria-hidden="true"></i>
+                    </span>
+                    <input type="file" id="perfilFoto" accept="image/jpeg,image/png" hidden />
+                    <div class="d-flex justify-content-center gap-2">
+                      <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        id="btnCambiarFoto"
+                      >
+                        <i class="bi bi-image" aria-hidden="true"></i> Cambiar
+                      </button>
+                      <button
+                        class="btn btn-outline-danger btn-sm d-none"
+                        type="button"
+                        id="btnQuitarFoto"
+                      >
+                        <i class="bi bi-trash" aria-hidden="true"></i> Quitar
+                      </button>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">JPG o PNG, máx. 2 MB.</p>
+                  </div>
+
+                  <!-- Columna de los campos -->
+                  <div class="col-12 col-lg-8">
+                    <div class="mb-3">
+                      <label for="perfilNombre" class="form-label">Nombre</label>
+                      <input class="form-control" type="text" id="perfilNombre" required />
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilEmail" class="form-label">Correo</label>
+                      <input class="form-control" type="email" id="perfilEmail" required />
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilPassword" class="form-label">Nueva contraseña</label>
+                      <input
+                        class="form-control"
+                        type="password"
+                        id="perfilPassword"
+                        minlength="8"
+                        placeholder="Dejar vacío para no cambiar"
+                        autocomplete="new-password"
+                      />
+                      <div class="form-text">
+                        Mínimo 8 caracteres. Déjala vacía para conservarla.
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary" type="submit" id="btnGuardarPerfil">
+                        <span
+                          class="spinner-border spinner-border-sm me-1 d-none"
+                          id="perfilSpinner"
+                          role="status"
+                        ></span>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- JS compartido -->
+    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/toast.js"></script>
+    <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/layout.js"></script>
+    <script src="../assets/js/notificaciones.js"></script>
+    <script src="../assets/js/browser-image-compression.js"></script>
+    <!-- Lógica propia -->
+    <script src="perfil.js"></script>
+  </body>
+</html>

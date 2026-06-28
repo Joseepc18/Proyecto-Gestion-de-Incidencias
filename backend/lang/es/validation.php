@@ -138,6 +138,7 @@ return [
         'id_rol' => 'rol',
         'fotos' => 'fotos',
         'fotos.*' => 'foto',
+        'foto' => 'foto de perfil',
         'tipo_evidencia' => 'tipo de evidencia',
     ],
 

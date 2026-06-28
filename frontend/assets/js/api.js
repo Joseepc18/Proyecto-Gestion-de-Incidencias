@@ -30,6 +30,8 @@ function obtenerToken() {
 
 function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
+  // Olvida la foto cacheada del navbar para no mostrar la del usuario anterior.
+  localStorage.removeItem("perfil_foto");
 }
 
 // Spinner global (solo aparece si la petición tarda más de 300ms)

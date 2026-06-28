@@ -19,6 +19,8 @@ class ActualizarPerfilRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$this->user()->id,
             'password' => 'nullable|string|min:8',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'quitar_foto' => 'nullable|boolean',
         ];
     }
 }

@@ -124,9 +124,26 @@
     '<div class="dropdown">' +
     '<button class="profile-button dropdown-toggle" type="button" ' +
     'data-bs-toggle="dropdown" aria-expanded="false">' +
-    '<span class="brand-icon"><i class="bi bi-person-circle" aria-hidden="true"></i></span>' +
+    '<span class="brand-icon" id="navbarAvatar"><i class="bi bi-person-circle" aria-hidden="true"></i></span>' +
     '<span class="profile-name d-none d-sm-inline" id="nombreUsuario">...</span></button>' +
     '<ul class="dropdown-menu dropdown-menu-end">' +
+    '<li><a class="dropdown-item" href="../perfil/perfil.html"><i class="bi bi-person me-2"></i>Mi perfil</a></li>' +
+    '<li><hr class="dropdown-divider" /></li>' +
     '<li><a class="dropdown-item" href="#" id="btnLogout">Cerrar sesión</a></li></ul>' +
     "</div></div></div>";
+
+  // Pinta el avatar del navbar: foto del usuario si la hay, o el icono por defecto.
+  window.pintarAvatarNavbar = function (foto) {
+    const cont = document.getElementById("navbarAvatar");
+    if (!cont) return;
+    if (foto) {
+      cont.innerHTML =
+        '<img src="/storage/' + foto + '" alt="Foto de perfil" class="navbar-avatar-img" />';
+    } else {
+      cont.innerHTML = '<i class="bi bi-person-circle" aria-hidden="true"></i>';
+    }
+  };
+
+  // Al cargar cualquier página usa la foto cacheada (se actualiza al editar el perfil).
+  window.pintarAvatarNavbar(localStorage.getItem("perfil_foto") || "");
 })();
