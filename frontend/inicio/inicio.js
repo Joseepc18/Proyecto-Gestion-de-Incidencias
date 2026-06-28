@@ -46,8 +46,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   try {
     const usuario = await apiFetch("/user");
 
-    // El usuario normal no tiene Inicio: su pantalla es "Mis incidencias".
-    if (usuario.rol && usuario.rol.nombre_rol === "normal") {
+    // Inicio es solo del admin; ciudadano y técnico arrancan en "Mis incidencias".
+    if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
       window.location.replace("../mis-incidencias/mis-incidencias.html");
       return;
     }
@@ -55,17 +55,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("nombreUsuario").textContent = usuario.name;
     document.getElementById("saludoNombre").textContent = usuario.name;
 
-    const rol = usuario.rol ? usuario.rol.nombre_rol : "";
-
-    // El menú se ajusta según el rol (admin: tabla + usuarios; resto: mis incidencias).
-    aplicarMenuRol(rol);
-
-    // El admin ve el dashboard; el técnico solo una bienvenida con acceso a su listado.
-    if (rol === "admin") {
-      await cargarDashboard();
-    } else {
-      mostrarInicioTecnico();
-    }
+    aplicarMenuRol("admin");
+    await cargarDashboard();
   } catch {
     // Token inválido o expirado -> limpiar y al login.
     eliminarToken();
@@ -88,13 +79,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Repinta las gráficas y el mapa cuando se alterna el tema (los colores cambian).
   observarCambioDeTema();
 });
-
-// Bienvenida del técnico: ajusta el subtítulo y muestra su bloque (sin pedir métricas).
-function mostrarInicioTecnico() {
-  document.getElementById("inicioSubtitulo").textContent =
-    "Revisa y atiende las incidencias que tienes asignadas.";
-  document.getElementById("tecnicoInicio").classList.remove("d-none");
-}
 
 // Pide las métricas al backend y pinta KPIs + gráficas + tabla + mapa.
 async function cargarDashboard() {

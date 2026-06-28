@@ -12,18 +12,15 @@
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
-  <body data-page="gestion-incidencias">
+  <body>
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
-      <!-- Sidebar (igual que incidencias.html) -->
       <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
 
       <div class="admin-main detalle-shell">
-        <!-- Navbar (igual que incidencias.html) -->
         <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
 
-        <!-- Contenido principal -->
         <main class="dashboard-content detalle-main">
           <div class="container-fluid px-3 px-lg-4 py-4">
             <!-- Encabezado de página -->
@@ -33,15 +30,26 @@
                 <div>
                   <p class="eyebrow mb-1" id="detalleCodigo">Incidencia</p>
                   <h1 class="h3 mb-1" id="detalleTitulo">Detalle de incidencia</h1>
-                  <p class="text-muted mb-0">Gestión completa de la incidencia reportada.</p>
+                  <p class="text-muted mb-0">Detalle de la incidencia reportada.</p>
                 </div>
               </div>
-              <a
-                class="btn btn-outline-secondary btn-sm"
-                href="../gestion-incidencias/gestion-incidencias.html"
-              >
-                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a incidencias
-              </a>
+              <div class="heading-actions d-flex gap-2">
+                <!-- Editar/Eliminar: solo el ciudadano dueño y mientras esté PENDIENTE -->
+                <button class="btn btn-primary btn-sm d-none" type="button" id="btnEditar">
+                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                </button>
+                <button class="btn btn-outline-danger btn-sm d-none" type="button" id="btnEliminar">
+                  <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                </button>
+                <!-- El destino y el texto los pone el JS según el rol -->
+                <a
+                  class="btn btn-outline-secondary btn-sm"
+                  id="btnVolver"
+                  href="../gestion-incidencias/gestion-incidencias.html"
+                >
+                  <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+                </a>
+              </div>
             </div>
 
             <!-- Spinner de carga -->
@@ -53,45 +61,138 @@
 
             <!-- Contenido (oculto mientras carga): 3 columnas que entran en una pantalla -->
             <div id="detalleContenido" class="detalle-grid d-none">
-              <!-- Columna 1: info + fotos -->
+              <!-- Columna 1: info + historial -->
               <div class="detalle-col">
                 <!-- Tarjeta principal -->
                 <section class="panel panel-acento" id="panelDetalle">
                   <div class="p-3">
-                    <!-- Badges estado / prioridad / tipo -->
-                    <div class="d-flex gap-2 mb-2 flex-wrap">
-                      <span class="badge" id="detalleEstado"></span>
-                      <span class="badge" id="detallePrioridad"></span>
-                      <span class="badge text-bg-light border" id="detalleTipoBadge"></span>
+                    <!-- Vista (solo lectura) -->
+                    <div id="datosVista">
+                      <!-- Badges estado / prioridad / tipo -->
+                      <div class="d-flex gap-2 mb-2 flex-wrap">
+                        <span class="badge" id="detalleEstado"></span>
+                        <span class="badge" id="detallePrioridad"></span>
+                        <span class="badge text-bg-light border" id="detalleTipoBadge"></span>
+                      </div>
+
+                      <!-- Línea meta: tipo → subtipo · reportado por · fecha -->
+                      <p class="text-muted small mb-2" id="detalleMeta"></p>
+
+                      <!-- Descripción -->
+                      <div id="detalleDescripcionBloque" class="mb-2">
+                        <h6 class="text-muted mb-1">Descripción</h6>
+                        <p id="detalleDescripcion" class="mb-0"></p>
+                      </div>
+
+                      <!-- Datos en 2 columnas -->
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <h6 class="text-muted mb-0 small">Reportado por</h6>
+                          <p id="detalleUsuario" class="mb-0 fw-semibold small"></p>
+                        </div>
+                        <div class="col-6">
+                          <h6 class="text-muted mb-0 small">Ciudad</h6>
+                          <p id="detalleCiudad" class="mb-0 fw-semibold small"></p>
+                        </div>
+                        <div class="col-6">
+                          <h6 class="text-muted mb-0 small">Dirección</h6>
+                          <p id="detalleDireccion" class="mb-0 small"></p>
+                        </div>
+                        <div class="col-6">
+                          <h6 class="text-muted mb-0 small">Fecha de creación</h6>
+                          <p id="detalleFecha" class="mb-0 small"></p>
+                        </div>
+                      </div>
                     </div>
 
-                    <!-- Línea meta: tipo → subtipo · reportado por · fecha -->
-                    <p class="text-muted small mb-2" id="detalleMeta"></p>
+                    <!-- Edición (ciudadano dueño; oculta hasta tocar "Editar") -->
+                    <form id="datosEdicion" class="row g-3 d-none needs-validation" novalidate>
+                      <div class="col-12">
+                        <label class="form-label" for="editTitulo"
+                          >Título <span class="text-danger">*</span></label
+                        >
+                        <input
+                          class="form-control"
+                          id="editTitulo"
+                          type="text"
+                          minlength="5"
+                          maxlength="100"
+                          required
+                        />
+                        <div class="invalid-feedback">Mínimo 5 caracteres.</div>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label" for="editDescripcion">Descripción</label>
+                        <textarea
+                          class="form-control"
+                          id="editDescripcion"
+                          rows="3"
+                          maxlength="500"
+                        ></textarea>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editTipo"
+                          >Tipo <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editTipo" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona un tipo.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editSubtipo"
+                          >Subtipo <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editSubtipo" required disabled>
+                          <option value="">Primero selecciona un tipo</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona un subtipo.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editProvincia"
+                          >Provincia <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editProvincia" required>
+                          <option value="">Seleccionar...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona una provincia.</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label" for="editCiudad"
+                          >Ciudad <span class="text-danger">*</span></label
+                        >
+                        <select class="form-select" id="editCiudad" required disabled>
+                          <option value="">Primero selecciona una provincia</option>
+                        </select>
+                        <div class="invalid-feedback">Selecciona una ciudad.</div>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label" for="editDireccion">Dirección</label>
+                        <input
+                          class="form-control"
+                          id="editDireccion"
+                          type="text"
+                          maxlength="500"
+                        />
+                      </div>
+                    </form>
 
-                    <!-- Descripción -->
-                    <div id="detalleDescripcionBloque" class="mb-2">
-                      <h6 class="text-muted mb-1">Descripción</h6>
-                      <p id="detalleDescripcion" class="mb-0"></p>
-                    </div>
-
-                    <!-- Datos en 2 columnas -->
-                    <div class="row g-2">
-                      <div class="col-6">
-                        <h6 class="text-muted mb-0 small">Reportado por</h6>
-                        <p id="detalleUsuario" class="mb-0 fw-semibold small"></p>
-                      </div>
-                      <div class="col-6">
-                        <h6 class="text-muted mb-0 small">Ciudad</h6>
-                        <p id="detalleCiudad" class="mb-0 fw-semibold small"></p>
-                      </div>
-                      <div class="col-6">
-                        <h6 class="text-muted mb-0 small">Dirección</h6>
-                        <p id="detalleDireccion" class="mb-0 small"></p>
-                      </div>
-                      <div class="col-6">
-                        <h6 class="text-muted mb-0 small">Fecha de creación</h6>
-                        <p id="detalleFecha" class="mb-0 small"></p>
-                      </div>
+                    <!-- Barra de acciones de edición (ciudadano) -->
+                    <div id="edicionAcciones" class="d-none d-flex justify-content-end gap-2 mt-3">
+                      <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        id="btnCancelarEdicion"
+                      >
+                        Cancelar
+                      </button>
+                      <button class="btn btn-primary btn-sm" type="button" id="btnGuardarEdicion">
+                        <span
+                          id="guardarSpinner"
+                          class="spinner-border spinner-border-sm d-none me-1"
+                        ></span>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
+                      </button>
                     </div>
                   </div>
                 </section>
@@ -109,10 +210,26 @@
 
               <!-- Columna 2: mapa + fotos -->
               <div class="detalle-col">
-                <!-- Mapa (solo lectura) -->
+                <!-- Mapa -->
                 <section class="panel">
                   <div class="p-3">
                     <h2 class="h6 mb-2"><i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa</h2>
+                    <!-- Controles del picker (solo en modo edición del ciudadano) -->
+                    <div
+                      id="mapaEditControles"
+                      class="d-none justify-content-between align-items-center mb-2 flex-wrap gap-2"
+                    >
+                      <span class="text-muted small"
+                        >Haz clic en el mapa para cambiar el lugar.</span
+                      >
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        id="btnMiUbicacionEdit"
+                      >
+                        <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
+                      </button>
+                    </div>
                     <div id="mapaDetalle" class="mapa-detalle"></div>
                   </div>
                 </section>
@@ -122,6 +239,35 @@
                   <div class="p-3 detalle-fill-cuerpo">
                     <h2 class="h6 mb-2"><i class="bi bi-images me-1"></i> Fotos del reporte</h2>
                     <div id="fotosReporte" class="d-flex gap-2 flex-wrap"></div>
+
+                    <!-- Zona de subida de fotos del reporte (solo el ciudadano dueño) -->
+                    <div id="evidenciasReporteEdicion" class="d-none mt-2">
+                      <label class="dropzone-fotos" id="dropzoneFotos" for="editFotos">
+                        <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+                        <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
+                        <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
+                      </label>
+                      <input
+                        class="d-none"
+                        id="editFotos"
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        multiple
+                      />
+                      <div id="editFotosError" class="text-danger small mt-1 d-none"></div>
+                      <div id="editFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                      <button
+                        class="btn btn-primary btn-sm mt-2 d-none"
+                        type="button"
+                        id="btnSubirFotos"
+                      >
+                        <span
+                          id="subirFotosSpinner"
+                          class="spinner-border spinner-border-sm d-none me-1"
+                        ></span>
+                        <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Subir fotos
+                      </button>
+                    </div>
 
                     <!-- Fotos de la resolución (dentro del mismo panel) -->
                     <div id="fotosResolucionBloque" class="d-none mt-3">
@@ -134,9 +280,9 @@
                 </section>
               </div>
 
-              <!-- Columna 3: herramientas de gestión (solo admin) + historial -->
+              <!-- Columna 3: herramientas de gestión (admin) + estado/fotos (técnico) -->
               <div class="detalle-col">
-                <!-- Prioridad -->
+                <!-- Prioridad (solo admin) -->
                 <section class="panel solo-admin d-none">
                   <div class="p-3">
                     <h3 class="panel-titulo-tool">
@@ -150,7 +296,7 @@
                   </div>
                 </section>
 
-                <!-- Asignación de técnicos -->
+                <!-- Asignación de técnicos (solo admin) -->
                 <section class="panel solo-admin d-none">
                   <div class="p-3">
                     <!-- Responsable -->
@@ -287,7 +433,9 @@
     <script src="../assets/js/chat.js"></script>
     <!-- Compresión de fotos antes de subir -->
     <script src="../assets/js/browser-image-compression.js"></script>
-    <!-- Lógica propia -->
-    <script src="detalle-gestion.js"></script>
+    <!-- Lógica propia: núcleo + módulos por rol (el orden importa) -->
+    <script src="detalle-incidencia.js"></script>
+    <script src="detalle-incidencia-gestion.js"></script>
+    <script src="detalle-incidencia-edicion.js"></script>
   </body>
 </html>

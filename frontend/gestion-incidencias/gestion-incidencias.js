@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, estadoConfig, prioridadConfig */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, estadoConfig, prioridadConfig, rutaDetalleIncidencia */
 
 let usuarioActual = null;
 
@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 // Funciones globales (se llaman desde onclick en el HTML).
 // eslint-disable-next-line no-unused-vars
 function verDetalle(id) {
-  window.location.href = "../detalle-gestion/detalle-gestion.html?id=" + id;
+  window.location.href = rutaDetalleIncidencia(id, "admin");
 }
 
 // eslint-disable-next-line no-unused-vars

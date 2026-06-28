@@ -176,7 +176,8 @@ function aplicarMenuRol(rol) {
     if (el) el.classList.toggle("d-none", !visible);
   }
 
-  mostrar("navInicio", !esNormal);
+  // Inicio es solo del admin; el técnico arranca en "Mis asignaciones".
+  mostrar("navInicio", esAdmin);
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
   mostrar("navCatalogos", esAdmin);
@@ -190,19 +191,15 @@ function aplicarMenuRol(rol) {
   if (textoMis) textoMis.textContent = rol === "tecnico" ? "Mis asignaciones" : "Mis reportes";
 }
 
-// Pantalla de arranque según el rol: normal → "Mis incidencias"; resto → Inicio.
+// Pantalla de arranque según el rol: solo el admin entra a Inicio; el resto, a "Mis incidencias".
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
-  return rol === "normal" ? "../mis-incidencias/mis-incidencias.html" : "../inicio/inicio.html";
+  return rol === "admin" ? "../inicio/inicio.html" : "../mis-incidencias/mis-incidencias.html";
 }
 
-// Página de detalle de una incidencia según el rol: el ciudadano ve la suya; admin y técnico, la de gestión.
+// Página de detalle de una incidencia: la misma para los tres roles (la página decide qué mostrar).
 // abrirChat: añade ?chat=1 para que la página abra el chat directamente (notificación de comentario).
 /* exported rutaDetalleIncidencia */
 function rutaDetalleIncidencia(id, rol, abrirChat = false) {
-  const base =
-    rol === "normal"
-      ? "../detalle-reporte/detalle-reporte.html"
-      : "../detalle-gestion/detalle-gestion.html";
-  return base + "?id=" + id + (abrirChat ? "&chat=1" : "");
+  return "../detalle-incidencia/detalle-incidencia.html?id=" + id + (abrirChat ? "&chat=1" : "");
 }

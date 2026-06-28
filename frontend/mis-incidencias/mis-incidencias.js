@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, estadoConfig, prioridadConfig */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, estadoConfig, prioridadConfig, rutaDetalleIncidencia */
 
 let usuarioActual = null;
 let mapa = null;
@@ -208,9 +208,9 @@ async function seleccionarIncidencia(id) {
       imgCompacta.classList.add("d-none");
     }
 
-    // "Ver detalles" → página de detalle del usuario
-    document.getElementById("btnVerDetalles").href =
-      "../detalle-reporte/detalle-reporte.html?id=" + id;
+    // "Ver detalles" → pantalla de detalle única (según el rol de quien mira)
+    const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
+    document.getElementById("btnVerDetalles").href = rutaDetalleIncidencia(id, rol);
 
     // Mostrar el panel de detalle
     document.getElementById("detalleVacio").classList.add("d-none");
