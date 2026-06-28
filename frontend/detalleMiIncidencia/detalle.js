@@ -184,6 +184,16 @@ async function cargarDetalle(id) {
 
     // Chat (reutilizable)
     crearChat("chatContenedor", id, usuarioActual);
+
+    // Si viene desde una notificación de comentario, hacer scroll suave hasta el chat
+    if (new URLSearchParams(window.location.search).get("chat") === "1") {
+      const chatEl = document.getElementById("chatContenedor");
+      if (chatEl) {
+        setTimeout(function () {
+          chatEl.scrollIntoView({ behavior: "smooth" });
+        }, 300);
+      }
+    }
   } catch (error) {
     document.getElementById("detalleCargando").classList.add("d-none");
     mostrarToast("No se pudo cargar la incidencia: " + error.message, "error");

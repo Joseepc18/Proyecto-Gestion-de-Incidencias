@@ -49,7 +49,7 @@
             <p class="text-muted small mb-0 mt-2" id="listaInfo"></p>
           </section>
 
-          <!-- Tarjeta flotante derecha: resumen liviano + "Ver detalles" + chat -->
+          <!-- Tarjeta flotante derecha: resumen liviano + "Ver detalles" -->
           <section class="mis-panel mis-detalle" id="detalleCard">
             <!-- Estado vacío -->
             <div id="detalleVacio" class="text-center text-muted p-3">
@@ -79,35 +79,17 @@
                 <a class="btn btn-primary btn-sm flex-fill" id="btnVerDetalles" href="#">
                   <i class="bi bi-eye me-1"></i> Ver detalles
                 </a>
-                <button
-                  class="btn btn-outline-secondary btn-sm"
-                  type="button"
-                  id="btnAbrirChat"
-                  aria-label="Abrir chat"
-                >
-                  <i class="bi bi-chat-dots"></i>
-                </button>
               </div>
 
               <!-- Aviso cuando ya no se puede editar -->
               <div id="avisoEdicion" class="alert alert-info py-1 px-2 small mt-2 mb-0 d-none">
                 <i class="bi bi-info-circle me-1"></i>
-                Ya está en proceso, no puedes editarla. Usa el chat para dar seguimiento.
+                Ya está en proceso, no puedes editarla. Use Ver detalles para dar seguimiento.
               </div>
             </div>
           </section>
 
-          <!-- Panel de chat flotante (se abre desde la tarjeta) -->
-          <section class="mis-panel mis-chat-panel d-none" id="chatPanel">
-            <div class="chat-cabecera">
-              <i class="bi bi-chat-dots me-2"></i>
-              <span id="chatPanelTitulo">Chat</span>
-              <button class="btn-cerrar-chat" id="btnCerrarChat" type="button" aria-label="Cerrar">
-                <i class="bi bi-chevron-down"></i>
-              </button>
-            </div>
-            <div id="chatContenedorFlotante" class="chat-cuerpo"></div>
-          </section>
+
         </main>
       </div>
     </div>

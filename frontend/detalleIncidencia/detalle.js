@@ -178,11 +178,23 @@ function puedeUsarChat() {
 // Muestra u oculta la burbuja del chat según quién mira (se reevalúa al cargar las asignaciones).
 function actualizarChatFab() {
   const fab = document.getElementById("btnChatFab");
-  if (fab) fab.classList.toggle("d-none", !puedeUsarChat());
+  if (fab) {
+    if (puedeUsarChat()) {
+      fab.classList.remove("d-none");
+      if (new URLSearchParams(window.location.search).get("chat") === "1" && !chatAbiertoAuto) {
+        chatAbiertoAuto = true;
+        fab.click();
+      }
+    } else {
+      fab.classList.add("d-none");
+    }
+  }
 }
 
 // Chat flotante: la burbuja abre/cierra el chat (se crea la primera vez que se abre).
 let chatCreado = false;
+let chatAbiertoAuto = false;
+
 function configurarChatFlotante(id) {
   const fab = document.getElementById("btnChatFab");
   const panel = document.getElementById("chatPanel");

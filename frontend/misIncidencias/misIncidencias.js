@@ -62,24 +62,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     mapa.map.invalidateSize();
   }, 200);
 
-  // Abrir el chat flotante de la incidencia seleccionada
-  document.getElementById("btnAbrirChat").addEventListener("click", abrirChat);
-  document.getElementById("btnCerrarChat").addEventListener("click", function () {
-    document.getElementById("chatPanel").classList.add("d-none");
-  });
 
   // Arranque
   cargarLista();
 });
-
-// Abre el panel de chat flotante para la incidencia seleccionada.
-function abrirChat() {
-  if (!incidenciaSeleccionada) return;
-  document.getElementById("chatPanelTitulo").textContent =
-    "Chat · " + codigoIncidencia(incidenciaSeleccionada);
-  document.getElementById("chatPanel").classList.remove("d-none");
-  crearChat("chatContenedorFlotante", incidenciaSeleccionada, usuarioActual);
-}
 
 // Paso 2 — Trae las incidencias del usuario y pinta las tarjetas en #listaIncidencias.
 async function cargarLista() {
@@ -175,8 +161,6 @@ async function seleccionarIncidencia(id) {
     card.classList.toggle("activa", Number(card.dataset.id) === id);
   });
 
-  // Al cambiar de incidencia, cerrar el chat (era de otra incidencia).
-  document.getElementById("chatPanel").classList.add("d-none");
 
   try {
     const inc = await apiFetch("/incidencias/" + id);

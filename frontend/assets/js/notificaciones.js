@@ -50,6 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
       item.className = "notification-item" + (n.estado_lectura ? "" : " no-leida");
       item.dataset.id = n.id_notificacion;
       item.dataset.incidencia = n.id_incidencia;
+      item.dataset.tipo = n.tipo_notificacion;
 
       const msg = document.createElement("span");
       msg.className = "notification-msg";
@@ -91,7 +92,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
     const rol = localStorage.getItem("rol_usuario") || "";
-    window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol);
+    // Si es notificación de comentario, abre el chat directamente al llegar al detalle.
+    const abrirChat = item.dataset.tipo === "COMENTARIO";
+    window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);
   });
 
   btnTodas.addEventListener("click", async function () {

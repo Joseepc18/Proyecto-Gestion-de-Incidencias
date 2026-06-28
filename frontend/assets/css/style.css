@@ -1876,7 +1876,8 @@ html[data-theme="dark"] {
 .global-spinner {
   position: fixed;
   inset: 0;
-  z-index: 1090;
+  /* Encima de paneles flotantes y confirmar (1095-1200) para desenfocarlos también; debajo de toasts (2000). */
+  z-index: 1300;
   display: flex;
   align-items: center;
   justify-content: center;

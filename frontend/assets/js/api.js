@@ -197,9 +197,10 @@ function inicioSegunRol(rol) {
 }
 
 // Página de detalle de una incidencia según el rol: el ciudadano ve la suya; admin y técnico, la de gestión.
+// abrirChat: añade ?chat=1 para que la página abra el chat directamente (notificación de comentario).
 /* exported rutaDetalleIncidencia */
-function rutaDetalleIncidencia(id, rol) {
+function rutaDetalleIncidencia(id, rol, abrirChat = false) {
   const base =
     rol === "normal" ? "../detalleMiIncidencia/detalle.html" : "../detalleIncidencia/detalle.html";
-  return base + "?id=" + id;
+  return base + "?id=" + id + (abrirChat ? "&chat=1" : "");
 }
