@@ -82,28 +82,6 @@
       });
     }
 
-    function initTableSearch() {
-      var searchInputs = document.querySelectorAll("[data-table-search]");
-
-      Array.prototype.forEach.call(searchInputs, function (input) {
-        var tableId = input.getAttribute("data-table-search");
-        var table = document.getElementById(tableId);
-
-        if (!table) {
-          return;
-        }
-
-        input.addEventListener("input", function () {
-          var query = input.value.trim().toLowerCase();
-          var rows = table.querySelectorAll("tbody tr");
-
-          Array.prototype.forEach.call(rows, function (row) {
-            row.hidden = query !== "" && row.textContent.toLowerCase().indexOf(query) === -1;
-          });
-        });
-      });
-    }
-
     function updateThemeControls(theme) {
       var nextTheme = theme === "dark" ? "light" : "dark";
       var label = "Switch to " + nextTheme + " mode";
@@ -142,28 +120,7 @@
     }
 
     initValidation();
-    initTableSearch();
     initThemeToggle();
-
-    // Initialize user profile values in UI. Provide a window.adminHMDUser object to override defaults.
-    function initUserProfile() {
-      var user = window.adminHMDUser || { name: "Admin Hasan", workspace: "Active Workspace", avatar: "../assets/images/avatar/avatar.jpg" };
-
-      var sidebarNameEl = document.querySelector(".sidebar-user strong");
-      var sidebarWorkspaceEl = document.querySelector(".sidebar-user small");
-      var sidebarAvatar = document.querySelector(".sidebar-user .avatar-img");
-      var profileNameEls = document.querySelectorAll(".profile-name");
-      var profileAvatarEls = document.querySelectorAll(".profile-button .avatar-img, .profile-button img");
-
-      if (sidebarNameEl) sidebarNameEl.textContent = user.name;
-      if (sidebarWorkspaceEl) sidebarWorkspaceEl.textContent = user.workspace;
-      if (sidebarAvatar && user.avatar) { sidebarAvatar.src = user.avatar; sidebarAvatar.alt = user.name; }
-
-      Array.prototype.forEach.call(profileNameEls, function (el) { el.textContent = user.name; });
-      Array.prototype.forEach.call(profileAvatarEls, function (img) { if (user.avatar) img.src = user.avatar; if (user.name) img.alt = user.name; });
-    }
-
-    initUserProfile();
 
     if (!sidebarToggle) {
       return;

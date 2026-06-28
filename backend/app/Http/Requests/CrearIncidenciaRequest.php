@@ -24,7 +24,7 @@ class CrearIncidenciaRequest extends FormRequest
             'id_ciudad' => 'required|exists:ciudades,id_ciudad',
             'id_subtipo_incidencia' => 'required|exists:subtipos_incidencia,id_subtipo_incidencia',
             'fotos' => 'nullable|array|max:3',
-            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:10240',
+            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:3072',
         ];
 
         // Solo el admin fija prioridad y estado al crear; al resto se les ignora.

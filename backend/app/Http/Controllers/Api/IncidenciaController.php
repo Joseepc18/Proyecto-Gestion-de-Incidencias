@@ -57,9 +57,12 @@ class IncidenciaController extends Controller
         $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? 'MEDIA';
         unset($datos['fotos']);
 
+        // Rutas ya escritas al disco; si la transacción falla las borramos a mano (el rollback no toca el disco).
+        $rutasGuardadas = [];
+
         try {
             // Todo o nada: si una foto no se guarda, se revierte la incidencia.
-            $incidencia = DB::transaction(function () use ($request, $datos) {
+            $incidencia = DB::transaction(function () use ($request, $datos, &$rutasGuardadas) {
                 $incidencia = Incidencia::create($datos);
 
                 // Cada foto se guarda como una evidencia ligada a la incidencia
@@ -70,6 +73,7 @@ class IncidenciaController extends Controller
                         if ($ruta === false) {
                             throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
                         }
+                        $rutasGuardadas[] = $ruta;
                         $incidencia->evidencias()->create([
                             'url_evidencia' => $ruta,
                             'id_usuario' => $request->user()->id,
@@ -85,6 +89,7 @@ class IncidenciaController extends Controller
                 201
             );
         } catch (AlmacenamientoException $e) {
+            Storage::disk('public')->delete($rutasGuardadas);
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
                 'tipo_error' => 'ARCHIVO',
@@ -93,6 +98,7 @@ class IncidenciaController extends Controller
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Exception $e) {
+            Storage::disk('public')->delete($rutasGuardadas);
             BitacoraError::create([
                 'id_usuario' => $request->user()->id,
                 'tipo_error' => 'SERVIDOR',

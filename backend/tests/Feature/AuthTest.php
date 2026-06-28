@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 use Laravel\Socialite\Facades\Socialite;
 use Tests\TestCase;
 
@@ -182,5 +184,27 @@ class AuthTest extends TestCase
         }
 
         $this->postJson('/api/login', $credenciales)->assertStatus(429);
+    }
+
+    public function test_quitar_foto_borra_la_foto_de_perfil(): void
+    {
+        Storage::fake('public');
+
+        // Un usuario con una foto ya guardada en disco.
+        Storage::disk('public')->put('perfiles/vieja.jpg', 'contenido');
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['foto_perfil' => 'perfiles/vieja.jpg'])->save();
+
+        Sanctum::actingAs($usuario);
+
+        $this->putJson('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'quitar_foto' => true,
+        ])->assertOk()->assertJsonPath('foto_perfil', null);
+
+        // Queda sin foto en la BD y el archivo se borró del disco.
+        $this->assertDatabaseHas('users', ['id' => $usuario->id, 'foto_perfil' => null]);
+        Storage::disk('public')->assertMissing('perfiles/vieja.jpg');
     }
 }

@@ -548,7 +548,10 @@ function renderResolucionPreview() {
     cont.className = "position-relative";
 
     const img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
+    // Libera el objectURL una vez que la miniatura ya cargó.
+    img.onload = () => URL.revokeObjectURL(url);
+    img.src = url;
     img.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:8px";
 
     const btn = document.createElement("button");

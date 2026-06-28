@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\AsignacionIncidencia;
+use App\Models\Ciudad;
 use App\Models\Comentario;
+use App\Models\SubtipoIncidencia;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -132,5 +135,76 @@ class IncidenciaTest extends TestCase
         // Muy largo (más de 100 caracteres).
         $this->postJson('/api/incidencias', $this->datosIncidenciaValidos(['nombre_incidencia' => str_repeat('a', 101)]))
             ->assertStatus(422)->assertJsonValidationErrors('nombre_incidencia');
+    }
+
+    public function test_listado_aplica_los_filtros_de_busqueda(): void
+    {
+        $autor = $this->crearUsuario('normal');
+
+        // Dos ciudades y dos tipos distintos para ejercitar los filtros por id.
+        [$ciudadA, $ciudadB] = Ciudad::take(2)->pluck('id_ciudad');
+        $subtipoA = SubtipoIncidencia::first();
+        $subtipoB = SubtipoIncidencia::where('id_tipo_incidencia', '!=', $subtipoA->id_tipo_incidencia)->first();
+
+        $this->crearIncidencia($autor, [
+            'nombre_incidencia' => 'Semaforo dañado en el centro',
+            'estado_incidencia' => 'PENDIENTE',
+            'prioridad_incidencia' => 'ALTA',
+            'id_ciudad' => $ciudadA,
+            'id_subtipo_incidencia' => $subtipoA->id_subtipo_incidencia,
+        ]);
+        $this->crearIncidencia($autor, [
+            'nombre_incidencia' => 'Fuga de agua en la avenida',
+            'estado_incidencia' => 'RESUELTO',
+            'prioridad_incidencia' => 'BAJA',
+            'id_ciudad' => $ciudadB,
+            'id_subtipo_incidencia' => $subtipoB->id_subtipo_incidencia,
+        ]);
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->getJson('/api/incidencias?estado=PENDIENTE')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.nombre_incidencia', 'Semaforo dañado en el centro');
+
+        $this->getJson('/api/incidencias?prioridad=BAJA')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.prioridad_incidencia', 'BAJA');
+
+        // La búsqueda es ilike: parcial y sin distinguir mayúsculas.
+        $this->getJson('/api/incidencias?busqueda=fuga')
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.nombre_incidencia', 'Fuga de agua en la avenida');
+
+        $this->getJson("/api/incidencias?ciudad_id={$ciudadA}")
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.id_ciudad', $ciudadA);
+
+        $this->getJson("/api/incidencias?tipo_id={$subtipoB->id_tipo_incidencia}")
+            ->assertOk()->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.nombre_incidencia', 'Fuga de agua en la avenida');
+    }
+
+    public function test_tecnico_no_puede_saltar_estados_no_permitidos(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $responsable = $this->crearUsuario('tecnico');
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        Sanctum::actingAs($responsable);
+
+        // Desde PENDIENTE el técnico solo puede ir a EN_PROCESO; saltar a RESUELTO se rechaza.
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'RESUELTO'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Transición de estado no permitida']);
+
+        // La incidencia sigue PENDIENTE (no se aplicó el cambio).
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'estado_incidencia' => 'PENDIENTE',
+        ]);
     }
 }

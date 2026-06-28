@@ -19,7 +19,7 @@ class SubirEvidenciaRequest extends FormRequest
     {
         return [
             'fotos' => 'required|array',
-            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:10240',
+            'fotos.*' => 'image|mimes:jpg,jpeg,png|max:3072',
             'tipo_evidencia' => 'nullable|in:REPORTE,RESOLUCION',
         ];
     }

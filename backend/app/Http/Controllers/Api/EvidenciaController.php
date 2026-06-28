@@ -29,15 +29,19 @@ class EvidenciaController extends Controller
             return response()->json(['message' => "Máximo $limite foto(s) de tipo $tipo"], 422);
         }
 
+        // Rutas ya escritas al disco; si la transacción falla las borramos a mano (el rollback no toca el disco).
+        $rutasGuardadas = [];
+
         try {
             // Todo o nada: si una foto no se guarda, no queda ninguna a medias.
-            DB::transaction(function () use ($request, $incidencia, $user, $tipo) {
+            DB::transaction(function () use ($request, $incidencia, $user, $tipo, &$rutasGuardadas) {
                 foreach ($request->file('fotos') as $foto) {
                     $ruta = $foto->store('incidencias', 'public');
                     // store() devuelve false si la escritura falla (permisos/disco): no creamos evidencia fantasma
                     if ($ruta === false) {
                         throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
                     }
+                    $rutasGuardadas[] = $ruta;
                     $incidencia->evidencias()->create([
                         'url_evidencia' => $ruta,
                         'id_usuario' => $user->id,
@@ -46,6 +50,7 @@ class EvidenciaController extends Controller
                 }
             });
         } catch (AlmacenamientoException $e) {
+            Storage::disk('public')->delete($rutasGuardadas);
             BitacoraError::create([
                 'id_usuario' => $user->id,
                 'tipo_error' => 'ARCHIVO',
@@ -53,6 +58,10 @@ class EvidenciaController extends Controller
             ]);
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
+        } catch (\Throwable $e) {
+            // Si la transacción falla por otra causa (p.ej. el trigger de límite), limpiamos las fotos ya escritas y dejamos que el handler global registre.
+            Storage::disk('public')->delete($rutasGuardadas);
+            throw $e;
         }
 
         // #8/#9 — Aviso de evidencia añadida (aquí y no en trigger: solo al agregar fotos después, no las iniciales).
