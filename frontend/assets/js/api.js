@@ -32,6 +32,8 @@ function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
   // Olvida la foto cacheada del navbar para no mostrar la del usuario anterior.
   localStorage.removeItem("perfil_foto");
+  // Olvida el rol cacheado para no pintar el menú del usuario anterior.
+  localStorage.removeItem("rol_usuario");
 }
 
 // Spinner global (solo aparece si la petición tarda más de 300ms)
@@ -159,6 +161,8 @@ async function apiFetch(endpoint, opciones = {}) {
 
 // Muestra/oculta los enlaces del menú según el rol (el normal arranca en "Mis incidencias").
 function aplicarMenuRol(rol) {
+  // Cachea el rol para que layout.js pinte el menú correcto antes de pedir /user (sin parpadeo).
+  if (rol) localStorage.setItem("rol_usuario", rol);
   const esAdmin = rol === "admin";
   const esNormal = rol === "normal";
 

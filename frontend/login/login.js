@@ -39,8 +39,11 @@ document.addEventListener("DOMContentLoaded", function () {
       // Éxito: guardar token y entrar a la pantalla de arranque según el rol
       guardarToken(data.access_token);
       const usuario = await apiFetch("/user", { sinSpinner: true });
-      toastFlash("Bienvenido de nuevo", "success");
-      window.location.href = inicioSegunRol(usuario.rol ? usuario.rol.nombre_rol : "");
+      const rol = usuario.rol ? usuario.rol.nombre_rol : "";
+      // Cachea el rol para que la página de arranque pinte el menú sin parpadeo.
+      if (rol) localStorage.setItem("rol_usuario", rol);
+      toastFlash("Bienvenido", "success");
+      window.location.href = inicioSegunRol(rol);
     } catch (error) {
       // Mostrar error del backend
       errorBox.textContent = error.message;
