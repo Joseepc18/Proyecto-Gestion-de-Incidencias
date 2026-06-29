@@ -4,17 +4,33 @@ namespace Database\Seeders;
 
 use App\Models\Ciudad;
 use App\Models\Incidencia;
+use App\Models\Rol;
 use App\Models\SubtipoIncidencia;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class IncidenciasSeeder extends Seeder
 {
     public function run(): void
     {
         $admin = User::where('email', 'admin@sistema.com')->first();
-        $tecnico = User::where('email', 'tecnico@sistema.com')->first();
-        $normal = User::where('email', 'normal@sistema.com')->first();
+        $tecnico = User::firstOrCreate(
+            ['email' => 'tecnico@sistema.com'],
+            [
+                'name' => 'Técnico Prueba',
+                'password' => Hash::make('password123'),
+                'id_rol' => Rol::where('nombre_rol', 'tecnico')->first()->id_rol ?? null,
+            ]
+        );
+        $normal = User::firstOrCreate(
+            ['email' => 'normal@sistema.com'],
+            [
+                'name' => 'Usuario Normal',
+                'password' => Hash::make('password123'),
+                'id_rol' => Rol::where('nombre_rol', 'normal')->first()->id_rol ?? null,
+            ]
+        );
 
         $santaElena = Ciudad::where('nombre_ciudad', 'Santa Elena')->first();
         $salinas = Ciudad::where('nombre_ciudad', 'Salinas')->first();
