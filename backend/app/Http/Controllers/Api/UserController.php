@@ -12,11 +12,38 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    // Listado de usuarios con filtro de rol. Por defecto oculta los suspendidos
+    // (soft delete); solo los muestra al pedir ?rol=suspendido.
     public function listado(Request $request)
     {
-        return response()->json(
-            User::with('rol')->orderBy('name')->paginate((int) $request->input('per_page', 10))
-        );
+        $query = User::with('rol')->orderBy('name');
+
+        if ($request->filled('rol')) {
+            if ($request->rol === 'suspendido') {
+                $query->onlyTrashed();
+            } else {
+                $query->whereHas('rol', fn ($q) => $q->where('nombre_rol', $request->rol));
+            }
+        }
+
+        return response()->json($query->paginate((int) $request->input('per_page', 10)));
+    }
+
+    // Restaurar un usuario suspendido (borrado lógico): lo reactiva y vuelve a ser visible.
+    public function restaurar(Request $request, int $id)
+    {
+        $usuario = User::withTrashed()->findOrFail($id);
+
+        if (! $usuario->trashed()) {
+            return response()->json(['message' => 'El usuario no está suspendido'], 422);
+        }
+
+        $usuario->restore();
+
+        return response()->json([
+            'message' => 'Usuario restaurado',
+            'usuario' => new UserResource($usuario->load('rol')),
+        ]);
     }
 
     // Listar los roles disponibles (para el desplegable del formulario).

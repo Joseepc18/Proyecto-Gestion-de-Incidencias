@@ -97,6 +97,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::post('/usuarios', [UserController::class, 'crear']);
         Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
         Route::delete('/usuarios/{usuario}', [UserController::class, 'eliminar']);
+        Route::post('/usuarios/{id}/restaurar', [UserController::class, 'restaurar'])->where('id', '[0-9]+');
         Route::get('/roles', [UserController::class, 'roles']);
     });
 });

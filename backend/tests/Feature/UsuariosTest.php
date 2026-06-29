@@ -104,4 +104,59 @@ class UsuariosTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $admin->id, 'deleted_at' => null]);
     }
+
+    public function test_listado_filtra_por_rol(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $tecnico = $this->crearUsuario('tecnico');
+
+        $respuesta = $this->getJson('/api/usuarios?rol=tecnico&per_page=50')->assertOk();
+
+        foreach ($respuesta->json('data') as $u) {
+            $this->assertSame('tecnico', $u['rol']['nombre_rol']);
+        }
+        $this->assertContains($tecnico->id, collect($respuesta->json('data'))->pluck('id')->all());
+    }
+
+    public function test_listado_oculta_suspendidos_y_los_muestra_con_filtro(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $activo = $this->crearUsuario('tecnico');
+        $suspendido = $this->crearUsuario('tecnico');
+
+        $this->deleteJson("/api/usuarios/{$suspendido->id}")->assertOk();
+
+        // Por defecto el suspendido no aparece entre los activos.
+        $sinFiltro = $this->getJson('/api/usuarios?per_page=50')->assertOk();
+        $idsSinFiltro = collect($sinFiltro->json('data'))->pluck('id')->all();
+        $this->assertContains($activo->id, $idsSinFiltro);
+        $this->assertNotContains($suspendido->id, $idsSinFiltro);
+
+        // Con ?rol=suspendido aparecen solo los soft-deleted (no el activo).
+        $conFiltro = $this->getJson('/api/usuarios?rol=suspendido&per_page=50')->assertOk();
+        $idsSuspendidos = collect($conFiltro->json('data'))->pluck('id')->all();
+        $this->assertContains($suspendido->id, $idsSuspendidos);
+        $this->assertNotContains($activo->id, $idsSuspendidos);
+    }
+
+    public function test_restaurar_reactiva_un_usuario_suspendido(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $suspendido = $this->crearUsuario('tecnico');
+
+        $this->deleteJson("/api/usuarios/{$suspendido->id}")->assertOk();
+        $this->assertSoftDeleted('users', ['id' => $suspendido->id]);
+
+        $this->postJson("/api/usuarios/{$suspendido->id}/restaurar")->assertOk();
+
+        $this->assertDatabaseHas('users', ['id' => $suspendido->id, 'deleted_at' => null]);
+    }
+
+    public function test_restaurar_rechaza_un_usuario_no_suspendido(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $activo = $this->crearUsuario('tecnico');
+
+        $this->postJson("/api/usuarios/{$activo->id}/restaurar")->assertStatus(422);
+    }
 }
