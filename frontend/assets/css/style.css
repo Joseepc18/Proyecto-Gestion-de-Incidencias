@@ -2221,19 +2221,89 @@ html[data-theme="dark"] {
 }
 
 .chat-burbuja {
+  display: flex;
+  flex-direction: column;
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 8px 11px;
   font-size: 0.88rem;
+}
+
+.chat-texto {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.chat-hora {
+  margin-top: 4px;
+  align-self: flex-end;
+  font-size: 0.68rem;
+  opacity: 0.75;
 }
 
 .chat-fila.propio .chat-burbuja {
   background: var(--admin-primary);
   color: #ffffff;
   border-color: var(--admin-primary);
+}
+
+/* Separador de fecha centrado, una vez por día */
+.chat-separador-fecha {
+  align-self: center;
+  margin: 4px 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--admin-muted);
+  background: color-mix(in srgb, var(--admin-surface) 80%, transparent);
+  border: 1px solid var(--admin-border);
+}
+
+/* Cabecera: avatar + nombre + rol del interlocutor */
+.chat-interlocutor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-right: 4px;
+}
+
+.chat-interlocutor-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.chat-interlocutor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-interlocutor-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.chat-interlocutor-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chat-interlocutor-rol {
+  font-size: 0.68rem;
+  opacity: 0.8;
 }
 
 .chat-vacio {

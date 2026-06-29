@@ -63,6 +63,29 @@ function crearChat(idContenedor, idIncidencia, usuario) {
 
   // Ids ya pintados, para no duplicar el mensaje propio (llega por POST y también por WebSocket).
   const idsPintados = new Set();
+  // Día (YYYY-MM-DD local) y usuario del último mensaje pintado: para separador de fecha y agrupación.
+  let ultimoDia = null;
+  let ultimoUsuarioId = null;
+
+  // Fecha legible del separador de día, ej. "28 jun 2026".
+  function textoDia(d) {
+    return d
+      .toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" })
+      .replace(/\./g, "");
+  }
+
+  // Clave del día en zona horaria local (no UTC) para comparar días entre mensajes.
+  function claveDia(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dia = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + dia;
+  }
+
+  // Hora legible dentro de la burbuja, ej. "10:59 p. m.".
+  function textoHora(d) {
+    return d.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" });
+  }
 
   // Pinta una burbuja a partir de un comentario (de la lista REST o del evento en tiempo real).
   function pintarMensaje(c, suave) {
@@ -73,51 +96,71 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     if (vacio) vacio.remove();
 
     const propio = c.usuario && c.usuario.id === usuario.id;
-    const fecha = new Date(c.created_at).toLocaleString("es-EC", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const d = new Date(c.created_at);
+    const dia = claveDia(d);
+    const cambioDia = dia !== ultimoDia;
+    const cambioUsuario = !c.usuario || c.usuario.id !== ultimoUsuarioId;
+    // Mostrar meta (avatar + nombre) solo al inicio de cada bloque: primer mensaje, cambio de día o cambio de autor.
+    const mostrarMeta = ultimoDia === null || cambioDia || cambioUsuario;
+
+    // Separador de fecha centrado, una sola vez por día.
+    if (cambioDia) {
+      const sep = document.createElement("div");
+      sep.className = "chat-separador-fecha";
+      sep.textContent = textoDia(d);
+      mensajes.appendChild(sep);
+    }
 
     const fila = document.createElement("div");
     fila.className = "chat-fila" + (propio ? " propio" : "");
 
-    const meta = document.createElement("p");
-    meta.className = "chat-meta";
+    if (mostrarMeta) {
+      const meta = document.createElement("p");
+      meta.className = "chat-meta";
 
-    // Avatar del contacto (solo en mensajes ajenos): foto de perfil o iniciales.
-    if (!propio) {
-      const avatar = document.createElement("span");
-      avatar.className = "chat-avatar";
-      const foto = c.usuario && c.usuario.foto_perfil;
-      if (foto) {
-        const img = document.createElement("img");
-        img.src = "/storage/" + foto;
-        img.alt = "";
-        avatar.appendChild(img);
-      } else {
-        avatar.textContent = inicialesChat(c.usuario ? c.usuario.name : "");
+      // Avatar del contacto (solo en mensajes ajenos): foto de perfil o iniciales.
+      if (!propio) {
+        const avatar = document.createElement("span");
+        avatar.className = "chat-avatar";
+        const foto = c.usuario && c.usuario.foto_perfil;
+        if (foto) {
+          const img = document.createElement("img");
+          img.src = "/storage/" + foto;
+          img.alt = "";
+          avatar.appendChild(img);
+        } else {
+          avatar.textContent = inicialesChat(c.usuario ? c.usuario.name : "");
+        }
+        meta.appendChild(avatar);
       }
-      meta.appendChild(avatar);
-    }
 
-    const metaTexto = document.createElement("span");
-    metaTexto.textContent = propio
-      ? "Tú · " + fecha
-      : (c.usuario ? c.usuario.name : "Usuario") +
-        " · " +
-        etiquetaRol(c.usuario && c.usuario.rol ? c.usuario.rol.nombre_rol : "") +
-        " · " +
-        fecha;
-    meta.appendChild(metaTexto);
+      const metaTexto = document.createElement("span");
+      metaTexto.textContent = propio
+        ? "Tú"
+        : (c.usuario ? c.usuario.name : "Usuario") +
+          " · " +
+          etiquetaRol(c.usuario && c.usuario.rol ? c.usuario.rol.nombre_rol : "");
+      meta.appendChild(metaTexto);
+      fila.appendChild(meta);
+    }
 
     const burbuja = document.createElement("div");
     burbuja.className = "chat-burbuja";
-    burbuja.textContent = c.comentario;
+    // Texto del comentario como nodo aparte (preserva saltos de línea con CSS white-space: pre-wrap).
+    const spanComentario = document.createElement("span");
+    spanComentario.className = "chat-texto";
+    spanComentario.textContent = c.comentario;
+    // Hora sutil en la esquina inferior derecha de la burbuja.
+    const spanHora = document.createElement("span");
+    spanHora.className = "chat-hora";
+    spanHora.textContent = textoHora(d);
+    burbuja.append(spanComentario, spanHora);
 
-    fila.append(meta, burbuja);
+    fila.appendChild(burbuja);
     mensajes.appendChild(fila);
+
+    ultimoDia = dia;
+    ultimoUsuarioId = c.usuario ? c.usuario.id : null;
     mensajes.scrollTo({ top: mensajes.scrollHeight, behavior: suave ? "smooth" : "instant" });
   }
 
@@ -130,6 +173,8 @@ function crearChat(idContenedor, idIncidencia, usuario) {
 
       mensajes.innerHTML = "";
       idsPintados.clear();
+      ultimoDia = null;
+      ultimoUsuarioId = null;
 
       if (comentarios.length === 0) {
         mensajes.innerHTML = '<p class="chat-vacio">Aún no hay mensajes. Escribe el primero.</p>';

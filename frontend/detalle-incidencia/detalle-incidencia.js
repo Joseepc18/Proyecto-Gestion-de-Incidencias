@@ -395,8 +395,65 @@ function configurarChatFlotante(id) {
   });
 }
 
+// Pinta la cabecera del chat con el interlocutor principal (foto/perfil o iniciales + nombre + rol).
+function pintarInterlocutorCabecera() {
+  const cont = document.getElementById("chatInterlocutor");
+  if (!cont || !incActual || !usuarioActual) return;
+
+  let nombre = "";
+  let rol = "";
+  let foto = null;
+
+  // Orden de prioridad del interlocutor: reportador → técnico responsable → Administración.
+  if (incActual.usuario && incActual.usuario.id !== usuarioActual.id) {
+    nombre = incActual.usuario.name;
+    rol = "Reportador";
+    foto = incActual.usuario.foto_perfil || null;
+  } else if (
+    responsableActual &&
+    responsableActual.usuario &&
+    responsableActual.usuario.id !== usuarioActual.id
+  ) {
+    nombre = responsableActual.usuario.name;
+    rol = "Técnico responsable";
+    foto = responsableActual.usuario.foto_perfil || null;
+  } else if (usuarioActual.rol && usuarioActual.rol.nombre_rol !== "admin") {
+    nombre = "Administración";
+    rol = "Administrador";
+  }
+
+  // Sin interlocutor (p. ej. conversación con uno mismo): se deja el título estático de fallback.
+  if (!nombre) return;
+
+  cont.replaceChildren();
+
+  const avatar = document.createElement("span");
+  avatar.className = "chat-interlocutor-avatar";
+  if (foto) {
+    const img = document.createElement("img");
+    img.src = "/storage/" + foto;
+    img.alt = "";
+    avatar.appendChild(img);
+  } else {
+    avatar.textContent = iniciales(nombre);
+  }
+
+  const info = document.createElement("span");
+  info.className = "chat-interlocutor-info";
+  const spanNombre = document.createElement("span");
+  spanNombre.className = "chat-interlocutor-nombre";
+  spanNombre.textContent = nombre;
+  const spanRol = document.createElement("span");
+  spanRol.className = "chat-interlocutor-rol";
+  spanRol.textContent = rol;
+  info.append(spanNombre, spanRol);
+
+  cont.append(avatar, info);
+}
+
 // Pinta los otros participantes del chat (todos menos quien mira).
 function pintarParticipantes() {
+  pintarInterlocutorCabecera();
   const cont = document.getElementById("chatParticipantes");
   if (!cont || !incActual || !usuarioActual) return;
 
