@@ -1,0 +1,105 @@
+// modal.js — Modal reutilizable para formularios pequeños (crear/editar). Devuelve Promise<boolean>.
+
+/* exported abrirModal */
+/* global escaparHtml */
+
+// alConfirmar(form): callback async; si lanza, el modal queda abierto y muestra el error.
+function abrirModal(opciones = {}) {
+  const {
+    titulo = "",
+    cuerpoHtml = "",
+    textoConfirmar = "Guardar",
+    textoCancelar = "Cancelar",
+    peligro = false,
+    alConfirmar = null,
+  } = opciones;
+
+  return new Promise(function (resolve) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML =
+      '<div class="modal-caja" role="dialog" aria-modal="true">' +
+      '<div class="modal-cabecera">' +
+      '<h3 class="modal-titulo">' +
+      escaparHtml(titulo) +
+      "</h3>" +
+      '<button class="modal-cerrar" type="button" aria-label="Cerrar">' +
+      '<i class="bi bi-x-lg" aria-hidden="true"></i></button>' +
+      "</div>" +
+      '<form class="modal-form" id="modalForm" novalidate>' +
+      '<div class="modal-cuerpo">' +
+      cuerpoHtml +
+      "</div>" +
+      '<p class="modal-error text-danger d-none" role="alert"></p>' +
+      '<div class="modal-acciones">' +
+      '<button class="btn btn-outline-secondary btn-sm" type="button" data-cancelar>' +
+      escaparHtml(textoCancelar) +
+      "</button>" +
+      '<button class="btn btn-sm ' +
+      (peligro ? "btn-danger" : "btn-primary") +
+      '" type="submit" data-confirmar>' +
+      '<span class="spinner-border spinner-border-sm me-1 d-none" data-spinner role="status"></span>' +
+      escaparHtml(textoConfirmar) +
+      "</button>" +
+      "</div></form></div>";
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function () {
+      overlay.classList.add("modal-visible");
+    });
+
+    const form = overlay.querySelector("#modalForm");
+    const error = overlay.querySelector(".modal-error");
+    const btnConfirmar = overlay.querySelector("[data-confirmar]");
+    const spinner = overlay.querySelector("[data-spinner]");
+
+    // Foco al primer control del formulario.
+    const primero = form.querySelector("input, select, textarea");
+    if (primero) setTimeout(() => primero.focus(), 50);
+
+    let cerrado = false;
+    function cerrar(resultado) {
+      if (cerrado) return;
+      cerrado = true;
+      overlay.classList.remove("modal-visible");
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener("keydown", alPulsarTecla);
+      resolve(resultado);
+    }
+
+    function alPulsarTecla(e) {
+      if (e.key === "Escape") cerrar(false);
+    }
+    document.addEventListener("keydown", alPulsarTecla);
+
+    overlay.querySelector(".modal-cerrar").addEventListener("click", () => cerrar(false));
+    overlay.querySelector("[data-cancelar]").addEventListener("click", () => cerrar(false));
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) cerrar(false);
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      error.classList.add("d-none");
+
+      if (!alConfirmar) {
+        cerrar(true);
+        return;
+      }
+
+      btnConfirmar.disabled = true;
+      spinner.classList.remove("d-none");
+      try {
+        await alConfirmar(form);
+        cerrar(true);
+      } catch (err) {
+        error.textContent = err.message || "No se pudo guardar.";
+        error.classList.remove("d-none");
+      } finally {
+        btnConfirmar.disabled = false;
+        spinner.classList.add("d-none");
+      }
+    });
+  });
+}

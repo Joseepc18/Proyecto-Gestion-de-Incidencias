@@ -1,10 +1,10 @@
-// usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y eliminar.
+// usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y suspender en modal.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal */
 
 let usuarioActualId = null;
-// Si es null estamos creando; si tiene un id estamos editando ese usuario.
-let usuarioEditandoId = null;
+// Roles que el admin puede asignar (los normales nacen por auto-registro, no se crean aquí).
+let rolesAsignables = [];
 
 document.addEventListener("DOMContentLoaded", async function () {
   if (!obtenerToken()) {
@@ -40,24 +40,19 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  document.getElementById("formUsuario").addEventListener("submit", guardarUsuario);
-  document.getElementById("btnCancelarEdicion").addEventListener("click", salirModoEdicion);
+  document
+    .getElementById("btnNuevoUsuario")
+    .addEventListener("click", () => abrirModalUsuario(null));
 
-  cargarRoles();
+  await cargarRoles();
   cargarUsuarios();
 });
 
-// Llena el desplegable de roles del formulario.
+// Trae los roles y se queda solo con los asignables por el admin (técnico y admin).
 async function cargarRoles() {
-  const select = document.getElementById("usuarioRol");
   try {
     const roles = await apiFetch("/roles");
-    roles.forEach(function (rol) {
-      const opcion = document.createElement("option");
-      opcion.value = rol.id_rol;
-      opcion.textContent = rol.nombre_rol;
-      select.appendChild(opcion);
-    });
+    rolesAsignables = roles.filter((r) => r.nombre_rol === "tecnico" || r.nombre_rol === "admin");
   } catch {
     mostrarToast("No se pudieron cargar los roles", "error");
   }
@@ -79,7 +74,7 @@ async function cargarUsuarios() {
 
     if (usuarios.length === 0) {
       tbody.innerHTML =
-        '<tr><td colspan="4" class="text-center text-muted py-4">Sin usuarios.</td></tr>';
+        '<tr><td colspan="5" class="text-center text-muted py-4">Sin usuarios.</td></tr>';
       document.getElementById("contenedorPaginacion").innerHTML = "";
       return;
     }
@@ -87,6 +82,11 @@ async function cargarUsuarios() {
     tbody.innerHTML = "";
     usuarios.forEach(function (u) {
       const tr = document.createElement("tr");
+
+      const tdAvatar = document.createElement("td");
+      tdAvatar.style.width = "48px";
+      tdAvatar.appendChild(crearAvatar(u));
+      tr.appendChild(tdAvatar);
 
       const tdNombre = document.createElement("td");
       tdNombre.textContent = u.name;
@@ -129,115 +129,155 @@ async function cargarUsuarios() {
     });
   } catch (error) {
     tbody.innerHTML =
-      '<tr><td colspan="4" class="text-center text-danger py-4">' +
+      '<tr><td colspan="5" class="text-center text-danger py-4">' +
       escaparHtml(error.message) +
       "</td></tr>";
   }
 }
 
-// Construye el menú de 3 puntos (Editar / Eliminar) de una fila.
+// Iniciales para el avatar cuando el usuario no tiene foto.
+function iniciales(nombre) {
+  const p = (nombre || "").trim().split(/\s+/);
+  return ((p[0] ? p[0][0] : "") + (p[1] ? p[1][0] : "")).toUpperCase() || "?";
+}
+
+// Avatar de la fila: foto de perfil o iniciales sobre el color primario.
+function crearAvatar(u) {
+  const avatar = document.createElement("span");
+  avatar.className = "tabla-avatar";
+  if (u.foto_perfil) {
+    const img = document.createElement("img");
+    img.src = "/storage/" + u.foto_perfil;
+    img.alt = "";
+    avatar.appendChild(img);
+  } else {
+    avatar.textContent = iniciales(u.name);
+  }
+  return avatar;
+}
+
+// Menú de acciones de la fila: los normales solo se suspenden; técnicos/admins además se editan.
 function crearMenuAcciones(u) {
+  const esNormal = u.rol && u.rol.nombre_rol === "normal";
+
   const dropdown = document.createElement("div");
   dropdown.className = "dropdown";
   dropdown.innerHTML =
     '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
     '<i class="bi bi-three-dots-vertical"></i></button>' +
     '<ul class="dropdown-menu dropdown-menu-end">' +
-    '<li><a class="dropdown-item" href="#" data-accion="editar">' +
-    '<i class="bi bi-pencil me-2"></i>Editar</a></li>' +
-    '<li><a class="dropdown-item text-danger" href="#" data-accion="eliminar">' +
-    '<i class="bi bi-trash me-2"></i>Eliminar</a></li>' +
+    (esNormal
+      ? ""
+      : '<li><a class="dropdown-item" href="#" data-accion="editar">' +
+        '<i class="bi bi-pencil me-2"></i>Editar</a></li>') +
+    '<li><a class="dropdown-item text-danger" href="#" data-accion="suspender">' +
+    '<i class="bi bi-slash-circle me-2"></i>Suspender</a></li>' +
     "</ul>";
 
-  dropdown.querySelector('[data-accion="editar"]').addEventListener("click", function (e) {
+  const editar = dropdown.querySelector('[data-accion="editar"]');
+  if (editar) {
+    editar.addEventListener("click", function (e) {
+      e.preventDefault();
+      abrirModalUsuario(u);
+    });
+  }
+  dropdown.querySelector('[data-accion="suspender"]').addEventListener("click", function (e) {
     e.preventDefault();
-    editarUsuario(u);
-  });
-  dropdown.querySelector('[data-accion="eliminar"]').addEventListener("click", function (e) {
-    e.preventDefault();
-    eliminarUsuario(u.id, u.name);
+    suspenderUsuario(u.id, u.name);
   });
 
   return dropdown;
 }
 
-// Pasa el formulario a modo edición y lo rellena con los datos del usuario.
-function editarUsuario(u) {
-  usuarioEditandoId = u.id;
-  document.getElementById("usuarioNombre").value = u.name;
-  document.getElementById("usuarioEmail").value = u.email;
-  document.getElementById("usuarioRol").value = u.id_rol;
+// Abre el modal de crear (u = null) o editar (u = usuario) y guarda al confirmar.
+function abrirModalUsuario(u) {
+  const editando = u !== null;
 
-  const pass = document.getElementById("usuarioPassword");
-  pass.value = "";
-  pass.required = false;
-  pass.placeholder = "Dejar vacío para no cambiar";
+  const opciones = rolesAsignables
+    .map(
+      (r) =>
+        '<option value="' +
+        r.id_rol +
+        '"' +
+        (editando && u.id_rol === r.id_rol ? " selected" : "") +
+        ">" +
+        escaparHtml(r.nombre_rol) +
+        "</option>",
+    )
+    .join("");
 
-  document.getElementById("tituloFormUsuario").textContent = "Editar usuario";
-  document.getElementById("btnUsuarioTexto").innerHTML =
-    '<i class="bi bi-check-lg" aria-hidden="true"></i> Guardar';
-  document.getElementById("btnCancelarEdicion").classList.remove("d-none");
+  const cuerpoHtml =
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mNombre">Nombre</label>' +
+    '<input class="form-control form-control-sm" id="mNombre" type="text" required value="' +
+    (editando ? escaparHtml(u.name) : "") +
+    '" />' +
+    "</div>" +
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mEmail">Correo</label>' +
+    '<input class="form-control form-control-sm" id="mEmail" type="email" required value="' +
+    (editando ? escaparHtml(u.email) : "") +
+    '" />' +
+    "</div>" +
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mPassword">Contraseña</label>' +
+    '<div class="input-group input-group-sm">' +
+    '<input class="form-control form-control-sm" id="mPassword" type="password" minlength="8" ' +
+    (editando ? 'placeholder="Dejar vacío para no cambiar"' : "required") +
+    " />" +
+    '<button class="btn toggle-password" type="button" data-target="mPassword" ' +
+    'aria-label="Mostrar contraseña" aria-pressed="false">' +
+    '<i class="bi bi-eye" aria-hidden="true"></i></button>' +
+    "</div></div>" +
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mPassword2">Confirmar contraseña</label>' +
+    '<input class="form-control form-control-sm" id="mPassword2" type="password" minlength="8" ' +
+    (editando ? 'placeholder="Dejar vacío para no cambiar"' : "required") +
+    " />" +
+    "</div>" +
+    '<div class="mb-1">' +
+    '<label class="form-label" for="mRol">Rol</label>' +
+    '<select class="form-select form-select-sm" id="mRol" required>' +
+    opciones +
+    "</select></div>";
 
-  document.getElementById("formUsuario").scrollIntoView({ behavior: "smooth", block: "center" });
+  return abrirModal({
+    titulo: editando ? "Editar usuario" : "Nuevo usuario",
+    cuerpoHtml,
+    textoConfirmar: editando ? "Guardar" : "Crear",
+    alConfirmar: async function (form) {
+      const password = form.querySelector("#mPassword").value;
+      const password2 = form.querySelector("#mPassword2").value;
+      if (password !== password2) {
+        throw new Error("Las contraseñas no coinciden.");
+      }
+
+      const datos = {
+        name: form.querySelector("#mNombre").value.trim(),
+        email: form.querySelector("#mEmail").value.trim(),
+        id_rol: form.querySelector("#mRol").value,
+      };
+      if (password) {
+        datos.password = password;
+        datos.password_confirmation = password2;
+      }
+
+      const endpoint = editando ? "/usuarios/" + u.id : "/usuarios";
+      const metodo = editando ? "PUT" : "POST";
+
+      await apiFetch(endpoint, { method: metodo, body: JSON.stringify(datos) });
+      await cargarUsuarios();
+      mostrarToast(editando ? "Usuario actualizado" : "Usuario creado", "success");
+    },
+  });
 }
 
-// Vuelve el formulario a modo "crear".
-function salirModoEdicion() {
-  usuarioEditandoId = null;
-  document.getElementById("formUsuario").reset();
-
-  const pass = document.getElementById("usuarioPassword");
-  pass.required = true;
-  pass.placeholder = "";
-
-  document.getElementById("tituloFormUsuario").textContent = "Nuevo usuario";
-  document.getElementById("btnUsuarioTexto").innerHTML =
-    '<i class="bi bi-plus-lg" aria-hidden="true"></i> Crear';
-  document.getElementById("btnCancelarEdicion").classList.add("d-none");
-}
-
-// Envía el formulario: crea (POST) o actualiza (PUT) según el modo.
-async function guardarUsuario(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnCrearUsuario");
-  const spinner = document.getElementById("usuarioSpinner");
-
-  const datos = {
-    name: document.getElementById("usuarioNombre").value.trim(),
-    email: document.getElementById("usuarioEmail").value.trim(),
-    id_rol: document.getElementById("usuarioRol").value,
-  };
-  const password = document.getElementById("usuarioPassword").value;
-  if (password) {
-    datos.password = password;
-  }
-
-  const editando = usuarioEditandoId !== null;
-  const endpoint = editando ? "/usuarios/" + usuarioEditandoId : "/usuarios";
-  const metodo = editando ? "PUT" : "POST";
-
-  btn.disabled = true;
-  spinner.classList.remove("d-none");
-
-  try {
-    await apiFetch(endpoint, { method: metodo, body: JSON.stringify(datos) });
-    salirModoEdicion();
-    await cargarUsuarios();
-    mostrarToast(editando ? "Usuario actualizado" : "Usuario creado", "success");
-  } catch (error) {
-    mostrarToast(error.message, "error");
-  } finally {
-    btn.disabled = false;
-    spinner.classList.add("d-none");
-  }
-}
-
-// Elimina (borrado lógico) un usuario.
-async function eliminarUsuario(id, nombre) {
+// Suspende (borrado lógico) un usuario.
+async function suspenderUsuario(id, nombre) {
   const ok = await confirmar({
-    titulo: "¿Eliminar usuario?",
-    mensaje: 'Se eliminará la cuenta de "' + nombre + '".',
-    textoConfirmar: "Eliminar",
+    titulo: "¿Suspender usuario?",
+    mensaje: 'Se suspenderá la cuenta de "' + nombre + '". No podrá iniciar sesión.',
+    textoConfirmar: "Suspender",
     peligro: true,
   });
   if (!ok) return;
@@ -245,7 +285,7 @@ async function eliminarUsuario(id, nombre) {
   try {
     await apiFetch("/usuarios/" + id, { method: "DELETE" });
     await cargarUsuarios();
-    mostrarToast("Usuario eliminado", "success");
+    mostrarToast("Usuario suspendido", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
   }

@@ -32,85 +32,12 @@
                   <p class="text-muted mb-0">Crea y administra las cuentas del sistema.</p>
                 </div>
               </div>
+              <div class="heading-actions">
+                <button class="btn btn-primary btn-sm" type="button" id="btnNuevoUsuario">
+                  <i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo usuario
+                </button>
+              </div>
             </div>
-
-            <!-- Panel: crear usuario -->
-            <section class="panel mb-4">
-              <div class="panel-header">
-                <h2 class="h5 mb-0 section-title">
-                  <i class="bi bi-person-plus" aria-hidden="true"></i>
-                  <span id="tituloFormUsuario">Nuevo usuario</span>
-                </h2>
-              </div>
-              <div class="p-3">
-                <form id="formUsuario" class="row g-2 align-items-end">
-                  <div class="col-md-3">
-                    <label for="usuarioNombre" class="form-label">Nombre</label>
-                    <input
-                      class="form-control form-control-sm"
-                      type="text"
-                      id="usuarioNombre"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-3">
-                    <label for="usuarioEmail" class="form-label">Correo</label>
-                    <input
-                      class="form-control form-control-sm"
-                      type="email"
-                      id="usuarioEmail"
-                      required
-                    />
-                  </div>
-                  <div class="col-md-2">
-                    <label for="usuarioPassword" class="form-label">Contraseña</label>
-                    <div class="input-group input-group-sm">
-                      <input
-                        class="form-control form-control-sm"
-                        type="password"
-                        id="usuarioPassword"
-                        minlength="8"
-                        required
-                      />
-                      <button
-                        class="btn toggle-password"
-                        type="button"
-                        data-target="usuarioPassword"
-                        aria-label="Mostrar contraseña"
-                        aria-pressed="false"
-                      >
-                        <i class="bi bi-eye" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <label for="usuarioRol" class="form-label">Rol</label>
-                    <select class="form-select form-select-sm" id="usuarioRol" required>
-                      <option value="">Seleccionar...</option>
-                    </select>
-                  </div>
-                  <div class="col-md-2">
-                    <button class="btn btn-primary btn-sm w-100" type="submit" id="btnCrearUsuario">
-                      <span
-                        class="spinner-border spinner-border-sm me-1 d-none"
-                        id="usuarioSpinner"
-                        role="status"
-                      ></span>
-                      <span id="btnUsuarioTexto"
-                        ><i class="bi bi-plus-lg" aria-hidden="true"></i> Crear</span
-                      >
-                    </button>
-                    <button
-                      class="btn btn-outline-secondary btn-sm w-100 mt-1 d-none"
-                      type="button"
-                      id="btnCancelarEdicion"
-                    >
-                      <i class="bi bi-x-lg" aria-hidden="true"></i> Cancelar
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </section>
 
             <!-- Panel: listado de usuarios -->
             <section class="panel">
@@ -124,6 +51,7 @@
                 <table class="table align-middle mb-0">
                   <thead>
                     <tr>
+                      <th></th>
                       <th>Nombre</th>
                       <th>Correo</th>
                       <th>Rol</th>
@@ -148,6 +76,7 @@
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script src="../assets/js/confirmar.js"></script>
+    <script src="../assets/js/modal.js"></script>
     <script src="../assets/js/password.js"></script>
     <script src="../assets/js/layout.js"></script>
     <script src="../assets/js/notificaciones.js"></script>

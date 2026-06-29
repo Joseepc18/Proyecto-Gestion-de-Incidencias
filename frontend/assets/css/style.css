@@ -1656,6 +1656,111 @@ html[data-theme="dark"] {
   gap: 0.5rem;
 }
 
+/* Modal de formulario reutilizable (modal.js) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1095;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.modal-visible {
+  opacity: 1;
+}
+.modal-caja {
+  width: min(480px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  border-radius: 14px;
+  box-shadow: var(--admin-shadow-lg);
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.modal-overlay.modal-visible .modal-caja {
+  transform: scale(1);
+}
+.modal-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1.1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+.modal-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+.modal-cerrar {
+  border: 0;
+  background: transparent;
+  color: var(--admin-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+.modal-cerrar:hover {
+  color: var(--admin-text);
+}
+.modal-cuerpo {
+  padding: 1.25rem;
+}
+.modal-error {
+  font-size: 0.85rem;
+  margin: 0 1.25rem;
+}
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+
+/* Paginación temática (paginacion.js) */
+.cursor-pointer {
+  cursor: pointer;
+}
+.pagination {
+  gap: 0.25rem;
+}
+.pagination .page-link {
+  min-width: 34px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.pagination .page-link:hover {
+  background: color-mix(in srgb, var(--admin-primary) 12%, transparent);
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
+.pagination .page-item.active .page-link {
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+  color: #ffffff;
+}
+.pagination .page-item.disabled .page-link {
+  background: transparent;
+  border-color: var(--admin-border);
+  color: var(--admin-muted);
+  opacity: 0.55;
+}
+
 /* Página de acceso con slider (login + registro en una sola vista) */
 .auth-slider {
   position: relative;
@@ -2229,6 +2334,26 @@ html[data-theme="dark"] {
 .tecnico-nombre {
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+/* Avatar pequeño para filas de tabla (foto de perfil o iniciales) */
+.tabla-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-grid;
+  place-items: center;
+  background: var(--admin-primary);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.tabla-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Timeline del historial de estados */
