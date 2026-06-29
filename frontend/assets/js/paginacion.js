@@ -11,6 +11,38 @@
  */
 /* exported renderizarPaginacion */
 
+// Lista de páginas a mostrar: extremos siempre, una ventana alrededor de la actual,
+// "…" solo cuando oculta más de una página (si oculta una sola, se muestra ese número).
+function construirPaginas(current, last) {
+  if (last <= 7) {
+    return Array.from({ length: last }, (_, i) => i + 1);
+  }
+
+  const claves = new Set([1, last, current, current - 1, current + 1]);
+  if (current <= 3) {
+    claves.add(2).add(3);
+  }
+  if (current >= last - 2) {
+    claves.add(last - 1).add(last - 2);
+  }
+
+  const orden = [...claves].filter((p) => p >= 1 && p <= last).sort((a, b) => a - b);
+
+  const paginas = [];
+  orden.forEach((p, i) => {
+    if (i > 0) {
+      const salto = p - orden[i - 1];
+      if (salto === 2) {
+        paginas.push(orden[i - 1] + 1);
+      } else if (salto > 2) {
+        paginas.push("...");
+      }
+    }
+    paginas.push(p);
+  });
+  return paginas;
+}
+
 function renderizarPaginacion({
   respuesta,
   idContenedor,
@@ -30,25 +62,7 @@ function renderizarPaginacion({
     return;
   }
 
-  // Generar botones numéricos con elipsis
-  const paginas = [];
-  if (last <= 7) {
-    for (let i = 1; i <= last; i++) paginas.push(i);
-  } else {
-    paginas.push(1);
-    if (current > 3) paginas.push("...");
-
-    let start = Math.max(2, current - 1);
-    let end = Math.min(last - 1, current + 1);
-
-    if (current === 1) end = 3;
-    if (current === last) start = last - 2;
-
-    for (let i = start; i <= end; i++) paginas.push(i);
-
-    if (current < last - 2) paginas.push("...");
-    paginas.push(last);
-  }
+  const paginas = construirPaginas(current, last);
 
   let htmlBotones = paginas
     .map((p) => {
