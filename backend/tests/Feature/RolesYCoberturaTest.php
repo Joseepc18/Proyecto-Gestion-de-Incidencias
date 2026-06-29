@@ -274,7 +274,7 @@ class RolesYCoberturaTest extends TestCase
     public function test_admin_actualiza_y_elimina_usuario(): void
     {
         $rolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
-        $objetivo = $this->crearUsuario('normal');
+        $objetivo = $this->crearUsuario('tecnico');
         Sanctum::actingAs($this->crearUsuario('admin'));
 
         $this->putJson("/api/usuarios/{$objetivo->id}", [

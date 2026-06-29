@@ -20,7 +20,8 @@ class CrearUsuarioRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->withoutTrashed()],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
-            'id_rol' => 'required|exists:roles,id_rol',
+            // El admin solo crea técnicos u otros admins; los normales nacen por auto-registro.
+            'id_rol' => ['required', Rule::exists('roles', 'id_rol')->whereIn('nombre_rol', ['tecnico', 'admin'])],
         ];
     }
 }

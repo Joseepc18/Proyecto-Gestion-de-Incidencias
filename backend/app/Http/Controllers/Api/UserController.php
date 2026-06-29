@@ -58,16 +58,16 @@ class UserController extends Controller
         return response()->json(new UserResource($usuario->load('rol')));
     }
 
-    // Eliminar (borrado lógico) un usuario.
+    // Suspender (borrado lógico) un usuario: lo desactiva y revoca sus tokens.
     public function eliminar(Request $request, User $usuario)
     {
         if ($usuario->id === $request->user()->id) {
-            return response()->json(['message' => 'No puedes eliminar tu propia cuenta'], 422);
+            return response()->json(['message' => 'No puedes suspender tu propia cuenta'], 422);
         }
 
         $usuario->tokens()->delete();
         $usuario->delete();
 
-        return response()->json(['message' => 'Usuario eliminado']);
+        return response()->json(['message' => 'Usuario suspendido']);
     }
 }
