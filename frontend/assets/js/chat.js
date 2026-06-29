@@ -95,7 +95,6 @@ function crearChat(idContenedor, idIncidencia, usuario) {
         const img = document.createElement("img");
         img.src = "/storage/" + foto;
         img.alt = "";
-        img.loading = "lazy";
         avatar.appendChild(img);
       } else {
         avatar.textContent = inicialesChat(c.usuario ? c.usuario.name : "");
