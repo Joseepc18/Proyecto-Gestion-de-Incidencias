@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ComentarioCreado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CrearComentarioRequest;
 use App\Http\Requests\EditarComentarioRequest;
@@ -33,7 +34,7 @@ class ComentarioController extends Controller
                 'comentario' => $datos['comentario'],
             ]);
 
-            event(new \App\Events\ComentarioCreado($comentario));
+            event(new ComentarioCreado($comentario));
 
             return response()->json($comentario->load('usuario.rol'), 201);
         } catch (\Exception $e) {

@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\UserController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +41,9 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Autorización de canales privados de WebSocket (Reverb); valida con el token Sanctum.
+    Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
 
     // Apis de catálogos para poblar los formularios
     Route::get('/catalogos/tipos-incidencia', [CatalogoController::class, 'tiposIncidencia']);

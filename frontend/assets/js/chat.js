@@ -1,12 +1,35 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch */
+/* global apiFetch, obtenerToken, Echo, Pusher */
 /* exported crearChat */
 
 // Etiqueta legible del rol del autor de un mensaje.
 function etiquetaRol(rol) {
   const mapa = { admin: "Administrador", tecnico: "Técnico", normal: "Reportador" };
   return mapa[rol] || "Usuario";
+}
+
+// Instancia única de Echo para toda la página (evita abrir varias conexiones WebSocket).
+let echoSingleton = null;
+
+// Crea (o reutiliza) el cliente de Echo apuntando al servidor Reverb por detrás de Nginx.
+function obtenerEcho() {
+  if (echoSingleton) return echoSingleton;
+  if (typeof Echo === "undefined" || typeof Pusher === "undefined") return null;
+
+  const esHttps = window.location.protocol === "https:";
+  echoSingleton = new Echo({
+    broadcaster: "reverb",
+    key: "incidencias-key",
+    wsHost: window.location.hostname,
+    wsPort: esHttps ? 443 : 80,
+    wssPort: esHttps ? 443 : 80,
+    forceTLS: esHttps,
+    enabledTransports: ["ws", "wss"],
+    authEndpoint: "/api/broadcasting/auth",
+    auth: { headers: { Authorization: "Bearer " + obtenerToken() } },
+  });
+  return echoSingleton;
 }
 
 // idContenedor: div del chat; idIncidencia: hilo; usuario: autenticado (para "Tú").
@@ -30,49 +53,63 @@ function crearChat(idContenedor, idIncidencia, usuario) {
   const spinner = cont.querySelector("#chatSpinner");
   const icono = cont.querySelector("#chatIcono");
 
-  // Trae el hilo y lo pinta como burbujas. suave: scroll animado (solo al enviar, no al cargar).
+  // Ids ya pintados, para no duplicar el mensaje propio (llega por POST y también por WebSocket).
+  const idsPintados = new Set();
+
+  // Pinta una burbuja a partir de un comentario (de la lista REST o del evento en tiempo real).
+  function pintarMensaje(c, suave) {
+    if (c.id_comentario && idsPintados.has(c.id_comentario)) return;
+    if (c.id_comentario) idsPintados.add(c.id_comentario);
+
+    const vacio = mensajes.querySelector(".chat-vacio");
+    if (vacio) vacio.remove();
+
+    const propio = c.usuario && c.usuario.id === usuario.id;
+    const fecha = new Date(c.created_at).toLocaleString("es-EC", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const fila = document.createElement("div");
+    fila.className = "chat-fila" + (propio ? " propio" : "");
+
+    const meta = document.createElement("p");
+    meta.className = "chat-meta";
+    meta.textContent = propio
+      ? "Tú · " + fecha
+      : (c.usuario ? c.usuario.name : "Usuario") +
+        " · " +
+        etiquetaRol(c.usuario && c.usuario.rol ? c.usuario.rol.nombre_rol : "") +
+        " · " +
+        fecha;
+
+    const burbuja = document.createElement("div");
+    burbuja.className = "chat-burbuja";
+    burbuja.textContent = c.comentario;
+
+    fila.append(meta, burbuja);
+    mensajes.appendChild(fila);
+    mensajes.scrollTo({ top: mensajes.scrollHeight, behavior: suave ? "smooth" : "instant" });
+  }
+
+  // Trae el hilo completo y lo repinta. suave: scroll animado (solo al enviar, no al cargar).
   async function recargar(suave) {
     try {
       const comentarios = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
         sinSpinner: true,
       });
 
+      mensajes.innerHTML = "";
+      idsPintados.clear();
+
       if (comentarios.length === 0) {
         mensajes.innerHTML = '<p class="chat-vacio">Aún no hay mensajes. Escribe el primero.</p>';
         return;
       }
 
-      mensajes.innerHTML = "";
-      comentarios.forEach(function (c) {
-        const propio = c.usuario && c.usuario.id === usuario.id;
-        const fecha = new Date(c.created_at).toLocaleString("es-EC", {
-          day: "2-digit",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        const fila = document.createElement("div");
-        fila.className = "chat-fila" + (propio ? " propio" : "");
-
-        const meta = document.createElement("p");
-        meta.className = "chat-meta";
-        meta.textContent = propio
-          ? "Tú · " + fecha
-          : (c.usuario ? c.usuario.name : "Usuario") +
-            " · " +
-            etiquetaRol(c.usuario && c.usuario.rol ? c.usuario.rol.nombre_rol : "") +
-            " · " +
-            fecha;
-
-        const burbuja = document.createElement("div");
-        burbuja.className = "chat-burbuja";
-        burbuja.textContent = c.comentario;
-
-        fila.append(meta, burbuja);
-        mensajes.appendChild(fila);
-      });
-
+      comentarios.forEach((c) => pintarMensaje(c, false));
       mensajes.scrollTo({ top: mensajes.scrollHeight, behavior: suave ? "smooth" : "instant" });
     } catch (error) {
       const p = document.createElement("p");
@@ -100,13 +137,14 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     icono.classList.add("d-none");
 
     try {
-      await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
+      const creado = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
         method: "POST",
         body: JSON.stringify({ comentario: valor }),
         sinSpinner: true,
       });
       texto.value = "";
-      await recargar(true);
+      // Pinta el propio al instante; si luego llega por WebSocket, el dedupe lo ignora.
+      pintarMensaje(creado, true);
     } catch (error) {
       const p = document.createElement("p");
       p.className = "chat-vacio text-danger";
@@ -121,6 +159,19 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     }
   });
 
+  // Suscripción en tiempo real: pinta los mensajes de los demás en cuanto llegan.
+  let canal = null;
+  const echo = obtenerEcho();
+  if (echo) {
+    canal = echo.private("incidencia." + idIncidencia);
+    canal.listen(".ComentarioCreado", (c) => pintarMensaje(c, true));
+  }
+
+  // Cierra la suscripción del canal (lo llama la página al cambiar de incidencia).
+  function detener() {
+    if (canal && echoSingleton) echoSingleton.leave("incidencia." + idIncidencia);
+  }
+
   recargar();
-  return { recargar };
+  return { recargar, detener };
 }
