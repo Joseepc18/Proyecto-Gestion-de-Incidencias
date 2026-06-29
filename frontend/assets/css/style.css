@@ -2058,6 +2058,47 @@ html[data-theme="dark"] {
   overflow-y: auto;
 }
 
+/* Paginación de flechas (‹ ›) exclusiva del feed de Mis Incidencias:
+   compacta y pegada al listado, evita el scroll vertical del helper de números. */
+.mis-pag-flechas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.mis-pag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.mis-pag-btn:hover:not(:disabled) {
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+  color: #fff;
+}
+
+.mis-pag-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mis-pag-info {
+  font-size: 0.72rem;
+  color: var(--admin-muted);
+  white-space: nowrap;
+}
+
 .mis-detalle {
   right: 16px;
   bottom: 16px;

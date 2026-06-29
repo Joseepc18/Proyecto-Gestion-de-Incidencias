@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, renderizarPaginacion */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia */
 
 let usuarioActual = null;
 let mapa = null;
@@ -82,25 +82,10 @@ async function cargarLista() {
       contenedor.innerHTML =
         '<p class="text-muted small text-center py-4 mb-0">No se encontraron incidencias.</p>';
       info.textContent = "";
-      document.getElementById("contenedorPaginacion").innerHTML = "";
+      document.getElementById("paginacionMis").innerHTML = "";
       if (mapa) mapa.pintarPines([], seleccionarIncidencia);
       return;
     }
-
-    renderizarPaginacion({
-      respuesta: respuesta,
-      idContenedor: "contenedorPaginacion",
-      onPageChange: (p) => {
-        paginaActual = p;
-        cargarLista();
-      },
-      onPerPageChange: (pp) => {
-        porPagina = pp;
-        paginaActual = 1;
-        cargarLista();
-      },
-      perPage: porPagina,
-    });
 
     contenedor.innerHTML = incidencias
       .map(function (inc) {
@@ -130,6 +115,12 @@ async function cargarLista() {
       })
       .join("");
 
+    // Paginación simple de flechas (‹ ›): no requiere hacer scroll hacia los números.
+    const current = respuesta.current_page || 1;
+    const last = respuesta.last_page || 1;
+    const total = respuesta.total || 0;
+    renderFlechasPaginacion(current, last, total, respuesta.from || 0, respuesta.to || 0);
+
     info.textContent =
       "Mostrando " + incidencias.length + " de " + respuesta.total + " incidencias";
 
@@ -154,6 +145,56 @@ async function cargarLista() {
       '<p class="text-danger small text-center py-4 mb-0">' + escaparHtml(error.message) + "</p>";
     info.textContent = "";
   }
+}
+
+// Render compacto de flechas (‹ página ›) para el feed de Mis Incidencias.
+// Vive solo en esta página: no usa el helper compartido paginacion.js para no forzar
+// el scroll del panel hacia los números cuando hay muchas incidencias.
+function renderFlechasPaginacion(current, last, total, from, to) {
+  const cont = document.getElementById("paginacionMis");
+  if (!cont) return;
+
+  if (last <= 1) {
+    cont.innerHTML = "";
+    return;
+  }
+
+  const primera = current === 1;
+  const ultima = current === last;
+
+  cont.innerHTML =
+    '<button type="button" class="mis-pag-btn" data-page="' +
+    (current - 1) +
+    '" ' +
+    (primera ? "disabled" : "") +
+    ' aria-label="Página anterior"><i class="bi bi-chevron-left"></i></button>' +
+    '<span class="mis-pag-info">Pág. ' +
+    current +
+    " / " +
+    last +
+    " · " +
+    from +
+    "–" +
+    to +
+    " / " +
+    total +
+    "</span>" +
+    '<button type="button" class="mis-pag-btn" data-page="' +
+    (current + 1) +
+    '" ' +
+    (ultima ? "disabled" : "") +
+    ' aria-label="Página siguiente"><i class="bi bi-chevron-right"></i></button>';
+
+  cont.querySelectorAll("[data-page]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (btn.disabled) return;
+      const p = parseInt(btn.getAttribute("data-page"), 10);
+      if (p >= 1 && p <= last && p !== current) {
+        paginaActual = p;
+        cargarLista();
+      }
+    });
+  });
 }
 
 // Paso 3 — Carga el resumen liviano de la incidencia en la tarjeta derecha.
