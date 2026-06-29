@@ -70,7 +70,6 @@ let filtroEstado = "";
 // Paso 2 — Trae las incidencias del usuario y pinta las tarjetas en #listaIncidencias.
 async function cargarLista() {
   const contenedor = document.getElementById("listaIncidencias");
-  const info = document.getElementById("listaInfo");
 
   const params = new URLSearchParams();
   params.set("page", paginaActual);
@@ -86,7 +85,6 @@ async function cargarLista() {
     if (incidencias.length === 0) {
       contenedor.innerHTML =
         '<p class="text-muted small text-center py-4 mb-0">No se encontraron incidencias.</p>';
-      info.textContent = "";
       document.getElementById("paginacionMis").innerHTML = "";
       if (mapa) mapa.pintarPines([], seleccionarIncidencia);
       return;
@@ -126,9 +124,6 @@ async function cargarLista() {
     const total = respuesta.total || 0;
     renderFlechasPaginacion(current, last, total, respuesta.from || 0, respuesta.to || 0);
 
-    info.textContent =
-      "Mostrando " + incidencias.length + " de " + respuesta.total + " incidencias";
-
     if (mapa) {
       const pines = incidencias
         .filter(function (i) {
@@ -148,7 +143,6 @@ async function cargarLista() {
   } catch (error) {
     contenedor.innerHTML =
       '<p class="text-danger small text-center py-4 mb-0">' + escaparHtml(error.message) + "</p>";
-    info.textContent = "";
   }
 }
 
