@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const usuario = await apiFetch("/user", { sinSpinner: true });
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
       if (rol) localStorage.setItem("rol_usuario", rol);
+      // Cachea la foto para que el navbar la pinte ya en la primera pantalla tras iniciar sesión.
+      localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
       toastFlash("Bienvenido", "success");
       window.location.href = inicioSegunRol(rol);
     } catch (error) {

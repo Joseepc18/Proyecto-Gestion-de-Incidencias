@@ -107,6 +107,30 @@
                         Mínimo 8 caracteres. Déjala vacía para conservarla.
                       </div>
                     </div>
+                    <div class="mb-3">
+                      <label for="perfilPasswordConfirm" class="form-label">
+                        Confirmar nueva contraseña
+                      </label>
+                      <div class="input-group">
+                        <input
+                          class="form-control"
+                          type="password"
+                          id="perfilPasswordConfirm"
+                          minlength="8"
+                          placeholder="Repite la nueva contraseña"
+                          autocomplete="new-password"
+                        />
+                        <button
+                          class="btn toggle-password"
+                          type="button"
+                          data-target="perfilPasswordConfirm"
+                          aria-label="Mostrar contraseña"
+                          aria-pressed="false"
+                        >
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </div>
                     <div class="d-flex justify-content-end">
                       <button class="btn btn-primary" type="submit" id="btnGuardarPerfil">
                         <span

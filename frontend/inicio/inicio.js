@@ -53,12 +53,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("saludoNombre").textContent = usuario.name;
 
     aplicarMenuRol("admin");
-    await cargarDashboard();
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";
     return;
   }
+
+  // El dashboard va aparte: si su render falla NO debe cerrar la sesión (eso causaba el logout del admin).
+  await cargarDashboard();
 
   document.getElementById("btnLogout").addEventListener("click", async (evento) => {
     evento.preventDefault();
@@ -93,10 +95,14 @@ async function cargarDashboard() {
     return;
   }
 
-  pintarKpis(totales, datos.promedio_dias);
-  document.getElementById("adminDashboard").classList.remove("d-none");
-  pintarGraficas(datos);
-  await pintarMapa(datos.por_provincia || []);
+  try {
+    pintarKpis(totales, datos.promedio_dias);
+    document.getElementById("adminDashboard").classList.remove("d-none");
+    pintarGraficas(datos);
+    await pintarMapa(datos.por_provincia || []);
+  } catch {
+    mostrarToast("No se pudo dibujar el panel.", "error");
+  }
 }
 
 // Rellena las 5 tarjetas KPI con los conteos globales y el promedio de resolución.

@@ -9,6 +9,14 @@ function etiquetaRol(rol) {
   return mapa[rol] || "Usuario";
 }
 
+// Iniciales para el avatar del chat cuando el contacto no tiene foto.
+function inicialesChat(nombre) {
+  const p = (nombre || "").trim().split(/\s+/);
+  const a = p[0] ? p[0][0] : "";
+  const b = p[1] ? p[1][0] : "";
+  return (a + b).toUpperCase() || "?";
+}
+
 // Instancia única de Echo para toda la página (evita abrir varias conexiones WebSocket).
 let echoSingleton = null;
 
@@ -77,13 +85,33 @@ function crearChat(idContenedor, idIncidencia, usuario) {
 
     const meta = document.createElement("p");
     meta.className = "chat-meta";
-    meta.textContent = propio
+
+    // Avatar del contacto (solo en mensajes ajenos): foto de perfil o iniciales.
+    if (!propio) {
+      const avatar = document.createElement("span");
+      avatar.className = "chat-avatar";
+      const foto = c.usuario && c.usuario.foto_perfil;
+      if (foto) {
+        const img = document.createElement("img");
+        img.src = "/storage/" + foto;
+        img.alt = "";
+        img.loading = "lazy";
+        avatar.appendChild(img);
+      } else {
+        avatar.textContent = inicialesChat(c.usuario ? c.usuario.name : "");
+      }
+      meta.appendChild(avatar);
+    }
+
+    const metaTexto = document.createElement("span");
+    metaTexto.textContent = propio
       ? "Tú · " + fecha
       : (c.usuario ? c.usuario.name : "Usuario") +
         " · " +
         etiquetaRol(c.usuario && c.usuario.rol ? c.usuario.rol.nombre_rol : "") +
         " · " +
         fecha;
+    meta.appendChild(metaTexto);
 
     const burbuja = document.createElement("div");
     burbuja.className = "chat-burbuja";

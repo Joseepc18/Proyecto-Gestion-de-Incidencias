@@ -128,8 +128,14 @@ async function guardarPerfil(e) {
   datos.append("email", document.getElementById("perfilEmail").value.trim());
 
   const password = document.getElementById("perfilPassword").value;
+  const passwordConfirm = document.getElementById("perfilPasswordConfirm").value;
   if (password) {
+    if (password !== passwordConfirm) {
+      mostrarToast("Las contraseñas no coinciden.", "error");
+      return;
+    }
     datos.append("password", password);
+    datos.append("password_confirmation", passwordConfirm);
   }
   if (fotoSeleccionada) {
     datos.append("foto", fotoSeleccionada);
@@ -147,6 +153,7 @@ async function guardarPerfil(e) {
     fotoSeleccionada = null;
     quitarFoto = false;
     document.getElementById("perfilPassword").value = "";
+    document.getElementById("perfilPasswordConfirm").value = "";
     mostrarAvatar(fotoActual ? "/storage/" + fotoActual : null);
 
     document.getElementById("nombreUsuario").textContent = usuario.name;
