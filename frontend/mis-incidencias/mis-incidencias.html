@@ -32,14 +32,36 @@
           <section class="mis-panel mis-feed" id="feedPanel">
             <div class="mis-feed-header">
               <h2 class="h6 mb-2">Mis Incidencias</h2>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="filtroBusqueda"
-                  placeholder="Buscar incidencia..."
-                />
+              <div class="d-flex gap-1">
+                <div class="input-group input-group-sm flex-fill">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="filtroBusqueda"
+                    placeholder="Buscar incidencia..."
+                  />
+                </div>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-light btn-sm px-2"
+                    type="button"
+                    id="btnFiltroEstado"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    title="Filtrar por estado"
+                  >
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnFiltroEstado">
+                    <li><a class="dropdown-item active" href="#" data-estado="">Todos</a></li>
+                    <li><a class="dropdown-item" href="#" data-estado="PENDIENTE">Pendiente</a></li>
+                    <li>
+                      <a class="dropdown-item" href="#" data-estado="EN_PROCESO">En proceso</a>
+                    </li>
+                    <li><a class="dropdown-item" href="#" data-estado="RESUELTO">Resuelto</a></li>
+                  </ul>
+                </div>
               </div>
             </div>
 

@@ -52,6 +52,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     timerBusqueda = setTimeout(cargarLista, 400);
   });
 
+  inicializarFiltroEstado();
+
   mapa = crearMapaIncidencias("mapaMisIncidencias");
   setTimeout(function () {
     mapa.map.invalidateSize();
@@ -62,6 +64,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 let paginaActual = 1;
 let porPagina = 10;
+// Filtro de estado del feed ('' = todos).
+let filtroEstado = "";
 
 // Paso 2 — Trae las incidencias del usuario y pinta las tarjetas en #listaIncidencias.
 async function cargarLista() {
@@ -73,6 +77,7 @@ async function cargarLista() {
   params.set("per_page", porPagina);
   const busqueda = document.getElementById("filtroBusqueda").value.trim();
   if (busqueda) params.set("busqueda", busqueda);
+  if (filtroEstado) params.set("estado", filtroEstado);
 
   try {
     const respuesta = await apiFetch("/incidencias?" + params.toString());
@@ -250,4 +255,25 @@ async function seleccionarIncidencia(id) {
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
   }
+}
+
+// Popover compacto de filtro por estado del feed. Solo cambia el activo del dropdown
+// y recarga la lista; no muestra texto en el botón para ahorrar ancho en el panel.
+function inicializarFiltroEstado() {
+  document
+    .querySelectorAll("#btnFiltroEstado + .dropdown-menu .dropdown-item")
+    .forEach(function (item) {
+      item.addEventListener("click", function (e) {
+        e.preventDefault();
+        document
+          .querySelectorAll("#btnFiltroEstado + .dropdown-menu .dropdown-item")
+          .forEach(function (i) {
+            i.classList.remove("active");
+          });
+        this.classList.add("active");
+        filtroEstado = this.dataset.estado || "";
+        paginaActual = 1;
+        cargarLista();
+      });
+    });
 }
