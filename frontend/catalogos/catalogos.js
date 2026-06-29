@@ -1,12 +1,13 @@
-// catalogos.js — Gestión de tipos y subtipos de incidencia (solo admin): listar, crear, editar y eliminar.
+// catalogos.js — Tipos y subtipos de incidencia (solo admin): tabla única con toggle, crear/editar en modal.
 
-// Cache del último listado (tipos con sus subtipos anidados) para no pedirlo de más.
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml */
+/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion */
 
+// Catálogo completo (tipos con sus subtipos anidados) cacheado para paginar en cliente.
 let tipos = [];
-// Si es null estamos creando; si tiene un id estamos editando ese registro.
-let tipoEditandoId = null;
-let subtipoEditandoId = null;
+let vista = "tipos";
+let filtroTipo = "";
+let paginaActual = 1;
+let porPagina = 10;
 
 document.addEventListener("DOMContentLoaded", async function () {
   if (!obtenerToken()) {
@@ -41,137 +42,299 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = "../login/login.html";
   });
 
-  document.getElementById("formTipo").addEventListener("submit", guardarTipo);
-  document.getElementById("btnCancelarTipo").addEventListener("click", salirModoEdicionTipo);
-  document.getElementById("formSubtipo").addEventListener("submit", guardarSubtipo);
-  document.getElementById("btnCancelarSubtipo").addEventListener("click", salirModoEdicionSubtipo);
-
-  document.getElementById("filtroSubtipoTipo").addEventListener("change", pintarSubtipos);
+  document.querySelectorAll("[data-vista]").forEach(function (btn) {
+    btn.addEventListener("click", () => cambiarVista(btn.dataset.vista));
+  });
+  document.getElementById("btnNuevoCatalogo").addEventListener("click", abrirModalNuevo);
+  document.getElementById("filtroSubtipoTipo").addEventListener("change", function () {
+    filtroTipo = this.value;
+    paginaActual = 1;
+    pintar();
+  });
 
   cargarCatalogos();
 });
 
-// Trae el catálogo (tipos con subtipos) y repinta ambas tablas + el select de tipos.
+// Trae el catálogo y repinta la vista activa + el select de filtro.
 async function cargarCatalogos() {
   try {
     tipos = await apiFetch("/catalogos/tipos-incidencia");
-    pintarTipos();
-    llenarSelectTipos();
     llenarFiltroTipos();
-    pintarSubtipos();
+    pintar();
   } catch (error) {
-    const msg =
+    document.getElementById("tbodyCatalogo").innerHTML =
       '<tr><td colspan="4" class="text-center text-danger py-4">' +
       escaparHtml(error.message) +
       "</td></tr>";
-    document.getElementById("tbodyTipos").innerHTML = msg;
-    document.getElementById("tbodySubtipos").innerHTML = msg;
   }
 }
 
-// Pinta la tabla de tipos.
-function pintarTipos() {
-  const tbody = document.getElementById("tbodyTipos");
+// Cambia entre la vista de tipos y la de subtipos.
+function cambiarVista(v) {
+  if (v === vista) return;
+  vista = v;
+  paginaActual = 1;
 
-  if (tipos.length === 0) {
+  document.querySelectorAll("[data-vista]").forEach(function (btn) {
+    btn.classList.toggle("active", btn.dataset.vista === v);
+  });
+  document.getElementById("filtroSubtipoWrap").classList.toggle("d-none", v !== "subtipos");
+
+  pintar();
+}
+
+// Llena el desplegable que filtra los subtipos por tipo (conserva la selección si sigue existiendo).
+function llenarFiltroTipos() {
+  const select = document.getElementById("filtroSubtipoTipo");
+  const seleccionado = select.value;
+
+  select.innerHTML = '<option value="">Todos los tipos</option>';
+  tipos.forEach(function (t) {
+    const opcion = document.createElement("option");
+    opcion.value = t.id_tipo_incidencia;
+    opcion.textContent = t.nombre_tipo_incidencia;
+    select.appendChild(opcion);
+  });
+
+  select.value = seleccionado;
+}
+
+// Devuelve la lista de la vista activa: tipos, o subtipos aplanados (con su tipo padre) y filtrados.
+function listaActiva() {
+  if (vista === "tipos") return tipos;
+
+  const filas = [];
+  tipos.forEach(function (t) {
+    if (filtroTipo && String(t.id_tipo_incidencia) !== filtroTipo) return;
+    (t.subtipos || []).forEach(function (s) {
+      filas.push({ subtipo: s, nombreTipo: t.nombre_tipo_incidencia });
+    });
+  });
+  return filas;
+}
+
+// Corta un array en la página actual y arma un objeto al estilo de la paginación de Laravel.
+function paginarCliente(items) {
+  const total = items.length;
+  const last = Math.max(1, Math.ceil(total / porPagina));
+  const current = Math.min(paginaActual, last);
+  const desde = (current - 1) * porPagina;
+  const data = items.slice(desde, desde + porPagina);
+
+  return {
+    data,
+    current_page: current,
+    last_page: last,
+    total,
+    from: total ? desde + 1 : 0,
+    to: desde + data.length,
+  };
+}
+
+// Pinta la cabecera + filas de la vista activa y los controles de paginación.
+function pintar() {
+  const thead = document.getElementById("theadCatalogo");
+  const tbody = document.getElementById("tbodyCatalogo");
+
+  thead.innerHTML =
+    vista === "tipos"
+      ? "<tr><th>Nombre</th><th>Descripción</th><th class='text-center'>Subtipos</th><th class='text-end'>Acciones</th></tr>"
+      : "<tr><th>Subtipo</th><th>Tipo padre</th><th>Descripción</th><th class='text-end'>Acciones</th></tr>";
+
+  const pagina = paginarCliente(listaActiva());
+
+  if (pagina.total === 0) {
+    const texto =
+      vista === "tipos"
+        ? "Sin tipos."
+        : filtroTipo
+          ? "Sin subtipos para este tipo."
+          : "Sin subtipos.";
     tbody.innerHTML =
-      '<tr><td colspan="4" class="text-center text-muted py-4">Sin tipos.</td></tr>';
+      '<tr><td colspan="4" class="text-center text-muted py-4">' + texto + "</td></tr>";
+    document.getElementById("contenedorPaginacion").innerHTML = "";
     return;
   }
 
   tbody.innerHTML = "";
-  tipos.forEach(function (t) {
-    const tr = document.createElement("tr");
+  pagina.data.forEach((item) =>
+    tbody.appendChild(vista === "tipos" ? filaTipo(item) : filaSubtipo(item)),
+  );
 
-    const tdNombre = document.createElement("td");
-    tdNombre.textContent = t.nombre_tipo_incidencia;
-    tr.appendChild(tdNombre);
-
-    const tdDesc = document.createElement("td");
-    tdDesc.className = "text-muted";
-    tdDesc.textContent = t.descripcion_tipo_incidencia || "—";
-    tr.appendChild(tdDesc);
-
-    const tdConteo = document.createElement("td");
-    tdConteo.className = "text-center";
-    const badge = document.createElement("span");
-    badge.className = "badge text-bg-secondary";
-    badge.textContent = t.subtipos ? t.subtipos.length : 0;
-    tdConteo.appendChild(badge);
-    tr.appendChild(tdConteo);
-
-    const tdAcciones = document.createElement("td");
-    tdAcciones.className = "text-end";
-    tdAcciones.appendChild(
-      crearMenuAcciones(
-        function () {
-          editarTipo(t);
-        },
-        function () {
-          eliminarTipo(t);
-        },
-      ),
-    );
-    tr.appendChild(tdAcciones);
-
-    tbody.appendChild(tr);
+  renderizarPaginacion({
+    respuesta: pagina,
+    idContenedor: "contenedorPaginacion",
+    onPageChange: (p) => {
+      paginaActual = p;
+      pintar();
+    },
+    onPerPageChange: (pp) => {
+      porPagina = pp;
+      paginaActual = 1;
+      pintar();
+    },
+    perPage: porPagina,
   });
 }
 
-// Pasa el formulario de tipo a modo edición y lo rellena.
-function editarTipo(t) {
-  tipoEditandoId = t.id_tipo_incidencia;
-  document.getElementById("tipoNombre").value = t.nombre_tipo_incidencia;
-  document.getElementById("tipoDescripcion").value = t.descripcion_tipo_incidencia || "";
+// Construye una fila de la tabla de tipos.
+function filaTipo(t) {
+  const tr = document.createElement("tr");
 
-  document.getElementById("tituloFormTipo").textContent = "Editar tipo";
-  document.getElementById("btnTipoTexto").innerHTML =
-    '<i class="bi bi-check-lg" aria-hidden="true"></i> Guardar';
-  document.getElementById("btnCancelarTipo").classList.remove("d-none");
+  const tdNombre = document.createElement("td");
+  tdNombre.textContent = t.nombre_tipo_incidencia;
+  tr.appendChild(tdNombre);
 
-  document.getElementById("formTipo").scrollIntoView({ behavior: "smooth", block: "center" });
+  const tdDesc = document.createElement("td");
+  tdDesc.className = "text-muted";
+  tdDesc.textContent = t.descripcion_tipo_incidencia || "—";
+  tr.appendChild(tdDesc);
+
+  const tdConteo = document.createElement("td");
+  tdConteo.className = "text-center";
+  const badge = document.createElement("span");
+  badge.className = "badge text-bg-secondary";
+  badge.textContent = t.subtipos ? t.subtipos.length : 0;
+  tdConteo.appendChild(badge);
+  tr.appendChild(tdConteo);
+
+  const tdAcciones = document.createElement("td");
+  tdAcciones.className = "text-end";
+  tdAcciones.appendChild(
+    crearMenuAcciones(
+      () => abrirModalTipo(t),
+      () => eliminarTipo(t),
+    ),
+  );
+  tr.appendChild(tdAcciones);
+
+  return tr;
 }
 
-// Vuelve el formulario de tipo a modo "crear".
-function salirModoEdicionTipo() {
-  tipoEditandoId = null;
-  document.getElementById("formTipo").reset();
+// Construye una fila de la tabla de subtipos.
+function filaSubtipo(fila) {
+  const s = fila.subtipo;
+  const tr = document.createElement("tr");
 
-  document.getElementById("tituloFormTipo").textContent = "Nuevo tipo";
-  document.getElementById("btnTipoTexto").innerHTML =
-    '<i class="bi bi-plus-lg" aria-hidden="true"></i> Crear';
-  document.getElementById("btnCancelarTipo").classList.add("d-none");
+  const tdNombre = document.createElement("td");
+  tdNombre.textContent = s.nombre_subtipo_incidencia;
+  tr.appendChild(tdNombre);
+
+  const tdTipo = document.createElement("td");
+  const badge = document.createElement("span");
+  badge.className = "badge text-bg-light";
+  badge.textContent = fila.nombreTipo;
+  tdTipo.appendChild(badge);
+  tr.appendChild(tdTipo);
+
+  const tdDesc = document.createElement("td");
+  tdDesc.className = "text-muted";
+  tdDesc.textContent = s.descripcion_subtipo_incidencia || "—";
+  tr.appendChild(tdDesc);
+
+  const tdAcciones = document.createElement("td");
+  tdAcciones.className = "text-end";
+  tdAcciones.appendChild(
+    crearMenuAcciones(
+      () => abrirModalSubtipo(s),
+      () => eliminarSubtipo(s),
+    ),
+  );
+  tr.appendChild(tdAcciones);
+
+  return tr;
 }
 
-// Envía el formulario de tipo: crea (POST) o actualiza (PUT) según el modo.
-async function guardarTipo(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnGuardarTipo");
-  const spinner = document.getElementById("tipoSpinner");
+// El botón "Nuevo" abre el modal de la vista activa.
+function abrirModalNuevo() {
+  if (vista === "tipos") abrirModalTipo(null);
+  else abrirModalSubtipo(null);
+}
 
-  const datos = {
-    nombre_tipo_incidencia: document.getElementById("tipoNombre").value.trim(),
-    descripcion_tipo_incidencia: document.getElementById("tipoDescripcion").value.trim() || null,
-  };
+// Modal de crear/editar un tipo.
+function abrirModalTipo(t) {
+  const editando = t !== null;
+  const cuerpoHtml =
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mTipoNombre">Nombre</label>' +
+    '<input class="form-control form-control-sm" id="mTipoNombre" type="text" maxlength="255" required value="' +
+    (editando ? escaparHtml(t.nombre_tipo_incidencia) : "") +
+    '" /></div>' +
+    '<div class="mb-1">' +
+    '<label class="form-label" for="mTipoDesc">Descripción (opcional)</label>' +
+    '<textarea class="form-control form-control-sm" id="mTipoDesc" maxlength="500" rows="2">' +
+    (editando ? escaparHtml(t.descripcion_tipo_incidencia || "") : "") +
+    "</textarea></div>";
 
-  const editando = tipoEditandoId !== null;
-  const endpoint = editando ? "/tipos-incidencia/" + tipoEditandoId : "/tipos-incidencia";
-  const metodo = editando ? "PUT" : "POST";
+  return abrirModal({
+    titulo: editando ? "Editar tipo" : "Nuevo tipo",
+    cuerpoHtml,
+    textoConfirmar: editando ? "Guardar" : "Crear",
+    alConfirmar: async function (form) {
+      const datos = {
+        nombre_tipo_incidencia: form.querySelector("#mTipoNombre").value.trim(),
+        descripcion_tipo_incidencia: form.querySelector("#mTipoDesc").value.trim() || null,
+      };
+      const endpoint = editando ? "/tipos-incidencia/" + t.id_tipo_incidencia : "/tipos-incidencia";
+      await apiFetch(endpoint, { method: editando ? "PUT" : "POST", body: JSON.stringify(datos) });
+      await cargarCatalogos();
+      mostrarToast(editando ? "Tipo actualizado" : "Tipo creado", "success");
+    },
+  });
+}
 
-  btn.disabled = true;
-  spinner.classList.remove("d-none");
+// Modal de crear/editar un subtipo.
+function abrirModalSubtipo(s) {
+  const editando = s !== null;
+  const opciones = tipos
+    .map(
+      (t) =>
+        '<option value="' +
+        t.id_tipo_incidencia +
+        '"' +
+        (editando && s.id_tipo_incidencia === t.id_tipo_incidencia ? " selected" : "") +
+        ">" +
+        escaparHtml(t.nombre_tipo_incidencia) +
+        "</option>",
+    )
+    .join("");
 
-  try {
-    await apiFetch(endpoint, { method: metodo, body: JSON.stringify(datos) });
-    salirModoEdicionTipo();
-    await cargarCatalogos();
-    mostrarToast(editando ? "Tipo actualizado" : "Tipo creado", "success");
-  } catch (error) {
-    mostrarToast(error.message, "error");
-  } finally {
-    btn.disabled = false;
-    spinner.classList.add("d-none");
-  }
+  const cuerpoHtml =
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mSubTipo">Tipo</label>' +
+    '<select class="form-select form-select-sm" id="mSubTipo" required>' +
+    '<option value="">Seleccionar...</option>' +
+    opciones +
+    "</select></div>" +
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mSubNombre">Nombre</label>' +
+    '<input class="form-control form-control-sm" id="mSubNombre" type="text" maxlength="255" required value="' +
+    (editando ? escaparHtml(s.nombre_subtipo_incidencia) : "") +
+    '" /></div>' +
+    '<div class="mb-1">' +
+    '<label class="form-label" for="mSubDesc">Descripción (opcional)</label>' +
+    '<textarea class="form-control form-control-sm" id="mSubDesc" maxlength="500" rows="2">' +
+    (editando ? escaparHtml(s.descripcion_subtipo_incidencia || "") : "") +
+    "</textarea></div>";
+
+  return abrirModal({
+    titulo: editando ? "Editar subtipo" : "Nuevo subtipo",
+    cuerpoHtml,
+    textoConfirmar: editando ? "Guardar" : "Crear",
+    alConfirmar: async function (form) {
+      const datos = {
+        id_tipo_incidencia: form.querySelector("#mSubTipo").value,
+        nombre_subtipo_incidencia: form.querySelector("#mSubNombre").value.trim(),
+        descripcion_subtipo_incidencia: form.querySelector("#mSubDesc").value.trim() || null,
+      };
+      const endpoint = editando
+        ? "/subtipos-incidencia/" + s.id_subtipo_incidencia
+        : "/subtipos-incidencia";
+      await apiFetch(endpoint, { method: editando ? "PUT" : "POST", body: JSON.stringify(datos) });
+      await cargarCatalogos();
+      mostrarToast(editando ? "Subtipo actualizado" : "Subtipo creado", "success");
+    },
+  });
 }
 
 // Elimina un tipo (el backend rechaza con 422 si todavía tiene subtipos).
@@ -190,156 +353,6 @@ async function eliminarTipo(t) {
     mostrarToast("Tipo eliminado", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
-  }
-}
-
-// Llena el desplegable de tipos del formulario de subtipo (conserva la selección si sigue existiendo).
-function llenarSelectTipos() {
-  const select = document.getElementById("subtipoTipo");
-  const seleccionado = select.value;
-
-  select.innerHTML = '<option value="">Seleccionar...</option>';
-  tipos.forEach(function (t) {
-    const opcion = document.createElement("option");
-    opcion.value = t.id_tipo_incidencia;
-    opcion.textContent = t.nombre_tipo_incidencia;
-    select.appendChild(opcion);
-  });
-
-  select.value = seleccionado;
-}
-
-// Llena el desplegable que filtra la tabla de subtipos por tipo (conserva la selección).
-function llenarFiltroTipos() {
-  const select = document.getElementById("filtroSubtipoTipo");
-  const seleccionado = select.value;
-
-  select.innerHTML = '<option value="">Todos los tipos</option>';
-  tipos.forEach(function (t) {
-    const opcion = document.createElement("option");
-    opcion.value = t.id_tipo_incidencia;
-    opcion.textContent = t.nombre_tipo_incidencia;
-    select.appendChild(opcion);
-  });
-
-  select.value = seleccionado;
-}
-
-// Pinta la tabla de subtipos (aplanando los subtipos de todos los tipos, aplicando el filtro por tipo).
-function pintarSubtipos() {
-  const tbody = document.getElementById("tbodySubtipos");
-  const filtro = document.getElementById("filtroSubtipoTipo").value;
-
-  const filas = [];
-  tipos.forEach(function (t) {
-    if (filtro && String(t.id_tipo_incidencia) !== filtro) return;
-    (t.subtipos || []).forEach(function (s) {
-      filas.push({ subtipo: s, nombreTipo: t.nombre_tipo_incidencia });
-    });
-  });
-
-  if (filas.length === 0) {
-    const texto = filtro ? "Sin subtipos para este tipo." : "Sin subtipos.";
-    tbody.innerHTML =
-      '<tr><td colspan="4" class="text-center text-muted py-4">' + texto + "</td></tr>";
-    return;
-  }
-
-  tbody.innerHTML = "";
-  filas.forEach(function (fila) {
-    const s = fila.subtipo;
-    const tr = document.createElement("tr");
-
-    const tdNombre = document.createElement("td");
-    tdNombre.textContent = s.nombre_subtipo_incidencia;
-    tr.appendChild(tdNombre);
-
-    const tdTipo = document.createElement("td");
-    const badge = document.createElement("span");
-    badge.className = "badge text-bg-light";
-    badge.textContent = fila.nombreTipo;
-    tdTipo.appendChild(badge);
-    tr.appendChild(tdTipo);
-
-    const tdDesc = document.createElement("td");
-    tdDesc.className = "text-muted";
-    tdDesc.textContent = s.descripcion_subtipo_incidencia || "—";
-    tr.appendChild(tdDesc);
-
-    const tdAcciones = document.createElement("td");
-    tdAcciones.className = "text-end";
-    tdAcciones.appendChild(
-      crearMenuAcciones(
-        function () {
-          editarSubtipo(s);
-        },
-        function () {
-          eliminarSubtipo(s);
-        },
-      ),
-    );
-    tr.appendChild(tdAcciones);
-
-    tbody.appendChild(tr);
-  });
-}
-
-// Pasa el formulario de subtipo a modo edición y lo rellena.
-function editarSubtipo(s) {
-  subtipoEditandoId = s.id_subtipo_incidencia;
-  document.getElementById("subtipoTipo").value = s.id_tipo_incidencia;
-  document.getElementById("subtipoNombre").value = s.nombre_subtipo_incidencia;
-  document.getElementById("subtipoDescripcion").value = s.descripcion_subtipo_incidencia || "";
-
-  document.getElementById("tituloFormSubtipo").textContent = "Editar subtipo";
-  document.getElementById("btnSubtipoTexto").innerHTML =
-    '<i class="bi bi-check-lg" aria-hidden="true"></i> Guardar';
-  document.getElementById("btnCancelarSubtipo").classList.remove("d-none");
-
-  document.getElementById("formSubtipo").scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-// Vuelve el formulario de subtipo a modo "crear".
-function salirModoEdicionSubtipo() {
-  subtipoEditandoId = null;
-  document.getElementById("formSubtipo").reset();
-
-  document.getElementById("tituloFormSubtipo").textContent = "Nuevo subtipo";
-  document.getElementById("btnSubtipoTexto").innerHTML =
-    '<i class="bi bi-plus-lg" aria-hidden="true"></i> Crear';
-  document.getElementById("btnCancelarSubtipo").classList.add("d-none");
-}
-
-// Envía el formulario de subtipo: crea (POST) o actualiza (PUT) según el modo.
-async function guardarSubtipo(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnGuardarSubtipo");
-  const spinner = document.getElementById("subtipoSpinner");
-
-  const datos = {
-    id_tipo_incidencia: document.getElementById("subtipoTipo").value,
-    nombre_subtipo_incidencia: document.getElementById("subtipoNombre").value.trim(),
-    descripcion_subtipo_incidencia:
-      document.getElementById("subtipoDescripcion").value.trim() || null,
-  };
-
-  const editando = subtipoEditandoId !== null;
-  const endpoint = editando ? "/subtipos-incidencia/" + subtipoEditandoId : "/subtipos-incidencia";
-  const metodo = editando ? "PUT" : "POST";
-
-  btn.disabled = true;
-  spinner.classList.remove("d-none");
-
-  try {
-    await apiFetch(endpoint, { method: metodo, body: JSON.stringify(datos) });
-    salirModoEdicionSubtipo();
-    await cargarCatalogos();
-    mostrarToast(editando ? "Subtipo actualizado" : "Subtipo creado", "success");
-  } catch (error) {
-    mostrarToast(error.message, "error");
-  } finally {
-    btn.disabled = false;
-    spinner.classList.add("d-none");
   }
 }
 
