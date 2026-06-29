@@ -108,7 +108,7 @@ async function cargarDashboard() {
     return;
   }
 
-  pintarKpis(totales, datos.promedio_dias);
+  pintarKpis(totales);
   document.getElementById("adminDashboard").classList.remove("d-none");
 
   // Gráficas y mapa se dibujan por separado: si una librería no cargó (5xx intermitente del
@@ -136,14 +136,12 @@ async function cargarDashboard() {
   }
 }
 
-// Rellena las 5 tarjetas KPI con los conteos globales y el promedio de resolución.
-function pintarKpis(totales, promedioDias) {
+// Rellena las 4 tarjetas KPI con los conteos globales.
+function pintarKpis(totales) {
   document.getElementById("kpiTotal").textContent = Number(totales.total || 0);
   document.getElementById("kpiPendientes").textContent = Number(totales.pendientes || 0);
   document.getElementById("kpiEnProceso").textContent = Number(totales.en_proceso || 0);
   document.getElementById("kpiResueltas").textContent = Number(totales.resueltas || 0);
-  document.getElementById("kpiPromedio").textContent =
-    promedioDias == null ? "—" : Number(promedioDias);
 }
 
 // Crea (o recrea) las gráficas a partir de las métricas cacheadas.
