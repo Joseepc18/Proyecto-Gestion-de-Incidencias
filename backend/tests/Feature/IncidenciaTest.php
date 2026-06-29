@@ -208,4 +208,25 @@ class IncidenciaTest extends TestCase
             'estado_incidencia' => 'PENDIENTE',
         ]);
     }
+
+    public function test_listado_manda_las_resueltas_al_final(): void
+    {
+        $autor = $this->crearUsuario('normal');
+
+        // Resuelta más antigua y pendiente más nueva: aunque la pendiente sea más reciente
+        // naturalmente, forzamos created_at para garantizar el orden de creación esperado.
+        $resuelta = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+        $resuelta->created_at = now()->subDay();
+        $resuelta->save();
+
+        $pendiente = $this->crearIncidencia($autor, ['estado_incidencia' => 'PENDIENTE']);
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $respuesta = $this->getJson('/api/incidencias?per_page=10')->assertOk();
+
+        // La pendiente (no resuelta) va primero; la resuelta queda al final mesmo siendo la más vieja.
+        $this->assertSame($pendiente->id_incidencia, $respuesta->json('data.0.id_incidencia'));
+        $this->assertSame($resuelta->id_incidencia, $respuesta->json('data.1.id_incidencia'));
+    }
 }

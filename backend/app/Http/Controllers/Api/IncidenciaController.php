@@ -20,7 +20,9 @@ class IncidenciaController extends Controller
     // Listar las incidencias aplicando filtros y permisos de visibilidad.
     public function listadoIncidencias(Request $request)
     {
+        // Resueltas al final; dentro de cada bloque, las más recientes primero.
         $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
+            ->orderByRaw("(estado_incidencia = 'RESUELTO') ASC")
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('estado')) {
