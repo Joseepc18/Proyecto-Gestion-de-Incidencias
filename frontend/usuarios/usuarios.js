@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     .addEventListener("click", () => abrirModalUsuario(null));
 
   await cargarRoles();
+  inicializarFiltroRol();
   cargarUsuarios();
 });
 
@@ -60,6 +61,8 @@ async function cargarRoles() {
 
 let paginaActual = 1;
 let porPagina = 10;
+// Filtro de rol activo: '' (todos), 'admin', 'tecnico', 'normal' o 'suspendido'.
+let filtroRol = "";
 
 // Trae y pinta la tabla de usuarios.
 async function cargarUsuarios() {
@@ -68,9 +71,11 @@ async function cargarUsuarios() {
     const params = new URLSearchParams();
     params.set("page", paginaActual);
     params.set("per_page", porPagina);
+    if (filtroRol) params.set("rol", filtroRol);
 
     const respuesta = await apiFetch("/usuarios?" + params.toString());
     const usuarios = respuesta.data;
+    const suspendidos = filtroRol === "suspendido";
 
     if (usuarios.length === 0) {
       tbody.innerHTML =
@@ -82,6 +87,7 @@ async function cargarUsuarios() {
     tbody.innerHTML = "";
     usuarios.forEach(function (u) {
       const tr = document.createElement("tr");
+      if (suspendidos) tr.classList.add("table-secondary");
 
       const tdAvatar = document.createElement("td");
       tdAvatar.style.width = "48px";
@@ -90,6 +96,7 @@ async function cargarUsuarios() {
 
       const tdNombre = document.createElement("td");
       tdNombre.textContent = u.name;
+      if (suspendidos) tdNombre.classList.add("text-decoration-line-through");
       tr.appendChild(tdNombre);
 
       const tdEmail = document.createElement("td");
@@ -106,7 +113,7 @@ async function cargarUsuarios() {
       const tdAcciones = document.createElement("td");
       tdAcciones.className = "text-end";
       if (u.id !== usuarioActualId) {
-        tdAcciones.appendChild(crearMenuAcciones(u));
+        tdAcciones.appendChild(crearMenuAcciones(u, suspendidos));
       }
       tr.appendChild(tdAcciones);
 
@@ -135,6 +142,30 @@ async function cargarUsuarios() {
   }
 }
 
+// Etiquetas que muestra el botón según el filtro elegido.
+const etiquetasFiltro = {
+  "": "Todos",
+  admin: "Administradores",
+  tecnico: "Técnicos",
+  normal: "Normales",
+  suspendido: "Suspendidos",
+};
+
+function inicializarFiltroRol() {
+  document
+    .querySelectorAll("#btnFiltroRol + .dropdown-menu .dropdown-item")
+    .forEach(function (item) {
+      item.addEventListener("click", function (e) {
+        e.preventDefault();
+        filtroRol = this.dataset.rol || "";
+        document.getElementById("filtroRolTexto").textContent =
+          etiquetasFiltro[filtroRol] || "Todos";
+        paginaActual = 1;
+        cargarUsuarios();
+      });
+    });
+}
+
 // Iniciales para el avatar cuando el usuario no tiene foto.
 function iniciales(nombre) {
   const p = (nombre || "").trim().split(/\s+/);
@@ -156,22 +187,24 @@ function crearAvatar(u) {
   return avatar;
 }
 
-// Menú de acciones de la fila: los normales solo se suspenden; técnicos/admins además se editan.
-function crearMenuAcciones(u) {
-  const esNormal = u.rol && u.rol.nombre_rol === "normal";
-
+// Menú de acciones de la fila: suspendidos se restauran; los normales solo se suspenden;
+// técnicos/admins además se editan.
+function crearMenuAcciones(u, suspendido) {
   const dropdown = document.createElement("div");
   dropdown.className = "dropdown";
   dropdown.innerHTML =
     '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
     '<i class="bi bi-three-dots-vertical"></i></button>' +
     '<ul class="dropdown-menu dropdown-menu-end">' +
-    (esNormal
-      ? ""
-      : '<li><a class="dropdown-item" href="#" data-accion="editar">' +
-        '<i class="bi bi-pencil me-2"></i>Editar</a></li>') +
-    '<li><a class="dropdown-item text-danger" href="#" data-accion="suspender">' +
-    '<i class="bi bi-slash-circle me-2"></i>Suspender</a></li>' +
+    (!suspendido && u.rol && u.rol.nombre_rol !== "normal"
+      ? '<li><a class="dropdown-item" href="#" data-accion="editar">' +
+        '<i class="bi bi-pencil me-2"></i>Editar</a></li>'
+      : "") +
+    (suspendido
+      ? '<li><a class="dropdown-item text-success" href="#" data-accion="restaurar">' +
+        '<i class="bi bi-arrow-counterclockwise me-2"></i>Restaurar</a></li>'
+      : '<li><a class="dropdown-item text-danger" href="#" data-accion="suspender">' +
+        '<i class="bi bi-slash-circle me-2"></i>Suspender</a></li>') +
     "</ul>";
 
   const editar = dropdown.querySelector('[data-accion="editar"]');
@@ -181,10 +214,20 @@ function crearMenuAcciones(u) {
       abrirModalUsuario(u);
     });
   }
-  dropdown.querySelector('[data-accion="suspender"]').addEventListener("click", function (e) {
-    e.preventDefault();
-    suspenderUsuario(u.id, u.name);
-  });
+  const restaurar = dropdown.querySelector('[data-accion="restaurar"]');
+  if (restaurar) {
+    restaurar.addEventListener("click", function (e) {
+      e.preventDefault();
+      restaurarUsuario(u.id, u.name);
+    });
+  }
+  const suspender = dropdown.querySelector('[data-accion="suspender"]');
+  if (suspender) {
+    suspender.addEventListener("click", function (e) {
+      e.preventDefault();
+      suspenderUsuario(u.id, u.name);
+    });
+  }
 
   return dropdown;
 }
@@ -286,6 +329,24 @@ async function suspenderUsuario(id, nombre) {
     await apiFetch("/usuarios/" + id, { method: "DELETE" });
     await cargarUsuarios();
     mostrarToast("Usuario suspendido", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+// Reactiva un usuario suspendido (revierte el borrado lógico).
+async function restaurarUsuario(id, nombre) {
+  const ok = await confirmar({
+    titulo: "¿Restaurar usuario?",
+    mensaje: 'Se reactivará la cuenta de "' + nombre + '". Volverá a poder iniciar sesión.',
+    textoConfirmar: "Restaurar",
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/usuarios/" + id + "/restaurar", { method: "POST" });
+    await cargarUsuarios();
+    mostrarToast("Usuario restaurado", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
   }

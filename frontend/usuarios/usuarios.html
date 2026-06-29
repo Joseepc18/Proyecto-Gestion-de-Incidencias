@@ -46,6 +46,31 @@
                   <i class="bi bi-list-ul" aria-hidden="true"></i>
                   <span>Listado de usuarios</span>
                 </h2>
+
+                <div class="dropdown">
+                  <button
+                    class="btn btn-light btn-sm dropdown-toggle"
+                    type="button"
+                    id="btnFiltroRol"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="bi bi-funnel me-1" aria-hidden="true"></i
+                    ><span id="filtroRolTexto">Todos</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnFiltroRol">
+                    <li><a class="dropdown-item" href="#" data-rol="">Todos</a></li>
+                    <li><a class="dropdown-item" href="#" data-rol="admin">Administradores</a></li>
+                    <li><a class="dropdown-item" href="#" data-rol="tecnico">Técnicos</a></li>
+                    <li><a class="dropdown-item" href="#" data-rol="normal">Normales</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a class="dropdown-item text-warning" href="#" data-rol="suspendido">
+                        <i class="bi bi-slash-circle me-1" aria-hidden="true"></i>Suspendidos
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <div class="table-responsive">
                 <table class="table align-middle mb-0">
