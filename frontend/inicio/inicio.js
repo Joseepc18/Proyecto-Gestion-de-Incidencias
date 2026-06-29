@@ -35,6 +35,19 @@ function normalizar(texto) {
   return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
+// Garantiza que una librería global (Chart, L) esté cargada; si un 5xx del túnel/caché
+// dejó el <script> sin ejecutar, la reinyecta con cache-buster para saltar la copia mala.
+function asegurarLibreria(nombreGlobal, src) {
+  if (typeof window[nombreGlobal] !== "undefined") return Promise.resolve(true);
+  return new Promise(function (resolve) {
+    const s = document.createElement("script");
+    s.src = src + "?reintento=" + Date.now();
+    s.onload = () => resolve(typeof window[nombreGlobal] !== "undefined");
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async function () {
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
@@ -95,13 +108,31 @@ async function cargarDashboard() {
     return;
   }
 
-  try {
-    pintarKpis(totales, datos.promedio_dias);
-    document.getElementById("adminDashboard").classList.remove("d-none");
-    pintarGraficas(datos);
-    await pintarMapa(datos.por_provincia || []);
-  } catch {
-    mostrarToast("No se pudo dibujar el panel.", "error");
+  pintarKpis(totales, datos.promedio_dias);
+  document.getElementById("adminDashboard").classList.remove("d-none");
+
+  // Gráficas y mapa se dibujan por separado: si una librería no cargó (5xx intermitente del
+  // túnel/caché) se reintenta, y el fallo de una parte no debe borrar la otra.
+  const hayChart = await asegurarLibreria("Chart", "../assets/vendors/chartjs/chart.umd.min.js");
+  if (hayChart) {
+    try {
+      pintarGraficas(datos);
+    } catch {
+      mostrarToast("No se pudieron dibujar las gráficas.", "error");
+    }
+  } else {
+    mostrarToast("No se pudieron cargar las gráficas.", "error");
+  }
+
+  const hayLeaflet = await asegurarLibreria("L", "../assets/vendors/leaflet/leaflet.js");
+  if (hayLeaflet) {
+    try {
+      await pintarMapa(datos.por_provincia || []);
+    } catch {
+      mostrarToast("No se pudo dibujar el mapa.", "error");
+    }
+  } else {
+    mostrarToast("No se pudo cargar el mapa.", "error");
   }
 }
 

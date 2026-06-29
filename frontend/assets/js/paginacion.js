@@ -64,28 +64,18 @@ function renderizarPaginacion({
 
   const paginas = construirPaginas(current, last);
 
-  let htmlBotones = paginas
+  const htmlNumeros = paginas
     .map((p) => {
       if (p === "...") {
-        return `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        return `<li class="pag-ellipsis">…</li>`;
       }
-      const active = p === current ? "active" : "";
-      return `<li class="page-item ${active}"><a class="page-link cursor-pointer" data-page="${p}">${p}</a></li>`;
+      const activo = p === current ? " pag-activo" : "";
+      return `<li><button class="pag-num${activo}" data-page="${p}">${p}</button></li>`;
     })
     .join("");
 
-  const btnAnterior = `<li class="page-item ${current === 1 ? "disabled" : ""}">
-    <a class="page-link cursor-pointer" aria-label="Anterior" data-page="${current - 1}">&laquo;</a>
-  </li>`;
-
-  const btnSiguiente = `<li class="page-item ${current === last ? "disabled" : ""}">
-    <a class="page-link cursor-pointer" aria-label="Siguiente" data-page="${current + 1}">&raquo;</a>
-  </li>`;
-
-  const opcionesPerPage = [10, 25, 50, 100]
-    .map(
-      (val) => `<option value="${val}" ${perPage == val ? "selected" : ""}>${val} / pág</option>`,
-    )
+  const opcionesPerPage = [5, 10, 15, 20, 50]
+    .map((val) => `<option value="${val}" ${perPage == val ? "selected" : ""}>${val}</option>`)
     .join("");
 
   contenedor.innerHTML = `
@@ -94,22 +84,24 @@ function renderizarPaginacion({
         Mostrando ${respuesta.from || 0} al ${respuesta.to || 0} de ${total} registros
       </div>
       <div class="d-flex align-items-center gap-3">
-        <select class="form-select form-select-sm w-auto select-per-page">
+        <select class="form-select form-select-sm w-auto select-per-page" aria-label="Registros por página">
           ${opcionesPerPage}
         </select>
-        <nav aria-label="Navegación de páginas">
-          <ul class="pagination pagination-sm mb-0">
-            ${btnAnterior}
-            ${htmlBotones}
-            ${btnSiguiente}
-          </ul>
+        <nav class="pag-nav" aria-label="Navegación de páginas">
+          <button class="pag-paso" data-page="${current - 1}" ${current === 1 ? "disabled" : ""}>
+            <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+          </button>
+          <ul class="pag-numeros">${htmlNumeros}</ul>
+          <button class="pag-paso" data-page="${current + 1}" ${current === last ? "disabled" : ""}>
+            Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </button>
         </nav>
       </div>
     </div>
   `;
 
   // Attach events
-  contenedor.querySelectorAll(".page-link[data-page]").forEach((el) => {
+  contenedor.querySelectorAll("[data-page]").forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       const p = parseInt(el.getAttribute("data-page"));

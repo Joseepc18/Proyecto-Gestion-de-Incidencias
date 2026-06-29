@@ -1725,40 +1725,67 @@ html[data-theme="dark"] {
   padding: 0.75rem 1.25rem 1.25rem;
 }
 
-/* Paginación temática (paginacion.js) */
+/* Paginación inteligente (paginacion.js) */
 .cursor-pointer {
   cursor: pointer;
 }
-.pagination {
-  gap: 0.25rem;
+.pag-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
-.pagination .page-link {
-  min-width: 34px;
-  text-align: center;
-  border-radius: 8px;
-  border: 1px solid var(--admin-border);
-  background: var(--admin-surface);
+.pag-numeros {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pag-num,
+.pag-paso {
+  border: 0;
+  background: transparent;
   color: var(--admin-text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
   transition:
     background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+    color 0.15s ease;
 }
-.pagination .page-link:hover {
+.pag-num {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.4rem;
+}
+.pag-num:hover {
   background: color-mix(in srgb, var(--admin-primary) 12%, transparent);
-  border-color: var(--admin-primary);
   color: var(--admin-primary);
 }
-.pagination .page-item.active .page-link {
+.pag-num.pag-activo {
   background: var(--admin-primary);
-  border-color: var(--admin-primary);
   color: #ffffff;
+  font-weight: 600;
 }
-.pagination .page-item.disabled .page-link {
-  background: transparent;
-  border-color: var(--admin-border);
+.pag-paso {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 32px;
+  padding: 0 0.6rem;
   color: var(--admin-muted);
-  opacity: 0.55;
+}
+.pag-paso:hover:not(:disabled) {
+  color: var(--admin-primary);
+}
+.pag-paso:disabled {
+  color: var(--admin-border);
+  cursor: default;
+}
+.pag-ellipsis {
+  padding: 0 0.25rem;
+  color: var(--admin-muted);
 }
 
 /* Página de acceso con slider (login + registro en una sola vista) */
