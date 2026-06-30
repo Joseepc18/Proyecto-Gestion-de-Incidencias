@@ -211,11 +211,13 @@ a {
   min-height: 72px;
   border-bottom: 1px solid var(--admin-border);
   box-shadow: var(--admin-shadow-sm);
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  backdrop-filter: blur(14px);
 }
 
 .admin-navbar.bg-white {
   background-color: rgba(255, 255, 255, 0.94) !important;
-  backdrop-filter: blur(14px);
 }
 
 .sidebar-toggle {
@@ -891,7 +893,7 @@ html[data-theme="dark"] body {
   font-size: 1rem;
 }
 
-.admin-navbar.bg-white,
+.admin-navbar,
 .sidebar-toggle,
 .icon-button,
 .profile-button {
@@ -899,7 +901,7 @@ html[data-theme="dark"] body {
   color: var(--admin-text);
 }
 
-html[data-theme="dark"] .admin-navbar.bg-white {
+html[data-theme="dark"] .admin-navbar {
   background-color: rgba(24, 34, 53, 0.92) !important;
 }
 
@@ -1570,6 +1572,21 @@ html[data-theme="dark"] {
 }
 .evidencia-foto:hover {
   transform: scale(1.04);
+}
+
+/* Miniatura mediana (130px) de evidencia ya subida. */
+.evidencia-foto-md {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+}
+
+/* Miniatura pequeña (80px) de la cola de fotos antes de subir. */
+.foto-preview-chica {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 .lightbox-overlay {
   position: fixed;

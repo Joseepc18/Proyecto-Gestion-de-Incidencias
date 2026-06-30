@@ -2,10 +2,10 @@
 // Carga la incidencia, pinta lo compartido (info, mapa, fotos, historial, chat) y
 // dispara los "hooks" de los módulos por rol (gestión y edición) cuando hay datos.
 
-/* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, opcionesCompresion, codigoIncidencia, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
+/* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, badgeEstadoHtml, badgePrioridadHtml, escaparHtml, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, badgeEstadoHtml, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 let incActual = null;
 let usuarioActual = null;
@@ -18,27 +18,6 @@ let mapaVista = null;
 // instancia del selector de ubicación (crearMapaPicker), solo en edición del ciudadano
 let picker = null;
 
-// Compresión de fotos antes de subir (la comparten los módulos de gestión y edición).
-const opcionesCompresion = {
-  maxSizeMB: 0.5,
-  maxWidthOrHeight: 1920,
-  useWebWorker: true,
-  fileType: "image/jpeg",
-  initialQuality: 0.8,
-};
-
-function codigoIncidencia(id) {
-  return "INC-" + String(id).padStart(4, "0");
-}
-
-// Iniciales para el avatar de un técnico.
-function iniciales(nombre) {
-  const partes = (nombre || "").trim().split(/\s+/);
-  const a = partes[0] ? partes[0][0] : "";
-  const b = partes[1] ? partes[1][0] : "";
-  return (a + b).toUpperCase() || "?";
-}
-
 // Lista a la que vuelve cada rol (también se usa si no llega ?id=).
 function rutaLista(rol) {
   return rol === "admin"
@@ -47,40 +26,18 @@ function rutaLista(rol) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  let rol = "";
-  try {
-    usuarioActual = await apiFetch("/user");
-    rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
-    esAdmin = rol === "admin";
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-    aplicarMenuRol(rol);
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
+  usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+  let rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
+  esAdmin = rol === "admin";
+  aplicarMenuRol(rol);
 
   const btnVolver = document.getElementById("btnVolver");
   btnVolver.href = rutaLista(rol);
   const textoVolver = rol === "admin" ? "Volver a incidencias" : "Volver a la lista";
   btnVolver.innerHTML = '<i class="bi bi-arrow-left" aria-hidden="true"></i> ' + textoVolver;
 
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  cablearLogout();
 
   const id = new URLSearchParams(window.location.search).get("id");
   if (!id) {
@@ -193,22 +150,20 @@ function activarMapaPicker(lat, lng, onCambio) {
   return picker;
 }
 
-// Pinta el badge de estado a partir del código.
+// Pinta el badge de estado sin reconstruir el elemento (evita perder el id).
 function pintarBadgeEstado(estado) {
   const span = document.getElementById("detalleEstado");
-  span.outerHTML = badgeEstadoHtml(estado).replace(
-    '<span class="badge',
-    '<span id="detalleEstado" class="badge',
-  );
+  const cfg = estadoConfig[estado] || estadoConfig.PENDIENTE;
+  span.className = "badge " + cfg.clase;
+  span.innerHTML = '<i class="bi ' + cfg.icono + ' me-1"></i>' + cfg.texto;
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
 function pintarBadgePrioridad(prioridad) {
   const span = document.getElementById("detallePrioridad");
-  span.outerHTML = badgePrioridadHtml(prioridad).replace(
-    '<span class="badge',
-    '<span id="detallePrioridad" class="badge',
-  );
+  const cfg = prioridadConfig[prioridad] || prioridadConfig.BAJA;
+  span.className = "badge " + cfg.clase + " px-2 py-1";
+  span.innerHTML = '<i class="bi ' + cfg.icono + ' me-1"></i>' + cfg.texto;
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {
@@ -244,9 +199,9 @@ function miniaturaFoto(ev) {
   return (
     '<img src="/storage/' +
     ev.url_evidencia +
-    '" class="evidencia-foto rounded" data-lightbox="/storage/' +
+    '" class="evidencia-foto evidencia-foto-md rounded" data-lightbox="/storage/' +
     ev.url_evidencia +
-    '" style="width:130px;height:130px;object-fit:cover" alt="Evidencia" loading="lazy" />'
+    '" alt="Evidencia" loading="lazy" />'
   );
 }
 

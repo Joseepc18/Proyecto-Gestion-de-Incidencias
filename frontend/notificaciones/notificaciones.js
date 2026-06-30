@@ -1,6 +1,6 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, rutaDetalleIncidencia */
+/* global apiFetch, aplicarMenuRol, rutaDetalleIncidencia, tiempoRelativo, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let notificaciones = [];
@@ -17,24 +17,6 @@ function iconoTipo(tipo) {
     EVIDENCIA: "bi-camera",
   };
   return iconos[tipo] || "bi-bell";
-}
-
-// Fecha ISO -> texto relativo ("hace 5 min", "hace 2 h"...).
-function tiempoRelativo(iso) {
-  const fecha = new Date(iso);
-  const seg = Math.floor((Date.now() - fecha.getTime()) / 1000);
-  if (seg < 60) return "hace un momento";
-  if (seg < 3600) return "hace " + Math.floor(seg / 60) + " min";
-  if (seg < 86400) return "hace " + Math.floor(seg / 3600) + " h";
-  if (seg < 604800) return "hace " + Math.floor(seg / 86400) + " d";
-  return fecha.toLocaleDateString("es-EC");
-}
-
-// Ruta del detalle según el rol (helper compartido en api.js).
-// tipo: si es COMENTARIO, pasa &chat=1 para que el detalle abra el chat directamente.
-function rutaDetalle(idIncidencia, tipo) {
-  const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
-  return rutaDetalleIncidencia(idIncidencia, rol, tipo === "COMENTARIO");
 }
 
 // Pinta el contador "N sin leer" y habilita/inhabilita "Marcar todas".
@@ -116,32 +98,10 @@ async function cargar() {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  try {
-    usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  cablearLogout();
 
   document.querySelectorAll("[data-filtro]").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -176,7 +136,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         /* aunque falle el marcado, seguimos a la incidencia */
       }
     }
-    window.location.href = rutaDetalle(item.dataset.incidencia, item.dataset.tipo);
+    const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
+    const abrirChat = item.dataset.tipo === "COMENTARIO";
+    window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);
   });
 
   cargar();

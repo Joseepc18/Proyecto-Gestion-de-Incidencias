@@ -1,12 +1,9 @@
 // registro.js — Lógica del registro. Usa apiFetch de api.js.
 
-/* global apiFetch, obtenerToken, toastFlash, inicioSegunRol */
+/* global apiFetch, toastFlash */
 
 document.addEventListener("DOMContentLoaded", function () {
-  if (obtenerToken()) {
-    window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));
-    return;
-  }
+  // El redirect con token ya lo valida login.js (carga antes); aquí sólo va el formulario.
 
   const form = document.getElementById("registroForm");
   const errorBox = document.getElementById("registroError");

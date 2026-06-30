@@ -1,6 +1,6 @@
 // notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
-/* global apiFetch, obtenerToken, rutaDetalleIncidencia */
+/* global apiFetch, obtenerToken, rutaDetalleIncidencia, tiempoRelativo */
 
 document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btnNotificaciones");
@@ -8,16 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const lista = document.getElementById("notifLista");
   const btnTodas = document.getElementById("btnMarcarTodas");
   if (!boton || !lista || !obtenerToken()) return;
-
-  function tiempoRelativo(iso) {
-    const fecha = new Date(iso);
-    const seg = Math.floor((Date.now() - fecha.getTime()) / 1000);
-    if (seg < 60) return "hace un momento";
-    if (seg < 3600) return "hace " + Math.floor(seg / 60) + " min";
-    if (seg < 86400) return "hace " + Math.floor(seg / 3600) + " h";
-    if (seg < 604800) return "hace " + Math.floor(seg / 86400) + " d";
-    return fecha.toLocaleDateString("es-EC");
-  }
 
   function pintarBadge(noLeidas) {
     if (noLeidas > 0) {

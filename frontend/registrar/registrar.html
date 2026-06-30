@@ -21,7 +21,7 @@
 
       <div class="admin-main">
         <!-- Navbar -->
-        <nav class="navbar admin-navbar navbar-expand bg-white" id="adminNavbar"></nav>
+        <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
 
         <!-- Contenido principal -->
         <main class="dashboard-content">
@@ -163,15 +163,10 @@
                     </div>
 
                     <!-- Estado (solo admin) -->
-                    <div class="col-sm-3 solo-admin d-none">
-                      <label class="form-label" for="crearEstado">
-                        Estado
-                        <i
-                          class="bi bi-info-circle text-muted"
-                          data-bs-toggle="tooltip"
-                          title="En qué estado nace la incidencia. Normalmente Pendiente."
-                        ></i>
-                      </label>
+                    <!-- El estado inicial de toda nueva incidencia es PENDIENTE; el selector se deja
+                         oculto para que el admin no cree una incidencia RESUELTO sin fecha/historial. -->
+                    <div class="col-sm-3 d-none" aria-hidden="true">
+                      <label class="form-label" for="crearEstado">Estado</label>
                       <select class="form-select" id="crearEstado">
                         <option value="PENDIENTE" selected>Pendiente</option>
                         <option value="EN_PROCESO">En proceso</option>
@@ -277,6 +272,11 @@
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/util.js"></script>
+    <script src="../assets/js/sesion.js"></script>
+    <script src="../assets/js/compresion.js"></script>
+    <script src="../assets/js/cascada.js"></script>
+    <script src="../assets/js/galeriaFotos.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script src="../assets/js/confirmar.js"></script>
     <script src="../assets/js/layout.js"></script>

@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia */
+/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, codigoIncidencia, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let mapa = null;
@@ -12,39 +12,11 @@ const colorEstado = {
   RESUELTO: "#16a34a",
 };
 
-// Genera un código legible a partir del id (INC-0001).
-function codigoIncidencia(id) {
-  return "INC-" + String(id).padStart(4, "0");
-}
-
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  try {
-    usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  cablearLogout();
 
   let timerBusqueda = null;
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
@@ -53,6 +25,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   inicializarFiltroEstado();
+
+  // Delegación: el click en una tarjeta del feed dispara su selección.
+  document.getElementById("listaIncidencias").addEventListener("click", function (e) {
+    const card = e.target.closest("[data-id]");
+    if (!card) return;
+    seleccionarIncidencia(Number(card.dataset.id));
+  });
 
   mapa = crearMapaIncidencias("mapaMisIncidencias");
   setTimeout(function () {
@@ -98,9 +77,7 @@ async function cargarLista() {
         return (
           '<div class="incidencia-card" data-id="' +
           id +
-          '" onclick="seleccionarIncidencia(' +
-          id +
-          ')">' +
+          '">' +
           '<div class="d-flex justify-content-between align-items-start gap-2">' +
           '<span class="card-codigo">' +
           codigoIncidencia(id) +
@@ -134,7 +111,8 @@ async function cargarLista() {
             id: i.id_incidencia,
             lat: Number(i.latitud_incidencia),
             lng: Number(i.longitud_incidencia),
-            titulo: codigoIncidencia(i.id_incidencia) + " — " + escaparHtml(i.nombre_incidencia),
+            // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
+            titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
             color: colorEstado[i.estado_incidencia] || "#2563eb",
           };
         });

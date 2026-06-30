@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, Chart, L */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -49,45 +49,24 @@ function asegurarLibreria(nombreGlobal, src) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
+  const usuario = await requerirSesion();
+  if (!usuario) return;
+
+  if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
+    window.location.replace("../mis-incidencias/mis-incidencias.html");
     return;
   }
 
-  try {
-    const usuario = await apiFetch("/user");
+  document.getElementById("nombreUsuario").textContent = usuario.name;
+  document.getElementById("saludoNombre").textContent = usuario.name;
 
-    if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
-      window.location.replace("../mis-incidencias/mis-incidencias.html");
-      return;
-    }
-
-    document.getElementById("nombreUsuario").textContent = usuario.name;
-    document.getElementById("saludoNombre").textContent = usuario.name;
-
-    aplicarMenuRol("admin");
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  // El dashboard va aparte: si su render falla NO debe cerrar la sesión (eso causaba el logout del admin).
-  await cargarDashboard();
-
-  document.getElementById("btnLogout").addEventListener("click", async (evento) => {
-    evento.preventDefault();
-    evento.currentTarget.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
-
+  aplicarMenuRol("admin");
+  // Cableamos logout y tema ANTES del dashboard: si este falla, el admin siempre puede salir.
+  cablearLogout();
   observarCambioDeTema();
+
+  // El dashboard va aparte: si su render falla NO debe cerrar la sesión.
+  await cargarDashboard();
 });
 
 // Pide las métricas al backend y pinta KPIs + gráficas + tabla + mapa.

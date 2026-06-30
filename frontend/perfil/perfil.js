@@ -1,7 +1,7 @@
 // perfil.js — Edición del perfil propio: nombre, correo, contraseña y foto.
 
 // Ruta de la foto guardada en el servidor (relativa); null si no tiene.
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar */
+/* global apiFetch, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar, OPCIONES_COMPRESION, requerirSesion, cablearLogout */
 
 let fotoActual = null;
 // Foto nueva ya comprimida lista para subir; null si no se cambió.
@@ -11,49 +11,19 @@ let quitarFoto = false;
 // objectURL del preview para liberarlo al reemplazarlo.
 let previewUrl = null;
 
-// Compresión de la foto: redimensiona a ~1920px y calidad 0.8 antes de subir.
-const opcionesCompresion = {
-  maxSizeMB: 0.5,
-  maxWidthOrHeight: 1920,
-  useWebWorker: true,
-  fileType: "image/jpeg",
-  initialQuality: 0.8,
-};
-
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
-    return;
-  }
+  const usuario = await requerirSesion();
+  if (!usuario) return;
+  aplicarMenuRol(usuario.rol ? usuario.rol.nombre_rol : "");
 
-  try {
-    const usuario = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuario.name;
-    aplicarMenuRol(usuario.rol ? usuario.rol.nombre_rol : "");
+  document.getElementById("perfilNombre").value = usuario.name;
+  document.getElementById("perfilEmail").value = usuario.email;
 
-    document.getElementById("perfilNombre").value = usuario.name;
-    document.getElementById("perfilEmail").value = usuario.email;
+  fotoActual = usuario.foto_perfil || null;
+  cachearFotoNavbar(fotoActual);
+  mostrarAvatar(fotoActual ? "/storage/" + fotoActual : null);
 
-    fotoActual = usuario.foto_perfil || null;
-    cachearFotoNavbar(fotoActual);
-    mostrarAvatar(fotoActual ? "/storage/" + fotoActual : null);
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  cablearLogout();
 
   const inputFoto = document.getElementById("perfilFoto");
   document.getElementById("btnCambiarFoto").addEventListener("click", function () {
@@ -73,7 +43,7 @@ async function procesarFoto() {
   if (!file) return;
 
   try {
-    const comprimida = await imageCompression(file, opcionesCompresion);
+    const comprimida = await imageCompression(file, OPCIONES_COMPRESION);
     fotoSeleccionada = new File([comprimida], "perfil.jpg", { type: "image/jpeg" });
     quitarFoto = false;
     mostrarAvatar(URL.createObjectURL(fotoSeleccionada));

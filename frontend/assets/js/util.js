@@ -1,0 +1,27 @@
+// util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
+
+/* exported iniciales, codigoIncidencia, tiempoRelativo */
+
+// Iniciales de un nombre (hasta 2 letras); fallback "?" si está vacío.
+function iniciales(nombre) {
+  const p = (nombre || "").trim().split(/\s+/);
+  const a = p[0] ? p[0][0] : "";
+  const b = p[1] ? p[1][0] : "";
+  return (a + b).toUpperCase() || "?";
+}
+
+// Código legible a partir del id de incidencia (INC-0001).
+function codigoIncidencia(id) {
+  return "INC-" + String(id).padStart(4, "0");
+}
+
+// Fecha ISO -> texto relativo ("hace 5 min", "hace 2 h", ...).
+function tiempoRelativo(iso) {
+  const fecha = new Date(iso);
+  const seg = Math.floor((Date.now() - fecha.getTime()) / 1000);
+  if (seg < 60) return "hace un momento";
+  if (seg < 3600) return "hace " + Math.floor(seg / 60) + " min";
+  if (seg < 86400) return "hace " + Math.floor(seg / 3600) + " h";
+  if (seg < 604800) return "hace " + Math.floor(seg / 86400) + " d";
+  return fecha.toLocaleDateString("es-EC");
+}

@@ -1,44 +1,24 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y suspender en modal.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal */
+/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, requerirSesion, cablearLogout */
 
 let usuarioActualId = null;
 // Roles que el admin puede asignar (los normales nacen por auto-registro, no se crean aquí).
 let rolesAsignables = [];
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
+  const usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+
+  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+    window.location.href = "../inicio/inicio.html";
     return;
   }
+  usuarioActualId = usuarioActual.id;
 
-  try {
-    const usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-
-    if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
-      window.location.href = "../inicio/inicio.html";
-      return;
-    }
-    usuarioActualId = usuarioActual.id;
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  cablearLogout();
 
   document
     .getElementById("btnNuevoUsuario")
@@ -113,7 +93,7 @@ async function cargarUsuarios() {
       const tdAcciones = document.createElement("td");
       tdAcciones.className = "text-end";
       if (u.id !== usuarioActualId) {
-        tdAcciones.appendChild(crearMenuAcciones(u, suspendidos));
+        tdAcciones.appendChild(menuAccionesUsuario(u, suspendidos));
       }
       tr.appendChild(tdAcciones);
 
@@ -166,11 +146,7 @@ function inicializarFiltroRol() {
     });
 }
 
-// Iniciales para el avatar cuando el usuario no tiene foto.
-function iniciales(nombre) {
-  const p = (nombre || "").trim().split(/\s+/);
-  return ((p[0] ? p[0][0] : "") + (p[1] ? p[1][0] : "")).toUpperCase() || "?";
-}
+// Iniciales vienen de util.js (helper compartido).
 
 // Avatar de la fila: foto de perfil o iniciales sobre el color primario.
 function crearAvatar(u) {
@@ -188,48 +164,31 @@ function crearAvatar(u) {
 }
 
 // Menú de acciones de la fila: suspendidos se restauran; los normales solo se suspenden;
-// técnicos/admins además se editan.
-function crearMenuAcciones(u, suspendido) {
-  const dropdown = document.createElement("div");
-  dropdown.className = "dropdown";
-  dropdown.innerHTML =
-    '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
-    '<i class="bi bi-three-dots-vertical"></i></button>' +
-    '<ul class="dropdown-menu dropdown-menu-end">' +
-    (!suspendido && u.rol && u.rol.nombre_rol !== "normal"
-      ? '<li><a class="dropdown-item" href="#" data-accion="editar">' +
-        '<i class="bi bi-pencil me-2"></i>Editar</a></li>'
-      : "") +
-    (suspendido
-      ? '<li><a class="dropdown-item text-success" href="#" data-accion="restaurar">' +
-        '<i class="bi bi-arrow-counterclockwise me-2"></i>Restaurar</a></li>'
-      : '<li><a class="dropdown-item text-danger" href="#" data-accion="suspender">' +
-        '<i class="bi bi-slash-circle me-2"></i>Suspender</a></li>') +
-    "</ul>";
-
-  const editar = dropdown.querySelector('[data-accion="editar"]');
-  if (editar) {
-    editar.addEventListener("click", function (e) {
-      e.preventDefault();
-      abrirModalUsuario(u);
+// técnicos/admins además se editan (helper compartido de menuAcciones.js).
+function menuAccionesUsuario(u, suspendido) {
+  const acciones = [];
+  if (!suspendido && u.rol && u.rol.nombre_rol !== "normal") {
+    acciones.push({
+      icon: "bi bi-pencil me-2",
+      label: "Editar",
+      handler: () => abrirModalUsuario(u),
     });
   }
-  const restaurar = dropdown.querySelector('[data-accion="restaurar"]');
-  if (restaurar) {
-    restaurar.addEventListener("click", function (e) {
-      e.preventDefault();
-      restaurarUsuario(u.id, u.name);
+  if (suspendido) {
+    acciones.push({
+      icon: "bi bi-arrow-counterclockwise me-2",
+      label: "Restaurar",
+      handler: () => restaurarUsuario(u.id, u.name),
+    });
+  } else {
+    acciones.push({
+      icon: "bi bi-slash-circle me-2",
+      label: "Suspender",
+      peligro: true,
+      handler: () => suspenderUsuario(u.id, u.name),
     });
   }
-  const suspender = dropdown.querySelector('[data-accion="suspender"]');
-  if (suspender) {
-    suspender.addEventListener("click", function (e) {
-      e.preventDefault();
-      suspenderUsuario(u.id, u.name);
-    });
-  }
-
-  return dropdown;
+  return crearMenuAcciones(acciones);
 }
 
 // Abre el modal de crear (u = null) o editar (u = usuario) y guarda al confirmar.

@@ -1,7 +1,7 @@
 // mapa.js — Helper reutilizable de Leaflet: mapa con satélite/calles y pines de incidencias.
 
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
-/* global L */
+/* global L, escaparHtml */
 
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};
@@ -50,7 +50,9 @@ function crearMapaIncidencias(idContenedor, opciones) {
         fillOpacity: 1,
       }).addTo(capaPines);
 
-      if (it.titulo) marcador.bindPopup(it.titulo);
+      // Defensa en profundidad: el popup de Leaflet se renderiza con innerHTML,
+      // así que siempre escapamos el título venga de donde venga.
+      if (it.titulo) marcador.bindPopup(escaparHtml(it.titulo));
       if (onSelect) {
         marcador.on("click", function () {
           onSelect(it.id);

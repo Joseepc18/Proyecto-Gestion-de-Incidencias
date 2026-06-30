@@ -1,42 +1,43 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, confirmar, mostrarToast, toastFlash, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion */
-
-let usuarioActual = null;
+/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
+  const usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+
+  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+    window.location.href = "../mis-incidencias/mis-incidencias.html";
     return;
   }
 
-  try {
-    usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
+  cablearLogout();
 
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-
-    if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
-      window.location.href = "../mis-incidencias/mis-incidencias.html";
-      return;
-    }
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
+  // Ver detalle lleva a la página propia de la incidencia (buena página de admin).
+  function verDetalle(id) {
+    window.location.href = rutaDetalleIncidencia(id, "admin");
   }
 
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
+  // Pide confirmación antes de borrar y recarga la tabla tras el DELETE.
+  async function eliminarIncidencia(id) {
+    const ok = await confirmar({
+      titulo: "Eliminar incidencia",
+      mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+      textoConfirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
+
     try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
+      await apiFetch("/incidencias/" + id, { method: "DELETE" });
+      toastFlash("Incidencia eliminada", "success");
+      location.reload();
+    } catch (error) {
+      mostrarToast("Error: " + error.message, "error");
     }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  }
 
   async function cargarCatalogos() {
     try {
@@ -107,8 +108,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  // Construye una celda con texto escapado para evitar XSS en innerHTML.
+  function td(texto) {
+    const celda = document.createElement("td");
+    celda.textContent = texto;
+    return celda;
+  }
+
   function renderizarTabla(incidencias) {
     const tbody = document.getElementById("tbodyIncidencias");
+    tbody.innerHTML = "";
 
     if (incidencias.length === 0) {
       tbody.innerHTML =
@@ -117,68 +126,56 @@ document.addEventListener("DOMContentLoaded", async function () {
       return;
     }
 
-    tbody.innerHTML = incidencias
-      .map(function (inc) {
-        const nombreTipo =
-          inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
+    const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
 
-        const nombreCiudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "—";
-        const fecha = new Date(inc.created_at).toLocaleDateString("es-EC");
+    incidencias.forEach(function (inc) {
+      const tr = document.createElement("tr");
+      tr.dataset.id = inc.id_incidencia;
 
-        const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
-        const esAutor = inc.id_usuario === usuarioActual.id;
-        const opcionEliminar =
-          esAdmin || esAutor
-            ? '<li><a class="dropdown-item text-danger" href="#" onclick="eliminarIncidencia(' +
-              inc.id_incidencia +
-              '); return false;">' +
-              '<i class="bi bi-trash me-2"></i>Eliminar</a></li>'
-            : "";
+      const nombreTipo =
+        inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
+      const nombreCiudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "—";
+      const fecha = new Date(inc.created_at).toLocaleDateString("es-EC");
+      const esAutor = inc.id_usuario === usuarioActual.id;
 
-        const acciones =
-          '<div class="dropdown">' +
-          '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
-          '<i class="bi bi-three-dots-vertical"></i>' +
-          "</button>" +
-          '<ul class="dropdown-menu dropdown-menu-end">' +
-          '<li><a class="dropdown-item" href="#" onclick="verDetalle(' +
-          inc.id_incidencia +
-          '); return false;">' +
-          '<i class="bi bi-eye me-2"></i>Ver detalle</a></li>' +
-          opcionEliminar +
-          "</ul>" +
-          "</div>";
+      tr.appendChild(td(inc.nombre_incidencia));
 
-        return (
-          "<tr>" +
-          "<td>" +
-          escaparHtml(inc.nombre_incidencia) +
-          "</td>" +
-          "<td>" +
-          badgeEstadoHtml(inc.estado_incidencia) +
-          "</td>" +
-          "<td>" +
-          badgePrioridadHtml(inc.prioridad_incidencia) +
-          "</td>" +
-          "<td>" +
-          escaparHtml(nombreTipo) +
-          "</td>" +
-          "<td>" +
-          escaparHtml(nombreCiudad) +
-          "</td>" +
-          "<td>" +
-          fecha +
-          "</td>" +
-          '<td class="text-end">' +
-          acciones +
-          "</td>" +
-          "</tr>"
-        );
-      })
-      .join("");
+      const tdEstado = document.createElement("td");
+      tdEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
+      tr.appendChild(tdEstado);
+
+      const tdPri = document.createElement("td");
+      tdPri.innerHTML = badgePrioridadHtml(inc.prioridad_incidencia);
+      tr.appendChild(tdPri);
+
+      tr.appendChild(td(nombreTipo));
+      tr.appendChild(td(nombreCiudad));
+      tr.appendChild(td(fecha));
+
+      const acciones = [
+        {
+          icon: "bi bi-eye me-2",
+          label: "Ver detalle",
+          handler: () => verDetalle(inc.id_incidencia),
+        },
+      ];
+      if (esAdmin || esAutor) {
+        acciones.push({
+          icon: "bi bi-trash me-2",
+          label: "Eliminar",
+          peligro: true,
+          handler: () => eliminarIncidencia(inc.id_incidencia),
+        });
+      }
+
+      const tdAcc = document.createElement("td");
+      tdAcc.className = "text-end";
+      tdAcc.appendChild(crearMenuAcciones(acciones));
+      tr.appendChild(tdAcc);
+
+      tbody.appendChild(tr);
+    });
   }
-
-  // actualizarPaginacion ya no se usa, usar renderizarPaginacion en su lugar
 
   document.getElementById("filtroEstado").addEventListener("change", function () {
     paginaActual = 1;
@@ -206,33 +203,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }, 400);
   });
 
-  // Botones de paginación anteriores eliminados
-
   cargarCatalogos();
   cargarIncidencias();
 });
-
-// Funciones globales (se llaman desde onclick en el HTML).
-// eslint-disable-next-line no-unused-vars
-function verDetalle(id) {
-  window.location.href = rutaDetalleIncidencia(id, "admin");
-}
-
-// eslint-disable-next-line no-unused-vars
-async function eliminarIncidencia(id) {
-  const ok = await confirmar({
-    titulo: "Eliminar incidencia",
-    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
-    textoConfirmar: "Eliminar",
-    peligro: true,
-  });
-  if (!ok) return;
-
-  try {
-    await apiFetch("/incidencias/" + id, { method: "DELETE" });
-    toastFlash("Incidencia eliminada", "success");
-    location.reload();
-  } catch (error) {
-    mostrarToast("Error: " + error.message, "error");
-  }
-}

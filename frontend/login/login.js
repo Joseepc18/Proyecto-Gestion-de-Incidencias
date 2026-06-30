@@ -1,11 +1,21 @@
 // login.js — Lógica del login. Usa apiFetch y guardarToken de api.js.
 
-/* global apiFetch, guardarToken, obtenerToken, mostrarToast, toastFlash, inicioSegunRol */
+/* global apiFetch, guardarToken, obtenerToken, eliminarToken, mostrarToast, toastFlash, inicioSegunRol */
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+  // Si ya hay token, lo validamos contra el backend antes de redirigir (evita el
+  // "flash" con un token que el backend ya no reconoce; si falla, se limpia y se queda aquí).
   if (obtenerToken()) {
-    window.location.replace(inicioSegunRol(localStorage.getItem("rol_usuario") || ""));
-    return;
+    try {
+      const usuario = await apiFetch("/user", { sinSpinner: true });
+      const rol = usuario.rol ? usuario.rol.nombre_rol : "";
+      if (rol) localStorage.setItem("rol_usuario", rol);
+      localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
+      window.location.replace(inicioSegunRol(rol));
+      return;
+    } catch {
+      eliminarToken();
+    }
   }
 
   const form = document.getElementById("loginForm");

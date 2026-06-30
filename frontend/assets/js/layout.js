@@ -14,6 +14,7 @@
       href: "../inicio/inicio.html",
       icon: "bi-speedometer2",
       texto: "Inicio",
+      oculto: true,
     },
     {
       page: "gestion-incidencias",

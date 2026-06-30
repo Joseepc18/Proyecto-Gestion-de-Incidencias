@@ -5,15 +5,17 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, imageCompression, opcionesCompresion, incActual, usuarioActual, idActual, activarMapaPicker */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
 // Ubicación elegida en el picker (arranca con la de la incidencia).
 let latEdit = null;
 let lngEdit = null;
-// Fotos del reporte comprimidas, en cola para subir.
-const fotosEnCola = [];
+// Galería de fotos nuevas del reporte (gestionada por galeriaFotos.js).
+let galeriaReporte = null;
+// Instancia del picker de ubicación en edición (para liberarla al volver a lectura).
+let pickerEdicion = null;
 
 // Hook del núcleo: decide si esta incidencia es editable por quien la mira.
 function edicionAlCargarDetalle() {
@@ -30,38 +32,24 @@ function edicionAlCargarDetalle() {
   btnEliminar.classList.remove("d-none");
   btnEditar.addEventListener("click", entrarEdicion);
   btnEliminar.addEventListener("click", eliminarIncidencia);
-  document.getElementById("btnCancelarEdicion").addEventListener("click", function () {
-    window.location.reload();
-  });
+  document.getElementById("btnCancelarEdicion").addEventListener("click", salirEdicion);
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
-  document.getElementById("btnSubirFotos").addEventListener("click", subirFotosNuevas);
 
-  const inputFotos = document.getElementById("editFotos");
-  inputFotos.addEventListener("change", function () {
-    procesarFotos(this.files);
-    this.value = "";
-  });
-  const dropzone = document.getElementById("dropzoneFotos");
-  ["dragenter", "dragover"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault();
-      dropzone.classList.add("dropzone-fotos--activo");
-    });
-  });
-  ["dragleave", "dragend"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function () {
-      dropzone.classList.remove("dropzone-fotos--activo");
-    });
-  });
-  dropzone.addEventListener("drop", function (e) {
-    e.preventDefault();
-    dropzone.classList.remove("dropzone-fotos--activo");
-    procesarFotos(e.dataTransfer.files);
+  galeriaReporte = crearGaleriaFotos({
+    input: document.getElementById("editFotos"),
+    dropzone: document.getElementById("dropzoneFotos"),
+    preview: document.getElementById("editFotosPreview"),
+    error: document.getElementById("editFotosError"),
+    cupo: cupoFotos,
+    textoCupo: "Máximo 3 fotos en total.",
+    btnSubir: document.getElementById("btnSubirFotos"),
+    onSubir: function (archivos) {
+      return subirFotosNuevas(archivos);
+    },
   });
 
   renderEvidenciasReporteEditable();
   document.getElementById("evidenciasReporteEdicion").classList.remove("d-none");
-  renderFotosNuevas();
 }
 
 // Modo edición de datos + mapa (las fotos ya son independientes).
@@ -93,7 +81,7 @@ async function entrarEdicion() {
   document.getElementById("btnEditar").classList.add("d-none");
   document.getElementById("btnEliminar").classList.add("d-none");
 
-  const p = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
+  pickerEdicion = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
     latEdit = lat;
     lngEdit = lng;
   });
@@ -101,8 +89,33 @@ async function entrarEdicion() {
   controles.classList.remove("d-none");
   controles.classList.add("d-flex");
   document.getElementById("btnMiUbicacionEdit").onclick = function () {
-    p.usarMiUbicacion();
+    pickerEdicion.usarMiUbicacion();
   };
+}
+
+// Libera el picker de ubicación y deja el contenedor listo para el mapa de lectura.
+function destruirPickerEdicion() {
+  if (pickerEdicion) {
+    pickerEdicion.map.remove();
+    pickerEdicion = null;
+  }
+  document.getElementById("mapaDetalle").innerHTML = "";
+}
+
+// Vuelve de edición a la vista de lectura sin recargar la página (restaurar DOM + mapa).
+function salirEdicion() {
+  document.getElementById("datosVista").classList.remove("d-none");
+  document.getElementById("datosEdicion").classList.add("d-none");
+  const acciones = document.getElementById("edicionAcciones");
+  acciones.classList.add("d-none");
+  acciones.classList.remove("d-flex");
+  document.getElementById("btnEditar").classList.remove("d-none");
+  document.getElementById("btnEliminar").classList.remove("d-none");
+  const controles = document.getElementById("mapaEditControles");
+  controles.classList.add("d-none");
+  controles.classList.remove("d-flex");
+  destruirPickerEdicion();
+  pintarMapaLectura();
 }
 
 // Carga los catálogos de tipos y ciudades en los selects (solo la 1.ª vez).
@@ -140,49 +153,25 @@ async function cargarCatalogos() {
   }
 }
 
-// Llena el select de subtipos según el tipo elegido.
+// Llena el select de subtipos según el tipo elegido (cascada reutilizable).
 function poblarSubtipos(idTipo) {
-  const selectSubtipo = document.getElementById("editSubtipo");
-  selectSubtipo.innerHTML = "";
   const tipo = catalogoTipos.find(function (t) {
     return t.id_tipo_incidencia === parseInt(idTipo);
   });
-  if (!tipo || !tipo.subtipos || tipo.subtipos.length === 0) {
-    selectSubtipo.disabled = true;
-    selectSubtipo.innerHTML = '<option value="">Primero selecciona un tipo</option>';
-    return;
-  }
-  selectSubtipo.disabled = false;
-  selectSubtipo.innerHTML = '<option value="">Seleccionar...</option>';
-  tipo.subtipos.forEach(function (sub) {
-    const op = document.createElement("option");
-    op.value = sub.id_subtipo_incidencia;
-    op.textContent = sub.nombre_subtipo_incidencia;
-    selectSubtipo.appendChild(op);
-  });
+  poblarSelectCascada(
+    document.getElementById("editSubtipo"),
+    itemsSubtiposDe(tipo),
+    "Primero selecciona un tipo",
+  );
 }
 
-// Llena el select de ciudades según la provincia elegida.
+// Llena el select de ciudades según la provincia elegida (cascada reutilizable).
 function poblarCiudades(idProvincia) {
-  const selectCiudad = document.getElementById("editCiudad");
-  selectCiudad.innerHTML = "";
-  if (!idProvincia) {
-    selectCiudad.disabled = true;
-    selectCiudad.innerHTML = '<option value="">Primero selecciona una provincia</option>';
-    return;
-  }
-  selectCiudad.disabled = false;
-  selectCiudad.innerHTML = '<option value="">Seleccionar...</option>';
-  catalogoCiudades
-    .filter(function (c) {
-      return c.id_provincia === parseInt(idProvincia);
-    })
-    .forEach(function (c) {
-      const op = document.createElement("option");
-      op.value = c.id_ciudad;
-      op.textContent = c.nombre_ciudad;
-      selectCiudad.appendChild(op);
-    });
+  poblarSelectCascada(
+    document.getElementById("editCiudad"),
+    itemsCiudadesDe(catalogoCiudades, idProvincia),
+    "Primero selecciona una provincia",
+  );
 }
 
 // Evidencias del reporte que se conservan (las de tipo RESOLUCION no las toca el ciudadano).
@@ -205,8 +194,7 @@ function renderEvidenciasReporteEditable() {
     const img = document.createElement("img");
     img.loading = "lazy";
     img.src = "/storage/" + ev.url_evidencia;
-    img.className = "evidencia-foto rounded";
-    img.style.cssText = "width:130px;height:130px;object-fit:cover";
+    img.className = "evidencia-foto evidencia-foto-md rounded";
     img.alt = "Evidencia";
 
     const btn = document.createElement("button");
@@ -229,7 +217,7 @@ async function eliminarFotoInmediata(idEv) {
     await apiFetch("/evidencias/" + idEv, { method: "DELETE" });
     incActual.evidencias = (incActual.evidencias || []).filter((ev) => ev.id_evidencia !== idEv);
     renderEvidenciasReporteEditable();
-    renderFotosNuevas();
+    if (galeriaReporte) galeriaReporte.render();
   } catch (error) {
     mostrarToast("No se pudo eliminar la foto: " + error.message, "error");
   }
@@ -240,84 +228,8 @@ function cupoFotos() {
   return 3 - evidenciasReporte().length;
 }
 
-// Comprime cada foto y la agrega a la cola, sin pasar del cupo.
-async function procesarFotos(lista) {
-  const errorFotos = document.getElementById("editFotosError");
-  errorFotos.classList.add("d-none");
-  for (const file of Array.from(lista)) {
-    if (fotosEnCola.length >= cupoFotos()) {
-      errorFotos.textContent = "Máximo 3 fotos en total.";
-      errorFotos.classList.remove("d-none");
-      break;
-    }
-    try {
-      const comprimida = await imageCompression(file, opcionesCompresion);
-      const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
-        type: "image/jpeg",
-      });
-      fotosEnCola.push(jpg);
-    } catch {
-      errorFotos.textContent = 'No se pudo procesar "' + file.name + '".';
-      errorFotos.classList.remove("d-none");
-    }
-  }
-  renderFotosNuevas();
-}
-
-// Dibuja las miniaturas de la cola y el botón "Subir fotos".
-function renderFotosNuevas() {
-  const preview = document.getElementById("editFotosPreview");
-  const dropzone = document.getElementById("dropzoneFotos");
-  const inputFotos = document.getElementById("editFotos");
-  const btnSubir = document.getElementById("btnSubirFotos");
-  preview.innerHTML = "";
-
-  const cupo = cupoFotos();
-  dropzone.classList.toggle("d-none", fotosEnCola.length > 0 || cupo <= 0);
-
-  fotosEnCola.forEach(function (file, idx) {
-    const cont = document.createElement("div");
-    cont.className = "position-relative";
-
-    const img = document.createElement("img");
-    img.loading = "lazy";
-    const url = URL.createObjectURL(file);
-    img.onload = () => URL.revokeObjectURL(url);
-    img.src = url;
-    img.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:8px";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
-    btn.innerHTML = "&times;";
-    btn.addEventListener("click", function () {
-      fotosEnCola.splice(idx, 1);
-      renderFotosNuevas();
-    });
-
-    cont.appendChild(img);
-    cont.appendChild(btn);
-    preview.appendChild(cont);
-  });
-
-  if (fotosEnCola.length > 0 && fotosEnCola.length < cupo) {
-    const agregar = document.createElement("button");
-    agregar.type = "button";
-    agregar.className = "foto-agregar";
-    agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
-    agregar.addEventListener("click", function () {
-      inputFotos.click();
-    });
-    preview.appendChild(agregar);
-  }
-
-  btnSubir.classList.toggle("d-none", fotosEnCola.length === 0);
-}
-
 // Sube las fotos en cola al backend (tipo REPORTE) y actualiza la galería.
-async function subirFotosNuevas() {
-  if (fotosEnCola.length === 0) return;
-
+async function subirFotosNuevas(archivos) {
   const btn = document.getElementById("btnSubirFotos");
   const spinner = document.getElementById("subirFotosSpinner");
   btn.disabled = true;
@@ -325,7 +237,7 @@ async function subirFotosNuevas() {
 
   try {
     const formData = new FormData();
-    fotosEnCola.forEach(function (file) {
+    archivos.forEach(function (file) {
       formData.append("fotos[]", file);
     });
     formData.append("tipo_evidencia", "REPORTE");
@@ -334,9 +246,8 @@ async function subirFotosNuevas() {
       body: formData,
     });
     incActual.evidencias = actualizada.evidencias || [];
-    fotosEnCola.length = 0;
     renderEvidenciasReporteEditable();
-    renderFotosNuevas();
+    galeriaReporte.limpiar();
     mostrarToast("Fotos subidas", "success");
   } catch (error) {
     mostrarToast("No se pudo subir: " + error.message, "error");
@@ -344,6 +255,36 @@ async function subirFotosNuevas() {
     btn.disabled = false;
     spinner.classList.add("d-none");
   }
+}
+
+// Vuelve a pintar los campos de solo lectura a partir de incActual (sin recargar).
+function repintarVistaLectura() {
+  document.getElementById("detalleTitulo").textContent = incActual.nombre_incidencia;
+
+  const tipo =
+    incActual.subtipo && incActual.subtipo.tipo
+      ? incActual.subtipo.tipo.nombre_tipo_incidencia
+      : "—";
+  const subtipo = incActual.subtipo ? incActual.subtipo.nombre_subtipo_incidencia : "—";
+  const reporta = incActual.usuario ? incActual.usuario.name : "—";
+  const fecha = new Date(incActual.created_at).toLocaleString("es-EC");
+  document.getElementById("detalleTipoBadge").textContent = tipo;
+  document.getElementById("detalleMeta").textContent =
+    tipo + " → " + subtipo + " · Reportado por " + reporta + " · " + fecha;
+
+  const bloqueDesc = document.getElementById("detalleDescripcionBloque");
+  if (incActual.descripcion_incidencia) {
+    bloqueDesc.classList.remove("d-none");
+    document.getElementById("detalleDescripcion").textContent = incActual.descripcion_incidencia;
+  } else {
+    bloqueDesc.classList.add("d-none");
+  }
+
+  document.getElementById("detalleCiudad").textContent = incActual.ciudad
+    ? incActual.ciudad.nombre_ciudad
+    : "—";
+  document.getElementById("detalleDireccion").textContent =
+    incActual.direccion_incidencia || "No especificada";
 }
 
 // Guarda solo los datos descriptivos y la ubicación (las fotos ya se persistieron aparte).
@@ -364,7 +305,8 @@ async function guardarCambios() {
   spinner.classList.remove("d-none");
 
   try {
-    await apiFetch("/incidencias/" + incActual.id_incidencia, {
+    // El PUT devuelve la incidencia actualizada (sin evidencias); fusionamos campos puntuales.
+    const actualizada = await apiFetch("/incidencias/" + incActual.id_incidencia, {
       method: "PUT",
       body: JSON.stringify({
         nombre_incidencia: document.getElementById("editTitulo").value.trim(),
@@ -376,8 +318,19 @@ async function guardarCambios() {
         longitud_incidencia: lngEdit,
       }),
     });
+    incActual.nombre_incidencia = actualizada.nombre_incidencia;
+    incActual.descripcion_incidencia = actualizada.descripcion_incidencia;
+    incActual.direccion_incidencia = actualizada.direccion_incidencia;
+    incActual.subtipo = actualizada.subtipo;
+    incActual.id_subtipo_incidencia = actualizada.id_subtipo_incidencia;
+    incActual.ciudad = actualizada.ciudad;
+    incActual.id_ciudad = actualizada.id_ciudad;
+    incActual.latitud_incidencia = actualizada.latitud_incidencia;
+    incActual.longitud_incidencia = actualizada.longitud_incidencia;
+
+    repintarVistaLectura();
+    salirEdicion();
     toastFlash("Cambios guardados", "success");
-    window.location.reload();
   } catch (error) {
     mostrarToast("No se pudo guardar: " + error.message, "error");
     btn.disabled = false;

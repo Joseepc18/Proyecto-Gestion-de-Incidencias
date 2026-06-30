@@ -1,38 +1,12 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, toastFlash, mostrarToast, imageCompression, crearMapaPicker, bootstrap */
+/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  let fotosSeleccionadas = [];
-
-  let usuarioActual = null;
-  try {
-    usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  const usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  cablearLogout();
 
   const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
   if (esAdmin) {
@@ -71,159 +45,40 @@ document.addEventListener("DOMContentLoaded", async function () {
     mostrarToast("No se pudieron cargar los catálogos. Recarga la página.", "error");
   }
 
+  // Cascada provincia→ciudad (helper compartido).
   document.getElementById("crearProvincia").addEventListener("change", function () {
-    const selectCiudad = document.getElementById("crearCiudad");
     const provinciaId = parseInt(this.value);
-    selectCiudad.innerHTML = "";
-
-    if (!provinciaId) {
-      selectCiudad.disabled = true;
-      selectCiudad.innerHTML = '<option value="">Primero selecciona una provincia</option>';
-      return;
-    }
-
-    selectCiudad.disabled = false;
-    selectCiudad.innerHTML = '<option value="">Seleccionar...</option>';
-    catalogoCiudades
-      .filter(function (ciudad) {
-        return ciudad.id_provincia === provinciaId;
-      })
-      .forEach(function (ciudad) {
-        const op = document.createElement("option");
-        op.value = ciudad.id_ciudad;
-        op.textContent = ciudad.nombre_ciudad;
-        selectCiudad.appendChild(op);
-      });
+    poblarSelectCascada(
+      document.getElementById("crearCiudad"),
+      itemsCiudadesDe(catalogoCiudades, provinciaId),
+      "Primero selecciona una provincia",
+    );
   });
 
+  // Cascada tipo→subtipo (helper compartido).
   document.getElementById("crearTipo").addEventListener("change", function () {
-    const selectSubtipo = document.getElementById("crearSubtipo");
-    selectSubtipo.innerHTML = "";
-
     const tipoId = parseInt(this.value);
     const tipo = catalogoTipos.find(function (t) {
       return t.id_tipo_incidencia === tipoId;
     });
-
-    if (!tipo || !tipo.subtipos || tipo.subtipos.length === 0) {
-      selectSubtipo.disabled = true;
-      selectSubtipo.innerHTML = '<option value="">Primero selecciona un tipo</option>';
-      return;
-    }
-
-    selectSubtipo.disabled = false;
-    selectSubtipo.innerHTML = '<option value="">Seleccionar...</option>';
-    tipo.subtipos.forEach(function (sub) {
-      const op = document.createElement("option");
-      op.value = sub.id_subtipo_incidencia;
-      op.textContent = sub.nombre_subtipo_incidencia;
-      selectSubtipo.appendChild(op);
-    });
+    poblarSelectCascada(
+      document.getElementById("crearSubtipo"),
+      itemsSubtiposDe(tipo),
+      "Primero selecciona un tipo",
+    );
   });
 
-  const opcionesCompresion = {
-    maxSizeMB: 0.5,
-    maxWidthOrHeight: 1920,
-    useWebWorker: true,
-    fileType: "image/jpeg",
-    initialQuality: 0.8,
-  };
-
-  const inputFotos = document.getElementById("crearFotos");
-  const previewFotos = document.getElementById("crearFotosPreview");
-  const errorFotos = document.getElementById("crearFotosError");
-
-  inputFotos.addEventListener("change", function () {
-    procesarFotos(this.files);
-    this.value = "";
+  // Galería de fotos (compressión + preview + revocación vía galeriaFotos.js).
+  const galeriaFotos = crearGaleriaFotos({
+    input: document.getElementById("crearFotos"),
+    dropzone: document.getElementById("dropzoneFotos"),
+    preview: document.getElementById("crearFotosPreview"),
+    error: document.getElementById("crearFotosError"),
+    cupo: function () {
+      return 3;
+    },
+    textoCupo: "Máximo 3 fotos permitidas.",
   });
-
-  const dropzone = document.getElementById("dropzoneFotos");
-  ["dragenter", "dragover"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault();
-      dropzone.classList.add("dropzone-fotos--activo");
-    });
-  });
-  ["dragleave", "dragend"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function () {
-      dropzone.classList.remove("dropzone-fotos--activo");
-    });
-  });
-  dropzone.addEventListener("drop", function (e) {
-    e.preventDefault();
-    dropzone.classList.remove("dropzone-fotos--activo");
-    procesarFotos(e.dataTransfer.files);
-  });
-
-  async function procesarFotos(lista) {
-    errorFotos.classList.add("d-none");
-    for (const file of Array.from(lista)) {
-      if (fotosSeleccionadas.length >= 3) {
-        mostrarErrorFotos("Máximo 3 fotos permitidas.");
-        break;
-      }
-      try {
-        const comprimida = await imageCompression(file, opcionesCompresion);
-        const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
-          type: "image/jpeg",
-        });
-        fotosSeleccionadas.push(jpg);
-      } catch {
-        mostrarErrorFotos('No se pudo procesar "' + file.name + '".');
-      }
-    }
-    renderPreviews();
-  }
-
-  function mostrarErrorFotos(mensaje) {
-    errorFotos.textContent = mensaje;
-    errorFotos.classList.remove("d-none");
-  }
-
-  function renderPreviews() {
-    previewFotos.innerHTML = "";
-    dropzone.classList.toggle("d-none", fotosSeleccionadas.length > 0);
-
-    fotosSeleccionadas.forEach(function (file, idx) {
-      const cont = document.createElement("div");
-      cont.className = "position-relative";
-
-      const img = document.createElement("img");
-      img.loading = "lazy";
-      const url = URL.createObjectURL(file);
-      img.onload = () => URL.revokeObjectURL(url);
-      img.src = url;
-      img.style.width = "80px";
-      img.style.height = "80px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "8px";
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
-      btn.innerHTML = "&times;";
-      btn.addEventListener("click", function () {
-        fotosSeleccionadas.splice(idx, 1);
-        renderPreviews();
-      });
-
-      cont.appendChild(img);
-      cont.appendChild(btn);
-      previewFotos.appendChild(cont);
-    });
-
-    if (fotosSeleccionadas.length > 0 && fotosSeleccionadas.length < 3) {
-      const agregar = document.createElement("button");
-      agregar.type = "button";
-      agregar.className = "foto-agregar";
-      agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
-      agregar.addEventListener("click", function () {
-        inputFotos.click();
-      });
-      previewFotos.appendChild(agregar);
-    }
-  }
 
   const picker = crearMapaPicker("mapaPicker", function (lat, lng) {
     document.getElementById("crearLatitud").value = lat.toFixed(6);
@@ -268,7 +123,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
     if (esAdmin) {
       formData.append("prioridad_incidencia", document.getElementById("crearPrioridad").value);
-      formData.append("estado_incidencia", document.getElementById("crearEstado").value);
     }
     formData.append("id_subtipo_incidencia", document.getElementById("crearSubtipo").value);
     formData.append("id_ciudad", document.getElementById("crearCiudad").value);
@@ -278,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const direccion = document.getElementById("crearDireccion").value.trim();
     if (direccion) formData.append("direccion_incidencia", direccion);
 
-    fotosSeleccionadas.forEach(function (file) {
+    galeriaFotos.archivos.forEach(function (file) {
       formData.append("fotos[]", file);
     });
 

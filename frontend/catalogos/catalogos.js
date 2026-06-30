@@ -1,6 +1,6 @@
 // catalogos.js — Tipos y subtipos de incidencia (solo admin): tabla única con toggle, crear/editar en modal.
 
-/* global apiFetch, obtenerToken, eliminarToken, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion */
+/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion, crearMenuAcciones, requerirSesion, cablearLogout */
 
 // Catálogo completo (tipos con sus subtipos anidados) cacheado para paginar en cliente.
 let tipos = [];
@@ -10,37 +10,17 @@ let paginaActual = 1;
 let porPagina = 10;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!obtenerToken()) {
-    window.location.href = "../login/login.html";
+  const usuarioActual = await requerirSesion();
+  if (!usuarioActual) return;
+
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+
+  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+    window.location.href = "../inicio/inicio.html";
     return;
   }
 
-  try {
-    const usuarioActual = await apiFetch("/user");
-    document.getElementById("nombreUsuario").textContent = usuarioActual.name;
-    aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
-
-    if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
-      window.location.href = "../inicio/inicio.html";
-      return;
-    }
-  } catch {
-    eliminarToken();
-    window.location.href = "../login/login.html";
-    return;
-  }
-
-  document.getElementById("btnLogout").addEventListener("click", async function (e) {
-    e.preventDefault();
-    this.classList.add("pe-none", "opacity-50");
-    try {
-      await apiFetch("/logout", { method: "POST" });
-    } catch {
-      /* ignorar */
-    }
-    eliminarToken();
-    window.location.href = "../login/login.html";
-  });
+  cablearLogout();
 
   document.querySelectorAll("[data-vista]").forEach(function (btn) {
     btn.addEventListener("click", () => cambiarVista(btn.dataset.vista));
@@ -201,7 +181,7 @@ function filaTipo(t) {
   const tdAcciones = document.createElement("td");
   tdAcciones.className = "text-end";
   tdAcciones.appendChild(
-    crearMenuAcciones(
+    menuAccionesCatalogo(
       () => abrirModalTipo(t),
       () => eliminarTipo(t),
     ),
@@ -235,7 +215,7 @@ function filaSubtipo(fila) {
   const tdAcciones = document.createElement("td");
   tdAcciones.className = "text-end";
   tdAcciones.appendChild(
-    crearMenuAcciones(
+    menuAccionesCatalogo(
       () => abrirModalSubtipo(s),
       () => eliminarSubtipo(s),
     ),
@@ -375,28 +355,10 @@ async function eliminarSubtipo(s) {
   }
 }
 
-// Construye el menú de 3 puntos (Editar / Eliminar) de una fila.
-function crearMenuAcciones(alEditar, alEliminar) {
-  const dropdown = document.createElement("div");
-  dropdown.className = "dropdown";
-  dropdown.innerHTML =
-    '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
-    '<i class="bi bi-three-dots-vertical"></i></button>' +
-    '<ul class="dropdown-menu dropdown-menu-end">' +
-    '<li><a class="dropdown-item" href="#" data-accion="editar">' +
-    '<i class="bi bi-pencil me-2"></i>Editar</a></li>' +
-    '<li><a class="dropdown-item text-danger" href="#" data-accion="eliminar">' +
-    '<i class="bi bi-trash me-2"></i>Eliminar</a></li>' +
-    "</ul>";
-
-  dropdown.querySelector('[data-accion="editar"]').addEventListener("click", function (e) {
-    e.preventDefault();
-    alEditar();
-  });
-  dropdown.querySelector('[data-accion="eliminar"]').addEventListener("click", function (e) {
-    e.preventDefault();
-    alEliminar();
-  });
-
-  return dropdown;
+// Construye el menú de 3 puntos (Editar / Eliminar) de una fila vía helper compartido.
+function menuAccionesCatalogo(alEditar, alEliminar) {
+  return crearMenuAcciones([
+    { icon: "bi bi-pencil me-2", label: "Editar", handler: alEditar },
+    { icon: "bi bi-trash me-2", label: "Eliminar", peligro: true, handler: alEliminar },
+  ]);
 }

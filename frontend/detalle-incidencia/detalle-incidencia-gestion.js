@@ -6,13 +6,13 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, imageCompression, opcionesCompresion, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
 
-// Fotos de resolución ya comprimidas, pendientes de subir.
-let fotosResolucion = [];
+// Galería de fotos de resolución (gestionada por galeriaFotos.js).
+let galeriaResolucion = null;
 
 // Hook del núcleo: al cargar el detalle. Revela y cablea lo del admin.
 function gestionAlCargarDetalle(id) {
@@ -154,36 +154,18 @@ function habilitarFotosResolucion(id) {
 }
 
 function prepararSubidaResolucion(id) {
-  const input = document.getElementById("inputResolucion");
-  const dropzone = document.getElementById("dropzoneResolucion");
-
-  input.addEventListener("change", function () {
-    procesarFotosResolucion(this.files);
-    this.value = "";
+  galeriaResolucion = crearGaleriaFotos({
+    input: document.getElementById("inputResolucion"),
+    dropzone: document.getElementById("dropzoneResolucion"),
+    preview: document.getElementById("resolucionPreview"),
+    error: document.getElementById("resolucionError"),
+    cupo: cupoResolucion,
+    textoCupo: "Máximo 3 fotos de resolución.",
+    btnSubir: document.getElementById("btnSubirResolucion"),
+    onSubir: function (archivos) {
+      return subirResolucion(id, archivos);
+    },
   });
-
-  ["dragenter", "dragover"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault();
-      dropzone.classList.add("dropzone-fotos--activo");
-    });
-  });
-  ["dragleave", "dragend"].forEach(function (ev) {
-    dropzone.addEventListener(ev, function () {
-      dropzone.classList.remove("dropzone-fotos--activo");
-    });
-  });
-  dropzone.addEventListener("drop", function (e) {
-    e.preventDefault();
-    dropzone.classList.remove("dropzone-fotos--activo");
-    procesarFotosResolucion(e.dataTransfer.files);
-  });
-
-  document.getElementById("btnSubirResolucion").addEventListener("click", function () {
-    subirResolucion(id);
-  });
-
-  renderResolucionPreview();
 }
 
 // Cupo de fotos de resolución que aún se pueden subir (máx. 3 en total).
@@ -194,84 +176,8 @@ function cupoResolucion() {
   return 3 - existentes;
 }
 
-// Comprime cada foto y la agrega al acumulador, sin pasar del cupo.
-async function procesarFotosResolucion(lista) {
-  const error = document.getElementById("resolucionError");
-  error.classList.add("d-none");
-  for (const file of Array.from(lista)) {
-    if (fotosResolucion.length >= cupoResolucion()) {
-      error.textContent = "Máximo 3 fotos de resolución.";
-      error.classList.remove("d-none");
-      break;
-    }
-    try {
-      const comprimida = await imageCompression(file, opcionesCompresion);
-      const jpg = new File([comprimida], file.name.replace(/\.\w+$/, ".jpg"), {
-        type: "image/jpeg",
-      });
-      fotosResolucion.push(jpg);
-    } catch {
-      error.textContent = 'No se pudo procesar "' + file.name + '".';
-      error.classList.remove("d-none");
-    }
-  }
-  renderResolucionPreview();
-}
-
-// Dibuja las miniaturas de las fotos elegidas (con botón para quitarlas).
-function renderResolucionPreview() {
-  const preview = document.getElementById("resolucionPreview");
-  const dropzone = document.getElementById("dropzoneResolucion");
-  const input = document.getElementById("inputResolucion");
-  const btnSubir = document.getElementById("btnSubirResolucion");
-  preview.innerHTML = "";
-
-  const cupo = cupoResolucion();
-  dropzone.classList.toggle("d-none", fotosResolucion.length > 0 || cupo <= 0);
-
-  fotosResolucion.forEach(function (file, idx) {
-    const cont = document.createElement("div");
-    cont.className = "position-relative";
-
-    const img = document.createElement("img");
-    img.loading = "lazy";
-    const url = URL.createObjectURL(file);
-    img.onload = () => URL.revokeObjectURL(url);
-    img.src = url;
-    img.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:8px";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
-    btn.innerHTML = "&times;";
-    btn.addEventListener("click", function () {
-      fotosResolucion.splice(idx, 1);
-      renderResolucionPreview();
-    });
-
-    cont.appendChild(img);
-    cont.appendChild(btn);
-    preview.appendChild(cont);
-  });
-
-  if (fotosResolucion.length > 0 && fotosResolucion.length < cupo) {
-    const agregar = document.createElement("button");
-    agregar.type = "button";
-    agregar.className = "foto-agregar";
-    agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
-    agregar.addEventListener("click", function () {
-      input.click();
-    });
-    preview.appendChild(agregar);
-  }
-
-  btnSubir.classList.toggle("d-none", fotosResolucion.length === 0);
-}
-
 // Sube las fotos al backend (tipo RESOLUCION) y repinta las galerías con la respuesta.
-async function subirResolucion(id) {
-  if (fotosResolucion.length === 0) return;
-
+async function subirResolucion(id, archivos) {
   const btnSubir = document.getElementById("btnSubirResolucion");
   const spinner = document.getElementById("resolucionSpinner");
   btnSubir.disabled = true;
@@ -279,7 +185,7 @@ async function subirResolucion(id) {
 
   try {
     const formData = new FormData();
-    fotosResolucion.forEach(function (file) {
+    archivos.forEach(function (file) {
       formData.append("fotos[]", file);
     });
     formData.append("tipo_evidencia", "RESOLUCION");
@@ -290,8 +196,7 @@ async function subirResolucion(id) {
     });
     incActual.evidencias = actualizada.evidencias || [];
     pintarFotos();
-    fotosResolucion = [];
-    renderResolucionPreview();
+    galeriaResolucion.limpiar();
     mostrarToast("Fotos de resolución subidas", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
