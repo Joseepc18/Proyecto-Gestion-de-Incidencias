@@ -2150,6 +2150,33 @@ html[data-theme="dark"] {
   overflow: hidden;
 }
 
+/* Pin circular para incidencias en Mapbox (sustituye al circleMarker de Leaflet) */
+.mapa-pin-incidencia {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Toggle de estilo 3D / Satélite del mapa */
+.mapa-estilo-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  font-size: 1rem;
+  color: #333;
+  background: #fff;
+  border: 0;
+}
+
+.mapa-estilo-toggle button.active {
+  background: var(--admin-primary, #2563eb);
+  color: #fff;
+}
+
 /* Chat reutilizable (página de detalle + panel flotante de Mis incidencias) */
 .chat-panel {
   display: flex;

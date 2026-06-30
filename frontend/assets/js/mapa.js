@@ -1,19 +1,24 @@
-// mapa.js — Helper reutilizable de Leaflet: mapa con satélite/calles y pines de incidencias.
+// mapa.js — Helper reutilizable de Mapbox GL JS: mapa 3D con edificios + pines de incidencias.
 
-// Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
-/* global L, escaparHtml */
+/* global mapboxgl, MAPBOX_TOKEN, escaparHtml */
 /* exported ciudadMasCercana, observarTamanoMapa */
 
-// Repinta el mapa cuando su contenedor cambia de tamaño (evita que nazca gris por medirse
-// antes de tener su tamaño final, p. ej. dentro de un panel que aún se está renderizando).
-// Reacciona al cambio real en vez de adivinar con setTimeout. Se autodesconecta al destruir el mapa.
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+// Standard Satellite: foto aérea + edificios 3D extruidos (lo más "Google Earth" que da Mapbox).
+const MAPBOX_ESTILO_3D = "mapbox://styles/mapbox/standard-satellite";
+// Maqueta 3D plana sin foto aérea (edificios blancos), por si se quiere ver solo el callejero.
+const MAPBOX_ESTILO_MAQUETA = "mapbox://styles/mapbox/standard";
+
+// Repinta el mapa cuando su contenedor cambia de tamaño (evita que nazca gris por
+// medirse antes de tener su tamaño final, p. ej. dentro de un panel que aún se renderiza).
 function observarTamanoMapa(map) {
   if (typeof ResizeObserver === "undefined") return;
   const ro = new ResizeObserver(function () {
-    map.invalidateSize();
+    map.resize();
   });
   ro.observe(map.getContainer());
-  map.on("unload", function () {
+  map.on("remove", function () {
     ro.disconnect();
   });
 }
@@ -43,29 +48,68 @@ function ciudadMasCercana(ciudades, lat, lng) {
   return cercana;
 }
 
-function crearMapaBase(idContenedor, opciones) {
-  opciones = opciones || {};
-  const centro = opciones.centro || [-2.2267, -80.9012];
-  const zoom = opciones.zoom || 13;
+// Botón flotante para alternar entre vista 3D (edificios) y satélite. Mapbox no tiene
+// control nativo de cambio de estilo, así que lo añadimos al contenedor de controles.
+function agregarControlEstilo(map) {
+  const grupo = document.createElement("div");
+  grupo.className = "mapboxgl-ctrl mapboxgl-ctrl-group mapa-estilo-toggle";
 
-  const map = L.map(idContenedor, { zoomControl: false }).setView(centro, zoom);
-  L.control.zoom({ position: "topright" }).addTo(map);
+  const btn3D = document.createElement("button");
+  btn3D.type = "button";
+  btn3D.title = "Vista satélite 3D (foto aérea + edificios)";
+  btn3D.setAttribute("aria-label", "Vista satélite 3D");
+  btn3D.classList.add("active");
+  btn3D.innerHTML = '<i class="bi bi-globe-americas" aria-hidden="true"></i>';
 
-  const satelite = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    { attribution: "Imágenes © Esri", maxZoom: 19, maxNativeZoom: 18 },
-  );
-  const calles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap",
-    maxZoom: 19,
+  const btnMaqueta = document.createElement("button");
+  btnMaqueta.type = "button";
+  btnMaqueta.title = "Vista de mapa con edificios";
+  btnMaqueta.setAttribute("aria-label", "Vista mapa");
+  btnMaqueta.innerHTML = '<i class="bi bi-buildings" aria-hidden="true"></i>';
+
+  let estiloActual = MAPBOX_ESTILO_3D;
+  function cambiarA(estilo, btnActivo, btnOtro) {
+    if (estiloActual === estilo) return;
+    map.setStyle(estilo);
+    estiloActual = estilo;
+    btnActivo.classList.add("active");
+    btnOtro.classList.remove("active");
+  }
+  btn3D.addEventListener("click", function () {
+    cambiarA(MAPBOX_ESTILO_3D, btn3D, btnMaqueta);
+  });
+  btnMaqueta.addEventListener("click", function () {
+    cambiarA(MAPBOX_ESTILO_MAQUETA, btnMaqueta, btn3D);
   });
 
-  (opciones.capaInicial === "calles" ? calles : satelite).addTo(map);
-  L.control
-    .layers({ Satélite: satelite, Calles: calles }, null, { position: "topright" })
-    .addTo(map);
+  grupo.append(btn3D, btnMaqueta);
+  const slot = map.getContainer().querySelector(".mapboxgl-ctrl-top-right");
+  if (slot) slot.appendChild(grupo);
+}
 
+function crearMapaBase(idContenedor, opciones) {
+  opciones = opciones || {};
+  // Mapbox usa [lng, lat], al revés que Leaflet.
+  const centro = opciones.centro || [-80.9012, -2.2267];
+  const zoom = opciones.zoom || 14;
+
+  const map = new mapboxgl.Map({
+    container: idContenedor,
+    style: MAPBOX_ESTILO_3D,
+    center: centro,
+    zoom: zoom,
+    // Tope a 18: más allá la imagen satelital se sobrezoomea y se ve pixelada
+    // (en Ecuador la foto aérea no tiene más resolución nativa).
+    maxZoom: 18,
+    pitch: 45,
+    bearing: -17,
+    antialias: true,
+  });
+
+  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+  agregarControlEstilo(map);
   observarTamanoMapa(map);
+
   return map;
 }
 
@@ -73,49 +117,60 @@ function crearMapaBase(idContenedor, opciones) {
 // eslint-disable-next-line no-unused-vars
 function crearMapaIncidencias(idContenedor, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
-  const capaPines = L.layerGroup().addTo(map);
   let marcadores = {};
 
   function pintarPines(items, onSelect) {
-    capaPines.clearLayers();
+    Object.values(marcadores).forEach(function (m) {
+      m.remove();
+    });
     marcadores = {};
     const puntos = [];
 
     items.forEach(function (it) {
       if (it.lat == null || it.lng == null) return;
-      const marcador = L.circleMarker([it.lat, it.lng], {
-        radius: 9,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: it.color || "#2563eb",
-        fillOpacity: 1,
-      }).addTo(capaPines);
 
-      // Defensa en profundidad: el popup de Leaflet se renderiza con innerHTML,
-      // así que siempre escapamos el título venga de donde venga.
-      if (it.titulo) marcador.bindPopup(escaparHtml(it.titulo));
+      const el = document.createElement("div");
+      el.className = "mapa-pin-incidencia";
+      el.style.background = it.color || "#2563eb";
+      if (onSelect) el.style.cursor = "pointer";
+
+      const marcador = new mapboxgl.Marker({ element: el }).setLngLat([it.lng, it.lat]).addTo(map);
+
+      // Defensa en profundidad: el popup se renderiza con HTML, así que escapamos el título.
+      if (it.titulo) {
+        marcador.setPopup(
+          new mapboxgl.Popup({ offset: 14, closeButton: false }).setHTML(escaparHtml(it.titulo)),
+        );
+      }
       if (onSelect) {
-        marcador.on("click", function () {
+        el.addEventListener("click", function (e) {
+          // El click en el pin de Mapbox abre el popup por defecto; lo dejamos pasar.
+          e.stopPropagation();
           onSelect(it.id);
         });
       }
 
       marcadores[it.id] = marcador;
-      puntos.push([it.lat, it.lng]);
+      puntos.push([it.lng, it.lat]);
     });
 
     if (puntos.length === 1) {
-      map.setView(puntos[0], 16);
+      map.flyTo({ center: puntos[0], zoom: 16 });
     } else if (puntos.length > 1) {
-      map.fitBounds(puntos, { padding: [40, 40], maxZoom: 16 });
+      const bounds = new mapboxgl.LngLatBounds();
+      puntos.forEach(function (p) {
+        bounds.extend(p);
+      });
+      map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 800 });
     }
   }
 
   function enfocar(id) {
     const marcador = marcadores[id];
     if (!marcador) return;
-    map.setView(marcador.getLatLng(), 16, { animate: true });
-    marcador.openPopup();
+    map.flyTo({ center: marcador.getLngLat(), zoom: 16 });
+    const popup = marcador.getPopup();
+    if (popup && !popup.isOpen()) marcador.togglePopup();
   }
 
   return { map, pintarPines, enfocar };
@@ -125,19 +180,22 @@ function crearMapaIncidencias(idContenedor, opciones) {
 // eslint-disable-next-line no-unused-vars
 function crearMapaPicker(idContenedor, onCambio, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
+  // Bounds en formato Mapbox: [[oeste, sur], [este, norte]].
   map.setMaxBounds([
-    [-5.5, -82.0],
-    [1.8, -74.5],
+    [-82.0, -5.5],
+    [-74.5, 1.8],
   ]);
   let marcador = null;
 
   function poner(lat, lng) {
     if (marcador) {
-      marcador.setLatLng([lat, lng]);
+      marcador.setLngLat([lng, lat]);
     } else {
-      marcador = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marcador = new mapboxgl.Marker({ draggable: true, color: "#2563eb" })
+        .setLngLat([lng, lat])
+        .addTo(map);
       marcador.on("dragend", function () {
-        const p = marcador.getLatLng();
+        const p = marcador.getLngLat();
         if (onCambio) onCambio(p.lat, p.lng);
       });
     }
@@ -145,19 +203,19 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
   }
 
   map.on("click", function (e) {
-    poner(e.latlng.lat, e.latlng.lng);
+    poner(e.lngLat.lat, e.lngLat.lng);
   });
 
   function usarMiUbicacion() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function (pos) {
-      map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+      map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 16 });
       poner(pos.coords.latitude, pos.coords.longitude);
     });
   }
 
   function setUbicacion(lat, lng) {
-    map.setView([lat, lng], 16);
+    map.flyTo({ center: [lng, lat], zoom: 16 });
     poner(lat, lng);
   }
 

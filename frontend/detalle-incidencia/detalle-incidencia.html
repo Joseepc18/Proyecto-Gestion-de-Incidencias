@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
-    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="../assets/vendors/mapbox-gl/mapbox-gl.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
@@ -213,7 +213,19 @@
                 <!-- Mapa -->
                 <section class="panel">
                   <div class="p-3">
-                    <h2 class="h6 mb-2"><i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa</h2>
+                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                      <h2 class="h6 mb-0">
+                        <i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa
+                      </h2>
+                      <a
+                        id="btnComoLlegar"
+                        class="btn btn-outline-primary btn-sm d-none"
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <i class="bi bi-signpost-split me-1"></i> Cómo llegar
+                      </a>
+                    </div>
                     <!-- Controles del picker (solo en modo edición del ciudadano) -->
                     <div
                       id="mapaEditControles"
@@ -435,7 +447,8 @@
     <script src="../assets/js/layout.js"></script>
     <script src="../assets/js/notificaciones.js"></script>
     <!-- Mapa -->
-    <script src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script src="../assets/vendors/mapbox-gl/mapbox-gl.js"></script>
+    <script src="../assets/js/mapbox-config.js"></script>
     <script src="../assets/js/mapa.js"></script>
     <!-- Chat en tiempo real (WebSockets locales: Pusher protocol + Laravel Echo) -->
     <script src="../assets/vendors/reverb/pusher.min.js"></script>

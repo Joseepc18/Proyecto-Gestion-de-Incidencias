@@ -114,10 +114,16 @@ async function cargarDetalle(id) {
 function pintarMapaLectura() {
   const lat = incActual.latitud_incidencia != null ? Number(incActual.latitud_incidencia) : null;
   const lng = incActual.longitud_incidencia != null ? Number(incActual.longitud_incidencia) : null;
+  const btnComoLlegar = document.getElementById("btnComoLlegar");
   if (lat == null || lng == null) {
     document.getElementById("mapaDetalle").innerHTML =
       '<p class="text-muted small p-3 mb-0">Esta incidencia no tiene ubicación.</p>';
+    if (btnComoLlegar) btnComoLlegar.classList.add("d-none");
     return;
+  }
+  if (btnComoLlegar) {
+    btnComoLlegar.href = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng;
+    btnComoLlegar.classList.remove("d-none");
   }
   mapaVista = crearMapaIncidencias("mapaDetalle");
   mapaVista.pintarPines([
@@ -138,6 +144,8 @@ function activarMapaPicker(lat, lng, onCambio) {
     mapaVista.map.remove();
     mapaVista = null;
   }
+  const btnComoLlegar = document.getElementById("btnComoLlegar");
+  if (btnComoLlegar) btnComoLlegar.classList.add("d-none");
   document.getElementById("mapaDetalle").innerHTML = "";
   picker = crearMapaPicker("mapaDetalle", onCambio);
   if (lat != null && lng != null) picker.setUbicacion(lat, lng);
