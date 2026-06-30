@@ -28,7 +28,7 @@ class UserController extends Controller
 
         // through() envuelve cada usuario en UserResource (incluye foto_perfil, oculta email ajeno)
         // sin alterar el shape de paginación de nivel superior que consume el frontend.
-        return $query->paginate((int) $request->input('per_page', 10))
+        return $query->paginate($this->perPage($request))
             ->through(fn ($usuario) => new UserResource($usuario));
     }
 

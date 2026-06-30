@@ -7,6 +7,7 @@ use App\Http\Requests\GuardarSubtipoRequest;
 use App\Http\Requests\GuardarTipoRequest;
 use App\Models\SubtipoIncidencia;
 use App\Models\TipoIncidencia;
+use Illuminate\Support\Facades\Cache;
 
 // CRUD de tipos y subtipos de incidencia (solo admin; rutas bajo el middleware 'admin').
 class CatalogoAdminController extends Controller
@@ -17,12 +18,16 @@ class CatalogoAdminController extends Controller
     {
         $tipo = TipoIncidencia::create($request->validated());
 
+        Cache::forget('catalogo_tipos_incidencia');
+
         return response()->json($tipo, 201);
     }
 
     public function actualizarTipo(GuardarTipoRequest $request, TipoIncidencia $tipo)
     {
         $tipo->update($request->validated());
+
+        Cache::forget('catalogo_tipos_incidencia');
 
         return $tipo;
     }
@@ -35,6 +40,8 @@ class CatalogoAdminController extends Controller
 
         $tipo->delete();
 
+        Cache::forget('catalogo_tipos_incidencia');
+
         return ['message' => 'Tipo eliminado'];
     }
 
@@ -44,12 +51,16 @@ class CatalogoAdminController extends Controller
     {
         $subtipo = SubtipoIncidencia::create($request->validated());
 
+        Cache::forget('catalogo_tipos_incidencia');
+
         return response()->json($subtipo->load('tipo'), 201);
     }
 
     public function actualizarSubtipo(GuardarSubtipoRequest $request, SubtipoIncidencia $subtipo)
     {
         $subtipo->update($request->validated());
+
+        Cache::forget('catalogo_tipos_incidencia');
 
         return $subtipo->load('tipo');
     }
@@ -61,6 +72,8 @@ class CatalogoAdminController extends Controller
         }
 
         $subtipo->delete();
+
+        Cache::forget('catalogo_tipos_incidencia');
 
         return ['message' => 'Subtipo eliminado'];
     }

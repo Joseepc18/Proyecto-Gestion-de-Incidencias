@@ -6,7 +6,6 @@ use App\Events\ComentarioCreado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CrearComentarioRequest;
 use App\Http\Requests\EditarComentarioRequest;
-use App\Models\BitacoraError;
 use App\Models\Comentario;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
@@ -26,20 +25,14 @@ class ComentarioController extends Controller
     {
         $datos = $request->validated();
 
-        try {
-            $comentario = $incidencia->comentarios()->create([
-                'id_usuario' => $request->user()->id,
-                'comentario' => $datos['comentario'],
-            ]);
+        $comentario = $incidencia->comentarios()->create([
+            'id_usuario' => $request->user()->id,
+            'comentario' => $datos['comentario'],
+        ]);
 
-            event(new ComentarioCreado($comentario));
+        event(new ComentarioCreado($comentario));
 
-            return response()->json($comentario->load('usuario.rol'), 201);
-        } catch (\Exception $e) {
-            BitacoraError::registrar($request->user(), 'SERVIDOR', 'ComentarioController@crearComentario', $e->getMessage());
-
-            return response()->json(['message' => 'Error al crear el comentario'], 500);
-        }
+        return response()->json($comentario->load('usuario.rol'), 201);
     }
 
     // Editar un comentario propio (la autorización la resuelve el FormRequest).

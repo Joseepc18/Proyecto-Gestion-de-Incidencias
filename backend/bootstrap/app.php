@@ -50,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             try {
                 BitacoraError::create([
-                    'id_usuario' => auth()->id(),
+                    'id_usuario' => auth('sanctum')->id(),
                     'tipo_error' => $e instanceof QueryException ? 'BASE_DATOS' : 'SERVIDOR',
                     'descripcion_error' => $e instanceof QueryException ? 'Error de base de datos (SQL oculto por seguridad)' : substr(get_class($e).': '.$e->getMessage(), 0, 1000),
                 ]);

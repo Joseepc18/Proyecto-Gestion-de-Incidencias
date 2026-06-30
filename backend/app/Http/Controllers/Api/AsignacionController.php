@@ -54,7 +54,7 @@ class AsignacionController extends Controller
 
             return response()->json($incidencia->load('asignaciones.usuario'), 201);
         } catch (QueryException $e) {
-            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage());
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage(), $e);
 
             return response()->json(['message' => 'No se pudo asignar el técnico. Inténtalo de nuevo.'], 422);
         }

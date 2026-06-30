@@ -76,8 +76,7 @@ class IncidenciaPolicy
     // El administrador y el técnico de APOYO no suben evidencias.
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
-        return $incidencia->id_usuario === $user->id
-        || $user->esResponsableDe($incidencia)
+        return ($incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia))
             ? Response::allow()
             : Response::deny('No autorizado');
     }

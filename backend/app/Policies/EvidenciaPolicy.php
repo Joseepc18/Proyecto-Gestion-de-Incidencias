@@ -14,7 +14,7 @@ class EvidenciaPolicy
     {
         $incidencia = $evidencia->incidencia;
 
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)
+        return ($user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia))
             ? Response::allow()
             : Response::deny('No autorizado');
     }

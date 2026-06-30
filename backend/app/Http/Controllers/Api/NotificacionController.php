@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\BitacoraError;
 use App\Models\Notificacion;
 use Illuminate\Http\Request;
 
@@ -34,36 +33,24 @@ class NotificacionController extends Controller
     {
         $this->authorize('marcar', $notificacion);
 
-        try {
-            $notificacion->update([
-                'estado_lectura' => true,
-                'fecha_lectura' => now(),
-            ]);
+        $notificacion->update([
+            'estado_lectura' => true,
+            'fecha_lectura' => now(),
+        ]);
 
-            return ['message' => 'Notificación marcada como leída'];
-        } catch (\Exception $e) {
-            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'NotificacionController@marcarLeida', $e->getMessage());
-
-            return response()->json(['message' => 'Error al actualizar la notificación'], 500);
-        }
+        return ['message' => 'Notificación marcada como leída'];
     }
 
     // Marcar todas las notificaciones del usuario como leídas.
     public function marcarTodas(Request $request)
     {
-        try {
-            Notificacion::where('id_usuario', $request->user()->id)
-                ->where('estado_lectura', false)
-                ->update([
-                    'estado_lectura' => true,
-                    'fecha_lectura' => now(),
-                ]);
+        Notificacion::where('id_usuario', $request->user()->id)
+            ->where('estado_lectura', false)
+            ->update([
+                'estado_lectura' => true,
+                'fecha_lectura' => now(),
+            ]);
 
-            return ['message' => 'Todas marcadas como leídas'];
-        } catch (\Exception $e) {
-            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'NotificacionController@marcarTodas', $e->getMessage());
-
-            return response()->json(['message' => 'Error al actualizar las notificaciones'], 500);
-        }
+        return ['message' => 'Todas marcadas como leídas'];
     }
 }
