@@ -377,6 +377,14 @@ async function pintarMapa(porProvincia) {
       scrollWheelZoom: true,
       zoomControl: true,
     });
+    // Repinta el coroplético cuando su contenedor cambia de tamaño (reacciona al hecho
+    // real en vez de adivinar con un setTimeout que puede dispararse antes de tiempo).
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(function () {
+        mapaProv.invalidateSize();
+      });
+      ro.observe(mapaProv.getContainer());
+    }
   }
   if (capaProv) capaProv.remove();
 
@@ -390,7 +398,6 @@ async function pintarMapa(porProvincia) {
   }).addTo(mapaProv);
 
   mapaProv.fitBounds(capaProv.getBounds(), { padding: [6, 6] });
-  setTimeout(() => mapaProv.invalidateSize(), 0);
 
   dibujarLeyenda(maximo);
 }

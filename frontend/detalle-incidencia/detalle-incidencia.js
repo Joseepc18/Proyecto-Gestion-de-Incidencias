@@ -120,18 +120,15 @@ function pintarMapaLectura() {
     return;
   }
   mapaVista = crearMapaIncidencias("mapaDetalle");
-  setTimeout(function () {
-    mapaVista.map.invalidateSize();
-    mapaVista.pintarPines([
-      {
-        id: incActual.id_incidencia,
-        lat: lat,
-        lng: lng,
-        titulo: codigoIncidencia(incActual.id_incidencia) + " — " + incActual.nombre_incidencia,
-        color: "#2563eb",
-      },
-    ]);
-  }, 200);
+  mapaVista.pintarPines([
+    {
+      id: incActual.id_incidencia,
+      lat: lat,
+      lng: lng,
+      titulo: codigoIncidencia(incActual.id_incidencia) + " — " + incActual.nombre_incidencia,
+      color: "#2563eb",
+    },
+  ]);
 }
 
 // Convierte el mapa de solo-lectura en un selector de ubicación (lo usa el módulo de edición).
@@ -143,10 +140,7 @@ function activarMapaPicker(lat, lng, onCambio) {
   }
   document.getElementById("mapaDetalle").innerHTML = "";
   picker = crearMapaPicker("mapaDetalle", onCambio);
-  setTimeout(function () {
-    picker.map.invalidateSize();
-    if (lat != null && lng != null) picker.setUbicacion(lat, lng);
-  }, 200);
+  if (lat != null && lng != null) picker.setUbicacion(lat, lng);
   return picker;
 }
 

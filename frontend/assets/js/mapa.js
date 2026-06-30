@@ -2,7 +2,21 @@
 
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
 /* global L, escaparHtml */
-/* exported ciudadMasCercana */
+/* exported ciudadMasCercana, observarTamanoMapa */
+
+// Repinta el mapa cuando su contenedor cambia de tamaño (evita que nazca gris por medirse
+// antes de tener su tamaño final, p. ej. dentro de un panel que aún se está renderizando).
+// Reacciona al cambio real en vez de adivinar con setTimeout. Se autodesconecta al destruir el mapa.
+function observarTamanoMapa(map) {
+  if (typeof ResizeObserver === "undefined") return;
+  const ro = new ResizeObserver(function () {
+    map.invalidateSize();
+  });
+  ro.observe(map.getContainer());
+  map.on("unload", function () {
+    ro.disconnect();
+  });
+}
 
 // Devuelve la ciudad del catálogo más cercana a (lat, lng) por distancia haversine.
 // Ignora ciudades sin coordenadas. Sirve para autocompletar provincia/ciudad al marcar en el mapa.
@@ -51,6 +65,7 @@ function crearMapaBase(idContenedor, opciones) {
     .layers({ Satélite: satelite, Calles: calles }, null, { position: "topright" })
     .addTo(map);
 
+  observarTamanoMapa(map);
   return map;
 }
 

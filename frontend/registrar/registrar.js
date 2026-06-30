@@ -105,9 +105,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("ubicacionError").classList.add("d-none");
     autocompletarUbicacion(lat, lng);
   });
-  setTimeout(function () {
-    picker.map.invalidateSize();
-  }, 200);
 
   document.getElementById("btnMiUbicacion").addEventListener("click", function () {
     picker.usarMiUbicacion();

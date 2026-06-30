@@ -34,9 +34,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   mapa = crearMapaIncidencias("mapaMisIncidencias");
-  setTimeout(function () {
-    mapa.map.invalidateSize();
-  }, 200);
 
   cargarLista();
 });
