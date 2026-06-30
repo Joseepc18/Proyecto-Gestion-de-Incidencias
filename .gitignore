@@ -33,3 +33,4 @@ auth.json
 docs/
 CLAUDE.md
 database/*.sqlite
+AGENTS.md
