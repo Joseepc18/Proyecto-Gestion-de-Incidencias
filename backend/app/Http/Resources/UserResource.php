@@ -16,11 +16,10 @@ class UserResource extends JsonResource
     {
         $esAdmin = $request->user()?->esAdmin();
         $esPropietario = $request->user()?->id === $this->id;
-        $esAuthRoute = in_array($request->path(), ['api/login', 'api/register', 'api/auth/google/callback']);
 
         $data = parent::toArray($request);
 
-        if (! $esAdmin && ! $esPropietario && ! $esAuthRoute) {
+        if (! $esAdmin && ! $esPropietario) {
             unset($data['email']);
         }
 

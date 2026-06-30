@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\AlmacenamientoException;
 use Illuminate\Database\Eloquent\Model;
 
 class Incidencia extends Model
@@ -65,8 +66,21 @@ class Incidencia extends Model
         return $this->hasMany(Evidencia::class, 'id_incidencia', 'id_incidencia');
     }
 
-    public function notificaciones()
+    // Guarda las fotos en disco y crea sus evidencias; acumula las rutas en $rutasGuardadas
+    // (por referencia) para que el controller pueda limpiarlas si la transacción revienta.
+    public function guardarEvidencias(array $fotos, int $idUsuario, ?string $tipo, array &$rutasGuardadas): void
     {
-        return $this->hasMany(Notificacion::class, 'id_incidencia', 'id_incidencia');
+        foreach ($fotos as $foto) {
+            $ruta = $foto->store('incidencias', 'public');
+            if ($ruta === false) {
+                throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
+            }
+            $rutasGuardadas[] = $ruta;
+            $datos = ['url_evidencia' => $ruta, 'id_usuario' => $idUsuario];
+            if ($tipo !== null) {
+                $datos['tipo_evidencia'] = $tipo;
+            }
+            $this->evidencias()->create($datos);
+        }
     }
 }

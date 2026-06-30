@@ -49,7 +49,7 @@ class IncidenciaController extends Controller
             $query->whereHas('asignaciones', fn ($q) => $q->where('id_usuario', $user->id));
         }
 
-        return response()->json($query->paginate((int) $request->input('per_page', 10)));
+        return $query->paginate((int) $request->input('per_page', 10));
     }
 
     // Crear una nueva incidencia adjuntando opcionalmente fotos (evidencias).
@@ -67,23 +67,11 @@ class IncidenciaController extends Controller
                 $incidencia = Incidencia::create($datos);
 
                 if ($request->hasFile('fotos')) {
-                    foreach ($request->file('fotos') as $foto) {
-                        $ruta = $foto->store('incidencias', 'public');
-                        if ($ruta === false) {
-                            throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
-                        }
-                        $rutasGuardadas[] = $ruta;
-                        $incidencia->evidencias()->create([
-                            'url_evidencia' => $ruta,
-                            'id_usuario' => $request->user()->id,
-                        ]);
-                    }
+                    $incidencia->guardarEvidencias($request->file('fotos'), $request->user()->id, null, $rutasGuardadas);
                 }
 
                 return $incidencia;
             });
-
-            Cache::forget('dashboard_metricas');
 
             return response()->json(
                 new IncidenciaResource($incidencia->load([
@@ -98,20 +86,12 @@ class IncidenciaController extends Controller
             );
         } catch (AlmacenamientoException $e) {
             Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'ARCHIVO',
-                'descripcion_error' => 'IncidenciaController@crearIncidencia: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@crearIncidencia', $e->getMessage());
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Exception $e) {
             Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'SERVIDOR',
-                'descripcion_error' => 'IncidenciaController@crearIncidencia: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia', $e->getMessage());
 
             return response()->json(['message' => 'Error al crear la incidencia'], 500);
         }
@@ -122,16 +102,15 @@ class IncidenciaController extends Controller
     {
         $this->authorize('ver', $incidencia);
 
-        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias'])));
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']));
     }
 
     // Actualizar datos básicos de la incidencia (solo autor si está PENDIENTE).
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
         $incidencia->update($request->validated());
-        Cache::forget('dashboard_metricas');
 
-        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 
     // Eliminar una incidencia junto con todas sus relaciones y fotos físicas.
@@ -151,23 +130,13 @@ class IncidenciaController extends Controller
 
             foreach ($rutasEvidencias as $ruta) {
                 if (! Storage::disk('public')->delete($ruta)) {
-                    BitacoraError::create([
-                        'id_usuario' => $request->user()->id,
-                        'tipo_error' => 'ARCHIVO',
-                        'descripcion_error' => 'IncidenciaController@eliminarIncidencia: no se pudo borrar '.$ruta,
-                    ]);
+                    BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@eliminarIncidencia', 'no se pudo borrar '.$ruta);
                 }
             }
 
-            Cache::forget('dashboard_metricas');
-
-            return response()->json(['message' => 'Incidencia eliminada']);
+            return ['message' => 'Incidencia eliminada'];
         } catch (\Exception $e) {
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'SERVIDOR',
-                'descripcion_error' => 'IncidenciaController@eliminarIncidencia: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@eliminarIncidencia', $e->getMessage());
 
             return response()->json(['message' => 'Error al eliminar la incidencia'], 500);
         }
@@ -178,9 +147,7 @@ class IncidenciaController extends Controller
     {
         $this->authorize('verHistorial', $incidencia);
 
-        return response()->json(
-            $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
-        );
+        return $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get();
     }
 
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
@@ -212,8 +179,10 @@ class IncidenciaController extends Controller
             });
         }
 
+        // El observer invalida la caché en el update Eloquent, pero la rama del SP (resolver_incidencia)
+        // es SQL crudo y no dispara eventos: aquí la invalidamos a mano.
         Cache::forget('dashboard_metricas');
 
-        return response()->json(new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad'])));
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 }

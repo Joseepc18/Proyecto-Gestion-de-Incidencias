@@ -28,7 +28,8 @@ class CrearIncidenciaRequest extends FormRequest
 
         if ($this->user()?->esAdmin()) {
             $reglas['prioridad_incidencia'] = 'nullable|in:ALTA,MEDIA,BAJA';
-            $reglas['estado_incidencia'] = 'nullable|in:PENDIENTE,EN_PROCESO,RESUELTO';
+            // No se permite crear en RESUELTO: resolver pasa por cambiarEstado (corre el SP, setea fecha e historial).
+            $reglas['estado_incidencia'] = 'nullable|in:PENDIENTE,EN_PROCESO';
         }
 
         return $reglas;

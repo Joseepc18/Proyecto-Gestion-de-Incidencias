@@ -135,6 +135,37 @@ class RolesYCoberturaTest extends TestCase
         $this->assertDatabaseHas('bitacora_errores', ['tipo_error' => 'ARCHIVO']);
     }
 
+    // Si la notificación de evidencia falla, la subida (ya commiteada) NO se rompe: 200 + bitácora.
+    public function test_subir_evidencia_no_se_rompe_si_falla_la_notificacion(): void
+    {
+        Storage::fake('public');
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        // Un admin como destino para que se intente crear la notificación.
+        $this->crearUsuario('admin');
+
+        // Forzamos que crear cualquier Notificacion explote.
+        Notificacion::creating(function () {
+            throw new \RuntimeException('falla de notificación');
+        });
+
+        Sanctum::actingAs($autor);
+
+        $this->post("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('foto.jpg')],
+            'tipo_evidencia' => 'REPORTE',
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        Notificacion::flushEventListeners();
+
+        // La foto quedó guardada pese al fallo, y el error se registró en la bitácora.
+        $this->assertDatabaseHas('evidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_evidencia' => 'REPORTE',
+        ]);
+        $this->assertDatabaseHas('bitacora_errores', ['tipo_error' => 'SERVIDOR']);
+    }
+
     // El dashboard de métricas es solo para admin y trae los tres bloques.
     public function test_dashboard_de_metricas_solo_admin(): void
     {

@@ -18,9 +18,7 @@ class ComentarioController extends Controller
     {
         $this->authorize('verChat', $incidencia);
 
-        return response()->json(
-            $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get()
-        );
+        return $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get();
     }
 
     // Crear un comentario en una incidencia.
@@ -38,11 +36,7 @@ class ComentarioController extends Controller
 
             return response()->json($comentario->load('usuario.rol'), 201);
         } catch (\Exception $e) {
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'SERVIDOR',
-                'descripcion_error' => 'ComentarioController@crearComentario: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'SERVIDOR', 'ComentarioController@crearComentario', $e->getMessage());
 
             return response()->json(['message' => 'Error al crear el comentario'], 500);
         }
@@ -53,6 +47,6 @@ class ComentarioController extends Controller
     {
         $comentario->update($request->validated());
 
-        return response()->json($comentario->load('usuario.rol'));
+        return $comentario->load('usuario.rol');
     }
 }

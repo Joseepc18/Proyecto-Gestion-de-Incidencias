@@ -3,7 +3,6 @@
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
-use Laravel\Sanctum\Sanctum;
 
 return [
 
@@ -18,12 +17,8 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
-    ))),
+    // API 100% stateless (tokens Bearer, sin cookies de sesión SPA): sin dominios stateful.
+    'stateful' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -37,7 +32,8 @@ return [
     |
     */
 
-    'guard' => ['web'],
+    // Sin guards de sesión: Sanctum autentica directamente por el token Bearer entrante.
+    'guard' => [],
 
     /*
     |--------------------------------------------------------------------------

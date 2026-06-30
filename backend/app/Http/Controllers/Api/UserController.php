@@ -26,7 +26,10 @@ class UserController extends Controller
             }
         }
 
-        return response()->json($query->paginate((int) $request->input('per_page', 10)));
+        // through() envuelve cada usuario en UserResource (incluye foto_perfil, oculta email ajeno)
+        // sin alterar el shape de paginación de nivel superior que consume el frontend.
+        return $query->paginate((int) $request->input('per_page', 10))
+            ->through(fn ($usuario) => new UserResource($usuario));
     }
 
     // Restaurar un usuario suspendido (borrado lógico): lo reactiva y vuelve a ser visible.
@@ -49,7 +52,7 @@ class UserController extends Controller
     // Listar los roles disponibles (para el desplegable del formulario).
     public function roles()
     {
-        return response()->json(Rol::orderBy('nombre_rol')->get());
+        return Rol::orderBy('nombre_rol')->get();
     }
 
     // Crear un usuario con su rol (el admin crea técnicos, otros admins, etc.).
@@ -82,7 +85,7 @@ class UserController extends Controller
 
         $usuario->save();
 
-        return response()->json(new UserResource($usuario->load('rol')));
+        return new UserResource($usuario->load('rol'));
     }
 
     // Suspender (borrado lógico) un usuario: lo desactiva y revoca sus tokens.
@@ -95,6 +98,6 @@ class UserController extends Controller
         $usuario->tokens()->delete();
         $usuario->delete();
 
-        return response()->json(['message' => 'Usuario suspendido']);
+        return ['message' => 'Usuario suspendido'];
     }
 }

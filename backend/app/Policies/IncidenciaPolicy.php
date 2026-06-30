@@ -66,7 +66,7 @@ class IncidenciaPolicy
     // El técnico de APOYO no cambia estados (solo puede ver el detalle).
     public function cambiarEstado(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() || $this->esResponsable($user, $incidencia)
+        return $user->esAdmin() || $user->esResponsableDe($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
@@ -76,7 +76,7 @@ class IncidenciaPolicy
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
         return $incidencia->id_usuario === $user->id
-        || $this->esResponsable($user, $incidencia)
+        || $user->esResponsableDe($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
@@ -84,18 +84,9 @@ class IncidenciaPolicy
     // Ver/escribir el chat: reportador, admin y técnico RESPONSABLE (el apoyo queda fuera).
     public function verChat(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $this->esResponsable($user, $incidencia)
+        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
-    }
-
-    // El técnico RESPONSABLE de la incidencia (el de APOYO no cuenta: solo puede ver).
-    private function esResponsable(User $user, Incidencia $incidencia): bool
-    {
-        return $incidencia->asignaciones()
-            ->where('id_usuario', $user->id)
-            ->where('rol_asignado', 'RESPONSABLE')
-            ->exists();
     }
 
     // El técnico está asignado a la incidencia (responsable o de apoyo).

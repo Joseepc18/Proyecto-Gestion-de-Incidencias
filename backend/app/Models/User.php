@@ -56,6 +56,15 @@ class User extends Authenticatable
         return $this->rol && $this->rol->nombre_rol === 'normal';
     }
 
+    // Es el técnico RESPONSABLE de la incidencia (el de APOYO no cuenta). Fuente única para las policies.
+    public function esResponsableDe(Incidencia $incidencia): bool
+    {
+        return $incidencia->asignaciones()
+            ->where('id_usuario', $this->id)
+            ->where('rol_asignado', 'RESPONSABLE')
+            ->exists();
+    }
+
     public function incidencias()
     {
         return $this->hasMany(Incidencia::class, 'id_usuario', 'id');

@@ -24,7 +24,7 @@ class CatalogoAdminController extends Controller
     {
         $tipo->update($request->validated());
 
-        return response()->json($tipo);
+        return $tipo;
     }
 
     public function eliminarTipo(TipoIncidencia $tipo)
@@ -35,7 +35,7 @@ class CatalogoAdminController extends Controller
 
         $tipo->delete();
 
-        return response()->json(['message' => 'Tipo eliminado']);
+        return ['message' => 'Tipo eliminado'];
     }
 
     // Subtipos
@@ -51,7 +51,7 @@ class CatalogoAdminController extends Controller
     {
         $subtipo->update($request->validated());
 
-        return response()->json($subtipo->load('tipo'));
+        return $subtipo->load('tipo');
     }
 
     public function eliminarSubtipo(SubtipoIncidencia $subtipo)
@@ -62,6 +62,6 @@ class CatalogoAdminController extends Controller
 
         $subtipo->delete();
 
-        return response()->json(['message' => 'Subtipo eliminado']);
+        return ['message' => 'Subtipo eliminado'];
     }
 }

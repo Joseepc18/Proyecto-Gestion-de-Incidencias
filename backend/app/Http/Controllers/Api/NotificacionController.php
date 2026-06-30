@@ -23,10 +23,10 @@ class NotificacionController extends Controller
             ->where('estado_lectura', false)
             ->count();
 
-        return response()->json([
+        return [
             'notificaciones' => $notificaciones,
             'no_leidas' => $noLeidas,
-        ]);
+        ];
     }
 
     // Marcar una notificación como leída (solo si es del usuario).
@@ -40,13 +40,9 @@ class NotificacionController extends Controller
                 'fecha_lectura' => now(),
             ]);
 
-            return response()->json(['message' => 'Notificación marcada como leída']);
+            return ['message' => 'Notificación marcada como leída'];
         } catch (\Exception $e) {
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'BASE_DATOS',
-                'descripcion_error' => 'NotificacionController@marcarLeida: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'NotificacionController@marcarLeida', $e->getMessage());
 
             return response()->json(['message' => 'Error al actualizar la notificación'], 500);
         }
@@ -63,13 +59,9 @@ class NotificacionController extends Controller
                     'fecha_lectura' => now(),
                 ]);
 
-            return response()->json(['message' => 'Todas marcadas como leídas']);
+            return ['message' => 'Todas marcadas como leídas'];
         } catch (\Exception $e) {
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'BASE_DATOS',
-                'descripcion_error' => 'NotificacionController@marcarTodas: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'NotificacionController@marcarTodas', $e->getMessage());
 
             return response()->json(['message' => 'Error al actualizar las notificaciones'], 500);
         }

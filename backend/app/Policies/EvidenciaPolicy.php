@@ -14,12 +14,7 @@ class EvidenciaPolicy
     {
         $incidencia = $evidencia->incidencia;
 
-        $esResponsable = $incidencia->asignaciones()
-            ->where('id_usuario', $user->id)
-            ->where('rol_asignado', 'RESPONSABLE')
-            ->exists();
-
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $esResponsable
+        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }

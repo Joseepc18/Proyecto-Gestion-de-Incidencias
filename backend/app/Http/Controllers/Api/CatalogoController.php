@@ -14,30 +14,24 @@ class CatalogoController extends Controller
     // Tipos con sus subtipos anidados
     public function tiposIncidencia()
     {
-        return response()->json(
-            TipoIncidencia::with('subtipos')->orderBy('nombre_tipo_incidencia')->get()
-        );
+        return TipoIncidencia::with('subtipos')->orderBy('nombre_tipo_incidencia')->get();
     }
 
     // Ciudades con su provincia y país
     public function ciudades()
     {
-        return response()->json(
-            Ciudad::with('provincia.pais')->orderBy('nombre_ciudad')->get()
-        );
+        return Ciudad::with('provincia.pais')->orderBy('nombre_ciudad')->get();
     }
 
     // Provincias con su país
     public function provincias()
     {
-        return response()->json(
-            Provincia::with('pais')->orderBy('nombre_provincia')->get()
-        );
+        return Provincia::with('pais')->orderBy('nombre_provincia')->get();
     }
 
     // Lista de países
     public function paises()
     {
-        return response()->json(Pais::orderBy('nombre_pais')->get());
+        return Pais::orderBy('nombre_pais')->get();
     }
 }

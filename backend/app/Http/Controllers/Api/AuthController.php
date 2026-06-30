@@ -12,6 +12,7 @@ use App\Models\BitacoraError;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ class AuthController extends Controller
     // Registrar usuario, asignarle el rol 'normal' y devolver su token.
     public function register(RegisterRequest $request)
     {
-        $rolNormal = Rol::where('nombre_rol', 'normal')->first();
+        $rolNormal = Rol::where('nombre_rol', 'normal')->firstOrFail();
 
         $user = User::create([
             'name' => $request->name,
@@ -32,6 +33,9 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // El dueño de la cuenta recién creada ve su propio email en la respuesta.
+        Auth::setUser($user);
 
         return response()->json([
             'access_token' => $token,
@@ -50,6 +54,9 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // El dueño que inicia sesión ve su propio email en la respuesta.
+        Auth::setUser($user);
 
         return response()->json([
             'access_token' => $token,
@@ -71,7 +78,7 @@ class AuthController extends Controller
     // Perfil del usuario autenticado (con su rol).
     public function me(Request $request)
     {
-        return response()->json(new UserResource($request->user()->load('rol')));
+        return new UserResource($request->user()->load('rol'));
     }
 
     // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña y foto).
@@ -100,18 +107,14 @@ class AuthController extends Controller
                 $user->foto_perfil = null;
             }
         } catch (AlmacenamientoException $e) {
-            BitacoraError::create([
-                'id_usuario' => $user->id,
-                'tipo_error' => 'ARCHIVO',
-                'descripcion_error' => 'AuthController@actualizarPerfil: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($user, 'ARCHIVO', 'AuthController@actualizarPerfil', $e->getMessage());
 
             return response()->json(['message' => 'No se pudo guardar la foto. Intenta de nuevo.'], 500);
         }
 
         $user->save();
 
-        return response()->json(new UserResource($user->load('rol')));
+        return new UserResource($user->load('rol'));
     }
 
     // Borra del disco la foto de perfil actual (si la hay) para no dejar archivos huérfanos.
@@ -136,7 +139,20 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            $rolNormal = Rol::where('nombre_rol', 'normal')->first();
+            // (a) Solo aceptamos cuentas con el email verificado por Google.
+            $emailVerificado = $googleUser->user['email_verified'] ?? $googleUser->user['verified_email'] ?? false;
+            if (! $emailVerificado) {
+                return redirect($frontend.'/login/login.html?error=google_email');
+            }
+
+            // (b) Si ese email ya es de un admin o técnico, no permitimos Google: deben usar el login clásico
+            //     (evita que alguien con el mismo correo de Gmail entre como cuenta privilegiada).
+            $existente = User::where('email', $googleUser->getEmail())->first();
+            if ($existente && ($existente->esAdmin() || $existente->esTecnico())) {
+                return redirect($frontend.'/login/login.html?error=google_privilegiado');
+            }
+
+            $rolNormal = Rol::where('nombre_rol', 'normal')->firstOrFail();
 
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],
@@ -149,13 +165,15 @@ class AuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return redirect($frontend.'/login/oauth.html#token='.$token);
+            // El frontend (F2) lee &nuevo=1 para mostrar el toast de bienvenida solo en el primer login.
+            $url = $frontend.'/login/oauth.html#token='.$token;
+            if ($user->wasRecentlyCreated) {
+                $url .= '&nuevo=1';
+            }
+
+            return redirect($url);
         } catch (\Exception $e) {
-            BitacoraError::create([
-                'id_usuario' => null,
-                'tipo_error' => 'AUTENTICACION',
-                'descripcion_error' => 'AuthController@handleGoogleCallback: '.get_class($e).' (detalles omitidos por seguridad)',
-            ]);
+            BitacoraError::registrar(null, 'AUTENTICACION', 'AuthController@handleGoogleCallback', get_class($e).' (detalles omitidos por seguridad)');
 
             return redirect($frontend.'/login/login.html?error=google');
         }

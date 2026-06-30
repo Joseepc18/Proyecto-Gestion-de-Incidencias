@@ -89,6 +89,16 @@ class IncidenciaTest extends TestCase
         ]);
     }
 
+    public function test_admin_no_puede_crear_incidencia_en_resuelto(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        // RESUELTO ya no es opción al crear: para resolver se pasa por cambiarEstado (corre el SP).
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
+            'estado_incidencia' => 'RESUELTO',
+        ]))->assertStatus(422)->assertJsonValidationErrors('estado_incidencia');
+    }
+
     public function test_ciudadano_no_puede_fijar_estado_al_crear(): void
     {
         Sanctum::actingAs($this->crearUsuario('normal'));

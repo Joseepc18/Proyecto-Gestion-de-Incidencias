@@ -20,4 +20,14 @@ class BitacoraError extends Model
     {
         return $this->belongsTo(User::class, 'id_usuario', 'id');
     }
+
+    // Registra un error en la bitácora desde los catch; $contexto es 'Clase@metodo'.
+    public static function registrar(?User $usuario, string $tipo, string $contexto, string $mensaje): void
+    {
+        self::create([
+            'id_usuario' => $usuario?->id,
+            'tipo_error' => $tipo,
+            'descripcion_error' => "$contexto: $mensaje",
+        ]);
+    }
 }

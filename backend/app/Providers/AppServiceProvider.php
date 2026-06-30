@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Incidencia;
+use App\Observers\IncidenciaObserver;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         JsonResource::withoutWrapping();
+
+        Incidencia::observe(IncidenciaObserver::class);
     }
 }

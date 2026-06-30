@@ -16,20 +16,16 @@ class AsignacionController extends Controller
     // Listar los técnicos disponibles (para el desplegable de asignación).
     public function tecnicos()
     {
-        return response()->json(
-            User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'tecnico'))
-                ->select('id', 'name', 'email')
-                ->orderBy('name')
-                ->get()
-        );
+        return User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'tecnico'))
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
     }
 
     // Listar las asignaciones (responsable + apoyo) de una incidencia.
     public function listado(Incidencia $incidencia)
     {
-        return response()->json(
-            $incidencia->asignaciones()->with('usuario')->get()
-        );
+        return $incidencia->asignaciones()->with('usuario')->get();
     }
 
     // Asignar un técnico a una incidencia (llama al procedimiento asignar_tecnico).
@@ -57,11 +53,7 @@ class AsignacionController extends Controller
 
             return response()->json($incidencia->load('asignaciones.usuario'), 201);
         } catch (QueryException $e) {
-            BitacoraError::create([
-                'id_usuario' => $request->user()->id,
-                'tipo_error' => 'BASE_DATOS',
-                'descripcion_error' => 'AsignacionController@asignar: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage());
 
             return response()->json(['message' => 'No se pudo asignar el técnico. Inténtalo de nuevo.'], 422);
         }
@@ -72,6 +64,6 @@ class AsignacionController extends Controller
     {
         $asignacion->delete();
 
-        return response()->json(['message' => 'Asignación eliminada']);
+        return ['message' => 'Asignación eliminada'];
     }
 }

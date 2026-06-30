@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -139,6 +140,65 @@ class AuthTest extends TestCase
 
         $this->get('/api/auth/google/callback')
             ->assertRedirect('https://example.test/login/login.html?error=google');
+    }
+
+    public function test_callback_google_usuario_nuevo_marca_nuevo_en_la_url(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        $googleUser = (new SocialiteUser)->setRaw(['email_verified' => true])->map([
+            'email' => 'nuevo@gmail.com',
+            'name' => 'Usuario Nuevo',
+        ]);
+        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+
+        $respuesta = $this->get('/api/auth/google/callback');
+
+        // Redirige al frontend con el token y &nuevo=1 (contrato: F2 muestra el toast de bienvenida).
+        $location = $respuesta->headers->get('Location');
+        $this->assertStringContainsString('oauth.html#token=', $location);
+        $this->assertStringContainsString('&nuevo=1', $location);
+
+        $usuario = User::where('email', 'nuevo@gmail.com')->first();
+        $this->assertNotNull($usuario);
+        $this->assertTrue($usuario->esNormal());
+    }
+
+    public function test_callback_google_rechaza_email_no_verificado(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        $googleUser = (new SocialiteUser)->setRaw(['email_verified' => false])->map([
+            'email' => 'sinverificar@gmail.com',
+            'name' => 'Sin Verificar',
+        ]);
+        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+
+        $this->get('/api/auth/google/callback')
+            ->assertRedirect('https://example.test/login/login.html?error=google_email');
+
+        // No se crea ninguna cuenta a partir de un email sin verificar.
+        $this->assertDatabaseMissing('users', ['email' => 'sinverificar@gmail.com']);
+    }
+
+    public function test_callback_google_no_loguea_si_el_email_es_de_un_admin(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        // Ya existe un admin con ese correo: Google no debe loguear como él (se fuerza login clásico).
+        $this->crearUsuario('admin')->forceFill(['email' => 'jefe@gmail.com'])->save();
+
+        $googleUser = (new SocialiteUser)->setRaw(['email_verified' => true])->map([
+            'email' => 'jefe@gmail.com',
+            'name' => 'Suplantador',
+        ]);
+        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+
+        $this->get('/api/auth/google/callback')
+            ->assertRedirect('https://example.test/login/login.html?error=google_privilegiado');
+
+        // No se emitió ningún token para esa cuenta.
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
     public function test_el_token_caduca_tras_la_expiracion_configurada(): void

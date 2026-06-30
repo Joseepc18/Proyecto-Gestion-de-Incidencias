@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-// Healthcheck público (sin token ni throttle) para monitoreo y pruebas de carga; el SELECT 1 toca toda la cadena Nginx → PHP-FPM → PostgreSQL.
+// Healthcheck público (sin token, throttle holgado 120/min) para monitoreo y pruebas de carga; el SELECT 1 toca toda la cadena Nginx → PHP-FPM → PostgreSQL.
 Route::get('/health', function () {
     try {
         DB::select('select 1');
@@ -25,7 +25,7 @@ Route::get('/health', function () {
     }
 
     return response()->json(['status' => 'ok', 'db' => $db, 'host' => gethostname()]);
-})->middleware('throttle:60,1');
+})->middleware('throttle:120,1');
 
 // Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');

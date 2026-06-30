@@ -31,26 +31,11 @@ class EvidenciaController extends Controller
 
         try {
             DB::transaction(function () use ($request, $incidencia, $user, $tipo, &$rutasGuardadas) {
-                foreach ($request->file('fotos') as $foto) {
-                    $ruta = $foto->store('incidencias', 'public');
-                    if ($ruta === false) {
-                        throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
-                    }
-                    $rutasGuardadas[] = $ruta;
-                    $incidencia->evidencias()->create([
-                        'url_evidencia' => $ruta,
-                        'id_usuario' => $user->id,
-                        'tipo_evidencia' => $tipo,
-                    ]);
-                }
+                $incidencia->guardarEvidencias($request->file('fotos'), $user->id, $tipo, $rutasGuardadas);
             });
         } catch (AlmacenamientoException $e) {
             Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::create([
-                'id_usuario' => $user->id,
-                'tipo_error' => 'ARCHIVO',
-                'descripcion_error' => 'EvidenciaController@subir: '.$e->getMessage(),
-            ]);
+            BitacoraError::registrar($user, 'ARCHIVO', 'EvidenciaController@subir', $e->getMessage());
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Throwable $e) {
@@ -58,9 +43,14 @@ class EvidenciaController extends Controller
             throw $e;
         }
 
-        $this->notificarEvidencia($incidencia, $user);
+        // La subida ya está commiteada: si la notificación falla, se bitácoriza pero NO rompe la respuesta.
+        try {
+            $this->notificarEvidencia($incidencia, $user);
+        } catch (\Throwable $e) {
+            BitacoraError::registrar($user, 'SERVIDOR', 'EvidenciaController@subir (notificación)', $e->getMessage());
+        }
 
-        return response()->json($incidencia->load('evidencias'));
+        return $incidencia->load('evidencias');
     }
 
     // Notifica según quién sube la foto (nunca al actor): el ciudadano → admins+técnicos; el técnico/admin → reportador.
@@ -99,6 +89,6 @@ class EvidenciaController extends Controller
         Storage::disk('public')->delete($evidencia->url_evidencia);
         $evidencia->delete();
 
-        return response()->json(['message' => 'Foto eliminada']);
+        return ['message' => 'Foto eliminada'];
     }
 }
