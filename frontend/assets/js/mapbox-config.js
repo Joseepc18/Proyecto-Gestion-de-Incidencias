@@ -5,8 +5,10 @@
 
 /* exported MAPBOX_TOKEN */
 
-const MAPBOX_TOKEN_PROD = "pk.eyJ1Ijoiam9zZWVwYzE4IiwiYSI6ImNtcjByeWY3cTBnZzYycm9kNHd4ZTY4dHoifQ.jnuPqL-1moDxPlRDyL0zng";
-const MAPBOX_TOKEN_LOCAL = "pk.eyJ1Ijoiam9zZWVwYzE4IiwiYSI6ImNtcjBzM2htazBnamEycnB1aXp0MmN4anAifQ.d28fWW7j1tn5eU0iCFu0bQ";
+const MAPBOX_TOKEN_PROD =
+  "pk.eyJ1Ijoiam9zZWVwYzE4IiwiYSI6ImNtcjByeWY3cTBnZzYycm9kNHd4ZTY4dHoifQ.jnuPqL-1moDxPlRDyL0zng";
+const MAPBOX_TOKEN_LOCAL =
+  "pk.eyJ1Ijoiam9zZWVwYzE4IiwiYSI6ImNtcjBzM2htazBnamEycnB1aXp0MmN4anAifQ.d28fWW7j1tn5eU0iCFu0bQ";
 
 const MAPBOX_TOKEN =
   location.hostname === "localhost" || location.hostname === "127.0.0.1"
