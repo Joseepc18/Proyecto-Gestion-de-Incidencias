@@ -5,10 +5,12 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadMasCercana, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
+// Polígonos de cantón para resolver la ciudad exacta al marcar en el mapa.
+let cantonesGeo = null;
 // Ubicación elegida en el picker (arranca con la de la incidencia).
 let latEdit = null;
 let lngEdit = null;
@@ -142,6 +144,14 @@ async function cargarCatalogos() {
     });
 
     catalogoCiudades = await apiFetch("/catalogos/ciudades");
+    fetch("../assets/geo/ecuador-cantones.geojson")
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (g) {
+        cantonesGeo = g;
+      })
+      .catch(function () {});
     const provincias = await apiFetch("/catalogos/provincias");
     const selectProvincia = document.getElementById("editProvincia");
     provincias.forEach(function (p) {
@@ -184,9 +194,9 @@ function poblarCiudades(idProvincia) {
   );
 }
 
-// Marca en el mapa → autocompleta provincia + ciudad con la ciudad existente más cercana.
+// Marca en el mapa → autocompleta provincia + ciudad por el cantón que contiene el punto.
 function autocompletarUbicacionEdit(lat, lng) {
-  const ciudad = ciudadMasCercana(catalogoCiudades, lat, lng);
+  const ciudad = ciudadEnPunto(cantonesGeo, catalogoCiudades, lat, lng);
   if (!ciudad) return;
   document.getElementById("editProvincia").value = ciudad.id_provincia;
   poblarCiudades(ciudad.id_provincia);

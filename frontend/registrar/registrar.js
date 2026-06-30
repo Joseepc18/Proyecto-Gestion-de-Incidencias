@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadMasCercana, crearGaleriaFotos, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -27,6 +27,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let catalogoTipos = [];
   let catalogoCiudades = [];
+  // Polígonos de cantón para resolver la ciudad exacta al marcar en el mapa (carga en segundo plano).
+  let cantonesGeo = null;
+  fetch("../assets/geo/ecuador-cantones.geojson")
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (g) {
+      cantonesGeo = g;
+    })
+    .catch(function () {});
 
   try {
     catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
@@ -86,9 +96,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     textoCupo: "Máximo 3 fotos permitidas.",
   });
 
-  // Marca en el mapa → elige la ciudad existente más cercana y rellena provincia + ciudad.
+  // Marca en el mapa → resuelve la ciudad por el cantón que contiene el punto y rellena provincia + ciudad.
   function autocompletarUbicacion(lat, lng) {
-    const ciudad = ciudadMasCercana(catalogoCiudades, lat, lng);
+    const ciudad = ciudadEnPunto(cantonesGeo, catalogoCiudades, lat, lng);
     if (!ciudad) return;
     document.getElementById("crearProvincia").value = ciudad.id_provincia;
     poblarSelectCascada(

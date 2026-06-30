@@ -1,7 +1,7 @@
 // mapa.js — Helper reutilizable de Mapbox GL JS: mapa 3D con edificios + pines de incidencias.
 
 /* global mapboxgl, MAPBOX_TOKEN, escaparHtml */
-/* exported ciudadMasCercana, observarTamanoMapa */
+/* exported ciudadMasCercana, ciudadEnPunto, observarTamanoMapa */
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -46,6 +46,60 @@ function ciudadMasCercana(ciudades, lat, lng) {
     }
   });
   return cercana;
+}
+
+// Normaliza un nombre para comparar (sin tildes, minúsculas, espacios colapsados).
+function normalizarNombre(s) {
+  return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+// ¿El punto (lng, lat) cae dentro de estos anillos? Ray-casting con regla par/impar
+// (los agujeros se descuentan solos al contar cruces sobre todos los anillos).
+function puntoEnAnillos(lng, lat, anillos) {
+  let dentro = false;
+  anillos.forEach(function (anillo) {
+    for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+      const xi = anillo[i][0];
+      const yi = anillo[i][1];
+      const xj = anillo[j][0];
+      const yj = anillo[j][1];
+      const cruza = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+      if (cruza) dentro = !dentro;
+    }
+  });
+  return dentro;
+}
+
+// ¿El punto cae dentro de una geometría GeoJSON (Polygon o MultiPolygon)?
+function puntoEnGeometria(lng, lat, geometry) {
+  if (geometry.type === "Polygon") return puntoEnAnillos(lng, lat, geometry.coordinates);
+  return geometry.coordinates.some(function (poly) {
+    return puntoEnAnillos(lng, lat, poly);
+  });
+}
+
+// Resuelve la ciudad del catálogo en un punto: primero por el polígono de cantón que lo contiene
+// (preciso, distingue cantones vecinos), y si no cae en ninguno conocido, por la más cercana (fallback).
+// cantonesGeo puede ser null (aún no cargó) → usa directamente el fallback.
+function ciudadEnPunto(cantonesGeo, ciudades, lat, lng) {
+  if (cantonesGeo && cantonesGeo.features) {
+    const feat = cantonesGeo.features.find(function (f) {
+      return puntoEnGeometria(lng, lat, f.geometry);
+    });
+    if (feat) {
+      const ciudadZ = normalizarNombre(feat.properties.ciudad);
+      const provZ = normalizarNombre(feat.properties.provincia);
+      const match = ciudades.find(function (c) {
+        return (
+          normalizarNombre(c.nombre_ciudad) === ciudadZ &&
+          c.provincia &&
+          normalizarNombre(c.provincia.nombre_provincia) === provZ
+        );
+      });
+      if (match) return match;
+    }
+  }
+  return ciudadMasCercana(ciudades, lat, lng);
 }
 
 // Botón flotante para alternar entre vista 3D (edificios) y satélite. Mapbox no tiene
