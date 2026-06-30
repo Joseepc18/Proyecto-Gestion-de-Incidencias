@@ -12,7 +12,11 @@ async function requerirSesion() {
     return null;
   }
   try {
-    return await apiFetch("/user");
+    const usuario = await apiFetch("/user");
+    // Pinta el nombre en el navbar compartido (todas las páginas admin lo tienen).
+    const el = document.getElementById("nombreUsuario");
+    if (el) el.textContent = usuario.name;
+    return usuario;
   } catch {
     eliminarToken();
     window.location.href = "../login/login.html";
@@ -38,16 +42,11 @@ function cablearLogout() {
   });
 }
 
-// Arranque típico de página admin: valida sesión, muestra el nombre y cablea logout.
-// Devuelve el usuario o null. opts.pintarNombre=false omite el "#nombreUsuario".
-async function inicializarPaginaAdmin(opts) {
-  opts = opts || {};
+// Arranque típico de página admin: valida sesión (requerirSesion ya pinta el nombre) y cablea logout.
+// Devuelve el usuario o null.
+async function inicializarPaginaAdmin() {
   const usuario = await requerirSesion();
   if (!usuario) return null;
-  if (opts.pintarNombre !== false) {
-    const el = document.getElementById("nombreUsuario");
-    if (el) el.textContent = usuario.name;
-  }
   cablearLogout();
   return usuario;
 }
