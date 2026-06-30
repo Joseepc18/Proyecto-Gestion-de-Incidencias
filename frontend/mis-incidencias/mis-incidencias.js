@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, codigoIncidencia, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let mapa = null;
@@ -62,8 +62,18 @@ async function cargarLista() {
     const incidencias = respuesta.data;
 
     if (incidencias.length === 0) {
-      contenedor.innerHTML =
-        '<p class="text-muted small text-center py-4 mb-0">No se encontraron incidencias.</p>';
+      const hayFiltro = busqueda || filtroEstado;
+      contenedor.innerHTML = hayFiltro
+        ? estadoVacioHtml(
+            "bi-search",
+            "Sin coincidencias",
+            "Ninguna incidencia coincide con la búsqueda o el filtro.",
+          )
+        : estadoVacioHtml(
+            "bi-clipboard-check",
+            "Aún no tienes incidencias",
+            "Cuando reportes una incidencia aparecerá aquí.",
+          );
       document.getElementById("paginacionMis").innerHTML = "";
       if (mapa) mapa.pintarPines([], seleccionarIncidencia);
       return;

@@ -1,6 +1,6 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, aplicarMenuRol, rutaDetalleIncidencia, tiempoRelativo, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, rutaDetalleIncidencia, tiempoRelativo, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let notificaciones = [];
@@ -40,13 +40,15 @@ function render() {
       : notificaciones;
 
   if (visibles.length === 0) {
-    const vacio = document.createElement("p");
-    vacio.className = "notification-empty";
-    vacio.textContent =
+    // Contenido estático (sin datos del usuario), seguro de inyectar como HTML.
+    cont.innerHTML =
       filtroActual === "no_leidas"
-        ? "No tienes notificaciones sin leer."
-        : "No tienes notificaciones.";
-    cont.appendChild(vacio);
+        ? estadoVacioHtml("bi-check2-all", "Todo al día", "No tienes notificaciones sin leer.")
+        : estadoVacioHtml(
+            "bi-bell",
+            "Sin notificaciones",
+            "Aquí verás los avisos de tus incidencias.",
+          );
     return;
   }
 

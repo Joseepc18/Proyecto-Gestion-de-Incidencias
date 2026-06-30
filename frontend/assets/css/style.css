@@ -2727,3 +2727,164 @@ html[data-theme="dark"] {
   font-size: 0.65rem;
   color: var(--admin-muted);
 }
+
+/* Estado vacío de listas (distinto de un error: tono neutro, no rojo) */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--admin-muted);
+}
+
+.estado-vacio-icono {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--admin-border);
+}
+
+.estado-vacio-titulo {
+  margin: 0;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.estado-vacio-texto {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Búsqueda con lupa integrada (envuelve un input de filtro) */
+.campo-busqueda {
+  position: relative;
+}
+
+.campo-busqueda .busqueda-icono {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  color: var(--admin-muted);
+  pointer-events: none;
+}
+
+.campo-busqueda .form-control {
+  padding-left: 2.2rem;
+}
+
+/* Badges/pills suaves: fondo teñido + texto del color, coherentes en claro/oscuro */
+.badge-estado-pendiente,
+.badge-estado-proceso,
+.badge-estado-resuelto {
+  border: 1px solid transparent;
+}
+
+.badge-estado-pendiente {
+  color: #b91c1c;
+  background-color: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.22);
+}
+
+.badge-estado-proceso {
+  color: #b45309;
+  background-color: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.24);
+}
+
+.badge-estado-resuelto {
+  color: #15803d;
+  background-color: rgba(22, 163, 74, 0.13);
+  border-color: rgba(22, 163, 74, 0.24);
+}
+
+html[data-theme="dark"] .badge-estado-pendiente {
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .badge-estado-proceso {
+  color: #fcd34d;
+}
+
+html[data-theme="dark"] .badge-estado-resuelto {
+  color: #86efac;
+}
+
+/* Pills de rol (Usuarios): mismo estilo suave por rol */
+.badge-rol {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.badge-rol-admin {
+  color: #6d28d9;
+  background-color: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.22);
+}
+
+.badge-rol-tecnico {
+  color: #1d4ed8;
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.badge-rol-normal {
+  color: #475569;
+  background-color: rgba(100, 116, 139, 0.14);
+  border-color: rgba(100, 116, 139, 0.24);
+}
+
+html[data-theme="dark"] .badge-rol-admin {
+  color: #c4b5fd;
+}
+
+html[data-theme="dark"] .badge-rol-tecnico {
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .badge-rol-normal {
+  color: #cbd5e1;
+}
+
+/* Páginas de error (404 / 500): centradas, con branding */
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: var(--admin-text);
+}
+
+.error-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--admin-primary);
+  margin-bottom: 0.75rem;
+}
+
+.error-codigo {
+  margin: 0;
+  font-size: clamp(4rem, 14vw, 7rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--admin-primary);
+  letter-spacing: 0.03em;
+}
+
+.error-icono {
+  font-size: 2.6rem;
+  color: var(--admin-border);
+  margin-bottom: 0.5rem;
+}

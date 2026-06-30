@@ -1,6 +1,7 @@
 // util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml */
+/* global escaparHtml */
 
 // Iniciales de un nombre (hasta 2 letras); fallback "?" si está vacío.
 function iniciales(nombre) {
@@ -24,4 +25,27 @@ function tiempoRelativo(iso) {
   if (seg < 86400) return "hace " + Math.floor(seg / 3600) + " h";
   if (seg < 604800) return "hace " + Math.floor(seg / 86400) + " d";
   return fecha.toLocaleDateString("es-EC");
+}
+
+// HTML de un "estado vacío" (lista sin datos): icono + título + texto opcional.
+// Es distinto de un error: tono neutro, no rojo. Para tablas usar filaVaciaHtml.
+function estadoVacioHtml(icono, titulo, texto) {
+  return (
+    '<div class="estado-vacio">' +
+    '<i class="bi ' +
+    icono +
+    ' estado-vacio-icono" aria-hidden="true"></i>' +
+    '<p class="estado-vacio-titulo">' +
+    escaparHtml(titulo) +
+    "</p>" +
+    (texto ? '<p class="estado-vacio-texto">' + escaparHtml(texto) + "</p>" : "") +
+    "</div>"
+  );
+}
+
+// Igual que estadoVacioHtml pero envuelto en una fila de tabla que ocupa todas las columnas.
+function filaVaciaHtml(colspan, icono, titulo, texto) {
+  return (
+    '<tr><td colspan="' + colspan + '">' + estadoVacioHtml(icono, titulo, texto) + "</td></tr>"
+  );
 }

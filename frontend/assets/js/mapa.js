@@ -2,6 +2,32 @@
 
 // Crea el mapa con capa satelital (Esri) + calles (OSM) y control para alternar.
 /* global L, escaparHtml */
+/* exported ciudadMasCercana */
+
+// Devuelve la ciudad del catálogo más cercana a (lat, lng) por distancia haversine.
+// Ignora ciudades sin coordenadas. Sirve para autocompletar provincia/ciudad al marcar en el mapa.
+function ciudadMasCercana(ciudades, lat, lng) {
+  const radioTierra = 6371;
+  const aRad = function (g) {
+    return (g * Math.PI) / 180;
+  };
+  let cercana = null;
+  let menorDist = Infinity;
+  ciudades.forEach(function (c) {
+    if (c.latitud == null || c.longitud == null) return;
+    const dLat = aRad(c.latitud - lat);
+    const dLng = aRad(c.longitud - lng);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(aRad(lat)) * Math.cos(aRad(c.latitud)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const dist = radioTierra * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    if (dist < menorDist) {
+      menorDist = dist;
+      cercana = c;
+    }
+  });
+  return cercana;
+}
 
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};

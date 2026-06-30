@@ -19,13 +19,21 @@
     <script src="../assets/js/api.js"></script>
     <script src="../assets/js/toast.js"></script>
     <script>
-      // El backend nos devuelve el token en el fragmento (#token=...).
+      // El backend nos devuelve el token en el fragmento (#token=...&nuevo=1 si es la 1ª vez).
       const params = new URLSearchParams(window.location.hash.substring(1));
       const token = params.get("token");
+      const esNuevo = params.get("nuevo") === "1";
 
       if (token) {
         guardarToken(token);
-        if (typeof toastFlash === "function") toastFlash("Bienvenido", "success");
+        if (typeof toastFlash === "function") {
+          toastFlash(
+            esNuevo
+              ? "¡Bienvenido a Gestión de Incidencias! Tu cuenta quedó creada con Google."
+              : "Bienvenido",
+            "success",
+          );
+        }
         // Entra a la pantalla de arranque según el rol (normal → mis incidencias).
         apiFetch("/user", { sinSpinner: true })
           .then(function (usuario) {

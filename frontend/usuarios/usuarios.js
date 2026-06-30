@@ -1,6 +1,6 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y suspender en modal.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, filaVaciaHtml, requerirSesion, cablearLogout */
 
 let usuarioActualId = null;
 // Roles que el admin puede asignar (los normales nacen por auto-registro, no se crean aquí).
@@ -58,8 +58,12 @@ async function cargarUsuarios() {
     const suspendidos = filtroRol === "suspendido";
 
     if (usuarios.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center text-muted py-4">Sin usuarios.</td></tr>';
+      tbody.innerHTML = filaVaciaHtml(
+        5,
+        "bi-people",
+        "Sin usuarios",
+        "No hay usuarios que coincidan con el filtro.",
+      );
       document.getElementById("contenedorPaginacion").innerHTML = "";
       return;
     }
@@ -84,9 +88,10 @@ async function cargarUsuarios() {
       tr.appendChild(tdEmail);
 
       const tdRol = document.createElement("td");
+      const nombreRol = u.rol ? u.rol.nombre_rol : "";
       const badge = document.createElement("span");
-      badge.className = "badge text-bg-secondary";
-      badge.textContent = u.rol ? u.rol.nombre_rol : "—";
+      badge.className = "badge-rol badge-rol-" + (nombreRol || "normal");
+      badge.textContent = nombreRol || "—";
       tdRol.appendChild(badge);
       tr.appendChild(tdRol);
 

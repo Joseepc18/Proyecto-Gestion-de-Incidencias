@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -120,9 +120,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     tbody.innerHTML = "";
 
     if (incidencias.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="7" class="text-center text-muted py-4">' +
-        "No se encontraron incidencias</td></tr>";
+      tbody.innerHTML = filaVaciaHtml(
+        7,
+        "bi-clipboard-x",
+        "Sin incidencias",
+        "No hay incidencias que coincidan con los filtros.",
+      );
       return;
     }
 

@@ -1,6 +1,6 @@
 // catalogos.js — Tipos y subtipos de incidencia (solo admin): tabla única con toggle, crear/editar en modal.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion, crearMenuAcciones, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 // Catálogo completo (tipos con sus subtipos anidados) cacheado para paginar en cliente.
 let tipos = [];
@@ -126,12 +126,16 @@ function pintar() {
   if (pagina.total === 0) {
     const texto =
       vista === "tipos"
-        ? "Sin tipos."
+        ? "Crea el primer tipo de incidencia con el botón de arriba."
         : filtroTipo
-          ? "Sin subtipos para este tipo."
-          : "Sin subtipos.";
-    tbody.innerHTML =
-      '<tr><td colspan="4" class="text-center text-muted py-4">' + texto + "</td></tr>";
+          ? "Este tipo todavía no tiene subtipos."
+          : "Crea el primer subtipo con el botón de arriba.";
+    tbody.innerHTML = filaVaciaHtml(
+      4,
+      "bi-tags",
+      vista === "tipos" ? "Sin tipos" : "Sin subtipos",
+      texto,
+    );
     document.getElementById("contenedorPaginacion").innerHTML = "";
     return;
   }

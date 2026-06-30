@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, crearGaleriaFotos, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadMasCercana, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -13,6 +13,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.querySelectorAll(".solo-admin").forEach(function (el) {
       el.classList.remove("d-none");
     });
+  } else {
+    // Rol normal: provincia/ciudad se autocompletan al marcar en el mapa, así que se ocultan.
+    document.getElementById("campoProvincia").classList.add("d-none");
+    document.getElementById("campoCiudad").classList.add("d-none");
+    document.getElementById("crearProvincia").required = false;
+    document.getElementById("crearCiudad").required = false;
   }
 
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
@@ -80,10 +86,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     textoCupo: "Máximo 3 fotos permitidas.",
   });
 
+  // Marca en el mapa → elige la ciudad existente más cercana y rellena provincia + ciudad.
+  function autocompletarUbicacion(lat, lng) {
+    const ciudad = ciudadMasCercana(catalogoCiudades, lat, lng);
+    if (!ciudad) return;
+    document.getElementById("crearProvincia").value = ciudad.id_provincia;
+    poblarSelectCascada(
+      document.getElementById("crearCiudad"),
+      itemsCiudadesDe(catalogoCiudades, ciudad.id_provincia),
+      "Primero selecciona una provincia",
+    );
+    document.getElementById("crearCiudad").value = ciudad.id_ciudad;
+  }
+
   const picker = crearMapaPicker("mapaPicker", function (lat, lng) {
     document.getElementById("crearLatitud").value = lat.toFixed(6);
     document.getElementById("crearLongitud").value = lng.toFixed(6);
     document.getElementById("ubicacionError").classList.add("d-none");
+    autocompletarUbicacion(lat, lng);
   });
   setTimeout(function () {
     picker.map.invalidateSize();

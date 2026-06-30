@@ -5,7 +5,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadMasCercana, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -74,6 +74,15 @@ async function entrarEdicion() {
   poblarCiudades(idProvincia);
   document.getElementById("editCiudad").value = incActual.id_ciudad || "";
 
+  // Rol normal: provincia/ciudad se autocompletan al marcar en el mapa, así que se ocultan.
+  const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+  if (!esAdmin) {
+    document.getElementById("campoEditProvincia").classList.add("d-none");
+    document.getElementById("campoEditCiudad").classList.add("d-none");
+    document.getElementById("editProvincia").required = false;
+    document.getElementById("editCiudad").required = false;
+  }
+
   document.getElementById("datosVista").classList.add("d-none");
   document.getElementById("datosEdicion").classList.remove("d-none");
   document.getElementById("edicionAcciones").classList.remove("d-none");
@@ -84,6 +93,7 @@ async function entrarEdicion() {
   pickerEdicion = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
     latEdit = lat;
     lngEdit = lng;
+    autocompletarUbicacionEdit(lat, lng);
   });
   const controles = document.getElementById("mapaEditControles");
   controles.classList.remove("d-none");
@@ -172,6 +182,15 @@ function poblarCiudades(idProvincia) {
     itemsCiudadesDe(catalogoCiudades, idProvincia),
     "Primero selecciona una provincia",
   );
+}
+
+// Marca en el mapa → autocompleta provincia + ciudad con la ciudad existente más cercana.
+function autocompletarUbicacionEdit(lat, lng) {
+  const ciudad = ciudadMasCercana(catalogoCiudades, lat, lng);
+  if (!ciudad) return;
+  document.getElementById("editProvincia").value = ciudad.id_provincia;
+  poblarCiudades(ciudad.id_provincia);
+  document.getElementById("editCiudad").value = ciudad.id_ciudad;
 }
 
 // Evidencias del reporte que se conservan (las de tipo RESOLUCION no las toca el ciudadano).

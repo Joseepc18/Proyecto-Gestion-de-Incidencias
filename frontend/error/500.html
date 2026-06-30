@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Error del servidor - Gestión de Incidencias" />
+    <title>Error del servidor | Gestión de Incidencias</title>
+
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body class="auth-body">
+    <button
+      class="icon-button theme-toggle auth-theme-toggle"
+      type="button"
+      data-theme-toggle
+      aria-label="Cambiar tema"
+      title="Cambiar tema"
+    >
+      <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+    </button>
+
+    <main class="error-page">
+      <div class="error-brand">
+        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+        <span>Incidencias UPSE</span>
+      </div>
+      <p class="error-codigo">500</p>
+      <i class="bi bi-cone-striped error-icono" aria-hidden="true"></i>
+      <h1 class="h3 mb-2">Algo falló de nuestro lado</h1>
+      <p class="text-muted mb-4">
+        El servidor tuvo un problema al procesar tu solicitud. Inténtalo de nuevo en unos minutos.
+      </p>
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <button class="btn btn-primary" type="button" id="btnReintentar">
+          <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+        </button>
+        <a class="btn btn-outline-secondary" href="../inicio/inicio.html">
+          <i class="bi bi-house-door me-1"></i> Ir al inicio
+        </a>
+      </div>
+    </main>
+
+    <script src="../assets/js/main.js"></script>
+    <script>
+      document.getElementById("btnReintentar").addEventListener("click", function () {
+        window.location.reload();
+      });
+    </script>
+  </body>
+</html>
