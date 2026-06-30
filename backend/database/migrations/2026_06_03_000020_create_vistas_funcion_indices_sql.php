@@ -9,7 +9,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Vista v_incidencias_completas: une incidencias con usuario, subtipo/tipo, ciudad y provincia (evita repetir JOINs).
+        // Vista v_incidencias_completas: une 6 tablas (incidencia, usuario, subtipo/tipo, ciudad, provincia).
+        // DEMOSTRATIVA (rúbrica "BD avanzada"): la app lista/detalla con Eloquent + eager loading, no la consulta.
         DB::unprepared('
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
@@ -101,6 +102,7 @@ return new class extends Migration
         ");
 
         // Función calcular_tiempo_resolucion: días que tardó en resolverse una incidencia (NULL si no está resuelta).
+        // DEMOSTRATIVA (rúbrica "BD avanzada"): es per-incidencia; el dashboard usa promedios agregados, no la invoca.
         DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
             RETURNS NUMERIC AS $$
