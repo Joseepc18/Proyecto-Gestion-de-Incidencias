@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EstadoIncidencia;
+use App\Enums\PrioridadIncidencia;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CrearIncidenciaRequest extends FormRequest
 {
@@ -27,9 +30,9 @@ class CrearIncidenciaRequest extends FormRequest
         ];
 
         if ($this->user()?->esAdmin()) {
-            $reglas['prioridad_incidencia'] = 'nullable|in:ALTA,MEDIA,BAJA';
+            $reglas['prioridad_incidencia'] = ['nullable', Rule::enum(PrioridadIncidencia::class)];
             // No se permite crear en RESUELTO: resolver pasa por cambiarEstado (corre el SP, setea fecha e historial).
-            $reglas['estado_incidencia'] = 'nullable|in:PENDIENTE,EN_PROCESO';
+            $reglas['estado_incidencia'] = ['nullable', 'in:'.implode(',', [EstadoIncidencia::Pendiente->value, EstadoIncidencia::EnProceso->value])];
         }
 
         return $reglas;

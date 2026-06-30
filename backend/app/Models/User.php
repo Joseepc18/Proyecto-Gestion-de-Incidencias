@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RolAsignacion;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -61,7 +62,7 @@ class User extends Authenticatable
     {
         return $incidencia->asignaciones()
             ->where('id_usuario', $this->id)
-            ->where('rol_asignado', 'RESPONSABLE')
+            ->where('rol_asignado', RolAsignacion::Responsable->value)
             ->exists();
     }
 

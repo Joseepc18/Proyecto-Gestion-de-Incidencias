@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\RolAsignacion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AsignarTecnicoRequest;
 use App\Models\AsignacionIncidencia;
@@ -37,8 +38,8 @@ class AsignacionController extends Controller
             return response()->json(['message' => 'Este técnico ya está asignado a esta incidencia.'], 422);
         }
 
-        if ($datos['rol_asignado'] === 'RESPONSABLE'
-            && $incidencia->asignaciones()->where('rol_asignado', 'RESPONSABLE')->exists()) {
+        if ($datos['rol_asignado'] === RolAsignacion::Responsable->value
+            && $incidencia->asignaciones()->where('rol_asignado', RolAsignacion::Responsable->value)->exists()) {
             return response()->json([
                 'message' => 'Esta incidencia ya tiene un responsable. Quita el actual antes de asignar otro.',
             ], 422);

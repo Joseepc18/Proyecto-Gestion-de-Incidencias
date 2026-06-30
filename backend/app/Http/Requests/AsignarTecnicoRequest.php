@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\RolAsignacion;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ class AsignarTecnicoRequest extends FormRequest
     {
         return [
             'id_usuario' => ['required', Rule::exists('users', 'id')->whereNull('deleted_at')],
-            'rol_asignado' => 'required|in:RESPONSABLE,APOYO',
+            'rol_asignado' => ['required', Rule::enum(RolAsignacion::class)],
         ];
     }
 }

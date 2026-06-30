@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\EstadoIncidencia;
 use App\Models\Incidencia;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -38,7 +39,7 @@ class IncidenciaPolicy
         }
 
         if ($incidencia->id_usuario === $user->id) {
-            return $incidencia->estado_incidencia === 'PENDIENTE'
+            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente->value
                 ? Response::allow()
                 : Response::deny('No puedes editar esta incidencia porque ya está en proceso. Usa los comentarios para comunicarte con el equipo.');
         }
@@ -54,7 +55,7 @@ class IncidenciaPolicy
         }
 
         if ($incidencia->id_usuario === $user->id) {
-            return $incidencia->estado_incidencia === 'PENDIENTE'
+            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente->value
                 ? Response::allow()
                 : Response::deny('No puedes eliminar esta incidencia porque ya está en proceso o resuelta.');
         }

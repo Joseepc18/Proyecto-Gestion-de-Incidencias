@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\TipoEvidencia;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubirEvidenciaRequest;
@@ -20,7 +21,7 @@ class EvidenciaController extends Controller
     public function subir(SubirEvidenciaRequest $request, Incidencia $incidencia)
     {
         $user = $request->user();
-        $tipo = $request->input('tipo_evidencia', 'REPORTE');
+        $tipo = $request->input('tipo_evidencia', TipoEvidencia::Reporte->value);
         $limite = 3;
 
         if ($incidencia->evidencias()->where('tipo_evidencia', $tipo)->count() + count($request->file('fotos')) > $limite) {

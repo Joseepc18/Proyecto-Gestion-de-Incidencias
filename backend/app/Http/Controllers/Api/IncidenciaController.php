@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoIncidencia;
+use App\Enums\PrioridadIncidencia;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
@@ -22,7 +24,7 @@ class IncidenciaController extends Controller
     {
         // Resueltas al final; dentro de cada bloque, las más recientes primero.
         $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
-            ->orderByRaw("(estado_incidencia = 'RESUELTO') ASC")
+            ->orderByRaw('(estado_incidencia = ?) ASC', [EstadoIncidencia::Resuelto->value])
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('estado')) {
@@ -57,7 +59,7 @@ class IncidenciaController extends Controller
     {
         $datos = $request->validated();
         $datos['id_usuario'] = $request->user()->id;
-        $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? 'MEDIA';
+        $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? PrioridadIncidencia::Media->value;
         unset($datos['fotos']);
 
         $rutasGuardadas = [];
@@ -156,20 +158,20 @@ class IncidenciaController extends Controller
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
-        if ($actual === 'RESUELTO') {
+        if ($actual === EstadoIncidencia::Resuelto->value) {
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
         }
 
         if (! $request->user()->esAdmin()) {
             $siguientePermitido = [
-                'EN_PROCESO' => 'RESUELTO',
+                EstadoIncidencia::EnProceso->value => EstadoIncidencia::Resuelto->value,
             ];
             if (($siguientePermitido[$actual] ?? null) !== $nuevo) {
                 return response()->json(['message' => 'Transición de estado no permitida'], 422);
             }
         }
 
-        if ($nuevo === 'RESUELTO' && $actual !== 'RESUELTO') {
+        if ($nuevo === EstadoIncidencia::Resuelto->value && $actual !== EstadoIncidencia::Resuelto->value) {
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {

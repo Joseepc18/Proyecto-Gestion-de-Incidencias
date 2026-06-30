@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoIncidencia;
+use App\Enums\PrioridadIncidencia;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +17,9 @@ class DashboardController extends Controller
         $datos = Cache::remember('dashboard_metricas', 60, function () {
             $totales = DB::table('incidencias')
                 ->selectRaw('COUNT(*) AS total')
-                ->selectRaw("COUNT(*) FILTER (WHERE estado_incidencia = 'PENDIENTE') AS pendientes")
-                ->selectRaw("COUNT(*) FILTER (WHERE estado_incidencia = 'EN_PROCESO') AS en_proceso")
-                ->selectRaw("COUNT(*) FILTER (WHERE estado_incidencia = 'RESUELTO') AS resueltas")
+                ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS pendientes', [EstadoIncidencia::Pendiente->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS en_proceso', [EstadoIncidencia::EnProceso->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS resueltas', [EstadoIncidencia::Resuelto->value])
                 ->first();
 
             $promedioGlobal = DB::table('incidencias')
@@ -26,9 +28,9 @@ class DashboardController extends Controller
                 ->value('dias');
 
             $porPrioridad = DB::table('incidencias')
-                ->selectRaw("COUNT(*) FILTER (WHERE prioridad_incidencia = 'ALTA') AS alta")
-                ->selectRaw("COUNT(*) FILTER (WHERE prioridad_incidencia = 'MEDIA') AS media")
-                ->selectRaw("COUNT(*) FILTER (WHERE prioridad_incidencia = 'BAJA') AS baja")
+                ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS alta', [PrioridadIncidencia::Alta->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS media', [PrioridadIncidencia::Media->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS baja', [PrioridadIncidencia::Baja->value])
                 ->first();
 
             $porTipo = DB::table('v_metricas_por_tipo')->get();
