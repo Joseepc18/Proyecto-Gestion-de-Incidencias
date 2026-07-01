@@ -28,7 +28,9 @@ class AuthTest extends TestCase
         ]);
 
         $respuesta->assertCreated()
-            ->assertJsonStructure(['access_token', 'token_type', 'user' => ['id', 'email']]);
+            ->assertJsonStructure(['access_token', 'token_type', 'user' => ['id', 'email', 'rol' => ['nombre_rol']]])
+            // El registro debe traer el rol embebido para que el front no re-pida /user.
+            ->assertJsonPath('user.rol.nombre_rol', 'normal');
 
         $this->assertDatabaseHas('users', ['email' => 'juan@ejemplo.com']);
 
@@ -55,7 +57,10 @@ class AuthTest extends TestCase
         $this->postJson('/api/login', [
             'email' => 'ana@ejemplo.com',
             'password' => 'Password123',
-        ])->assertOk()->assertJsonStructure(['access_token']);
+        ])->assertOk()
+            ->assertJsonStructure(['access_token', 'user' => ['rol' => ['nombre_rol']]])
+            // El login debe traer el rol embebido para que el front no re-pida /user.
+            ->assertJsonPath('user.rol.nombre_rol', 'normal');
     }
 
     public function test_login_con_credenciales_invalidas_devuelve_401(): void

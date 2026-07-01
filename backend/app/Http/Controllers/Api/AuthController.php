@@ -40,7 +40,8 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user),
+            // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
+            'user' => new UserResource($user->load('rol')),
         ], 201);
     }
 
@@ -61,7 +62,8 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user),
+            // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
+            'user' => new UserResource($user->load('rol')),
         ], 200);
     }
 

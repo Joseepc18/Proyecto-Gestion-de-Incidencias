@@ -48,7 +48,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         sinSpinner: true,
       });
       guardarToken(data.access_token);
-      const usuario = await apiFetch("/user", { sinSpinner: true });
+      // /login ya devuelve el user con su rol: lo usamos y evitamos un segundo request a /user.
+      const usuario = data.user || {};
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
       if (rol) localStorage.setItem("rol_usuario", rol);
       // Cachea la foto para que el navbar la pinte ya en la primera pantalla tras iniciar sesión.
