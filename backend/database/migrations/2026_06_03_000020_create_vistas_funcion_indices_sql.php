@@ -132,6 +132,10 @@ return new class extends Migration
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);');
         // Acelera el conteo de evidencias por incidencia (trigger fn_limite_evidencias y EvidenciaController@subir).
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_evidencias_incidencia ON evidencias(id_incidencia);');
+        // Postgres no indexa las FK automáticamente. id_ciudad e id_subtipo_incidencia se filtran
+        // (listado) y se joinean (dashboard, vistas de métricas) sin índice.
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_ciudad ON incidencias(id_ciudad);');
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_subtipo ON incidencias(id_subtipo_incidencia);');
     }
 
     /**
@@ -149,5 +153,7 @@ return new class extends Migration
         DB::unprepared('DROP INDEX IF EXISTS idx_historial_incidencia;');
         DB::unprepared('DROP INDEX IF EXISTS idx_notificaciones_usuario;');
         DB::unprepared('DROP INDEX IF EXISTS idx_evidencias_incidencia;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_ciudad;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_subtipo;');
     }
 };

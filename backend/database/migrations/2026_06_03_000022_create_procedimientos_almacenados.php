@@ -9,7 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Procedimiento asignar_tecnico: valida (incidencia existe, rol válido, sin duplicado, RESPONSABLE/APOYO) y asigna el técnico.
+        // Procedimiento asignar_tecnico: valida (incidencia existe, rol técnico, sin duplicado, RESPONSABLE/APOYO) y asigna el técnico.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE asignar_tecnico(
             p_id_incidencia BIGINT,
@@ -31,18 +31,18 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
             END IF;
 
-            -- Validación 2: ¿el usuario existe (no borrado) y tiene rol técnico o admin?
+            -- Validación 2: ¿el usuario existe (no borrado) y tiene rol técnico?
             SELECT r.nombre_rol INTO v_rol_usuario
             FROM users u
             JOIN roles r ON u.id_rol = r.id_rol
             WHERE u.id = p_id_usuario AND u.deleted_at IS NULL;
 
-            -- Si no encontró fila, v_rol_usuario es NULL (NULL NOT IN ... no dispara, hay que chequearlo aparte).
+            -- Si no encontró fila, v_rol_usuario es NULL (NULL <> 'x' no dispara, hay que chequearlo aparte).
             IF v_rol_usuario IS NULL THEN
                 RAISE EXCEPTION 'El usuario % no existe o fue eliminado.', p_id_usuario;
             END IF;
 
-            IF v_rol_usuario NOT IN ('tecnico', 'admin') THEN
+            IF v_rol_usuario <> 'tecnico' THEN
                 RAISE EXCEPTION 'El usuario % no tiene permisos para ser asignado.', p_id_usuario;
             END IF;
 
@@ -68,7 +68,7 @@ return new class extends Migration
         \$\$;
         ");
 
-        // Procedimiento resolver_incidencia: pasa a RESUELTO y notifica a reportador y técnicos (los triggers hacen historial y fecha).
+        // Procedimiento resolver_incidencia: pasa a RESUELTO y notifica a reportador y técnicos (menos al actor), los triggers hacen historial y fecha.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,
@@ -103,21 +103,26 @@ return new class extends Migration
             -- Publica el actor para el trigger de historial (local a la transacción).
             PERFORM set_config('app.actor_id', p_id_usuario::text, true);
 
-            -- Cambia el estado a RESUELTO
+            -- Cambia el estado a RESUELTO y refresca updated_at
             -- El trigger tr_fecha_resolucion llena fecha_resolucion automáticamente
             -- El trigger tr_cambio_estado_incidencias guarda el historial automáticamente
             UPDATE incidencias
-            SET estado_incidencia = 'RESUELTO'
+            SET estado_incidencia = 'RESUELTO',
+                updated_at = NOW()
             WHERE id_incidencia = p_id_incidencia;
 
-            -- Notifica al ciudadano reportador
-            INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-            VALUES (v_reportador_id, p_id_incidencia, 'CAMBIO_ESTADO',
-                    'Tu incidencia ha sido resuelta: ' || v_nombre);
+            -- Notifica al reportador, salvo que sea quien resuelve.
+            IF v_reportador_id IS DISTINCT FROM p_id_usuario THEN
+                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
+                VALUES (v_reportador_id, p_id_incidencia, 'CAMBIO_ESTADO',
+                        'Tu incidencia ha sido resuelta: ' || v_nombre);
+            END IF;
 
-            -- Notifica a cada técnico asignado
+            -- Notifica a cada técnico asignado, menos al actor.
             FOR v_tecnico_id IN
-                SELECT id_usuario FROM asignaciones_incidencia WHERE id_incidencia = p_id_incidencia
+                SELECT id_usuario FROM asignaciones_incidencia
+                WHERE id_incidencia = p_id_incidencia
+                  AND id_usuario IS DISTINCT FROM p_id_usuario
             LOOP
                 INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
                 VALUES (v_tecnico_id, p_id_incidencia, 'CAMBIO_ESTADO',
