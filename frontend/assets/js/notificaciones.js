@@ -78,8 +78,12 @@ document.addEventListener("DOMContentLoaded", function () {
       item.classList.remove("no-leida");
     }
 
-    // Las de INCIDENCIA_ELIMINADA no tienen incidencia a la cual ir (se borró físico).
-    if (!item.dataset.incidencia || item.dataset.incidencia === "null") return;
+    // Las de INCIDENCIA_ELIMINADA no tienen incidencia a la cual ir (se borró físico):
+    // se lleva a la bandeja para que el usuario lea el motivo completo.
+    if (!item.dataset.incidencia || item.dataset.incidencia === "null") {
+      window.location.href = "../notificaciones/notificaciones.html";
+      return;
+    }
 
     const rol = localStorage.getItem("rol_usuario") || "";
     const abrirChat = item.dataset.tipo === "COMENTARIO";
