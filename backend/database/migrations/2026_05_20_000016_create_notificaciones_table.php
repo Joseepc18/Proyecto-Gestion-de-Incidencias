@@ -21,11 +21,21 @@ return new class extends Migration
             estado_lectura BOOLEAN DEFAULT FALSE,
             fecha_lectura TIMESTAMP NULL,
             tipo_notificacion VARCHAR(50) NOT NULL CHECK(tipo_notificacion IN ('ASIGNACION','CAMBIO_ESTADO','COMENTARIO','NUEVA_INCIDENCIA','EVIDENCIA','INCIDENCIA_ELIMINADA')),
+            -- Comentarios agrupados en una misma notificación de COMENTARIO sin leer.
+            contador INT NOT NULL DEFAULT 1,
             FOREIGN KEY (id_incidencia) REFERENCES incidencias(id_incidencia) ON DELETE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        ");
+
+        // Solo puede existir UNA notificación de COMENTARIO sin leer por (usuario, incidencia):
+        // es el ancla del UPSERT de fn_notificar_nuevo_comentario (ver migración de triggers).
+        DB::statement("
+            CREATE UNIQUE INDEX uq_notif_comentario_pendiente
+                ON notificaciones (id_usuario, id_incidencia)
+                WHERE tipo_notificacion = 'COMENTARIO' AND estado_lectura = false;
         ");
     }
 

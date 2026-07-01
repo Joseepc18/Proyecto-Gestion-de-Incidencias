@@ -61,7 +61,9 @@ return new class extends Migration
         ');
 
         // 3) fn_notificar_nuevo_comentario: avisa a todo el chat (reportador + admins +
-        // técnico responsable), menos al autor del comentario.
+        // técnico responsable), menos al autor. Consolida: si el destinatario ya tiene una
+        // notificación de comentario sin leer de esa incidencia, suma al contador y refresca
+        // la fecha en vez de crear otra fila (ver índice uq_notif_comentario_pendiente).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_nuevo_comentario()
             RETURNS TRIGGER AS \$\$
@@ -73,9 +75,9 @@ return new class extends Migration
                 INTO v_reportador, v_nombre
                 FROM incidencias WHERE id_incidencia = NEW.id_incidencia;
 
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
+                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion, contador)
                 SELECT DISTINCT d.id_usuario, NEW.id_incidencia, 'COMENTARIO',
-                       'Nuevo comentario en la incidencia: ' || v_nombre
+                       'Nuevo comentario en la incidencia: ' || v_nombre, 1
                 FROM (
                     SELECT v_reportador AS id_usuario
                     UNION
@@ -88,7 +90,14 @@ return new class extends Migration
                           AND a.rol_asignado = 'RESPONSABLE'
                 ) d
                 WHERE d.id_usuario IS NOT NULL
-                  AND d.id_usuario <> NEW.id_usuario;   -- nunca al autor
+                  AND d.id_usuario <> NEW.id_usuario   -- nunca al autor
+                ON CONFLICT (id_usuario, id_incidencia)
+                    WHERE tipo_notificacion = 'COMENTARIO' AND estado_lectura = false
+                DO UPDATE SET
+                    contador             = notificaciones.contador + 1,
+                    mensaje_notificacion = (notificaciones.contador + 1) || ' comentarios nuevos en la incidencia: ' || v_nombre,
+                    created_at           = NOW(),
+                    updated_at           = NOW();
                 RETURN NEW;
             END;
             \$\$ LANGUAGE plpgsql;

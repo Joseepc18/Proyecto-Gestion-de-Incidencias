@@ -406,6 +406,57 @@ a {
   gap: 0.15rem;
 }
 
+/* Grupo de notificaciones de una misma incidencia (cabecera navegable + chevron). */
+.notif-group-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.notif-group-row .notif-cabecera {
+  flex: 1 1 auto;
+  border-bottom: none;
+}
+
+.notif-chevron {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--admin-muted);
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.notif-chevron i {
+  transition: transform 0.15s ease;
+}
+
+.notif-chevron.abierto i {
+  transform: rotate(180deg);
+}
+
+/* Pastilla con el total de notificaciones agrupadas. */
+.notif-count {
+  margin-left: auto;
+  align-self: center;
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--admin-primary);
+  color: #fff;
+}
+
+.notif-hijas {
+  background: var(--admin-surface-soft, rgba(15, 23, 42, 0.03));
+}
+
+.notif-hija.notif-page-item {
+  padding-left: 2.7rem;
+}
+
 .profile-button {
   display: flex;
   align-items: center;

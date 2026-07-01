@@ -6,6 +6,7 @@ use App\Models\AsignacionIncidencia;
 use App\Models\Ciudad;
 use App\Models\Comentario;
 use App\Models\Evidencia;
+use App\Models\Notificacion;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -140,6 +141,31 @@ class BaseDatosAvanzadaTest extends TestCase
             'id_incidencia' => $incidencia->id_incidencia,
             'tipo_notificacion' => 'COMENTARIO',
         ]);
+    }
+
+    // Varios comentarios sin leer se consolidan en UNA sola notificación con contador.
+    public function test_comentarios_seguidos_se_consolidan_en_una_notificacion(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $autor = $this->crearUsuario('tecnico');
+
+        foreach (['Primero', 'Segundo', 'Tercero'] as $texto) {
+            Comentario::create([
+                'id_incidencia' => $incidencia->id_incidencia,
+                'id_usuario' => $autor->id,
+                'comentario' => $texto,
+            ]);
+        }
+
+        $notifs = Notificacion::where('id_usuario', $reportador->id)
+            ->where('id_incidencia', $incidencia->id_incidencia)
+            ->where('tipo_notificacion', 'COMENTARIO')
+            ->get();
+
+        $this->assertCount(1, $notifs, 'Los comentarios sin leer no deben acumular filas.');
+        $this->assertEquals(3, $notifs->first()->contador);
+        $this->assertStringContainsString('3 comentarios nuevos', $notifs->first()->mensaje_notificacion);
     }
 
     // #1 — Trigger fn_notificar_nueva_incidencia: avisa a los administradores.

@@ -28,7 +28,83 @@ function actualizarContador(noLeidas) {
   btnTodas.disabled = noLeidas === 0;
 }
 
-// Dibuja la lista con createElement + textContent (sin innerHTML) para no abrir un XSS.
+// Una fila de notificación (botón que lleva al detalle). Se reutiliza como cabecera
+// de grupo y como hija desplegada. createElement + textContent (sin innerHTML) para no abrir un XSS.
+function filaNotificacion(n, esHija) {
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className =
+    "notification-item notif-page-item" +
+    (n.estado_lectura ? "" : " no-leida") +
+    (esHija ? " notif-hija" : "");
+  item.dataset.id = n.id_notificacion;
+  item.dataset.incidencia = n.id_incidencia;
+  item.dataset.tipo = n.tipo_notificacion;
+
+  const linea = document.createElement("div");
+  linea.className = "notif-line";
+
+  const icono = document.createElement("span");
+  icono.className = "notif-icon";
+  const i = document.createElement("i");
+  i.className = "bi " + iconoTipo(n.tipo_notificacion);
+  icono.appendChild(i);
+
+  const body = document.createElement("div");
+  body.className = "notif-body";
+
+  const msg = document.createElement("span");
+  msg.className = "notification-msg";
+  msg.textContent = n.mensaje_notificacion;
+
+  const hora = document.createElement("span");
+  hora.className = "notification-time";
+  hora.textContent = tiempoRelativo(n.created_at);
+
+  body.append(msg, hora);
+  linea.append(icono, body);
+  item.appendChild(linea);
+  return item;
+}
+
+// Un grupo (varias notificaciones de una misma incidencia): la más reciente como
+// cabecera navegable + chevron que despliega el resto.
+function grupoNotificaciones(grupo) {
+  const wrap = document.createElement("div");
+  wrap.className = "notif-group";
+
+  const fila = document.createElement("div");
+  fila.className = "notif-group-row";
+
+  const cabecera = filaNotificacion(grupo[0], false);
+  cabecera.classList.add("notif-cabecera");
+
+  const badge = document.createElement("span");
+  badge.className = "notif-count";
+  badge.textContent = grupo.length;
+  cabecera.querySelector(".notif-line").appendChild(badge);
+
+  const chevron = document.createElement("button");
+  chevron.type = "button";
+  chevron.className = "notif-chevron";
+  chevron.setAttribute("aria-label", "Desplegar notificaciones");
+  const ch = document.createElement("i");
+  ch.className = "bi bi-chevron-down";
+  chevron.appendChild(ch);
+
+  fila.append(cabecera, chevron);
+
+  const hijas = document.createElement("div");
+  hijas.className = "notif-hijas d-none";
+  grupo.slice(1).forEach(function (n) {
+    hijas.appendChild(filaNotificacion(n, true));
+  });
+
+  wrap.append(fila, hijas);
+  return wrap;
+}
+
+// Dibuja la lista agrupando por incidencia (una fila por incidencia; el resto se despliega).
 function render() {
   const cont = document.getElementById("listaNotificaciones");
   cont.innerHTML = "";
@@ -53,38 +129,25 @@ function render() {
     return;
   }
 
+  // Agrupa conservando el orden (ya viene por fecha desc). Las INCIDENCIA_ELIMINADA
+  // (sin incidencia) van cada una en su propio grupo.
+  const grupos = [];
+  const indice = new Map();
   visibles.forEach(function (n) {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "notification-item notif-page-item" + (n.estado_lectura ? "" : " no-leida");
-    item.dataset.id = n.id_notificacion;
-    item.dataset.incidencia = n.id_incidencia;
-    item.dataset.tipo = n.tipo_notificacion;
+    const clave = n.id_incidencia ? "i" + n.id_incidencia : "n" + n.id_notificacion;
+    let grupo = indice.get(clave);
+    if (!grupo) {
+      grupo = [];
+      indice.set(clave, grupo);
+      grupos.push(grupo);
+    }
+    grupo.push(n);
+  });
 
-    const linea = document.createElement("div");
-    linea.className = "notif-line";
-
-    const icono = document.createElement("span");
-    icono.className = "notif-icon";
-    const i = document.createElement("i");
-    i.className = "bi " + iconoTipo(n.tipo_notificacion);
-    icono.appendChild(i);
-
-    const body = document.createElement("div");
-    body.className = "notif-body";
-
-    const msg = document.createElement("span");
-    msg.className = "notification-msg";
-    msg.textContent = n.mensaje_notificacion;
-
-    const hora = document.createElement("span");
-    hora.className = "notification-time";
-    hora.textContent = tiempoRelativo(n.created_at);
-
-    body.append(msg, hora);
-    linea.append(icono, body);
-    item.appendChild(linea);
-    cont.appendChild(item);
+  grupos.forEach(function (grupo) {
+    cont.appendChild(
+      grupo.length === 1 ? filaNotificacion(grupo[0], false) : grupoNotificaciones(grupo),
+    );
   });
 }
 
@@ -126,6 +189,15 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   document.getElementById("listaNotificaciones").addEventListener("click", async function (evento) {
+    // El chevron solo despliega/colapsa el resto del grupo, no navega.
+    const chevron = evento.target.closest(".notif-chevron");
+    if (chevron) {
+      const hijas = chevron.closest(".notif-group").querySelector(".notif-hijas");
+      hijas.classList.toggle("d-none");
+      chevron.classList.toggle("abierto");
+      return;
+    }
+
     const item = evento.target.closest(".notification-item");
     if (!item) return;
 
