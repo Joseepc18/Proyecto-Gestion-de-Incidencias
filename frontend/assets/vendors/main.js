@@ -6,7 +6,11 @@
   var desktopMedia = "(min-width: 992px)";
 
   function onReady(callback) {
-    if (document.readyState === "loading") {
+    // "!== complete" (no "=== loading"): con <script defer>, para cuando este script corre
+    // el HTML ya terminó de parsear (readyState ya es "interactive", no "loading"), pero
+    // layout.js -que inyecta el navbar/sidebar con los botones que este archivo cablea- puede
+    // no haber corrido todavía. Solo es seguro ejecutar ya si el documento está "complete".
+    if (document.readyState !== "complete") {
       document.addEventListener("DOMContentLoaded", callback);
       return;
     }
