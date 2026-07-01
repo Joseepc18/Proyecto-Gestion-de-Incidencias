@@ -7,7 +7,6 @@ module.exports = [
   {
     ignores: [
       "assets/js/bootstrap.bundle.min.js",
-      "assets/js/main.js",
       "assets/js/browser-image-compression.js",
       "assets/vendors/**",
       "eslint.config.js",
