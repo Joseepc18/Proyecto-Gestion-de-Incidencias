@@ -359,7 +359,7 @@ async function guardarCambios() {
 
     repintarVistaLectura();
     salirEdicion();
-    toastFlash("Cambios guardados", "success");
+    mostrarToast("Cambios guardados", "success");
   } catch (error) {
     mostrarToast("No se pudo guardar: " + error.message, "error");
     btn.disabled = false;

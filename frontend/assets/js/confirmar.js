@@ -37,15 +37,29 @@ function confirmar(opciones = {}) {
       overlay.classList.add("confirm-visible");
     });
 
+    const btnConfirmar = overlay.querySelector("[data-confirmar]");
+    // Foco inicial al botón de confirmar (accesibilidad, igual que modal.js).
+    setTimeout(() => btnConfirmar.focus(), 50);
+
+    let cerrado = false;
     function cerrar(resultado) {
+      if (cerrado) return;
+      cerrado = true;
       overlay.classList.remove("confirm-visible");
       setTimeout(function () {
         overlay.remove();
       }, 200);
+      document.removeEventListener("keydown", alPulsarTecla);
       resolve(resultado);
     }
 
-    overlay.querySelector("[data-confirmar]").addEventListener("click", function () {
+    // Cierre con Escape (cancela), igual que modal.js.
+    function alPulsarTecla(e) {
+      if (e.key === "Escape") cerrar(false);
+    }
+    document.addEventListener("keydown", alPulsarTecla);
+
+    btnConfirmar.addEventListener("click", function () {
       cerrar(true);
     });
     overlay.querySelector("[data-cancelar]").addEventListener("click", function () {

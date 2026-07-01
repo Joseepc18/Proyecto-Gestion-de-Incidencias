@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         selectCiudad.appendChild(op);
       });
     } catch (error) {
-      console.error("Error cargando catálogos:", error);
+      mostrarToast("No se pudieron cargar los filtros: " + error.message, "error");
     }
   }
 
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         perPage: porPagina,
       });
     } catch (error) {
-      console.error("Error cargando incidencias:", error);
+      mostrarToast("No se pudieron cargar las incidencias: " + error.message, "error");
     }
   }
 

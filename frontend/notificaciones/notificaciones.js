@@ -1,6 +1,6 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, aplicarMenuRol, rutaDetalleIncidencia, tiempoRelativo, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, rutaDetalleIncidencia, tiempoRelativo, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let notificaciones = [];
@@ -94,8 +94,8 @@ async function cargar() {
     notificaciones = data.notificaciones || [];
     actualizarContador(data.no_leidas);
     render();
-  } catch {
-    /* apiFetch ya mostró el error */
+  } catch (error) {
+    mostrarToast("No se pudieron cargar las notificaciones: " + error.message, "error");
   }
 }
 
@@ -119,8 +119,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     try {
       await apiFetch("/notificaciones/leer-todas", { method: "PATCH" });
       await cargar();
-    } catch {
-      /* apiFetch ya mostró el error */
+    } catch (error) {
+      mostrarToast("No se pudieron marcar como leídas: " + error.message, "error");
     }
   });
 

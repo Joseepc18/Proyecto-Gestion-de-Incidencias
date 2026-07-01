@@ -10,24 +10,28 @@ function crearMenuAcciones(acciones) {
   dropdown.innerHTML =
     '<button class="btn btn-light btn-sm" data-bs-toggle="dropdown" aria-expanded="false">' +
     '<i class="bi bi-three-dots-vertical"></i></button>' +
-    '<ul class="dropdown-menu dropdown-menu-end">' +
-    acciones
-      .map(function (a) {
-        const clase = a.peligro ? "dropdown-item text-danger" : "dropdown-item";
-        const icono = a.icon ? '<i class="' + a.icon + '"></i>' : "";
-        return (
-          '<li><a href="#" class="' + clase + '" role="button">' + icono + a.label + "</a></li>"
-        );
-      })
-      .join("") +
-    "</ul>";
+    '<ul class="dropdown-menu dropdown-menu-end"></ul>';
 
-  const items = dropdown.querySelectorAll(".dropdown-item");
-  acciones.forEach(function (a, i) {
-    items[i].addEventListener("click", function (e) {
+  // El label se pinta con textContent (nunca innerHTML) para que el helper sea seguro por construcción.
+  const menu = dropdown.querySelector(".dropdown-menu");
+  acciones.forEach(function (a) {
+    const li = document.createElement("li");
+    const enlace = document.createElement("a");
+    enlace.href = "#";
+    enlace.className = a.peligro ? "dropdown-item text-danger" : "dropdown-item";
+    enlace.setAttribute("role", "button");
+    if (a.icon) {
+      const icono = document.createElement("i");
+      icono.className = a.icon;
+      enlace.appendChild(icono);
+    }
+    enlace.appendChild(document.createTextNode(a.label));
+    enlace.addEventListener("click", function (e) {
       e.preventDefault();
       a.handler();
     });
+    li.appendChild(enlace);
+    menu.appendChild(li);
   });
   return dropdown;
 }

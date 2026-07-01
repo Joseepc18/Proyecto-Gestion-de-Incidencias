@@ -183,28 +183,33 @@ function pintarFotos() {
   const resolucion = evidencias.filter((ev) => ev.tipo_evidencia === "RESOLUCION");
 
   const contReporte = document.getElementById("fotosReporte");
-  contReporte.innerHTML = reporte.length
-    ? reporte.map(miniaturaFoto).join("")
-    : '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
+  contReporte.innerHTML = "";
+  if (reporte.length) {
+    reporte.forEach((ev) => contReporte.appendChild(miniaturaFoto(ev)));
+  } else {
+    contReporte.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
+  }
 
   const bloqueRes = document.getElementById("fotosResolucionBloque");
   if (resolucion.length) {
     bloqueRes.classList.remove("d-none");
-    document.getElementById("fotosResolucion").innerHTML = resolucion.map(miniaturaFoto).join("");
+    const contRes = document.getElementById("fotosResolucion");
+    contRes.innerHTML = "";
+    resolucion.forEach((ev) => contRes.appendChild(miniaturaFoto(ev)));
   } else {
     bloqueRes.classList.add("d-none");
   }
 }
 
-// HTML de una miniatura con lightbox.
+// Miniatura con lightbox construida con createElement (la URL no se interpola en HTML crudo).
 function miniaturaFoto(ev) {
-  return (
-    '<img src="/storage/' +
-    ev.url_evidencia +
-    '" class="evidencia-foto evidencia-foto-md rounded" data-lightbox="/storage/' +
-    ev.url_evidencia +
-    '" alt="Evidencia" loading="lazy" />'
-  );
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.src = "/storage/" + ev.url_evidencia;
+  img.className = "evidencia-foto evidencia-foto-md rounded";
+  img.alt = "Evidencia";
+  img.dataset.lightbox = "/storage/" + ev.url_evidencia;
+  return img;
 }
 
 // ¿Quien mira es el técnico RESPONSABLE de esta incidencia? (el de apoyo no cuenta)
