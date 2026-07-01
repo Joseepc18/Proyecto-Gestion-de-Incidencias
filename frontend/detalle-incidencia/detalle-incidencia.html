@@ -59,346 +59,413 @@
               </div>
             </div>
 
-            <!-- Contenido (oculto mientras carga): 3 columnas que entran en una pantalla -->
-            <div id="detalleContenido" class="detalle-grid d-none">
-              <!-- Columna 1: info + historial -->
-              <div class="detalle-col">
-                <!-- Tarjeta principal -->
-                <section class="panel panel-acento" id="panelDetalle">
-                  <div class="p-3">
-                    <!-- Vista (solo lectura) -->
-                    <div id="datosVista">
-                      <!-- Badges estado / prioridad / tipo -->
-                      <div class="d-flex gap-2 mb-2 flex-wrap">
-                        <span class="badge" id="detalleEstado"></span>
-                        <span class="badge" id="detallePrioridad"></span>
-                        <span class="badge text-bg-light border" id="detalleTipoBadge"></span>
-                      </div>
+            <!-- Contenido (oculto mientras carga) -->
+            <div id="detalleContenido" class="d-none">
+              <!-- Barra de meta-información: Reportado por / Provincia-Ciudad / Fecha de creación / Creado hace -->
+              <div class="detalle-meta-bar" id="detalleMetaBar">
+                <div class="meta-tile">
+                  <span class="meta-tile-icono"
+                    ><i class="bi bi-person" aria-hidden="true"></i
+                  ></span>
+                  <div class="meta-tile-texto">
+                    <span class="meta-tile-label">Reportado por</span>
+                    <span class="meta-tile-valor" id="metaReportadoPor">—</span>
+                  </div>
+                </div>
+                <div class="meta-tile">
+                  <span class="meta-tile-icono"
+                    ><i class="bi bi-geo-alt" aria-hidden="true"></i
+                  ></span>
+                  <div class="meta-tile-texto">
+                    <span class="meta-tile-label">Provincia / Ciudad</span>
+                    <span class="meta-tile-valor" id="metaProvinciaCiudad">—</span>
+                  </div>
+                </div>
+                <div class="meta-tile">
+                  <span class="meta-tile-icono"
+                    ><i class="bi bi-calendar-event" aria-hidden="true"></i
+                  ></span>
+                  <div class="meta-tile-texto">
+                    <span class="meta-tile-label">Fecha de creación</span>
+                    <span class="meta-tile-valor" id="metaFechaCreacion">—</span>
+                  </div>
+                </div>
+                <div class="meta-tile">
+                  <span class="meta-tile-icono"
+                    ><i class="bi bi-hourglass-split" aria-hidden="true"></i
+                  ></span>
+                  <div class="meta-tile-texto">
+                    <span class="meta-tile-label">Creado hace</span>
+                    <span class="meta-tile-valor" id="metaCreadoHace">—</span>
+                  </div>
+                </div>
+              </div>
 
-                      <!-- Línea meta: tipo → subtipo · reportado por · fecha -->
-                      <p class="text-muted small mb-2" id="detalleMeta"></p>
-
-                      <!-- Descripción -->
-                      <div id="detalleDescripcionBloque" class="mb-2">
-                        <h6 class="text-muted mb-1">Descripción</h6>
-                        <p id="detalleDescripcion" class="mb-0"></p>
-                      </div>
-
-                      <!-- Datos en 2 columnas -->
-                      <div class="row g-2">
-                        <div class="col-6">
-                          <h6 class="text-muted mb-0 small">Reportado por</h6>
-                          <p id="detalleUsuario" class="mb-0 fw-semibold small"></p>
+              <!-- 3 columnas que entran en una pantalla -->
+              <div class="detalle-grid">
+                <!-- Columna 1: info + historial -->
+                <div class="detalle-col">
+                  <!-- Tarjeta principal -->
+                  <section class="panel panel-acento" id="panelDetalle">
+                    <div class="p-3">
+                      <!-- Vista (solo lectura) -->
+                      <div id="datosVista">
+                        <!-- Badges estado / prioridad / tipo -->
+                        <div class="d-flex gap-2 mb-2 flex-wrap">
+                          <span class="badge" id="detalleEstado"></span>
+                          <span class="badge" id="detallePrioridad"></span>
+                          <span class="badge text-bg-light border" id="detalleTipoBadge"></span>
                         </div>
-                        <div class="col-6">
-                          <h6 class="text-muted mb-0 small">Ciudad</h6>
-                          <p id="detalleCiudad" class="mb-0 fw-semibold small"></p>
+
+                        <!-- Tipo / Subtipo (el tipo ya se ve en el badge, pero se repite explícito aquí) -->
+                        <p class="text-muted small mb-2">
+                          <span id="detalleTipoTexto"></span><br />
+                          <span id="detalleSubtipoTexto"></span>
+                        </p>
+
+                        <!-- Descripción -->
+                        <div id="detalleDescripcionBloque" class="mb-2">
+                          <h6 class="text-muted mb-1">Descripción</h6>
+                          <p id="detalleDescripcion" class="mb-0"></p>
                         </div>
-                        <div class="col-6">
+
+                        <!-- Dirección (lo único que no se repite arriba) -->
+                        <div class="mb-0">
                           <h6 class="text-muted mb-0 small">Dirección</h6>
                           <p id="detalleDireccion" class="mb-0 small"></p>
                         </div>
-                        <div class="col-6">
-                          <h6 class="text-muted mb-0 small">Fecha de creación</h6>
-                          <p id="detalleFecha" class="mb-0 small"></p>
+                      </div>
+
+                      <!-- Edición (ciudadano dueño; oculta hasta tocar "Editar") -->
+                      <form id="datosEdicion" class="row g-3 d-none needs-validation" novalidate>
+                        <div class="col-12">
+                          <label class="form-label" for="editTitulo"
+                            >Título <span class="text-danger">*</span></label
+                          >
+                          <input
+                            class="form-control"
+                            id="editTitulo"
+                            type="text"
+                            minlength="5"
+                            maxlength="100"
+                            required
+                          />
+                          <div class="invalid-feedback">Mínimo 5 caracteres.</div>
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label" for="editDescripcion">Descripción</label>
+                          <textarea
+                            class="form-control"
+                            id="editDescripcion"
+                            rows="3"
+                            maxlength="500"
+                          ></textarea>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label" for="editTipo"
+                            >Tipo <span class="text-danger">*</span></label
+                          >
+                          <select class="form-select" id="editTipo" required>
+                            <option value="">Seleccionar...</option>
+                          </select>
+                          <div class="invalid-feedback">Selecciona un tipo.</div>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label" for="editSubtipo"
+                            >Subtipo <span class="text-danger">*</span></label
+                          >
+                          <select class="form-select" id="editSubtipo" required disabled>
+                            <option value="">Primero selecciona un tipo</option>
+                          </select>
+                          <div class="invalid-feedback">Selecciona un subtipo.</div>
+                        </div>
+                        <div class="col-md-6" id="campoEditProvincia">
+                          <label class="form-label" for="editProvincia"
+                            >Provincia <span class="text-danger">*</span></label
+                          >
+                          <select class="form-select" id="editProvincia" required>
+                            <option value="">Seleccionar...</option>
+                          </select>
+                          <div class="invalid-feedback">Selecciona una provincia.</div>
+                        </div>
+                        <div class="col-md-6" id="campoEditCiudad">
+                          <label class="form-label" for="editCiudad"
+                            >Ciudad <span class="text-danger">*</span></label
+                          >
+                          <select class="form-select" id="editCiudad" required disabled>
+                            <option value="">Primero selecciona una provincia</option>
+                          </select>
+                          <div class="invalid-feedback">Selecciona una ciudad.</div>
+                        </div>
+                        <div class="col-12">
+                          <label class="form-label" for="editDireccion">Dirección</label>
+                          <input
+                            class="form-control"
+                            id="editDireccion"
+                            type="text"
+                            maxlength="500"
+                          />
+                        </div>
+                      </form>
+
+                      <!-- Barra de acciones de edición (ciudadano) -->
+                      <div id="edicionAcciones" class="d-none justify-content-end gap-2 mt-3">
+                        <button
+                          class="btn btn-outline-secondary btn-sm"
+                          type="button"
+                          id="btnCancelarEdicion"
+                        >
+                          Cancelar
+                        </button>
+                        <button class="btn btn-primary btn-sm" type="button" id="btnGuardarEdicion">
+                          <span
+                            id="guardarSpinner"
+                            class="spinner-border spinner-border-sm d-none me-1"
+                          ></span>
+                          <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <!-- Historial de estados (formato horizontal compacto) -->
+                  <section class="panel detalle-fill">
+                    <div class="p-3 detalle-fill-cuerpo">
+                      <h3 class="panel-titulo-tool">
+                        <i class="bi bi-clock-history me-1"></i> Historial de estados
+                      </h3>
+                      <div id="historialTimeline" class="historial-lista"></div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- Columna 2: mapa + fotos -->
+                <div class="detalle-col">
+                  <!-- Mapa -->
+                  <section class="panel">
+                    <div class="p-3">
+                      <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                        <h2 class="h6 mb-0">
+                          <i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa
+                        </h2>
+                        <a
+                          id="btnComoLlegar"
+                          class="btn btn-outline-primary btn-sm d-none"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          <i class="bi bi-signpost-split me-1"></i> Cómo llegar
+                        </a>
+                      </div>
+                      <!-- Controles del picker (solo en modo edición del ciudadano) -->
+                      <div
+                        id="mapaEditControles"
+                        class="d-none justify-content-between align-items-center mb-2 flex-wrap gap-2"
+                      >
+                        <span class="text-muted small"
+                          >Haz clic en el mapa para cambiar el lugar.</span
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm"
+                          id="btnMiUbicacionEdit"
+                        >
+                          <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
+                        </button>
+                      </div>
+                      <div id="mapaDetalle" class="mapa-detalle"></div>
+                    </div>
+                  </section>
+
+                  <!-- Fotos: toggle Reportador/Técnico + carrusel -->
+                  <section class="panel detalle-fill" id="fotosReporteBloque">
+                    <div class="p-3 detalle-fill-cuerpo">
+                      <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                        <h2 class="h6 mb-0"><i class="bi bi-images me-1"></i> Fotos</h2>
+                        <div class="btn-group btn-group-sm" id="fotosToggleGrupo" role="group">
+                          <button
+                            type="button"
+                            class="btn btn-outline-secondary active"
+                            id="btnFotosReportador"
+                            data-tab="reporte"
+                          >
+                            Reportador
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            id="btnFotosTecnico"
+                            data-tab="resolucion"
+                          >
+                            Técnico
+                          </button>
                         </div>
                       </div>
-                    </div>
 
-                    <!-- Edición (ciudadano dueño; oculta hasta tocar "Editar") -->
-                    <form id="datosEdicion" class="row g-3 d-none needs-validation" novalidate>
-                      <div class="col-12">
-                        <label class="form-label" for="editTitulo"
-                          >Título <span class="text-danger">*</span></label
-                        >
+                      <!-- Carril REPORTE: carrusel de solo lectura (o grid editable del ciudadano dueño) -->
+                      <div id="fotosReporte"></div>
+
+                      <!-- Zona de subida del ciudadano dueño (sustituye el contenido de #fotosReporte en modo edición) -->
+                      <div id="evidenciasReporteEdicion" class="d-none mt-2">
+                        <label class="dropzone-fotos" id="dropzoneFotos" for="editFotos">
+                          <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+                          <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
+                          <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
+                        </label>
                         <input
-                          class="form-control"
-                          id="editTitulo"
-                          type="text"
-                          minlength="5"
-                          maxlength="100"
-                          required
+                          class="d-none"
+                          id="editFotos"
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          multiple
                         />
-                        <div class="invalid-feedback">Mínimo 5 caracteres.</div>
-                      </div>
-                      <div class="col-12">
-                        <label class="form-label" for="editDescripcion">Descripción</label>
-                        <textarea
-                          class="form-control"
-                          id="editDescripcion"
-                          rows="3"
-                          maxlength="500"
-                        ></textarea>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label" for="editTipo"
-                          >Tipo <span class="text-danger">*</span></label
+                        <div id="editFotosError" class="text-danger small mt-1 d-none"></div>
+                        <div id="editFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                        <button
+                          class="btn btn-primary btn-sm mt-2 d-none"
+                          type="button"
+                          id="btnSubirFotos"
                         >
-                        <select class="form-select" id="editTipo" required>
-                          <option value="">Seleccionar...</option>
-                        </select>
-                        <div class="invalid-feedback">Selecciona un tipo.</div>
+                          <span
+                            id="subirFotosSpinner"
+                            class="spinner-border spinner-border-sm d-none me-1"
+                          ></span>
+                          <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Subir fotos
+                        </button>
                       </div>
-                      <div class="col-md-6">
-                        <label class="form-label" for="editSubtipo"
-                          >Subtipo <span class="text-danger">*</span></label
-                        >
-                        <select class="form-select" id="editSubtipo" required disabled>
-                          <option value="">Primero selecciona un tipo</option>
-                        </select>
-                        <div class="invalid-feedback">Selecciona un subtipo.</div>
+
+                      <!-- Carril RESOLUCION: carrusel de solo lectura -->
+                      <div id="fotosResolucionBloque" class="d-none">
+                        <div id="fotosResolucion"></div>
                       </div>
-                      <div class="col-md-6" id="campoEditProvincia">
-                        <label class="form-label" for="editProvincia"
-                          >Provincia <span class="text-danger">*</span></label
-                        >
-                        <select class="form-select" id="editProvincia" required>
-                          <option value="">Seleccionar...</option>
-                        </select>
-                        <div class="invalid-feedback">Selecciona una provincia.</div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- Columna 3: panel único de Acciones (admin y/o técnico responsable) -->
+                <!-- Si queda vacío (ciudadano / técnico de apoyo), el JS la colapsa y deja 2 columnas -->
+                <div class="detalle-col" id="colGestion">
+                  <section class="panel detalle-fill" id="panelAcciones">
+                    <div class="p-3 detalle-fill-cuerpo">
+                      <h3 class="panel-titulo-tool"><i class="bi bi-sliders me-1"></i> Acciones</h3>
+
+                      <!-- Prioridad (solo admin): el botón activo se pinta con el color de su badge -->
+                      <div class="mb-3 solo-admin d-none">
+                        <label class="form-label small fw-semibold mb-2">Prioridad</label>
+                        <div class="btn-grupo-tool" id="prioridadBotones">
+                          <button type="button" class="btn-tool" data-prioridad="ALTA">Alta</button>
+                          <button type="button" class="btn-tool" data-prioridad="MEDIA">
+                            Media
+                          </button>
+                          <button type="button" class="btn-tool" data-prioridad="BAJA">Baja</button>
+                        </div>
                       </div>
-                      <div class="col-md-6" id="campoEditCiudad">
-                        <label class="form-label" for="editCiudad"
-                          >Ciudad <span class="text-danger">*</span></label
-                        >
-                        <select class="form-select" id="editCiudad" required disabled>
-                          <option value="">Primero selecciona una provincia</option>
-                        </select>
-                        <div class="invalid-feedback">Selecciona una ciudad.</div>
+
+                      <!-- Estado (admin y técnico responsable): el botón activo se pinta con el color de su badge -->
+                      <div class="mb-3 gestion-estado d-none">
+                        <label class="form-label small fw-semibold mb-2">Estado</label>
+                        <div class="d-flex flex-column gap-2" id="estadoBotones">
+                          <button type="button" class="btn-estado-tool" data-estado="PENDIENTE">
+                            <span><i class="bi bi-clock-history me-1"></i> Pendiente</span>
+                            <i class="bi bi-check-lg marca"></i>
+                          </button>
+                          <button type="button" class="btn-estado-tool" data-estado="EN_PROCESO">
+                            <span><i class="bi bi-gear-wide-connected me-1"></i> En proceso</span>
+                            <i class="bi bi-check-lg marca"></i>
+                          </button>
+                          <button type="button" class="btn-estado-tool" data-estado="RESUELTO">
+                            <span><i class="bi bi-check2-circle me-1"></i> Resuelto</span>
+                            <i class="bi bi-check-lg marca"></i>
+                          </button>
+                        </div>
                       </div>
-                      <div class="col-12">
-                        <label class="form-label" for="editDireccion">Dirección</label>
+
+                      <!-- Asignación de técnicos (solo admin) -->
+                      <div class="solo-admin d-none">
+                        <h3 class="panel-titulo-tool">
+                          <i class="bi bi-person-badge me-1"></i> Responsable
+                        </h3>
+                        <div id="responsableLista" class="mb-2"></div>
+                        <div class="input-group input-group-sm mb-3" id="responsableForm">
+                          <div class="combobox-buscable" id="comboResponsable">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm combobox-input"
+                              placeholder="Selecciona un técnico…"
+                              autocomplete="off"
+                            />
+                            <ul class="combobox-lista d-none"></ul>
+                          </div>
+                          <select id="selectResponsable" class="d-none">
+                            <option value="">Selecciona un técnico…</option>
+                          </select>
+                          <button type="button" class="btn btn-primary" id="btnAsignarResponsable">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
+                        </div>
+
+                        <h3 class="panel-titulo-tool">
+                          <i class="bi bi-people me-1"></i> Ayudantes
+                        </h3>
+                        <div id="ayudantesLista" class="mb-2"></div>
+                        <div class="input-group input-group-sm" id="ayudanteForm">
+                          <div class="combobox-buscable" id="comboAyudante">
+                            <input
+                              type="text"
+                              class="form-control form-control-sm combobox-input"
+                              placeholder="Selecciona un técnico…"
+                              autocomplete="off"
+                            />
+                            <ul class="combobox-lista d-none"></ul>
+                          </div>
+                          <select id="selectAyudante" class="d-none">
+                            <option value="">Selecciona un técnico…</option>
+                          </select>
+                          <button type="button" class="btn btn-primary" id="btnAsignarAyudante">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Fotos de la resolución: dropzone (solo técnico responsable) -->
+                      <div class="gestion-fotos d-none mt-3">
+                        <h3 class="panel-titulo-tool">
+                          <i class="bi bi-camera me-1"></i> Fotos de la resolución
+                        </h3>
+                        <p class="text-muted small mb-2">
+                          Sube hasta 3 fotos del trabajo realizado.
+                        </p>
+                        <label class="dropzone-fotos" id="dropzoneResolucion" for="inputResolucion">
+                          <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+                          <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
+                          <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
+                        </label>
                         <input
-                          class="form-control"
-                          id="editDireccion"
-                          type="text"
-                          maxlength="500"
+                          class="d-none"
+                          id="inputResolucion"
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          multiple
                         />
+                        <div id="resolucionError" class="text-danger small mt-1 d-none"></div>
+                        <div id="resolucionPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm mt-2 d-none"
+                          id="btnSubirResolucion"
+                        >
+                          <span
+                            class="spinner-border spinner-border-sm me-1 d-none"
+                            id="resolucionSpinner"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Subir fotos
+                        </button>
                       </div>
-                    </form>
-
-                    <!-- Barra de acciones de edición (ciudadano) -->
-                    <div id="edicionAcciones" class="d-none justify-content-end gap-2 mt-3">
-                      <button
-                        class="btn btn-outline-secondary btn-sm"
-                        type="button"
-                        id="btnCancelarEdicion"
-                      >
-                        Cancelar
-                      </button>
-                      <button class="btn btn-primary btn-sm" type="button" id="btnGuardarEdicion">
-                        <span
-                          id="guardarSpinner"
-                          class="spinner-border spinner-border-sm d-none me-1"
-                        ></span>
-                        <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
-                      </button>
                     </div>
-                  </div>
-                </section>
-
-                <!-- Historial de estados -->
-                <section class="panel detalle-fill">
-                  <div class="p-3 detalle-fill-cuerpo">
-                    <h3 class="panel-titulo-tool">
-                      <i class="bi bi-clock-history me-1"></i> Historial de estados
-                    </h3>
-                    <div id="historialTimeline" class="timeline"></div>
-                  </div>
-                </section>
-              </div>
-
-              <!-- Columna 2: mapa + fotos -->
-              <div class="detalle-col">
-                <!-- Mapa -->
-                <section class="panel">
-                  <div class="p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
-                      <h2 class="h6 mb-0">
-                        <i class="bi bi-geo-alt me-1"></i> Ubicación en el mapa
-                      </h2>
-                      <a
-                        id="btnComoLlegar"
-                        class="btn btn-outline-primary btn-sm d-none"
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        <i class="bi bi-signpost-split me-1"></i> Cómo llegar
-                      </a>
-                    </div>
-                    <!-- Controles del picker (solo en modo edición del ciudadano) -->
-                    <div
-                      id="mapaEditControles"
-                      class="d-none justify-content-between align-items-center mb-2 flex-wrap gap-2"
-                    >
-                      <span class="text-muted small"
-                        >Haz clic en el mapa para cambiar el lugar.</span
-                      >
-                      <button
-                        type="button"
-                        class="btn btn-outline-primary btn-sm"
-                        id="btnMiUbicacionEdit"
-                      >
-                        <i class="bi bi-geo-alt-fill me-1"></i> Usar mi ubicación
-                      </button>
-                    </div>
-                    <div id="mapaDetalle" class="mapa-detalle"></div>
-                  </div>
-                </section>
-
-                <!-- Fotos del reporte -->
-                <section class="panel detalle-fill" id="fotosReporteBloque">
-                  <div class="p-3 detalle-fill-cuerpo">
-                    <h2 class="h6 mb-2"><i class="bi bi-images me-1"></i> Fotos del reporte</h2>
-                    <div id="fotosReporte" class="d-flex gap-2 flex-wrap"></div>
-
-                    <!-- Zona de subida de fotos del reporte (solo el ciudadano dueño) -->
-                    <div id="evidenciasReporteEdicion" class="d-none mt-2">
-                      <label class="dropzone-fotos" id="dropzoneFotos" for="editFotos">
-                        <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
-                        <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
-                        <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
-                      </label>
-                      <input
-                        class="d-none"
-                        id="editFotos"
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        multiple
-                      />
-                      <div id="editFotosError" class="text-danger small mt-1 d-none"></div>
-                      <div id="editFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
-                      <button
-                        class="btn btn-primary btn-sm mt-2 d-none"
-                        type="button"
-                        id="btnSubirFotos"
-                      >
-                        <span
-                          id="subirFotosSpinner"
-                          class="spinner-border spinner-border-sm d-none me-1"
-                        ></span>
-                        <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i> Subir fotos
-                      </button>
-                    </div>
-
-                    <!-- Fotos de la resolución (dentro del mismo panel) -->
-                    <div id="fotosResolucionBloque" class="d-none mt-3">
-                      <h2 class="h6 mb-2">
-                        <i class="bi bi-tools me-1"></i> Fotos de la resolución
-                      </h2>
-                      <div id="fotosResolucion" class="d-flex gap-2 flex-wrap"></div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <!-- Columna 3: herramientas de gestión (admin) + estado/fotos (técnico) -->
-              <!-- Si queda vacía (ciudadano / técnico de apoyo), el JS la colapsa y deja 2 columnas -->
-              <div class="detalle-col" id="colGestion">
-                <!-- Prioridad (solo admin) -->
-                <section class="panel solo-admin d-none">
-                  <div class="p-3">
-                    <h3 class="panel-titulo-tool">
-                      <i class="bi bi-flag-fill me-1"></i> Prioridad
-                    </h3>
-                    <div class="btn-grupo-tool" id="prioridadBotones">
-                      <button type="button" class="btn-tool" data-prioridad="ALTA">Alta</button>
-                      <button type="button" class="btn-tool" data-prioridad="MEDIA">Media</button>
-                      <button type="button" class="btn-tool" data-prioridad="BAJA">Baja</button>
-                    </div>
-                  </div>
-                </section>
-
-                <!-- Asignación de técnicos (solo admin) -->
-                <section class="panel solo-admin d-none">
-                  <div class="p-3">
-                    <!-- Responsable -->
-                    <h3 class="panel-titulo-tool">
-                      <i class="bi bi-person-badge me-1"></i> Responsable
-                    </h3>
-                    <div id="responsableLista" class="mb-2"></div>
-                    <div class="input-group input-group-sm mb-3" id="responsableForm">
-                      <select id="selectResponsable" class="form-select">
-                        <option value="">Selecciona un técnico…</option>
-                      </select>
-                      <button type="button" class="btn btn-primary" id="btnAsignarResponsable">
-                        <i class="bi bi-plus-lg"></i>
-                      </button>
-                    </div>
-
-                    <!-- Ayudantes -->
-                    <h3 class="panel-titulo-tool"><i class="bi bi-people me-1"></i> Ayudantes</h3>
-                    <div id="ayudantesLista" class="mb-2"></div>
-                    <div class="input-group input-group-sm" id="ayudanteForm">
-                      <select id="selectAyudante" class="form-select">
-                        <option value="">Selecciona un técnico…</option>
-                      </select>
-                      <button type="button" class="btn btn-primary" id="btnAsignarAyudante">
-                        <i class="bi bi-plus-lg"></i>
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <!-- Cambiar estado (admin y técnico responsable) -->
-                <section class="panel gestion-estado d-none">
-                  <div class="p-3">
-                    <h3 class="panel-titulo-tool">
-                      <i class="bi bi-arrow-repeat me-1"></i> Cambiar estado
-                    </h3>
-                    <div class="d-flex flex-column gap-2" id="estadoBotones">
-                      <button type="button" class="btn-estado-tool" data-estado="PENDIENTE">
-                        <span><i class="bi bi-clock-history me-1"></i> Pendiente</span>
-                        <i class="bi bi-check-lg marca"></i>
-                      </button>
-                      <button type="button" class="btn-estado-tool" data-estado="EN_PROCESO">
-                        <span><i class="bi bi-gear-wide-connected me-1"></i> En proceso</span>
-                        <i class="bi bi-check-lg marca"></i>
-                      </button>
-                      <button type="button" class="btn-estado-tool" data-estado="RESUELTO">
-                        <span><i class="bi bi-check2-circle me-1"></i> Resuelto</span>
-                        <i class="bi bi-check-lg marca"></i>
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                <!-- Fotos de la resolución (solo técnico responsable; el admin las ve pero no las sube) -->
-                <section class="panel gestion-fotos d-none">
-                  <div class="p-3">
-                    <h3 class="panel-titulo-tool">
-                      <i class="bi bi-camera me-1"></i> Fotos de la resolución
-                    </h3>
-                    <p class="text-muted small mb-2">Sube hasta 3 fotos del trabajo realizado.</p>
-                    <label class="dropzone-fotos" id="dropzoneResolucion" for="inputResolucion">
-                      <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
-                      <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
-                      <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
-                    </label>
-                    <input
-                      class="d-none"
-                      id="inputResolucion"
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      multiple
-                    />
-                    <div id="resolucionError" class="text-danger small mt-1 d-none"></div>
-                    <div id="resolucionPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
-                    <button
-                      type="button"
-                      class="btn btn-primary btn-sm mt-2 d-none"
-                      id="btnSubirResolucion"
-                    >
-                      <span
-                        class="spinner-border spinner-border-sm me-1 d-none"
-                        id="resolucionSpinner"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Subir fotos
-                    </button>
-                  </div>
-                </section>
+                  </section>
+                </div>
               </div>
             </div>
 
@@ -440,10 +507,12 @@
     <script defer src="../assets/js/sesion.js"></script>
     <script defer src="../assets/js/compresion.js"></script>
     <script defer src="../assets/js/cascada.js"></script>
+    <script defer src="../assets/js/comboboxBuscable.js"></script>
     <script defer src="../assets/js/galeriaFotos.js"></script>
     <script defer src="../assets/js/toast.js"></script>
     <script defer src="../assets/js/confirmar.js"></script>
     <script defer src="../assets/js/lightbox.js"></script>
+    <script defer src="../assets/js/carruselFotos.js"></script>
     <script defer src="../assets/js/layout.js"></script>
     <script defer src="../assets/js/notificaciones.js"></script>
     <!-- Mapa -->

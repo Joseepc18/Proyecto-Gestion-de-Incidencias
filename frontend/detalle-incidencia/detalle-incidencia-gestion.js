@@ -6,10 +6,13 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
+// Comboboxes buscables de Responsable/Ayudante (se crean una vez, en prepararAsignacion).
+let comboResponsable = null;
+let comboAyudante = null;
 
 // Galería de fotos de resolución (gestionada por galeriaFotos.js).
 let galeriaResolucion = null;
@@ -52,7 +55,7 @@ function prepararPrioridad(id) {
 
   cont.addEventListener("click", async function (e) {
     const btn = e.target.closest("[data-prioridad]");
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
     const nueva = btn.dataset.prioridad;
     if (nueva === incActual.prioridad_incidencia) return;
 
@@ -74,12 +77,15 @@ function prepararPrioridad(id) {
   });
 }
 
-// Resalta el botón de la prioridad actual.
+// Resalta el botón de la prioridad actual pintándolo con el mismo color que su badge
+// (prioridadConfig.clase, ej. "text-bg-danger"), para que el distintivo sea consistente.
 function marcarPrioridadActiva() {
   document.querySelectorAll("#prioridadBotones .btn-tool").forEach(function (b) {
+    const cfg = prioridadConfig[b.dataset.prioridad];
     const activa = b.dataset.prioridad === incActual.prioridad_incidencia;
+    Object.values(prioridadConfig).forEach((c) => b.classList.remove(...c.clase.split(" ")));
     b.classList.toggle("activa", activa);
-    b.classList.toggle("activa-" + b.dataset.prioridad.toLowerCase(), activa);
+    if (activa) b.classList.add(...cfg.clase.split(" "));
   });
 }
 
@@ -128,13 +134,17 @@ function prepararEstado(id) {
   });
 }
 
-// Resalta el estado actual; el admin habilita cualquier otro, el técnico solo EN_PROCESO → RESUELTO.
+// Resalta el estado actual pintándolo con el mismo color que su badge (estadoConfig.clase,
+// ej. "badge-estado-pendiente"); el admin habilita cualquier otro, el técnico solo EN_PROCESO → RESUELTO.
 function marcarEstadoActivo() {
   const actual = incActual.estado_incidencia;
   document.querySelectorAll("#estadoBotones .btn-estado-tool").forEach(function (b) {
     const estado = b.dataset.estado;
+    const cfg = estadoConfig[estado];
     const activo = estado === actual;
+    Object.values(estadoConfig).forEach((c) => b.classList.remove(c.clase));
     b.classList.toggle("activo", activo);
+    if (activo) b.classList.add(cfg.clase);
     if (activo) {
       b.disabled = true;
     } else if (esAdmin) {
@@ -283,6 +293,10 @@ async function prepararAsignacion(id) {
     mostrarToast("No se pudieron cargar los técnicos", "error");
     return;
   }
+
+  comboResponsable = crearComboboxBuscable("selectResponsable", "comboResponsable");
+  comboAyudante = crearComboboxBuscable("selectAyudante", "comboAyudante");
+
   refrescarSelectsTecnicos();
 
   document.getElementById("btnAsignarResponsable").addEventListener("click", function () {
@@ -311,6 +325,9 @@ function refrescarSelectsTecnicos() {
       select.appendChild(op);
     });
   });
+  // El select siempre vuelve al placeholder tras repoblar: refleja lo mismo en los combobox.
+  if (comboResponsable) comboResponsable.resetear();
+  if (comboAyudante) comboAyudante.resetear();
   sincronizarSelects();
 }
 

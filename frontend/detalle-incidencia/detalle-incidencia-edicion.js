@@ -5,7 +5,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -211,6 +211,9 @@ function evidenciasReporte() {
 // Pinta las fotos del reporte con botón × para eliminación inmediata.
 function renderEvidenciasReporteEditable() {
   const cont = document.getElementById("fotosReporte");
+  // Reemplaza el layout del carrusel (flex-columna, lo pone montarCarrusel) por el grid
+  // de miniaturas que arma esta función (envolvente, no de una sola foto).
+  cont.className = "d-flex gap-2 flex-wrap";
   cont.innerHTML = "";
   const reporte = evidenciasReporte();
   if (reporte.length === 0) {
@@ -295,11 +298,9 @@ function repintarVistaLectura() {
       ? incActual.subtipo.tipo.nombre_tipo_incidencia
       : "—";
   const subtipo = incActual.subtipo ? incActual.subtipo.nombre_subtipo_incidencia : "—";
-  const reporta = incActual.usuario ? incActual.usuario.name : "—";
-  const fecha = new Date(incActual.created_at).toLocaleString("es-EC");
   document.getElementById("detalleTipoBadge").textContent = tipo;
-  document.getElementById("detalleMeta").textContent =
-    tipo + " → " + subtipo + " · Reportado por " + reporta + " · " + fecha;
+  document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
+  document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
 
   const bloqueDesc = document.getElementById("detalleDescripcionBloque");
   if (incActual.descripcion_incidencia) {
@@ -309,9 +310,9 @@ function repintarVistaLectura() {
     bloqueDesc.classList.add("d-none");
   }
 
-  document.getElementById("detalleCiudad").textContent = incActual.ciudad
-    ? incActual.ciudad.nombre_ciudad
-    : "—";
+  document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(
+    incActual.ciudad,
+  );
   document.getElementById("detalleDireccion").textContent =
     incActual.direccion_incidencia || "No especificada";
 }

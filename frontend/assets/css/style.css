@@ -2396,7 +2396,8 @@ html[data-theme="dark"] {
   margin-bottom: 12px;
 }
 
-/* Selector de prioridad: 3 botones lado a lado */
+/* Selector de prioridad: 3 botones lado a lado. El activo se pinta con el color de su
+   badge (prioridadConfig.clase se agrega/quita por JS), por eso no hay color aquí. */
 .btn-grupo-tool {
   display: flex;
   gap: 8px;
@@ -2421,7 +2422,12 @@ html[data-theme="dark"] {
   background: var(--admin-surface-soft);
 }
 
-/* Botones de cambio de estado (apilados) */
+.btn-tool.activa {
+  border-color: transparent;
+}
+
+/* Botones de cambio de estado (apilados). El activo se pinta con el color de su badge
+   (estadoConfig.clase se agrega/quita por JS), por eso no hay color de fondo aquí. */
 .btn-estado-tool {
   display: flex;
   align-items: center;
@@ -2449,13 +2455,51 @@ html[data-theme="dark"] {
 }
 
 .btn-estado-tool.activo {
-  background: rgba(37, 99, 235, 0.1);
-  border-color: var(--admin-primary);
-  color: var(--admin-primary);
+  border-color: transparent;
 }
 
 .btn-estado-tool.activo .marca {
   opacity: 1;
+}
+
+/* Combobox buscable (Responsable/Ayudante): input de texto + lista filtrable encima del select oculto */
+.combobox-buscable {
+  position: relative;
+  flex: 1;
+}
+
+.combobox-lista {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-lg, 0 8px 24px rgba(15, 23, 42, 0.18));
+}
+
+.combobox-opcion {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.combobox-opcion:hover {
+  background: var(--admin-surface-soft);
+}
+
+.combobox-vacio {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: var(--admin-muted);
 }
 
 /* Filas de técnicos asignados (avatar de iniciales + nombre) */
@@ -2506,55 +2550,200 @@ html[data-theme="dark"] {
   object-fit: cover;
 }
 
-/* Timeline del historial de estados */
-.timeline {
-  position: relative;
-  padding-left: 22px;
+/* Historial de estados: fila horizontal compacta (punto + label + fecha a la derecha) */
+.historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.timeline::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 4px;
-  bottom: 4px;
-  width: 2px;
-  background: var(--admin-border);
+.historial-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
 }
 
-.timeline-item {
-  position: relative;
-  padding-bottom: 18px;
+.historial-fila:hover {
+  background: var(--admin-surface-soft);
 }
 
-.timeline-item:last-child {
-  padding-bottom: 0;
-}
-
-.timeline-punto {
-  position: absolute;
-  left: -22px;
-  top: 3px;
-  width: 12px;
-  height: 12px;
+.historial-punto {
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: var(--admin-primary);
-  border: 3px solid var(--admin-surface);
+  flex-shrink: 0;
 }
 
-.timeline-titulo {
-  font-weight: 700;
-  font-size: 0.85rem;
-  margin: 0;
+.historial-texto {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
-.timeline-meta {
-  font-size: 0.75rem;
+.historial-fecha {
+  font-size: 0.72rem;
   color: var(--admin-muted);
-  margin: 2px 0 0;
+  white-space: nowrap;
 }
 
-/* Rejilla de 3 columnas del detalle (apila en móvil, una sola pantalla en escritorio) */
+/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha / Creado hace */
+.detalle-meta-bar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.meta-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface);
+}
+
+.meta-tile-icono {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: var(--admin-primary);
+  font-size: 1rem;
+}
+
+html[data-theme="dark"] .meta-tile-icono {
+  background: #1e3a5f;
+  color: #bfdbfe;
+}
+
+.meta-tile-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.meta-tile-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-muted);
+}
+
+.meta-tile-valor {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 992px) {
+  .detalle-meta-bar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Carrusel de fotos de solo lectura: una foto visible, flechas + puntos indicadores */
+.carrusel-fotos {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-surface-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 100px;
+}
+
+.carrusel-fotos-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Estado intermedio de navegar(): la foto sale deslizándose y desvaneciéndose. */
+.carrusel-fotos-img--saliendo {
+  pointer-events: none;
+}
+
+/* Reposiciona la foto entrante del lado opuesto sin animar ese salto (se anima el regreso al centro). */
+.carrusel-fotos-img--sin-transicion {
+  transition: none !important;
+}
+
+.carrusel-fotos-flecha {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 23, 42, 0.55);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+.carrusel-fotos-flecha:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.carrusel-fotos-flecha--prev {
+  left: 8px;
+}
+
+.carrusel-fotos-flecha--next {
+  right: 8px;
+}
+
+.carrusel-fotos-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.carrusel-fotos-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--admin-border);
+  padding: 0;
+  transition:
+    width 0.15s ease,
+    border-radius 0.15s ease,
+    background 0.15s ease;
+}
+
+.carrusel-fotos-dot.activo {
+  background: var(--admin-primary);
+  width: 18px;
+  border-radius: 4px;
+}
+
+/* Contenedor de la meta-bar + el grid de columnas (apila en móvil, una sola pantalla en escritorio) */
+#detalleContenido {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .detalle-grid {
   display: flex;
   flex-direction: column;
@@ -2598,6 +2787,15 @@ html[data-theme="dark"] {
     flex-direction: column;
   }
 
+  #detalleContenido {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .detalle-meta-bar {
+    flex: 0 0 auto;
+  }
+
   .detalle-grid {
     flex: 1;
     min-height: 0;
@@ -2626,6 +2824,24 @@ html[data-theme="dark"] {
   .detalle-fill-cuerpo {
     min-height: 0;
     overflow-y: auto;
+  }
+
+  /* Tarjeta de Fotos: el carrusel (una sola foto, altura fija) no debe scrollear —
+     se ajusta al espacio disponible en vez de forzar overflow por unos pixeles de más. */
+  #fotosReporteBloque .detalle-fill-cuerpo {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+  }
+
+  /* Se aplica al contenedor que en ese momento tiene un carrusel montado (#fotosReporte en modo
+     lectura, o #fotosResolucion) — NO a #fotosReporte cuando el ciudadano lo usa como grid editable. */
+  .carrusel-fotos-wrap,
+  #fotosResolucionBloque {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   /* Evita el salto del hover de panel en este layout apretado */

@@ -111,7 +111,7 @@ class IncidenciaController extends Controller
     {
         $this->authorize('ver', $incidencia);
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'evidencias']));
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia', 'evidencias']));
     }
 
     // Actualizar datos básicos de la incidencia (solo autor si está PENDIENTE).
@@ -119,7 +119,7 @@ class IncidenciaController extends Controller
     {
         $incidencia->update($request->validated());
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia']));
     }
 
     // Eliminar una incidencia junto con todas sus relaciones y fotos físicas.

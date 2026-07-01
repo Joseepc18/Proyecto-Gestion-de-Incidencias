@@ -2,10 +2,17 @@
 // Carga la incidencia, pinta lo compartido (info, mapa, fotos, historial, chat) y
 // dispara los "hooks" de los módulos por rol (gestión y edición) cuando hay datos.
 
-/* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker */
+/* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, badgeEstadoHtml, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+
+// Color del punto del historial por estado (no viene de estadoConfig: ahí solo hay clase/icono/texto de badge).
+const colorHistorial = {
+  PENDIENTE: "var(--admin-danger)",
+  EN_PROCESO: "var(--admin-primary)",
+  RESUELTO: "var(--admin-success)",
+};
 
 let incActual = null;
 let usuarioActual = null;
@@ -46,6 +53,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
   idActual = id;
 
+  prepararToggleFotos();
+
   await cargarDetalle(id);
   cargarAsignaciones(id);
   cargarHistorial(id);
@@ -69,11 +78,16 @@ async function cargarDetalle(id) {
     const tipo = inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
     const subtipo = inc.subtipo ? inc.subtipo.nombre_subtipo_incidencia : "—";
     document.getElementById("detalleTipoBadge").textContent = tipo;
+    document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
+    document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
 
     const fecha = new Date(inc.created_at).toLocaleString("es-EC");
     const reporta = inc.usuario ? inc.usuario.name : "—";
-    document.getElementById("detalleMeta").textContent =
-      tipo + " → " + subtipo + " · Reportado por " + reporta + " · " + fecha;
+
+    document.getElementById("metaReportadoPor").textContent = reporta;
+    document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(inc.ciudad);
+    document.getElementById("metaFechaCreacion").textContent = fecha;
+    document.getElementById("metaCreadoHace").textContent = tiempoRelativo(inc.created_at);
 
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
     if (inc.descripcion_incidencia) {
@@ -83,13 +97,8 @@ async function cargarDetalle(id) {
       bloqueDesc.classList.add("d-none");
     }
 
-    document.getElementById("detalleUsuario").textContent = reporta;
-    document.getElementById("detalleCiudad").textContent = inc.ciudad
-      ? inc.ciudad.nombre_ciudad
-      : "—";
     document.getElementById("detalleDireccion").textContent =
       inc.direccion_incidencia || "No especificada";
-    document.getElementById("detalleFecha").textContent = fecha;
 
     pintarFotos();
 
@@ -108,6 +117,13 @@ async function cargarDetalle(id) {
       escaparHtml(error.message) +
       "</p>";
   }
+}
+
+// "Provincia / Ciudad" combinado para la barra de meta-información (ej. "Guayas / Guayaquil").
+function provinciaCiudadTexto(ciudad) {
+  if (!ciudad) return "—";
+  const provincia = ciudad.provincia ? ciudad.provincia.nombre_provincia + " / " : "";
+  return provincia + ciudad.nombre_ciudad;
 }
 
 // Crea el mapa de solo-lectura con el pin de la incidencia (o un aviso si no hay ubicación).
@@ -175,41 +191,32 @@ function pintarBadgePrioridad(prioridad) {
   }
 }
 
-// Reparte las evidencias en las dos galerías (reporte / resolución), en solo lectura.
-// El módulo de edición sobrescribe #fotosReporte con la versión editable si es el dueño.
+// Reparte las evidencias en los 2 carriles (reporte / resolución) como carruseles de solo lectura.
+// El módulo de edición sobrescribe #fotosReporte con su grid editable si es el dueño.
 function pintarFotos() {
   const evidencias = incActual.evidencias || [];
   const reporte = evidencias.filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
   const resolucion = evidencias.filter((ev) => ev.tipo_evidencia === "RESOLUCION");
 
-  const contReporte = document.getElementById("fotosReporte");
-  contReporte.innerHTML = "";
-  if (reporte.length) {
-    reporte.forEach((ev) => contReporte.appendChild(miniaturaFoto(ev)));
-  } else {
-    contReporte.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
-  }
-
-  const bloqueRes = document.getElementById("fotosResolucionBloque");
-  if (resolucion.length) {
-    bloqueRes.classList.remove("d-none");
-    const contRes = document.getElementById("fotosResolucion");
-    contRes.innerHTML = "";
-    resolucion.forEach((ev) => contRes.appendChild(miniaturaFoto(ev)));
-  } else {
-    bloqueRes.classList.add("d-none");
-  }
+  montarCarrusel(document.getElementById("fotosReporte"), reporte, "Sin fotos del reporte.");
+  montarCarrusel(
+    document.getElementById("fotosResolucion"),
+    resolucion,
+    "Sin fotos de resolución.",
+  );
 }
 
-// Miniatura con lightbox construida con createElement (la URL no se interpola en HTML crudo).
-function miniaturaFoto(ev) {
-  const img = document.createElement("img");
-  img.loading = "lazy";
-  img.src = "/storage/" + ev.url_evidencia;
-  img.className = "evidencia-foto evidencia-foto-md rounded";
-  img.alt = "Evidencia";
-  img.dataset.lightbox = "/storage/" + ev.url_evidencia;
-  return img;
+// Cablea el toggle Reportador/Técnico de la tarjeta de fotos (siempre visible, una vez).
+function prepararToggleFotos() {
+  document.getElementById("fotosToggleGrupo").addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-tab]");
+    if (!btn) return;
+    const esReporte = btn.dataset.tab === "reporte";
+    document.getElementById("fotosReporte").classList.toggle("d-none", !esReporte);
+    document.getElementById("fotosResolucionBloque").classList.toggle("d-none", esReporte);
+    document.getElementById("btnFotosReportador").classList.toggle("active", esReporte);
+    document.getElementById("btnFotosTecnico").classList.toggle("active", !esReporte);
+  });
 }
 
 // ¿Quien mira es el técnico RESPONSABLE de esta incidencia? (el de apoyo no cuenta)
@@ -242,13 +249,16 @@ async function cargarAsignaciones(id) {
   }
 }
 
-// Si la columna de gestión no tiene ningún panel visible (ciudadano / técnico de apoyo),
-// se oculta y la grilla pasa de 3 a 2 columnas para no desperdiciar el ancho.
+// Si el panel de Acciones no tiene ningún grupo visible (ciudadano / técnico de apoyo),
+// se oculta la columna y la grilla pasa de 3 a 2 columnas para no desperdiciar el ancho.
 function ajustarLayout() {
   const col = document.getElementById("colGestion");
   const grid = document.querySelector(".detalle-grid");
-  if (!col || !grid) return;
-  const tieneContenido = Array.from(col.children).some((el) => !el.classList.contains("d-none"));
+  const panel = document.getElementById("panelAcciones");
+  if (!col || !grid || !panel) return;
+  const tieneContenido = Array.from(
+    panel.querySelectorAll(".solo-admin, .gestion-estado, .gestion-fotos"),
+  ).some((el) => !el.classList.contains("d-none"));
   col.classList.toggle("d-none", !tieneContenido);
   grid.classList.toggle("detalle-grid--2col", !tieneContenido);
 }
@@ -275,25 +285,27 @@ async function cargarHistorial(id) {
 
     cont.innerHTML = "";
     eventos.forEach(function (ev) {
-      const item = document.createElement("div");
-      item.className = "timeline-item";
+      const cfg = estadoConfig[ev.estado] || estadoConfig.PENDIENTE;
+
+      const fila = document.createElement("div");
+      fila.className = "historial-fila";
 
       const punto = document.createElement("span");
-      punto.className = "timeline-punto";
-      item.appendChild(punto);
+      punto.className = "historial-punto";
+      punto.style.background = colorHistorial[ev.estado] || colorHistorial.PENDIENTE;
+      fila.appendChild(punto);
 
-      const titulo = document.createElement("p");
-      titulo.className = "timeline-titulo";
-      titulo.innerHTML = badgeEstadoHtml(ev.estado);
-      item.appendChild(titulo);
+      const texto = document.createElement("span");
+      texto.className = "historial-texto";
+      texto.textContent = cfg.texto + " · " + ev.nombre;
+      fila.appendChild(texto);
 
-      const meta = document.createElement("p");
-      meta.className = "timeline-meta";
-      const cuando = new Date(ev.fecha).toLocaleString("es-EC");
-      meta.textContent = ev.nombre + " · " + cuando;
-      item.appendChild(meta);
+      const fechaSpan = document.createElement("span");
+      fechaSpan.className = "historial-fecha";
+      fechaSpan.textContent = new Date(ev.fecha).toLocaleString("es-EC");
+      fila.appendChild(fechaSpan);
 
-      cont.appendChild(item);
+      cont.appendChild(fila);
     });
   } catch {
     cont.innerHTML = '<p class="text-danger small mb-0">No se pudo cargar el historial.</p>';
