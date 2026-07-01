@@ -22,7 +22,8 @@ class RolesYUsuariosSeeder extends Seeder
             ['email' => 'admin@sistema.com'],
             [
                 'name' => 'Administrador',
-                'password' => Hash::make('password123'),
+                // En prod la clave real vive en SEED_ADMIN_PASSWORD del .env; el fallback es solo para dev.
+                'password' => Hash::make(env('SEED_ADMIN_PASSWORD', 'password123')),
                 'id_rol' => $admin->id_rol,
             ]
         );

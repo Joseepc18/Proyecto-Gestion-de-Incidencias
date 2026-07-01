@@ -68,6 +68,15 @@ class IncidenciaController extends Controller
             $incidencia = DB::transaction(function () use ($request, $datos, &$rutasGuardadas) {
                 $incidencia = Incidencia::create($datos);
 
+                // Nacer en EN_PROCESO se salta el flujo PENDIENTE→EN_PROCESO, que el trigger AFTER UPDATE nunca vería.
+                if ($incidencia->estado_incidencia === EstadoIncidencia::EnProceso->value) {
+                    $incidencia->historialEstados()->create([
+                        'id_usuario' => $request->user()->id,
+                        'estado_anterior' => EstadoIncidencia::Pendiente->value,
+                        'estado_nuevo' => EstadoIncidencia::EnProceso->value,
+                    ]);
+                }
+
                 if ($request->hasFile('fotos')) {
                     $incidencia->guardarEvidencias($request->file('fotos'), $request->user()->id, null, $rutasGuardadas);
                 }

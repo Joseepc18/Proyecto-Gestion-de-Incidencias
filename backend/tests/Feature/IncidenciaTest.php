@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AsignacionIncidencia;
 use App\Models\Ciudad;
 use App\Models\Comentario;
+use App\Models\Incidencia;
 use App\Models\SubtipoIncidencia;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -87,6 +88,38 @@ class IncidenciaTest extends TestCase
             'nombre_incidencia' => 'Bache peligroso en la avenida principal',
             'estado_incidencia' => 'EN_PROCESO',
         ]);
+    }
+
+    public function test_crear_en_en_proceso_registra_historial_inicial(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
+            'estado_incidencia' => 'EN_PROCESO',
+        ]))->assertCreated();
+
+        $incidencia = Incidencia::where('estado_incidencia', 'EN_PROCESO')->firstOrFail();
+
+        // Nacer en EN_PROCESO deja la fila inicial PENDIENTE→EN_PROCESO atribuida al admin.
+        $this->assertDatabaseHas('historial_estados', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $admin->id,
+            'estado_anterior' => 'PENDIENTE',
+            'estado_nuevo' => 'EN_PROCESO',
+        ]);
+    }
+
+    public function test_crear_en_pendiente_no_registra_historial(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([
+            'estado_incidencia' => 'PENDIENTE',
+        ]))->assertCreated();
+
+        // El estado por defecto no genera fila de historial (no hubo transición).
+        $this->assertDatabaseCount('historial_estados', 0);
     }
 
     public function test_admin_no_puede_crear_incidencia_en_resuelto(): void
@@ -216,6 +249,42 @@ class IncidenciaTest extends TestCase
         $this->assertDatabaseHas('incidencias', [
             'id_incidencia' => $incidencia->id_incidencia,
             'estado_incidencia' => 'PENDIENTE',
+        ]);
+    }
+
+    public function test_no_se_puede_asignar_un_admin_como_tecnico(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $otroAdmin = $this->crearUsuario('admin');
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        // Solo el rol 'tecnico' puede asignarse; un admin es rechazado en validación (422).
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $otroAdmin->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ])->assertStatus(422)->assertJsonValidationErrors('id_usuario');
+
+        $this->assertDatabaseMissing('asignaciones_incidencia', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $otroAdmin->id,
+        ]);
+    }
+
+    public function test_se_puede_asignar_un_tecnico(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $tecnico = $this->crearUsuario('tecnico');
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('asignaciones_incidencia', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
         ]);
     }
 
