@@ -6,6 +6,7 @@ use App\Models\AsignacionIncidencia;
 use App\Models\Ciudad;
 use App\Models\Comentario;
 use App\Models\Incidencia;
+use App\Models\Notificacion;
 use App\Models\SubtipoIncidencia;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -71,9 +72,47 @@ class IncidenciaTest extends TestCase
         // El admin puede eliminar en cualquier estado; aquí probamos el cascade de hijos.
         Sanctum::actingAs($this->crearUsuario('admin'));
 
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}", ['motivo' => 'Duplicada con la INC-1.'])
+            ->assertOk();
+
+        $this->assertDatabaseMissing('incidencias', ['id_incidencia' => $incidencia->id_incidencia]);
+    }
+
+    // La notificación del motivo debe sobrevivir al borrado físico de la incidencia (id_incidencia null).
+    public function test_eliminar_notifica_el_motivo_y_sobrevive_al_borrado(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}", ['motivo' => 'Reporte duplicado.'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $autor->id,
+            'id_incidencia' => null,
+            'tipo_notificacion' => 'INCIDENCIA_ELIMINADA',
+        ]);
+        $notificacion = Notificacion::where('id_usuario', $autor->id)
+            ->where('tipo_notificacion', 'INCIDENCIA_ELIMINADA')
+            ->firstOrFail();
+        $this->assertStringContainsString('Reporte duplicado.', $notificacion->mensaje_notificacion);
+    }
+
+    // El dueño borrando su propia incidencia (PENDIENTE) no necesita explicarse ni genera notificación.
+    public function test_autor_elimina_su_propia_incidencia_sin_motivo(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        Sanctum::actingAs($autor);
+
         $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
 
         $this->assertDatabaseMissing('incidencias', ['id_incidencia' => $incidencia->id_incidencia]);
+        $this->assertDatabaseMissing('notificaciones', [
+            'id_usuario' => $autor->id,
+            'tipo_notificacion' => 'INCIDENCIA_ELIMINADA',
+        ]);
     }
 
     public function test_admin_puede_fijar_estado_al_crear(): void

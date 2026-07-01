@@ -181,7 +181,21 @@ class PermisosTest extends TestCase
         $incidencia->update(['estado_incidencia' => 'RESUELTO']);
         Sanctum::actingAs($this->crearUsuario('admin'));
 
-        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}", ['motivo' => 'Duplicada.'])
+            ->assertOk();
+    }
+
+    // El admin borrando la incidencia de otro debe explicar el motivo (se le notifica al dueño).
+    public function test_admin_no_puede_eliminar_sin_motivo(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('motivo');
+
+        $this->assertDatabaseHas('incidencias', ['id_incidencia' => $incidencia->id_incidencia]);
     }
 
     // El técnico responsable solo puede cerrar EN_PROCESO→RESUELTO; el admin arranca el trabajo.

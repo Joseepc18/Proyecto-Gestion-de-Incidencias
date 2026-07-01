@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, abrirModal, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -20,23 +20,84 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.location.href = rutaDetalleIncidencia(id, "admin");
   }
 
-  // Pide confirmación antes de borrar y recarga la tabla tras el DELETE.
-  async function eliminarIncidencia(id) {
-    const ok = await confirmar({
+  // Motivos frecuentes para eliminar la incidencia de otro; "Otro" abre un textarea libre.
+  const MOTIVOS_ELIMINACION = [
+    "Reporte duplicado",
+    "Información insuficiente o incorrecta",
+    "Fuera de jurisdicción / no corresponde",
+    "Contenido inapropiado o spam",
+    "Incidencia ya resuelta por otra vía",
+  ];
+
+  // Si es de otro usuario, pide el motivo (se le notifica al dueño); si es propia, solo confirma.
+  async function eliminarIncidencia(id, esAutor) {
+    if (esAutor) {
+      const ok = await confirmar({
+        titulo: "Eliminar incidencia",
+        mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+        textoConfirmar: "Eliminar",
+        peligro: true,
+      });
+      if (!ok) return;
+
+      try {
+        await apiFetch("/incidencias/" + id, { method: "DELETE" });
+        toastFlash("Incidencia eliminada", "success");
+        location.reload();
+      } catch (error) {
+        mostrarToast("Error: " + error.message, "error");
+      }
+      return;
+    }
+
+    const opciones = MOTIVOS_ELIMINACION.map(
+      (m) => '<option value="' + m + '">' + m + "</option>",
+    ).join("");
+
+    const promesaModal = abrirModal({
       titulo: "Eliminar incidencia",
-      mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+      cuerpoHtml:
+        '<p class="text-secondary small">Se notificará al reportador el motivo de la eliminación.</p>' +
+        '<label for="modalMotivoTipo" class="form-label">Motivo</label>' +
+        '<select class="form-select" id="modalMotivoTipo" required>' +
+        '<option value="" disabled selected>Selecciona un motivo…</option>' +
+        opciones +
+        '<option value="__otro__">Otro (especificar)</option>' +
+        "</select>" +
+        '<div class="mt-2 d-none" id="modalMotivoOtroWrap">' +
+        '<label for="modalMotivoOtro" class="form-label">Especifica el motivo</label>' +
+        '<textarea class="form-control" id="modalMotivoOtro" rows="3" minlength="5" maxlength="500"></textarea>' +
+        "</div>",
       textoConfirmar: "Eliminar",
       peligro: true,
+      alConfirmar: async function (form) {
+        const tipo = form.querySelector("#modalMotivoTipo").value;
+        const motivo =
+          tipo === "__otro__" ? form.querySelector("#modalMotivoOtro").value.trim() : tipo;
+        await apiFetch("/incidencias/" + id, {
+          method: "DELETE",
+          body: JSON.stringify({ motivo: motivo }),
+        });
+      },
     });
-    if (!ok) return;
 
-    try {
-      await apiFetch("/incidencias/" + id, { method: "DELETE" });
-      toastFlash("Incidencia eliminada", "success");
-      location.reload();
-    } catch (error) {
-      mostrarToast("Error: " + error.message, "error");
-    }
+    // El textarea de "Otro" solo se muestra (y se vuelve obligatorio) al elegir esa opción:
+    // un required oculto rompería reportValidity (campo inválido no enfocable).
+    const selTipo = document.getElementById("modalMotivoTipo");
+    const wrapOtro = document.getElementById("modalMotivoOtroWrap");
+    const txtOtro = document.getElementById("modalMotivoOtro");
+    selTipo.addEventListener("change", function () {
+      const esOtro = selTipo.value === "__otro__";
+      wrapOtro.classList.toggle("d-none", !esOtro);
+      txtOtro.required = esOtro;
+      if (esOtro) txtOtro.focus();
+    });
+
+    const confirmado = await promesaModal;
+    if (!confirmado) return;
+
+    toastFlash("Incidencia eliminada", "success");
+    location.reload();
   }
 
   async function cargarCatalogos() {
@@ -167,7 +228,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           icon: "bi bi-trash me-2",
           label: "Eliminar",
           peligro: true,
-          handler: () => eliminarIncidencia(inc.id_incidencia),
+          handler: () => eliminarIncidencia(inc.id_incidencia, esAutor),
         });
       }
 

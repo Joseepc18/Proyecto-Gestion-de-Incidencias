@@ -15,6 +15,7 @@ function iconoTipo(tipo) {
     COMENTARIO: "bi-chat-dots",
     NUEVA_INCIDENCIA: "bi-exclamation-triangle",
     EVIDENCIA: "bi-camera",
+    INCIDENCIA_ELIMINADA: "bi-trash",
   };
   return iconos[tipo] || "bi-bell";
 }
@@ -137,7 +138,12 @@ document.addEventListener("DOMContentLoaded", async function () {
       } catch {
         /* aunque falle el marcado, seguimos a la incidencia */
       }
+      item.classList.remove("no-leida");
     }
+
+    // Las de INCIDENCIA_ELIMINADA no tienen incidencia a la cual ir (se borró físico).
+    if (!item.dataset.incidencia || item.dataset.incidencia === "null") return;
+
     const rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
     const abrirChat = item.dataset.tipo === "COMENTARIO";
     window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);

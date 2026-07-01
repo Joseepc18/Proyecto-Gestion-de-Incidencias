@@ -345,8 +345,11 @@
                 <!-- Columna 3: panel único de Acciones (admin y/o técnico responsable) -->
                 <!-- Si queda vacío (ciudadano / técnico de apoyo), el JS la colapsa y deja 2 columnas -->
                 <div class="detalle-col" id="colGestion">
-                  <section class="panel detalle-fill" id="panelAcciones">
-                    <div class="p-3 detalle-fill-cuerpo">
+                  <!-- Sin .detalle-fill/.detalle-fill-cuerpo a propósito: con scroll interno forzado,
+                       la lista desplegable del combobox (position:absolute) empuja el alto scrolleable
+                       y aparece un scroll de la tarjeta completa solo por abrir el select. -->
+                  <section class="panel" id="panelAcciones">
+                    <div class="p-3">
                       <h3 class="panel-titulo-tool"><i class="bi bi-sliders me-1"></i> Acciones</h3>
 
                       <!-- Prioridad (solo admin): el botón activo se pinta con el color de su badge -->

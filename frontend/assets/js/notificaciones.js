@@ -75,7 +75,12 @@ document.addEventListener("DOMContentLoaded", function () {
       } catch {
         /* aunque falle el marcado, igual vamos a la incidencia */
       }
+      item.classList.remove("no-leida");
     }
+
+    // Las de INCIDENCIA_ELIMINADA no tienen incidencia a la cual ir (se borró físico).
+    if (!item.dataset.incidencia || item.dataset.incidencia === "null") return;
+
     const rol = localStorage.getItem("rol_usuario") || "";
     const abrirChat = item.dataset.tipo === "COMENTARIO";
     window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);

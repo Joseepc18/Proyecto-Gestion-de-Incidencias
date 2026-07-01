@@ -9,9 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
+use App\Http\Requests\EliminarIncidenciaRequest;
 use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
+use App\Models\Notificacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -123,18 +125,32 @@ class IncidenciaController extends Controller
     }
 
     // Eliminar una incidencia junto con todas sus relaciones y fotos físicas.
-    public function eliminarIncidencia(Request $request, Incidencia $incidencia)
+    // Si la borra alguien más (el admin), se le notifica el motivo al dueño ANTES de borrar:
+    // la notificación se crea con id_incidencia null para no depender de una fila que está por desaparecer.
+    public function eliminarIncidencia(EliminarIncidenciaRequest $request, Incidencia $incidencia)
     {
-        $this->authorize('eliminar', $incidencia);
+        $esPropia = $incidencia->id_usuario === $request->user()->id;
+        $nombreIncidencia = $incidencia->nombre_incidencia;
+        $idReportador = $incidencia->id_usuario;
+        $motivo = $request->validated()['motivo'] ?? null;
 
         try {
             $rutasEvidencias = $incidencia->evidencias->pluck('url_evidencia');
 
-            DB::transaction(function () use ($incidencia) {
+            DB::transaction(function () use ($incidencia, $esPropia, $nombreIncidencia, $idReportador, $motivo) {
                 $incidencia->comentarios()->delete();
                 $incidencia->historialEstados()->delete();
                 $incidencia->asignaciones()->delete();
                 $incidencia->delete();
+
+                if (! $esPropia) {
+                    Notificacion::create([
+                        'id_incidencia' => null,
+                        'id_usuario' => $idReportador,
+                        'tipo_notificacion' => 'INCIDENCIA_ELIMINADA',
+                        'mensaje_notificacion' => 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo,
+                    ]);
+                }
             });
 
             foreach ($rutasEvidencias as $ruta) {
