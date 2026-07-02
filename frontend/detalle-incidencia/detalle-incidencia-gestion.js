@@ -24,6 +24,7 @@ function gestionAlCargarDetalle(id) {
   prepararPrioridad(id);
   prepararAsignacion(id);
   habilitarGestionEstado(id);
+  prepararReaperturaAdmin(id);
 }
 
 // Hook del núcleo: al cargar las asignaciones. Habilita al responsable y pinta las listas del admin.
@@ -120,15 +121,6 @@ function prepararEstado(id) {
       if (!ok) return;
     }
 
-    if (incActual.estado_incidencia === "RESUELTO" && nuevo === "EN_PROCESO") {
-      const ok = await confirmar({
-        titulo: "Reabrir incidencia",
-        mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
-        textoConfirmar: "Reabrir",
-      });
-      if (!ok) return;
-    }
-
     cont.querySelectorAll(".btn-estado-tool").forEach((b) => (b.disabled = true));
     try {
       const actualizada = await apiFetch("/incidencias/" + id + "/estado", {
@@ -149,6 +141,8 @@ function prepararEstado(id) {
 
 // Resalta el estado actual pintándolo con el mismo color que su badge (estadoConfig.clase,
 // ej. "badge-estado-pendiente"); el admin habilita cualquier otro, el técnico solo EN_PROCESO → RESUELTO.
+// RESUELTO queda bloqueado para TODOS (admin incluido): de ahí solo se sale con el botón
+// "Reabrir" (ver prepararReaperturaAdmin), nunca clickeando el selector genérico.
 function marcarEstadoActivo() {
   const actual = incActual.estado_incidencia;
   document.querySelectorAll("#estadoBotones .btn-estado-tool").forEach(function (b) {
@@ -158,12 +152,53 @@ function marcarEstadoActivo() {
     Object.values(estadoConfig).forEach((c) => b.classList.remove(c.clase));
     b.classList.toggle("activo", activo);
     if (activo) b.classList.add(cfg.clase);
-    if (activo) {
+    if (activo || actual === "RESUELTO") {
       b.disabled = true;
     } else if (esAdmin) {
       b.disabled = false;
     } else {
       b.disabled = !(actual === "EN_PROCESO" && estado === "RESUELTO");
+    }
+  });
+}
+
+// El admin reabre SOLO si hay una solicitud del reportador sin revisar (incActual.reapertura_pendiente).
+// Botón dedicado, separado del selector genérico (que queda bloqueado mientras esté RESUELTO).
+function prepararReaperturaAdmin(id) {
+  const btn = document.getElementById("btnReabrirIncidencia");
+  if (!btn) return;
+  btn.classList.toggle(
+    "d-none",
+    !(incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente),
+  );
+  if (btn.dataset.cableado === "1") return;
+  btn.dataset.cableado = "1";
+
+  btn.addEventListener("click", async function () {
+    const ok = await confirmar({
+      titulo: "Reabrir incidencia",
+      mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
+      textoConfirmar: "Reabrir",
+    });
+    if (!ok) return;
+
+    btn.disabled = true;
+    try {
+      const actualizada = await apiFetch("/incidencias/" + id + "/estado", {
+        method: "PATCH",
+        body: JSON.stringify({ estado_incidencia: "EN_PROCESO" }),
+      });
+      incActual.estado_incidencia = actualizada.estado_incidencia;
+      incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
+      pintarBadgeEstado(incActual.estado_incidencia);
+      marcarEstadoActivo();
+      btn.classList.add("d-none");
+      cargarHistorial(id);
+      mostrarToast("Incidencia reabierta", "success");
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    } finally {
+      btn.disabled = false;
     }
   });
 }

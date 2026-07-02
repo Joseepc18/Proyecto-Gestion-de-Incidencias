@@ -115,7 +115,20 @@ class IncidenciaController extends Controller
     {
         $this->authorize('ver', $incidencia);
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia', 'evidencias']));
+        $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia', 'evidencias']);
+        $incidencia->reapertura_pendiente = $this->tieneSolicitudReaperturaPendiente($incidencia);
+
+        return new IncidenciaResource($incidencia);
+    }
+
+    // ¿Hay una solicitud de reapertura del reportador sin revisar? RESUELTO queda de solo lectura
+    // para TODOS (incluido el admin) hasta que exista una: solo entonces se habilita el botón "Reabrir".
+    private function tieneSolicitudReaperturaPendiente(Incidencia $incidencia): bool
+    {
+        return Notificacion::where('id_incidencia', $incidencia->id_incidencia)
+            ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
+            ->where('estado_lectura', false)
+            ->exists();
     }
 
     // Actualizar datos básicos de la incidencia (solo autor si está PENDIENTE).
@@ -183,11 +196,13 @@ class IncidenciaController extends Controller
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
-        // Única excepción al "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
-        // (p. ej. tras una solicitud de reapertura del reportador). El técnico nunca puede.
+        // Única excepción al "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO,
+        // pero SOLO si el reportador lo pidió (RESUELTO queda cerrado para todos, admin
+        // incluido, hasta que exista una solicitud sin revisar). El técnico nunca puede.
         $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto->value
             && $nuevo === EstadoIncidencia::EnProceso->value
-            && $request->user()->esAdmin();
+            && $request->user()->esAdmin()
+            && $this->tieneSolicitudReaperturaPendiente($incidencia);
 
         if ($actual === EstadoIncidencia::Resuelto->value && ! $esReaperturaDeAdmin) {
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
@@ -216,6 +231,17 @@ class IncidenciaController extends Controller
         // es SQL crudo y no dispara eventos: aquí la invalidamos a mano.
         Cache::forget('dashboard_metricas');
 
+        // Ya se atendió la solicitud: se marca leída para todos los admins (libera el botón
+        // "Reabrir" y el cupo de "1 solicitud pendiente" para una futura reapertura).
+        if ($esReaperturaDeAdmin) {
+            Notificacion::where('id_incidencia', $incidencia->id_incidencia)
+                ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
+                ->where('estado_lectura', false)
+                ->update(['estado_lectura' => true, 'fecha_lectura' => now()]);
+        }
+
+        $incidencia->reapertura_pendiente = $this->tieneSolicitudReaperturaPendiente($incidencia);
+
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 
@@ -225,12 +251,7 @@ class IncidenciaController extends Controller
     // se rechaza (422) hasta que un admin la revise y la marque leída al abrir el detalle.
     public function solicitarReapertura(SolicitarReaperturaRequest $request, Incidencia $incidencia)
     {
-        $yaPendiente = Notificacion::where('id_incidencia', $incidencia->id_incidencia)
-            ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
-            ->where('estado_lectura', false)
-            ->exists();
-
-        if ($yaPendiente) {
+        if ($this->tieneSolicitudReaperturaPendiente($incidencia)) {
             return response()->json(['message' => 'Ya tienes una solicitud de reapertura pendiente de revisión.'], 422);
         }
 

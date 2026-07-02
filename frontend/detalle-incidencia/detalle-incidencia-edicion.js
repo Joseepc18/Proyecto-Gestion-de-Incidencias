@@ -1,5 +1,6 @@
-// detalle-incidencia-edicion.js — Edición del ciudadano dueño (solo cuando está PENDIENTE).
-// Editar texto + ubicación (botón "Editar") y subir/borrar fotos del reporte (en todo momento).
+// detalle-incidencia-edicion.js — Edición del ciudadano dueño.
+// Editar texto + ubicación (botón "Editar"): solo mientras está PENDIENTE.
+// Subir/borrar fotos del reporte: hasta que se resuelve (PENDIENTE y EN_PROCESO).
 // El núcleo (detalle-incidencia.js) llama a edicionAlCargarDetalle cuando hay datos.
 
 /* exported edicionAlCargarDetalle */
@@ -20,11 +21,17 @@ let galeriaReporte = null;
 let pickerEdicion = null;
 
 // Hook del núcleo: decide si esta incidencia es editable por quien la mira.
+// Datos (texto/ubicación) y fotos del reporte tienen ventanas distintas: los datos solo
+// mientras está PENDIENTE, las fotos hasta que se resuelve (igual que el técnico con las suyas).
 function edicionAlCargarDetalle() {
   const esDueno = incActual.id_usuario === usuarioActual.id;
 
   if (esDueno && incActual.estado_incidencia === "RESUELTO") {
     prepararSolicitudReapertura();
+  }
+
+  if (esDueno && incActual.estado_incidencia !== "RESUELTO") {
+    prepararFotosReporte();
   }
 
   const editable = esDueno && incActual.estado_incidencia === "PENDIENTE";
@@ -41,7 +48,11 @@ function edicionAlCargarDetalle() {
   btnEliminar.addEventListener("click", eliminarIncidencia);
   document.getElementById("btnCancelarEdicion").addEventListener("click", salirEdicion);
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
+}
 
+// Zona de subida/borrado de fotos del reporte: activa en PENDIENTE y EN_PROCESO (se cierra
+// solo al resolverse). Independiente del modo edición de texto/ubicación (solo PENDIENTE).
+function prepararFotosReporte() {
   galeriaReporte = crearGaleriaFotos({
     input: document.getElementById("editFotos"),
     dropzone: document.getElementById("dropzoneFotos"),

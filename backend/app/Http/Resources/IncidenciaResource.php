@@ -30,6 +30,8 @@ class IncidenciaResource extends JsonResource
             'fecha_resolucion' => $this->fecha_resolucion,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            // Solo lo setea el controller cuando aplica (RESUELTO): habilita el botón "Reabrir" del admin.
+            'reapertura_pendiente' => $this->reapertura_pendiente ?? false,
             // Relaciones: solo se incluyen si el controller las cargó (whenLoaded).
             'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
             'subtipo' => $this->whenLoaded('subtipo'),

@@ -235,9 +235,12 @@ class PermisosTest extends TestCase
 
     // Única excepción a "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
     // (limpia fecha_resolucion vía trigger, ya que el update pasa por el flujo normal).
+    // El admin SOLO puede reabrir si el reportador la pidió (RESUELTO queda cerrado para
+    // todos, admin incluido, hasta que exista una solicitud sin revisar).
     public function test_admin_puede_reabrir_incidencia_resuelta(): void
     {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
         $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
         $responsable = $this->crearUsuario('tecnico');
         $apoyo = $this->crearUsuario('tecnico');
@@ -251,15 +254,24 @@ class PermisosTest extends TestCase
             'id_usuario' => $apoyo->id,
             'rol_asignado' => 'APOYO',
         ]);
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        $admin = $this->crearUsuario('admin');
 
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'EN_PROCESO',
+        // El reportador pide la reapertura primero (si no, el admin no puede tocarla).
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual.',
         ])->assertOk();
+
+        Sanctum::actingAs($admin);
+        $respuesta = $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertOk()->json();
 
         $fresca = $incidencia->fresh();
         $this->assertSame('EN_PROCESO', $fresca->estado_incidencia);
         $this->assertNull($fresca->fecha_resolucion);
+        // Ya no queda pendiente: se atendió la solicitud.
+        $this->assertFalse($respuesta['reapertura_pendiente']);
 
         // Responsable y apoyo ven la misma alerta (SOLICITUD_REAPERTURA) que la del admin,
         // no el aviso azul genérico de CAMBIO_ESTADO.
@@ -270,6 +282,29 @@ class PermisosTest extends TestCase
                 'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
             ]);
         }
+
+        // La solicitud del admin (destinatario admin) quedó marcada como leída.
+        $this->assertDatabaseHas('notificaciones', [
+            'id_usuario' => $admin->id,
+            'id_incidencia' => $incidencia->id_incidencia,
+            'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
+            'estado_lectura' => true,
+        ]);
+    }
+
+    // Sin una solicitud de reapertura pendiente, ni el admin puede reabrir: RESUELTO
+    // queda cerrado para todos hasta que el reportador la pida.
+    public function test_admin_no_puede_reabrir_sin_solicitud_pendiente(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertStatus(422);
+
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia);
     }
 
     // El admin no puede saltar de RESUELTO a PENDIENTE (solo la reapertura a EN_PROCESO tiene sentido).
@@ -300,6 +335,26 @@ class PermisosTest extends TestCase
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertStatus(422);
+    }
+
+    // El reportador puede seguir subiendo y borrando SUS fotos de reporte mientras la
+    // incidencia está EN_PROCESO (no solo en PENDIENTE): eso lo bloquea "actualizar" (editar
+    // texto/ubicación), no "subirEvidencia"/"eliminar" evidencia, que solo cierran en RESUELTO.
+    public function test_reportador_sube_y_borra_fotos_de_reporte_en_proceso(): void
+    {
+        Storage::fake('public');
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador, ['estado_incidencia' => 'EN_PROCESO']);
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('r.jpg')],
+            'tipo_evidencia' => 'REPORTE',
+        ])->assertOk();
+
+        $evidencia = Evidencia::first();
+        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertOk();
+        $this->assertDatabaseMissing('evidencias', ['id_evidencia' => $evidencia->id_evidencia]);
     }
 
     // En RESUELTO nadie sube evidencias: el expediente queda cerrado. Si hace falta, el

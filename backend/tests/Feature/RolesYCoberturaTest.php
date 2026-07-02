@@ -259,6 +259,12 @@ class RolesYCoberturaTest extends TestCase
                 'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
             ]);
         }
+
+        // El detalle expone la bandera que habilita el botón "Reabrir" del admin.
+        Sanctum::actingAs($admin1);
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
+            ->assertOk()
+            ->assertJson(['reapertura_pendiente' => true]);
     }
 
     // No se puede pedir reapertura si la incidencia no está resuelta, ni si no es el reportador.
