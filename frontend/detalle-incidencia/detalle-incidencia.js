@@ -334,8 +334,6 @@ function configurarChatFlotante(id) {
   const panel = document.getElementById("chatPanel");
   const cerrar = document.getElementById("btnCerrarChat");
 
-  actualizarChatFab();
-
   fab.addEventListener("click", function () {
     panel.classList.remove("d-none");
     fab.classList.add("d-none");
@@ -347,6 +345,9 @@ function configurarChatFlotante(id) {
       chatCreado = true;
     }
   });
+
+  // El auto-open por ?chat=1 necesita el listener de arriba ya registrado antes de simular el click
+  actualizarChatFab();
 
   function cerrarChat() {
     panel.classList.add("d-none");
