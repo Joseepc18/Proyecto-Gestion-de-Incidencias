@@ -1,6 +1,6 @@
 // util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria */
 /* global escaparHtml */
 
 // Iniciales de un nombre (hasta 2 letras); fallback "?" si está vacío.
@@ -41,6 +41,19 @@ function estadoVacioHtml(icono, titulo, texto) {
     (texto ? '<p class="estado-vacio-texto">' + escaparHtml(texto) + "</p>" : "") +
     "</div>"
   );
+}
+
+// Garantiza que una librería global (Chart, L) esté cargada; si un 5xx del túnel/caché
+// dejó el <script> sin ejecutar, la reinyecta con cache-buster para saltar la copia mala.
+function asegurarLibreria(nombreGlobal, src) {
+  if (typeof window[nombreGlobal] !== "undefined") return Promise.resolve(true);
+  return new Promise(function (resolve) {
+    const s = document.createElement("script");
+    s.src = src + "?reintento=" + Date.now();
+    s.onload = () => resolve(typeof window[nombreGlobal] !== "undefined");
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
 }
 
 // Igual que estadoVacioHtml pero envuelto en una fila de tabla que ocupa todas las columnas.

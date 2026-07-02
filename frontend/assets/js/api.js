@@ -157,13 +157,18 @@ function aplicarMenuRol(rol) {
   if (rol) localStorage.setItem("rol_usuario", rol);
   const esAdmin = rol === "admin";
   const esNormal = rol === "normal";
+  const esTecnico = rol === "tecnico";
 
   function mostrar(id, visible) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("d-none", !visible);
   }
 
-  mostrar("navInicio", esAdmin);
+  mostrar("navInicio", esAdmin || esTecnico);
+
+  // El "Inicio" del técnico es su propio panel (el href por defecto apunta al del admin).
+  const navInicio = document.getElementById("navInicio");
+  if (navInicio && esTecnico) navInicio.href = "../inicio-tecnico/inicio-tecnico.html";
   mostrar("navIncidencias", esAdmin);
   mostrar("navUsuarios", esAdmin);
   mostrar("navCatalogos", esAdmin);
@@ -175,10 +180,12 @@ function aplicarMenuRol(rol) {
   if (textoMis) textoMis.textContent = rol === "tecnico" ? "Mis asignaciones" : "Mis reportes";
 }
 
-// Pantalla de arranque según el rol: solo el admin entra a Inicio; el resto, a "Mis incidencias".
+// Pantalla de arranque según el rol: admin y técnico tienen su propio Inicio; el normal va a "Mis incidencias".
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
-  return rol === "admin" ? "../inicio/inicio.html" : "../mis-incidencias/mis-incidencias.html";
+  if (rol === "admin") return "../inicio/inicio.html";
+  if (rol === "tecnico") return "../inicio-tecnico/inicio-tecnico.html";
+  return "../mis-incidencias/mis-incidencias.html";
 }
 
 // Página de detalle de una incidencia: la misma para los tres roles (la página decide qué mostrar).

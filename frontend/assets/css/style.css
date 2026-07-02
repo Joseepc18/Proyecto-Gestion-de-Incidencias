@@ -693,6 +693,55 @@ a {
   outline: none;
 }
 
+/* Inicio del técnico: mapa de sus asignadas y lista "Atiende primero" */
+#mapaAsignadas {
+  height: 100%;
+  width: 100%;
+  background: var(--admin-surface-soft);
+}
+
+.lista-atender {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.atender-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+.atender-item:last-child {
+  border-bottom: 0;
+}
+
+.atender-item:hover {
+  background: var(--admin-surface-soft);
+}
+
+.atender-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.atender-nombre {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.atender-meta {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+}
+
 .leyenda-mapa {
   background: var(--admin-surface);
   color: var(--admin-text);

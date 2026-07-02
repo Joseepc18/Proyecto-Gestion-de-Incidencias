@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -35,25 +35,12 @@ function normalizar(texto) {
   return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
-// Garantiza que una librería global (Chart, L) esté cargada; si un 5xx del túnel/caché
-// dejó el <script> sin ejecutar, la reinyecta con cache-buster para saltar la copia mala.
-function asegurarLibreria(nombreGlobal, src) {
-  if (typeof window[nombreGlobal] !== "undefined") return Promise.resolve(true);
-  return new Promise(function (resolve) {
-    const s = document.createElement("script");
-    s.src = src + "?reintento=" + Date.now();
-    s.onload = () => resolve(typeof window[nombreGlobal] !== "undefined");
-    s.onerror = () => resolve(false);
-    document.head.appendChild(s);
-  });
-}
-
 document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
   if (!usuario) return;
 
   if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
-    window.location.replace("../mis-incidencias/mis-incidencias.html");
+    window.location.replace(inicioSegunRol(usuario.rol ? usuario.rol.nombre_rol : ""));
     return;
   }
 

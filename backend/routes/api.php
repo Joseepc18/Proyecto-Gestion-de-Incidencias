@@ -76,6 +76,9 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Apis de asignaciones (responsable / apoyo)
     Route::get('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'listado']);
+
+    // Métricas del panel del técnico (el rol se valida en el controller)
+    Route::get('/dashboard/tecnico', [DashboardController::class, 'metricasTecnico']);
     Route::middleware('admin')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);

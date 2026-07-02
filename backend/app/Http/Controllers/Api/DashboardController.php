@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -64,5 +65,60 @@ class DashboardController extends Controller
         });
 
         return response()->json($datos);
+    }
+
+    // Métricas personales del panel del técnico: solo cuentan sus asignaciones.
+    // Sin caché a propósito: son consultas chicas por usuario y así el panel refleja al instante lo que resuelve.
+    public function metricasTecnico(Request $request)
+    {
+        $user = $request->user();
+        if (! $user->esTecnico()) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
+        // Base reutilizable: incidencias donde este técnico tiene alguna asignación.
+        $asignadas = fn () => DB::table('incidencias as i')
+            ->join('asignaciones_incidencia as a', 'a.id_incidencia', '=', 'i.id_incidencia')
+            ->where('a.id_usuario', $user->id);
+
+        // Conteos como RESPONSABLE (KPIs y dona) más las activas donde solo es APOYO.
+        $totales = $asignadas()
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS pendientes", [EstadoIncidencia::Pendiente->value])
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS en_proceso", [EstadoIncidencia::EnProceso->value])
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS resueltas", [EstadoIncidencia::Resuelto->value])
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ? AND i.fecha_resolucion >= ?) AS resueltas_mes", [EstadoIncidencia::Resuelto->value, now()->startOfMonth()])
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'APOYO' AND i.estado_incidencia <> ?) AS apoyo_activas", [EstadoIncidencia::Resuelto->value])
+            ->first();
+
+        // Resueltas por semana (últimas 8), rellenando con 0 las semanas sin cierres.
+        $inicioSemanas = now()->startOfWeek()->subWeeks(7);
+        $cierres = $asignadas()
+            ->where('a.rol_asignado', 'RESPONSABLE')
+            ->whereNotNull('i.fecha_resolucion')
+            ->where('i.fecha_resolucion', '>=', $inicioSemanas)
+            ->groupByRaw("date_trunc('week', i.fecha_resolucion)")
+            ->selectRaw("to_char(date_trunc('week', i.fecha_resolucion), 'YYYY-MM-DD') AS semana, COUNT(*) AS total")
+            ->pluck('total', 'semana');
+
+        $porSemana = [];
+        for ($i = 0; $i < 8; $i++) {
+            $semana = $inicioSemanas->copy()->addWeeks($i)->toDateString();
+            $porSemana[] = ['semana' => $semana, 'total' => (int) ($cierres[$semana] ?? 0)];
+        }
+
+        // Sus incidencias sin resolver (mapa y lista): prioridad ALTA primero y las más viejas arriba.
+        $activas = $asignadas()
+            ->where('i.estado_incidencia', '<>', EstadoIncidencia::Resuelto->value)
+            ->orderByRaw('CASE i.prioridad_incidencia WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END', [PrioridadIncidencia::Alta->value, PrioridadIncidencia::Media->value])
+            ->orderBy('i.created_at')
+            ->select('i.id_incidencia', 'i.nombre_incidencia', 'i.prioridad_incidencia', 'i.estado_incidencia',
+                'i.latitud_incidencia', 'i.longitud_incidencia', 'i.created_at', 'a.rol_asignado')
+            ->get();
+
+        return response()->json([
+            'totales' => $totales,
+            'por_semana' => $porSemana,
+            'activas' => $activas,
+        ]);
     }
 }
