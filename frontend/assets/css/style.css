@@ -2681,6 +2681,19 @@ html[data-theme="dark"] {
   object-fit: cover;
 }
 
+/* Color de fondo del avatar según el rol, coherente con badge-rol-*. */
+.tabla-avatar-admin {
+  background: #7c3aed;
+}
+
+.tabla-avatar-tecnico {
+  background: var(--admin-primary);
+}
+
+.tabla-avatar-normal {
+  background: #64748b;
+}
+
 /* Historial de estados: fila horizontal compacta (punto + label + fecha a la derecha) */
 .historial-lista {
   display: flex;

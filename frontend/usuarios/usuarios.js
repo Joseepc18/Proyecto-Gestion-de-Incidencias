@@ -153,10 +153,11 @@ function inicializarFiltroRol() {
 
 // Iniciales vienen de util.js (helper compartido).
 
-// Avatar de la fila: foto de perfil o iniciales sobre el color primario.
+// Avatar de la fila: foto de perfil o iniciales coloreadas según el rol (igual que badge-rol).
 function crearAvatar(u) {
   const avatar = document.createElement("span");
-  avatar.className = "tabla-avatar";
+  const nombreRol = u.rol ? u.rol.nombre_rol : "";
+  avatar.className = "tabla-avatar tabla-avatar-" + (nombreRol || "normal");
   if (u.foto_perfil) {
     const img = document.createElement("img");
     img.src = "/storage/" + u.foto_perfil;
