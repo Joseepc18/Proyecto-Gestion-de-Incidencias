@@ -5,7 +5,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -22,6 +22,11 @@ let pickerEdicion = null;
 // Hook del núcleo: decide si esta incidencia es editable por quien la mira.
 function edicionAlCargarDetalle() {
   const esDueno = incActual.id_usuario === usuarioActual.id;
+
+  if (esDueno && incActual.estado_incidencia === "RESUELTO") {
+    prepararSolicitudReapertura();
+  }
+
   const editable = esDueno && incActual.estado_incidencia === "PENDIENTE";
   if (!editable) return;
 
@@ -366,6 +371,70 @@ async function guardarCambios() {
     btn.disabled = false;
     spinner.classList.add("d-none");
   }
+}
+
+// Motivos frecuentes para pedir reapertura; "Otro" abre un textarea libre.
+const MOTIVOS_REAPERTURA = [
+  "El problema sigue igual",
+  "Volvió a aparecer poco después",
+  "La resolución fue incompleta",
+  "No era la solución correcta",
+];
+
+// El dueño pide reabrir su incidencia resuelta: NO cambia el estado, solo lo notifica al admin.
+function prepararSolicitudReapertura() {
+  const btn = document.getElementById("btnSolicitarReapertura");
+  btn.classList.remove("d-none");
+  btn.addEventListener("click", solicitarReapertura);
+}
+
+async function solicitarReapertura() {
+  const opciones = MOTIVOS_REAPERTURA.map(
+    (m) => '<option value="' + m + '">' + m + "</option>",
+  ).join("");
+
+  const promesaModal = abrirModal({
+    titulo: "No quedó resuelto",
+    cuerpoHtml:
+      '<p class="text-secondary small">Un administrador revisará tu solicitud antes de reabrirla.</p>' +
+      '<label for="modalMotivoTipo" class="form-label">Motivo</label>' +
+      '<select class="form-select" id="modalMotivoTipo" required>' +
+      '<option value="" disabled selected>Selecciona un motivo…</option>' +
+      opciones +
+      '<option value="__otro__">Otro (especificar)</option>' +
+      "</select>" +
+      '<div class="mt-2 d-none" id="modalMotivoOtroWrap">' +
+      '<label for="modalMotivoOtro" class="form-label">Especifica el motivo</label>' +
+      '<textarea class="form-control" id="modalMotivoOtro" rows="3" minlength="5" maxlength="500"></textarea>' +
+      "</div>",
+    textoConfirmar: "Enviar solicitud",
+    alConfirmar: async function (form) {
+      const tipo = form.querySelector("#modalMotivoTipo").value;
+      const motivo =
+        tipo === "__otro__" ? form.querySelector("#modalMotivoOtro").value.trim() : tipo;
+      await apiFetch("/incidencias/" + idActual + "/solicitar-reapertura", {
+        method: "POST",
+        body: JSON.stringify({ motivo: motivo }),
+      });
+    },
+  });
+
+  // El textarea de "Otro" solo se muestra (y se vuelve obligatorio) al elegir esa opción.
+  const selTipo = document.getElementById("modalMotivoTipo");
+  const wrapOtro = document.getElementById("modalMotivoOtroWrap");
+  const txtOtro = document.getElementById("modalMotivoOtro");
+  selTipo.addEventListener("change", function () {
+    const esOtro = selTipo.value === "__otro__";
+    wrapOtro.classList.toggle("d-none", !esOtro);
+    txtOtro.required = esOtro;
+    if (esOtro) txtOtro.focus();
+  });
+
+  const confirmado = await promesaModal;
+  if (!confirmado) return;
+
+  mostrarToast("Solicitud enviada. Un administrador la revisará.", "success");
+  document.getElementById("btnSolicitarReapertura").classList.add("d-none");
 }
 
 // Eliminar la incidencia completa.

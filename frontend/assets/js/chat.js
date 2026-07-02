@@ -41,25 +41,29 @@ function obtenerEcho() {
 }
 
 // idContenedor: div del chat; idIncidencia: hilo; usuario: autenticado (para "Tú").
-function crearChat(idContenedor, idIncidencia, usuario) {
+// opts.soloLectura: true deshabilita el input y muestra un aviso (incidencia RESUELTO).
+function crearChat(idContenedor, idIncidencia, usuario, opts) {
   const cont = document.getElementById(idContenedor);
   if (!cont) return null;
+  const soloLectura = !!(opts && opts.soloLectura);
 
-  cont.innerHTML =
-    '<div class="chat-mensajes" id="chatMensajes"></div>' +
-    '<form class="chat-form" id="chatForm">' +
-    '<textarea class="form-control" id="chatTexto" rows="1" ' +
-    'placeholder="Escribe un mensaje…" required></textarea>' +
-    '<button class="chat-enviar" type="submit" aria-label="Enviar">' +
-    '<span class="spinner-border spinner-border-sm d-none" id="chatSpinner"></span>' +
-    '<i class="bi bi-send" id="chatIcono"></i></button></form>';
+  const inputHtml = soloLectura
+    ? '<p class="chat-solo-lectura">La incidencia está resuelta: el chat es solo de lectura.</p>'
+    : '<form class="chat-form" id="chatForm">' +
+      '<textarea class="form-control" id="chatTexto" rows="1" ' +
+      'placeholder="Escribe un mensaje…" required></textarea>' +
+      '<button class="chat-enviar" type="submit" aria-label="Enviar">' +
+      '<span class="spinner-border spinner-border-sm d-none" id="chatSpinner"></span>' +
+      '<i class="bi bi-send" id="chatIcono"></i></button></form>';
+
+  cont.innerHTML = '<div class="chat-mensajes" id="chatMensajes"></div>' + inputHtml;
 
   const mensajes = cont.querySelector("#chatMensajes");
-  const form = cont.querySelector("#chatForm");
-  const texto = cont.querySelector("#chatTexto");
-  const botonEnviar = cont.querySelector(".chat-enviar");
-  const spinner = cont.querySelector("#chatSpinner");
-  const icono = cont.querySelector("#chatIcono");
+  const form = soloLectura ? null : cont.querySelector("#chatForm");
+  const texto = soloLectura ? null : cont.querySelector("#chatTexto");
+  const botonEnviar = soloLectura ? null : cont.querySelector(".chat-enviar");
+  const spinner = soloLectura ? null : cont.querySelector("#chatSpinner");
+  const icono = soloLectura ? null : cont.querySelector("#chatIcono");
 
   // Ids ya pintados, para no duplicar el mensaje propio (llega por POST y también por WebSocket).
   const idsPintados = new Set();
@@ -191,45 +195,47 @@ function crearChat(idContenedor, idIncidencia, usuario) {
     }
   }
 
-  texto.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
+  if (texto && form) {
+    texto.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      form.requestSubmit();
-    }
-  });
+      const valor = texto.value.trim();
+      if (!valor) return;
 
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const valor = texto.value.trim();
-    if (!valor) return;
+      texto.disabled = true;
+      botonEnviar.disabled = true;
+      spinner.classList.remove("d-none");
+      icono.classList.add("d-none");
 
-    texto.disabled = true;
-    botonEnviar.disabled = true;
-    spinner.classList.remove("d-none");
-    icono.classList.add("d-none");
-
-    try {
-      const creado = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
-        method: "POST",
-        body: JSON.stringify({ comentario: valor }),
-        sinSpinner: true,
-      });
-      texto.value = "";
-      // Pinta el propio al instante; si luego llega por WebSocket, el dedupe lo ignora.
-      pintarMensaje(creado, true);
-    } catch (error) {
-      const p = document.createElement("p");
-      p.className = "chat-vacio text-danger";
-      p.textContent = "No se pudo enviar: " + error.message;
-      mensajes.appendChild(p);
-    } finally {
-      texto.disabled = false;
-      botonEnviar.disabled = false;
-      spinner.classList.add("d-none");
-      icono.classList.remove("d-none");
-      texto.focus();
-    }
-  });
+      try {
+        const creado = await apiFetch("/incidencias/" + idIncidencia + "/comentarios", {
+          method: "POST",
+          body: JSON.stringify({ comentario: valor }),
+          sinSpinner: true,
+        });
+        texto.value = "";
+        // Pinta el propio al instante; si luego llega por WebSocket, el dedupe lo ignora.
+        pintarMensaje(creado, true);
+      } catch (error) {
+        const p = document.createElement("p");
+        p.className = "chat-vacio text-danger";
+        p.textContent = "No se pudo enviar: " + error.message;
+        mensajes.appendChild(p);
+      } finally {
+        texto.disabled = false;
+        botonEnviar.disabled = false;
+        spinner.classList.add("d-none");
+        icono.classList.remove("d-none");
+        texto.focus();
+      }
+    });
+  }
 
   // Suscripción en tiempo real: pinta los mensajes de los demás en cuanto llegan.
   let canal = null;

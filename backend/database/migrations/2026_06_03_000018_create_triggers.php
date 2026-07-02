@@ -202,27 +202,41 @@ return new class extends Migration
 
         // 7) fn_notificar_cambio_estado: en cualquier cambio de estado distinto de RESUELTO
         // (ese lo cubre resolver_incidencia), avisa al reportador y técnicos, menos al actor.
+        // Caso especial: si venía de RESUELTO (el admin la reabrió), usa el mismo tipo
+        // SOLICITUD_REAPERTURA que la petición del reportador, así responsable y apoyo
+        // ven la misma alerta roja en vez del aviso azul genérico de cambio de estado.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_cambio_estado()
             RETURNS TRIGGER AS \$\$
             DECLARE
                 v_actor BIGINT;
+                v_tipo VARCHAR;
+                v_msg_reportador VARCHAR;
+                v_msg_tecnicos VARCHAR;
             BEGIN
                 IF NEW.estado_incidencia <> OLD.estado_incidencia
                    AND NEW.estado_incidencia <> 'RESUELTO' THEN
                     v_actor := NULLIF(current_setting('app.actor_id', true), '')::BIGINT;
 
+                    IF OLD.estado_incidencia = 'RESUELTO' THEN
+                        v_tipo := 'SOLICITUD_REAPERTURA';
+                        v_msg_reportador := 'Tu incidencia fue reabierta: ' || NEW.nombre_incidencia;
+                        v_msg_tecnicos := 'La incidencia fue reabierta: ' || NEW.nombre_incidencia;
+                    ELSE
+                        v_tipo := 'CAMBIO_ESTADO';
+                        v_msg_reportador := 'Tu incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia;
+                        v_msg_tecnicos := 'La incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia;
+                    END IF;
+
                     -- Al reportador (IS DISTINCT FROM trata bien el actor NULL).
                     IF NEW.id_usuario IS DISTINCT FROM v_actor THEN
                         INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                        VALUES (NEW.id_usuario, NEW.id_incidencia, 'CAMBIO_ESTADO',
-                                'Tu incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia);
+                        VALUES (NEW.id_usuario, NEW.id_incidencia, v_tipo, v_msg_reportador);
                     END IF;
 
-                    -- A los técnicos asignados, menos el actor.
+                    -- A los técnicos asignados (responsable y apoyo), menos el actor.
                     INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                    SELECT a.id_usuario, NEW.id_incidencia, 'CAMBIO_ESTADO',
-                           'La incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia
+                    SELECT a.id_usuario, NEW.id_incidencia, v_tipo, v_msg_tecnicos
                     FROM asignaciones_incidencia a
                     WHERE a.id_incidencia = NEW.id_incidencia
                       AND a.id_usuario IS DISTINCT FROM v_actor;

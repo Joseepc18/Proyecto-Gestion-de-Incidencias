@@ -16,6 +16,7 @@ function iconoTipo(tipo) {
     NUEVA_INCIDENCIA: "bi-exclamation-triangle",
     EVIDENCIA: "bi-camera",
     INCIDENCIA_ELIMINADA: "bi-trash",
+    SOLICITUD_REAPERTURA: "bi-arrow-counterclockwise",
   };
   return iconos[tipo] || "bi-bell";
 }
@@ -33,8 +34,12 @@ function actualizarContador(noLeidas) {
 function filaNotificacion(n, esHija) {
   const item = document.createElement("button");
   item.type = "button";
+  // Igual que la campana: "notification-alert" para las solicitudes de reapertura (rojo,
+  // incluso leídas) y "no-leida" siempre según el estado real (si no, un clic nunca la marca leída).
+  const esAlerta = n.tipo_notificacion === "SOLICITUD_REAPERTURA";
   item.className =
     "notification-item notif-page-item" +
+    (esAlerta ? " notification-alert" : "") +
     (n.estado_lectura ? "" : " no-leida") +
     (esHija ? " notif-hija" : "");
   item.dataset.id = n.id_notificacion;

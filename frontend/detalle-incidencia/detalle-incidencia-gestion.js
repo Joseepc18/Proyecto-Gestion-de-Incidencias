@@ -32,7 +32,11 @@ function gestionAlCargarAsignaciones(asignaciones, id) {
 
   if (esResponsableActual()) {
     habilitarGestionEstado(id);
-    habilitarFotosResolucion(id);
+    // En RESUELTO, el expediente queda cerrado: el responsable no sube/borra fotos (policy 403).
+    // Sigue viendo las fotos ya cargadas (sección de solo lectura del detalle).
+    if (incActual.estado_incidencia !== "RESUELTO") {
+      habilitarFotosResolucion(id);
+    }
   }
 
   if (!esAdmin) return;
@@ -112,6 +116,15 @@ function prepararEstado(id) {
         titulo: "Marcar como resuelto",
         mensaje: "Se registrará la fecha de resolución y se notificará a los involucrados.",
         textoConfirmar: "Resolver",
+      });
+      if (!ok) return;
+    }
+
+    if (incActual.estado_incidencia === "RESUELTO" && nuevo === "EN_PROCESO") {
+      const ok = await confirmar({
+        titulo: "Reabrir incidencia",
+        mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
+        textoConfirmar: "Reabrir",
       });
       if (!ok) return;
     }

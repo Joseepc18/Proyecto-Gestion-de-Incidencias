@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Gate;
 
 class CrearComentarioRequest extends FormRequest
 {
-    // Autoriza antes de validar: reportador, admin o técnico responsable (chat).
+    // Autoriza antes de validar: reportador, admin o técnico responsable, y la incidencia
+    // NO está resuelta (en RESUELTO el chat es solo de lectura).
     public function authorize(): bool
     {
-        Gate::authorize('verChat', $this->route('incidencia'));
+        Gate::authorize('comentar', $this->route('incidencia'));
 
         return true;
     }

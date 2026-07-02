@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
+use App\Models\Evidencia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -228,5 +231,156 @@ class PermisosTest extends TestCase
         ])->assertOk();
 
         $this->assertSame('EN_PROCESO', $incidencia->fresh()->estado_incidencia);
+    }
+
+    // Única excepción a "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
+    // (limpia fecha_resolucion vía trigger, ya que el update pasa por el flujo normal).
+    public function test_admin_puede_reabrir_incidencia_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $responsable = $this->crearUsuario('tecnico');
+        $apoyo = $this->crearUsuario('tecnico');
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $apoyo->id,
+            'rol_asignado' => 'APOYO',
+        ]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertOk();
+
+        $fresca = $incidencia->fresh();
+        $this->assertSame('EN_PROCESO', $fresca->estado_incidencia);
+        $this->assertNull($fresca->fecha_resolucion);
+
+        // Responsable y apoyo ven la misma alerta (SOLICITUD_REAPERTURA) que la del admin,
+        // no el aviso azul genérico de CAMBIO_ESTADO.
+        foreach ([$responsable, $apoyo] as $tecnico) {
+            $this->assertDatabaseHas('notificaciones', [
+                'id_usuario' => $tecnico->id,
+                'id_incidencia' => $incidencia->id_incidencia,
+                'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
+            ]);
+        }
+    }
+
+    // El admin no puede saltar de RESUELTO a PENDIENTE (solo la reapertura a EN_PROCESO tiene sentido).
+    public function test_admin_no_puede_pasar_resuelto_a_pendiente(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'PENDIENTE',
+        ])->assertStatus(422);
+    }
+
+    // El técnico responsable NUNCA puede reabrir, ni siquiera la suya resuelta.
+    public function test_tecnico_no_puede_reabrir_incidencia_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $responsable = $this->crearUsuario('tecnico');
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($responsable);
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertStatus(422);
+    }
+
+    // En RESUELTO nadie sube evidencias: el expediente queda cerrado. Si hace falta, el
+    // reportador pide reapertura y un admin reabre a EN_PROCESO.
+    public function test_responsable_no_puede_subir_evidencia_a_resuelta(): void
+    {
+        Storage::fake('public');
+        $responsable = $this->crearUsuario('tecnico');
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+
+        Sanctum::actingAs($responsable);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('r.jpg')],
+            'tipo_evidencia' => 'RESOLUCION',
+        ])->assertStatus(403);
+    }
+
+    // En RESUELTO tampoco se borran evidencias (expediente cerrado, la reapertura es la excepción).
+    public function test_responsable_no_puede_borrar_evidencia_de_resuelta(): void
+    {
+        Storage::fake('public');
+        $responsable = $this->crearUsuario('tecnico');
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'), ['estado_incidencia' => 'EN_PROCESO']);
+        AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $responsable->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ]);
+
+        // Sube una foto de resolución mientras está EN_PROCESO (permitido).
+        Sanctum::actingAs($responsable);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
+            'fotos' => [UploadedFile::fake()->image('r.jpg')],
+            'tipo_evidencia' => 'RESOLUCION',
+        ])->assertOk();
+        $evidencia = Evidencia::first();
+
+        // Se resuelve y el responsable intenta borrarla: 403 (expediente cerrado).
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertStatus(403);
+    }
+
+    // En RESUELTO el chat queda en solo lectura: no se pueden crear comentarios.
+    public function test_no_se_puede_comentar_incidencia_resuelta(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
+            'comentario' => 'Pero esto sigue roto.',
+        ])->assertStatus(403);
+
+        // El historial del chat (Lectura) sigue siendo accesible.
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
+    }
+
+    // Solo 1 solicitud de reapertura pendiente a la vez: una segunda se rechaza (422)
+    // mientras la primera esté sin leer. Si el admin la lee, se libera el cupo.
+    public function test_no_se_puede_pedir_reapertura_doble_si_hay_una_pendiente(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual, no lo taparon.',
+        ])->assertOk();
+
+        // Segundo intento while la primera sigue sin leer: 422.
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'Otro motivo distinto para reintentar.',
+        ])->assertStatus(422);
     }
 }

@@ -41,6 +41,14 @@
                 <button class="btn btn-outline-danger btn-sm d-none" type="button" id="btnEliminar">
                   <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
                 </button>
+                <!-- Solo el ciudadano dueño, y solo mientras esté RESUELTO -->
+                <button
+                  class="btn btn-outline-warning btn-sm d-none"
+                  type="button"
+                  id="btnSolicitarReapertura"
+                >
+                  <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> No quedó resuelto
+                </button>
                 <!-- El destino y el texto los pone el JS según el rol -->
                 <a
                   class="btn btn-outline-secondary btn-sm"
@@ -514,6 +522,7 @@
     <script defer src="../assets/js/galeriaFotos.js"></script>
     <script defer src="../assets/js/toast.js"></script>
     <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/modal.js"></script>
     <script defer src="../assets/js/lightbox.js"></script>
     <script defer src="../assets/js/carruselFotos.js"></script>
     <script defer src="../assets/js/layout.js"></script>

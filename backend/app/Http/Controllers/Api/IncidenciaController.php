@@ -10,10 +10,12 @@ use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
 use App\Http\Requests\EliminarIncidenciaRequest;
+use App\Http\Requests\SolicitarReaperturaRequest;
 use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\Notificacion;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -181,7 +183,13 @@ class IncidenciaController extends Controller
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
-        if ($actual === EstadoIncidencia::Resuelto->value) {
+        // Única excepción al "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
+        // (p. ej. tras una solicitud de reapertura del reportador). El técnico nunca puede.
+        $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto->value
+            && $nuevo === EstadoIncidencia::EnProceso->value
+            && $request->user()->esAdmin();
+
+        if ($actual === EstadoIncidencia::Resuelto->value && ! $esReaperturaDeAdmin) {
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
         }
 
@@ -209,5 +217,36 @@ class IncidenciaController extends Controller
         Cache::forget('dashboard_metricas');
 
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+    }
+
+    // El reportador pide reabrir una incidencia ya resuelta: NO cambia el estado, solo avisa
+    // a los admins con el motivo para que decidan si la reabren (vía cambiarEstado).
+    // Solo 1 solicitud pendiente a la vez: si ya hay una SIN LEER para esta incidencia,
+    // se rechaza (422) hasta que un admin la revise y la marque leída al abrir el detalle.
+    public function solicitarReapertura(SolicitarReaperturaRequest $request, Incidencia $incidencia)
+    {
+        $yaPendiente = Notificacion::where('id_incidencia', $incidencia->id_incidencia)
+            ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
+            ->where('estado_lectura', false)
+            ->exists();
+
+        if ($yaPendiente) {
+            return response()->json(['message' => 'Ya tienes una solicitud de reapertura pendiente de revisión.'], 422);
+        }
+
+        $motivo = $request->validated()['motivo'];
+
+        User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'admin'))
+            ->get()
+            ->each(function (User $admin) use ($incidencia, $motivo) {
+                Notificacion::create([
+                    'id_incidencia' => $incidencia->id_incidencia,
+                    'id_usuario' => $admin->id,
+                    'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
+                    'mensaje_notificacion' => 'Piden reabrir "'.$incidencia->nombre_incidencia.'". Motivo: '.$motivo,
+                ]);
+            });
+
+        return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
     }
 }

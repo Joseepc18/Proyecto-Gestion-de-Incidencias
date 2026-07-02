@@ -353,7 +353,9 @@ function configurarChatFlotante(id) {
     fab.classList.add("d-none");
     pintarParticipantes();
     if (!chatCreado) {
-      crearChat("chatContenedor", id, usuarioActual);
+      crearChat("chatContenedor", id, usuarioActual, {
+        soloLectura: incActual && incActual.estado_incidencia === "RESUELTO",
+      });
       chatCreado = true;
     }
   });

@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
     Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado']);
+    Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura']);
 
     // Apis de comentarios
     Route::get('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'listadoComentarios']);

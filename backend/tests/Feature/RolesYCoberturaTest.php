@@ -237,6 +237,48 @@ class RolesYCoberturaTest extends TestCase
         $this->assertCount(8, $respuesta['por_semana']);
     }
 
+    // El reportador solicita reabrir su incidencia resuelta: NO cambia el estado, solo notifica a los admins.
+    public function test_reportador_solicita_reapertura_y_notifica_a_admins(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual, no lo taparon.',
+        ])->assertOk();
+
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia);
+        foreach ([$admin1, $admin2] as $admin) {
+            $this->assertDatabaseHas('notificaciones', [
+                'id_usuario' => $admin->id,
+                'id_incidencia' => $incidencia->id_incidencia,
+                'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
+            ]);
+        }
+    }
+
+    // No se puede pedir reapertura si la incidencia no está resuelta, ni si no es el reportador.
+    public function test_solicitar_reapertura_rechaza_si_no_procede(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'Aún no la resuelven.',
+        ])->assertStatus(403);
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($this->crearUsuario('normal'));
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'No es mía pero igual pido.',
+        ])->assertStatus(403);
+    }
+
     // El técnico RESPONSABLE puede borrar una evidencia (reemplazar su foto).
     public function test_responsable_puede_borrar_evidencia(): void
     {

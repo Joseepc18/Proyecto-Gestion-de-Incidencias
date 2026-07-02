@@ -20,7 +20,7 @@ return new class extends Migration
             mensaje_notificacion VARCHAR(600) NOT NULL,
             estado_lectura BOOLEAN DEFAULT FALSE,
             fecha_lectura TIMESTAMP NULL,
-            tipo_notificacion VARCHAR(50) NOT NULL CHECK(tipo_notificacion IN ('ASIGNACION','CAMBIO_ESTADO','COMENTARIO','NUEVA_INCIDENCIA','EVIDENCIA','INCIDENCIA_ELIMINADA')),
+            tipo_notificacion VARCHAR(50) NOT NULL CHECK(tipo_notificacion IN ('ASIGNACION','CAMBIO_ESTADO','COMENTARIO','NUEVA_INCIDENCIA','EVIDENCIA','INCIDENCIA_ELIMINADA','SOLICITUD_REAPERTURA')),
             -- Comentarios agrupados en una misma notificación de COMENTARIO sin leer.
             contador INT NOT NULL DEFAULT 1,
             FOREIGN KEY (id_incidencia) REFERENCES incidencias(id_incidencia) ON DELETE CASCADE,
