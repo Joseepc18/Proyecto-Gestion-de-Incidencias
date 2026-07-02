@@ -4,9 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
-    // S7: alinea el UNIQUE de users.email con la validación withoutTrashed.
-    // El UNIQUE plano cuenta a los suspendidos (soft-deleted) y rompía con 500 al
-    // reusar su correo; el índice único parcial solo aplica a usuarios activos.
+    // Alinea el UNIQUE de users.email con withoutTrashed: el plano contaba a los suspendidos y rompía con 500 al reusar el correo.
     public function up(): void
     {
         DB::statement('ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_unique;');

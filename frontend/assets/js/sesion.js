@@ -4,8 +4,7 @@
 
 /* global apiFetch, obtenerToken, eliminarToken */
 
-// Pide /user; si no hay token o falla (401/500), limpia y manda al login.
-// Devuelve el usuario o null (la página debe abortar en ese caso).
+// Si no hay token o falla (401/500), limpia y manda al login
 async function requerirSesion() {
   if (!obtenerToken()) {
     window.location.href = "../login/login.html";
@@ -42,8 +41,7 @@ function cablearLogout() {
   });
 }
 
-// Arranque típico de página admin: valida sesión (requerirSesion ya pinta el nombre) y cablea logout.
-// Devuelve el usuario o null.
+// Valida sesión (requerirSesion ya pinta el nombre) y cablea logout
 async function inicializarPaginaAdmin() {
   const usuario = await requerirSesion();
   if (!usuario) return null;

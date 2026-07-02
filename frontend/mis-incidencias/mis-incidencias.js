@@ -131,9 +131,7 @@ async function cargarLista() {
   }
 }
 
-// Render compacto de flechas (‹ página ›) para el feed de Mis Incidencias.
-// Vive solo en esta página: no usa el helper compartido paginacion.js para no forzar
-// el scroll del panel hacia los números cuando hay muchas incidencias.
+// No usa paginacion.js: evita forzar el scroll del panel hacia los números
 function renderFlechasPaginacion(current, last, total, from, to) {
   const cont = document.getElementById("paginacionMis");
   if (!cont) return;
@@ -236,8 +234,7 @@ async function seleccionarIncidencia(id) {
   }
 }
 
-// Popover compacto de filtro por estado del feed. Solo cambia el activo del dropdown
-// y recarga la lista; no muestra texto en el botón para ahorrar ancho en el panel.
+// No muestra texto en el botón, para ahorrar ancho en el panel
 function inicializarFiltroEstado() {
   document
     .querySelectorAll("#btnFiltroEstado + .dropdown-menu .dropdown-item")

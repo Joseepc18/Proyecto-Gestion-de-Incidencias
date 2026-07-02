@@ -34,9 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     notificaciones.forEach(function (n) {
       const item = document.createElement("button");
       item.type = "button";
-      // Las solicitudes de reapertura se distinguen con un color rojo de alerta (incluso leídas).
-      // "no-leida" sigue el estado real (el CSS de alerta pesa más y la pinta roja igual):
-      // si no, un clic nunca la marcaría como leída y el cupo de "1 solicitud pendiente" no se liberaría.
+      // "no-leida" sigue el estado real; el CSS de alerta la pinta roja igual aunque se marque leída
       const esAlerta = n.tipo_notificacion === "SOLICITUD_REAPERTURA";
       const clases = ["notification-item"];
       if (esAlerta) clases.push("notification-alert");
@@ -85,8 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
       item.classList.remove("no-leida");
     }
 
-    // Las de INCIDENCIA_ELIMINADA no tienen incidencia a la cual ir (se borró físico):
-    // se lleva a la bandeja para que el usuario lea el motivo completo.
+    // INCIDENCIA_ELIMINADA no tiene incidencia a la cual ir: se borró físico
     if (!item.dataset.incidencia || item.dataset.incidencia === "null") {
       window.location.href = "../notificaciones/notificaciones.html";
       return;

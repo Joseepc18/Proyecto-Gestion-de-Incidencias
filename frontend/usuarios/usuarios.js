@@ -169,8 +169,7 @@ function crearAvatar(u) {
   return avatar;
 }
 
-// Menú de acciones de la fila: suspendidos se restauran; los normales solo se suspenden;
-// técnicos/admins además se editan (helper compartido de menuAcciones.js).
+// Suspendidos se restauran; normales solo se suspenden; técnicos/admins además se editan
 function menuAccionesUsuario(u, suspendido) {
   const acciones = [];
   if (!suspendido && u.rol && u.rol.nombre_rol !== "normal") {

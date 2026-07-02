@@ -7,8 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1) fn_registrar_cambio_estado: guarda cada cambio de estado en historial_estados,
-        // atribuyéndolo al EJECUTOR (variable de sesión app.actor_id) y no al dueño.
+        // 1) fn_registrar_cambio_estado: guarda cada cambio de estado atribuyéndolo al EJECUTOR (app.actor_id), no al dueño.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
             RETURNS TRIGGER AS \$\$
@@ -60,10 +59,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // 3) fn_notificar_nuevo_comentario: avisa a todo el chat (reportador + admins +
-        // técnico responsable), menos al autor. Consolida: si el destinatario ya tiene una
-        // notificación de comentario sin leer de esa incidencia, suma al contador y refresca
-        // la fecha en vez de crear otra fila (ver índice uq_notif_comentario_pendiente).
+        // 3) fn_notificar_nuevo_comentario: avisa al chat (reportador + admins + responsable) menos al autor; consolida en la notificación sin leer existente (uq_notif_comentario_pendiente).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_nuevo_comentario()
             RETURNS TRIGGER AS \$\$
@@ -163,8 +159,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_notificar_nueva_incidencia();
         ');
 
-        // 6) fn_notificar_asignacion: al asignar un técnico avisa a ese técnico; si es
-        // RESPONSABLE, también al reportador.
+        // 6) fn_notificar_asignacion: avisa al técnico asignado y, si es RESPONSABLE, también al reportador.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_asignacion()
             RETURNS TRIGGER AS \$\$
@@ -200,11 +195,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_notificar_asignacion();
         ');
 
-        // 7) fn_notificar_cambio_estado: en cualquier cambio de estado distinto de RESUELTO
-        // (ese lo cubre resolver_incidencia), avisa al reportador y técnicos, menos al actor.
-        // Caso especial: si venía de RESUELTO (el admin la reabrió), usa el mismo tipo
-        // SOLICITUD_REAPERTURA que la petición del reportador, así responsable y apoyo
-        // ven la misma alerta roja en vez del aviso azul genérico de cambio de estado.
+        // 7) fn_notificar_cambio_estado: en cambios distintos de RESUELTO avisa a reportador y técnicos menos al actor; si venía de RESUELTO usa el tipo SOLICITUD_REAPERTURA.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_cambio_estado()
             RETURNS TRIGGER AS \$\$

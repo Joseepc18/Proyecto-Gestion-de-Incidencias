@@ -4,17 +4,7 @@
 
 /* global imageCompression, OPCIONES_COMPRESION */
 
-// Crea (o pinta) la galería para subir fotos. opts:
-//   input     — <input type="file"> original (se le cablea change)
-//   dropzone  — OPCIONAL: zona de arrastre; si no se pasa (modo compacto), la página
-//               provee su propio botón de "agregar" y aquí no se pinta el azulejo "+".
-//   preview   — contenedor donde se pintan las miniaturas
-//   error     — elemento <div> para mostrar mensajes (opcional)
-//   cupo      — () => número de fotos que aún se pueden agregar (0 si lleno)
-//   textoCupo — mensaje al superar el cupo (opcional)
-//   btnSubir  — botón "Subir" (opcional; si se pasa, se cablea a onSubir)
-//   onSubir   — async (archivos: File[]) llamado al pulsar btnSubir; debe llamar a limpiar() si tuvo éxito
-// Devuelve { archivos: File[], limpiar, render } para que la página acceda (p. ej. el form submit).
+// Sin opts.dropzone (modo compacto) la página aporta su propio botón de "agregar"
 function crearGaleriaFotos(opts) {
   const archivos = [];
 

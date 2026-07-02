@@ -30,10 +30,7 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE.
-    // Los técnicos (responsable incluido) NO editan los detalles de la incidencia.
-    // En RESUELTO queda de solo lectura para todos (incluido el admin y su prioridad):
-    // el expediente está cerrado; para tocarlo hay que reabrir primero (cambiarEstado).
+    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE; en RESUELTO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
@@ -69,8 +66,7 @@ class IncidenciaPolicy
         return Response::deny('No autorizado');
     }
 
-    // Cambiar de estado: admin (libre) o el técnico RESPONSABLE (la transición la valida el controller).
-    // El técnico de APOYO no cambia estados (solo puede ver el detalle).
+    // Cambiar de estado: admin o el técnico RESPONSABLE (el de APOYO no cambia estados; la transición la valida el controller).
     public function cambiarEstado(User $user, Incidencia $incidencia): Response
     {
         return $user->esAdmin() || $user->esResponsableDe($incidencia)
@@ -78,9 +74,7 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Subir evidencias: autor (fotos de REPORTE) o el técnico RESPONSABLE (foto de RESOLUCION).
-    // El administrador y el técnico de APOYO no suben evidencias. En RESUELTO, nadie sube:
-    // el expediente queda cerrado; si hace falta, el reportador pide reapertura.
+    // Subir evidencias: autor (REPORTE) o técnico RESPONSABLE (RESOLUCION); en RESUELTO nadie sube (pedir reapertura).
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
@@ -92,8 +86,7 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Ver el chat (lectura): reportador, admin y técnico RESPONSABLE (el apoyo queda fuera).
-    // Sigue permitido aunque la incidencia esté resuelta (se conserva el historial).
+    // Ver el chat (lectura): reportador, admin y técnico RESPONSABLE; sigue permitido en RESUELTO (se conserva el historial).
     public function verChat(User $user, Incidencia $incidencia): Response
     {
         return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)

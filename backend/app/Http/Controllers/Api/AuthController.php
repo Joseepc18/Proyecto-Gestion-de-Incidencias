@@ -147,8 +147,7 @@ class AuthController extends Controller
                 return redirect($frontend.'/login/login.html?error=google_email');
             }
 
-            // (b) Si ese email ya es de un admin o técnico, no permitimos Google: deben usar el login clásico
-            //     (evita que alguien con el mismo correo de Gmail entre como cuenta privilegiada).
+            // (b) Si ese email ya es de un admin o técnico, no permitimos Google (evita entrar como cuenta privilegiada por Gmail).
             $existente = User::where('email', $googleUser->getEmail())->first();
             if ($existente && ($existente->esAdmin() || $existente->esTecnico())) {
                 return redirect($frontend.'/login/login.html?error=google_privilegiado');

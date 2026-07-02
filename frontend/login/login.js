@@ -3,8 +3,7 @@
 /* global apiFetch, guardarToken, obtenerToken, eliminarToken, mostrarToast, toastFlash, inicioSegunRol */
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Si ya hay token, lo validamos contra el backend antes de redirigir (evita el
-  // "flash" con un token que el backend ya no reconoce; si falla, se limpia y se queda aquí).
+  // Valida el token contra el backend antes de redirigir, para evitar un "flash" con uno inválido
   if (obtenerToken()) {
     try {
       const usuario = await apiFetch("/user", { sinSpinner: true });

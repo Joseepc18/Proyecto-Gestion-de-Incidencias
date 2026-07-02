@@ -1,7 +1,4 @@
-// detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable).
-// El admin: prioridad, asignación de técnicos y cambio de estado libre.
-// El técnico responsable: cambio de estado EN_PROCESO→RESUELTO y fotos de la resolución.
-// El núcleo (detalle-incidencia.js) llama a los hooks gestion* cuando hay datos.
+// detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable)
 
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
@@ -17,8 +14,7 @@ let comboAyudante = null;
 // Galería de fotos de resolución (gestionada por galeriaFotos.js).
 let galeriaResolucion = null;
 
-// ¿La incidencia está cerrada (RESUELTO)? Prioridad, asignaciones y estado quedan de solo
-// lectura para el admin; solo se reabre con el botón dedicado si hay solicitud pendiente.
+// En RESUELTO, prioridad/asignaciones/estado quedan de solo lectura para el admin
 function gestionBloqueada() {
   return incActual.estado_incidencia === "RESUELTO";
 }
@@ -39,8 +35,7 @@ function gestionAlCargarAsignaciones(asignaciones, id) {
 
   if (esResponsableActual()) {
     habilitarGestionEstado(id);
-    // En RESUELTO, el expediente queda cerrado: el responsable no sube/borra fotos (policy 403).
-    // Sigue viendo las fotos ya cargadas (sección de solo lectura del detalle).
+    // En RESUELTO el responsable ya no sube/borra fotos (policy 403), solo las ve
     if (incActual.estado_incidencia !== "RESUELTO") {
       habilitarFotosResolucion(id);
     }
@@ -88,8 +83,7 @@ function prepararPrioridad(id) {
   });
 }
 
-// Resalta el botón de la prioridad actual pintándolo con el mismo color que su badge
-// (prioridadConfig.clase, ej. "text-bg-danger"), para que el distintivo sea consistente.
+// Pinta el botón de la prioridad actual con el mismo color que su badge
 function marcarPrioridadActiva() {
   const bloqueada = gestionBloqueada();
   document.querySelectorAll("#prioridadBotones .btn-tool").forEach(function (b) {
@@ -148,10 +142,7 @@ function prepararEstado(id) {
   });
 }
 
-// Resalta el estado actual pintándolo con el mismo color que su badge (estadoConfig.clase,
-// ej. "badge-estado-pendiente"); el admin habilita cualquier otro, el técnico solo EN_PROCESO → RESUELTO.
-// RESUELTO queda bloqueado para TODOS (admin incluido): de ahí solo se sale con el botón
-// "Reabrir" (ver prepararReaperturaAdmin), nunca clickeando el selector genérico.
+// RESUELTO queda bloqueado para todos: solo se sale con el botón "Reabrir"
 function marcarEstadoActivo() {
   const actual = incActual.estado_incidencia;
   document.querySelectorAll("#estadoBotones .btn-estado-tool").forEach(function (b) {
@@ -171,8 +162,7 @@ function marcarEstadoActivo() {
   });
 }
 
-// El admin reabre SOLO si hay una solicitud del reportador sin revisar (incActual.reapertura_pendiente).
-// Botón dedicado, separado del selector genérico (que queda bloqueado mientras esté RESUELTO).
+// El admin reabre solo si hay una solicitud del reportador sin revisar
 function prepararReaperturaAdmin(id) {
   const btn = document.getElementById("btnReabrirIncidencia");
   if (!btn) return;
@@ -295,7 +285,6 @@ function renderAsignaciones(asignaciones, id) {
   }
 
   // En RESUELTO las asignaciones quedan congeladas: se ocultan los formularios de agregar
-  // (el de quitar se omite en filaTecnico). Solo se muestra quién está asignado, de lectura.
   const bloqueada = gestionBloqueada();
   const formResp = document.getElementById("responsableForm");
   if (formResp) formResp.classList.toggle("d-none", bloqueada || !!responsable);

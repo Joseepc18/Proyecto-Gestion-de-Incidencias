@@ -128,9 +128,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia']));
     }
 
-    // Eliminar una incidencia junto con todas sus relaciones y fotos físicas.
-    // Si la borra alguien más (el admin), se le notifica el motivo al dueño ANTES de borrar:
-    // la notificación se crea con id_incidencia null para no depender de una fila que está por desaparecer.
+    // Si la borra alguien más (el admin), se notifica el motivo al dueño con id_incidencia null (la fila está por desaparecer).
     public function eliminarIncidencia(EliminarIncidenciaRequest $request, Incidencia $incidencia)
     {
         $esPropia = $incidencia->id_usuario === $request->user()->id;
@@ -185,9 +183,7 @@ class IncidenciaController extends Controller
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
 
-        // Única excepción al "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO,
-        // pero SOLO si el reportador lo pidió (bandera reapertura_solicitada). RESUELTO queda
-        // cerrado para todos, admin incluido, hasta esa reapertura. El técnico nunca puede.
+        // Única excepción al "RESUELTO es terminal": el admin reabre a EN_PROCESO solo si el reportador lo pidió (bandera reapertura_solicitada).
         $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto->value
             && $nuevo === EstadoIncidencia::EnProceso->value
             && $request->user()->esAdmin()
@@ -221,12 +217,10 @@ class IncidenciaController extends Controller
             });
         }
 
-        // El observer invalida la caché en el update Eloquent, pero la rama del SP (resolver_incidencia)
-        // es SQL crudo y no dispara eventos: aquí la invalidamos a mano.
+        // La rama del SP (resolver_incidencia) es SQL crudo y no dispara el observer: se invalida la caché a mano.
         Cache::forget('dashboard_metricas');
 
-        // Ya se atendió la solicitud: se marcan leídas las notificaciones de reapertura de todos
-        // los admins, para que la alerta roja desaparezca de sus campanas.
+        // Ya se atendió la solicitud: se marcan leídas las notificaciones de reapertura de todos los admins.
         if ($esReaperturaDeAdmin) {
             Notificacion::where('id_incidencia', $incidencia->id_incidencia)
                 ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
@@ -237,10 +231,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
 
-    // El reportador pide reabrir una incidencia ya resuelta: NO cambia el estado, solo enciende
-    // la bandera y avisa a los admins con el motivo para que decidan si la reabren (cambiarEstado).
-    // Solo 1 solicitud a la vez: mientras la bandera siga encendida (el admin no ha reabierto),
-    // no se puede pedir otra. Leer la notificación NO libera el cupo, solo reabrir lo hace.
+    // No cambia el estado: solo enciende la bandera y avisa a los admins; solo reabrir (no leer) libera el cupo para otra solicitud.
     public function solicitarReapertura(SolicitarReaperturaRequest $request, Incidencia $incidencia)
     {
         if ($incidencia->reapertura_solicitada) {

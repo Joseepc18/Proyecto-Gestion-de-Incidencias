@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    // Métricas para el panel del admin. Se cachean 60s en Redis para no recalcular
-    // los conteos y promedios en cada carga.
+    // Métricas para el panel del admin, cacheadas 60s en Redis para no recalcular en cada carga.
     public function metricas()
     {
         $datos = Cache::remember('dashboard_metricas', 60, function () {
@@ -67,8 +66,7 @@ class DashboardController extends Controller
         return response()->json($datos);
     }
 
-    // Métricas personales del panel del técnico: solo cuentan sus asignaciones.
-    // Sin caché a propósito: son consultas chicas por usuario y así el panel refleja al instante lo que resuelve.
+    // Métricas personales del panel del técnico (solo sus asignaciones); sin caché para reflejar al instante lo resuelto.
     public function metricasTecnico(Request $request)
     {
         $user = $request->user();

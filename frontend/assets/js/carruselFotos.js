@@ -6,12 +6,9 @@
 // Duración de la animación de deslizamiento (debe coincidir con la transición del CSS).
 const CARRUSEL_DURACION_MS = 200;
 
-// Monta un carrusel dentro de `contenedor` a partir de un array de evidencias
-// ({ url_evidencia }). Si la lista está vacía, pinta el mensaje vacío en su lugar.
-// La imagen central lleva data-lightbox para reusar el visor de pantalla completa (lightbox.js).
+// La imagen central lleva data-lightbox para reusar el visor de pantalla completa (lightbox.js)
 function montarCarrusel(contenedor, evidencias, mensajeVacio) {
-  // Layout propio del carrusel (flex-columna, una sola foto a la vez): distinto del grid de
-  // miniaturas que usa el modo edición del ciudadano en este mismo contenedor (#fotosReporte).
+  // Distinto del grid de miniaturas del modo edición en este mismo contenedor (#fotosReporte)
   contenedor.className = "carrusel-fotos-wrap";
   contenedor.innerHTML = "";
 
@@ -74,8 +71,7 @@ function montarCarrusel(contenedor, evidencias, mensajeVacio) {
     dots.classList.toggle("d-none", unaSola);
   }
 
-  // Cambia a `nuevoIndice` deslizando en la dirección indicada (1 = hacia la izquierda/siguiente,
-  // -1 = hacia la derecha/anterior). La foto actual sale deslizándose y la nueva entra del lado opuesto.
+  // direccion: 1 = hacia la izquierda/siguiente, -1 = hacia la derecha/anterior
   function navegar(nuevoIndice, direccion) {
     if (animando || nuevoIndice === indice) return;
     animando = true;

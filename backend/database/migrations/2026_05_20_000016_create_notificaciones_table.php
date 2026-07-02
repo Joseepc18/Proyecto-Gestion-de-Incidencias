@@ -30,8 +30,7 @@ return new class extends Migration
         );
         ");
 
-        // Solo puede existir UNA notificación de COMENTARIO sin leer por (usuario, incidencia):
-        // es el ancla del UPSERT de fn_notificar_nuevo_comentario (ver migración de triggers).
+        // Solo una notificación de COMENTARIO sin leer por (usuario, incidencia): ancla del UPSERT de fn_notificar_nuevo_comentario.
         DB::statement("
             CREATE UNIQUE INDEX uq_notif_comentario_pendiente
                 ON notificaciones (id_usuario, id_incidencia)

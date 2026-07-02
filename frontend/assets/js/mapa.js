@@ -10,8 +10,7 @@ const MAPBOX_ESTILO_3D = "mapbox://styles/mapbox/standard-satellite";
 // Maqueta 3D plana sin foto aérea (edificios blancos), por si se quiere ver solo el callejero.
 const MAPBOX_ESTILO_MAQUETA = "mapbox://styles/mapbox/standard";
 
-// Repinta el mapa cuando su contenedor cambia de tamaño (evita que nazca gris por
-// medirse antes de tener su tamaño final, p. ej. dentro de un panel que aún se renderiza).
+// Evita que el mapa nazca gris por medirse antes de tener su tamaño final
 function observarTamanoMapa(map) {
   if (typeof ResizeObserver === "undefined") return;
   const ro = new ResizeObserver(function () {
@@ -23,8 +22,7 @@ function observarTamanoMapa(map) {
   });
 }
 
-// Devuelve la ciudad del catálogo más cercana a (lat, lng) por distancia haversine.
-// Ignora ciudades sin coordenadas. Sirve para autocompletar provincia/ciudad al marcar en el mapa.
+// Distancia haversine a la ciudad del catálogo más cercana; ignora ciudades sin coordenadas
 function ciudadMasCercana(ciudades, lat, lng) {
   const radioTierra = 6371;
   const aRad = function (g) {
@@ -53,8 +51,7 @@ function normalizarNombre(s) {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-// ¿El punto (lng, lat) cae dentro de estos anillos? Ray-casting con regla par/impar
-// (los agujeros se descuentan solos al contar cruces sobre todos los anillos).
+// Ray-casting con regla par/impar: los agujeros se descuentan solos al contar cruces
 function puntoEnAnillos(lng, lat, anillos) {
   let dentro = false;
   anillos.forEach(function (anillo) {
@@ -78,9 +75,7 @@ function puntoEnGeometria(lng, lat, geometry) {
   });
 }
 
-// Resuelve la ciudad del catálogo en un punto: primero por el polígono de cantón que lo contiene
-// (preciso, distingue cantones vecinos), y si no cae en ninguno conocido, por la más cercana (fallback).
-// cantonesGeo puede ser null (aún no cargó) → usa directamente el fallback.
+// Primero por el polígono de cantón que la contiene; si no cae en ninguno, fallback a la más cercana
 function ciudadEnPunto(cantonesGeo, ciudades, lat, lng) {
   if (cantonesGeo && cantonesGeo.features) {
     const feat = cantonesGeo.features.find(function (f) {
@@ -102,8 +97,7 @@ function ciudadEnPunto(cantonesGeo, ciudades, lat, lng) {
   return ciudadMasCercana(ciudades, lat, lng);
 }
 
-// Botón flotante para alternar entre vista 3D (edificios) y satélite. Mapbox no tiene
-// control nativo de cambio de estilo, así que lo añadimos al contenedor de controles.
+// Mapbox no tiene control nativo de cambio de estilo, así que lo añadimos a mano
 function agregarControlEstilo(map) {
   const grupo = document.createElement("div");
   grupo.className = "mapboxgl-ctrl mapboxgl-ctrl-group mapa-estilo-toggle";
@@ -152,8 +146,7 @@ function crearMapaBase(idContenedor, opciones) {
     style: MAPBOX_ESTILO_3D,
     center: centro,
     zoom: zoom,
-    // Tope a 18: más allá la imagen satelital se sobrezoomea y se ve pixelada
-    // (en Ecuador la foto aérea no tiene más resolución nativa).
+    // Tope a 18: en Ecuador la foto aérea no tiene más resolución nativa
     maxZoom: 18,
     pitch: 45,
     bearing: -17,

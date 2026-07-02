@@ -11,8 +11,7 @@
  */
 /* exported renderizarPaginacion */
 
-// Lista de páginas a mostrar: extremos siempre, una ventana alrededor de la actual,
-// "…" solo cuando oculta más de una página (si oculta una sola, se muestra ese número).
+// "…" solo cuando oculta más de una página; si oculta una sola, se muestra ese número
 function construirPaginas(current, last) {
   if (last <= 7) {
     return Array.from({ length: last }, (_, i) => i + 1);

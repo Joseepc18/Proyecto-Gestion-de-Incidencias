@@ -1,5 +1,4 @@
-// password.js — Botón de mostrar/ocultar contraseña reutilizable.
-// Por delegación: se engancha a cualquier botón .toggle-password de la página.
+// password.js — Botón de mostrar/ocultar contraseña, por delegación sobre .toggle-password
 
 document.addEventListener("click", function (e) {
   const boton = e.target.closest(".toggle-password");

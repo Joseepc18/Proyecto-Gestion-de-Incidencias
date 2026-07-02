@@ -81,8 +81,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       },
     });
 
-    // El textarea de "Otro" solo se muestra (y se vuelve obligatorio) al elegir esa opción:
-    // un required oculto rompería reportValidity (campo inválido no enfocable).
+    // Un required oculto rompería reportValidity (campo inválido no enfocable)
     const selTipo = document.getElementById("modalMotivoTipo");
     const wrapOtro = document.getElementById("modalMotivoOtroWrap");
     const txtOtro = document.getElementById("modalMotivoOtro");

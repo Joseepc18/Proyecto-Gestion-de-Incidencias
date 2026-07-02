@@ -30,10 +30,9 @@ class IncidenciaResource extends JsonResource
             'fecha_resolucion' => $this->fecha_resolucion,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            // Bandera de la incidencia: el reportador pidió reabrir y el admin aún no lo hace.
-            // Habilita el botón "Reabrir" del admin (solo relevante cuando está RESUELTO).
+            // Habilita el botón "Reabrir" del admin cuando el reportador ya lo pidió (solo relevante en RESUELTO).
             'reapertura_pendiente' => (bool) $this->reapertura_solicitada,
-            // Relaciones: solo se incluyen si el controller las cargó (whenLoaded).
+            // Relaciones: solo se incluyen si el controller las cargó.
             'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
             'subtipo' => $this->whenLoaded('subtipo'),
             'ciudad' => $this->whenLoaded('ciudad'),

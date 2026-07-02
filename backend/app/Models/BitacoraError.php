@@ -23,8 +23,7 @@ class BitacoraError extends Model
         return $this->belongsTo(User::class, 'id_usuario', 'id');
     }
 
-    // Registra un error en la bitácora desde los catch; $contexto es 'Clase@metodo'.
-    // Si $origen es una QueryException, el SQL se oculta (mismo criterio que el handler global).
+    // Registra un error en la bitácora desde los catch ($contexto = 'Clase@metodo'); si es QueryException, oculta el SQL.
     public static function registrar(?User $usuario, string $tipo, string $contexto, string $mensaje, ?Throwable $origen = null): void
     {
         $descripcion = $origen instanceof QueryException

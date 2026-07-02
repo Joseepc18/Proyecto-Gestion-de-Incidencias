@@ -188,8 +188,7 @@ function inicioSegunRol(rol) {
   return "../mis-incidencias/mis-incidencias.html";
 }
 
-// Página de detalle de una incidencia: la misma para los tres roles (la página decide qué mostrar).
-// abrirChat: añade ?chat=1 para que la página abra el chat directamente (notificación de comentario).
+// abrirChat añade ?chat=1 para que la página abra el chat directamente
 /* exported rutaDetalleIncidencia */
 function rutaDetalleIncidencia(id, rol, abrirChat = false) {
   return "../detalle-incidencia/detalle-incidencia.html?id=" + id + (abrirChat ? "&chat=1" : "");

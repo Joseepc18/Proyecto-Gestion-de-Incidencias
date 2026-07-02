@@ -1,7 +1,4 @@
-// detalle-incidencia-edicion.js — Edición del ciudadano dueño.
-// Editar texto + ubicación (botón "Editar"): solo mientras está PENDIENTE.
-// Subir/borrar fotos del reporte: hasta que se resuelve (PENDIENTE y EN_PROCESO).
-// El núcleo (detalle-incidencia.js) llama a edicionAlCargarDetalle cuando hay datos.
+// detalle-incidencia-edicion.js — Edición del ciudadano dueño, llamado desde el núcleo (detalle-incidencia.js)
 
 /* exported edicionAlCargarDetalle */
 
@@ -20,9 +17,7 @@ let galeriaReporte = null;
 // Instancia del picker de ubicación en edición (para liberarla al volver a lectura).
 let pickerEdicion = null;
 
-// Hook del núcleo: decide si esta incidencia es editable por quien la mira.
-// Datos (texto/ubicación) y fotos del reporte tienen ventanas distintas: los datos solo
-// mientras está PENDIENTE, las fotos hasta que se resuelve (igual que el técnico con las suyas).
+// Datos (texto/ubicación) solo editables en PENDIENTE; fotos hasta que se resuelve
 function edicionAlCargarDetalle() {
   const esDueno = incActual.id_usuario === usuarioActual.id;
 
@@ -50,12 +45,9 @@ function edicionAlCargarDetalle() {
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
 }
 
-// Zona de subida/borrado de fotos del reporte: activa en PENDIENTE y EN_PROCESO (se cierra
-// solo al resolverse). Independiente del modo edición de texto/ubicación (solo PENDIENTE).
+// Activa en PENDIENTE y EN_PROCESO, independiente del modo edición de texto/ubicación
 function prepararFotosReporte() {
-  // Modo compacto (sin dropzone grande): el azulejo "+" va inline en la grilla de fotos
-  // (renderEvidenciasReporteEditable), así no se desborda el panel. La cola de fotos por
-  // subir se previsualiza abajo con su botón "Subir".
+  // Modo compacto: el azulejo "+" va inline en la grilla para no desbordar el panel
   galeriaReporte = crearGaleriaFotos({
     input: document.getElementById("editFotos"),
     preview: document.getElementById("editFotosPreview"),
@@ -226,12 +218,10 @@ function evidenciasReporte() {
   return (incActual.evidencias || []).filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
 }
 
-// Pinta las fotos del reporte (grid) con botón × para borrar, más un azulejo "+" al lado
-// para agregar más (mientras quede cupo). Sin fotos y sin cupo se muestra un texto.
+// Grid de miniaturas con botón × para borrar y un azulejo "+" si aún hay cupo
 function renderEvidenciasReporteEditable() {
   const cont = document.getElementById("fotosReporte");
-  // Reemplaza el layout del carrusel (flex-columna, lo pone montarCarrusel) por el grid
-  // de miniaturas que arma esta función (envolvente, no de una sola foto).
+  // Reemplaza el layout de carrusel (flex-columna) que deja montarCarrusel
   cont.className = "d-flex gap-2 flex-wrap align-items-center";
   cont.innerHTML = "";
   const reporte = evidenciasReporte();

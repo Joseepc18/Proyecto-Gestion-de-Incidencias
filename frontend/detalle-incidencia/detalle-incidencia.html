@@ -49,8 +49,7 @@
                 >
                   <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> No quedó resuelto
                 </button>
-                <!-- Solo admin, y solo si el reportador pidió reabrirla (RESUELTO es de solo
-                     lectura hasta entonces, incluso para el admin) -->
+                <!-- Solo admin, y solo si el reportador pidió reabrirla -->
                 <button
                   class="btn btn-outline-warning btn-sm d-none"
                   type="button"
@@ -322,8 +321,7 @@
                       <!-- Carril REPORTE: carrusel de solo lectura (o grid editable del ciudadano dueño) -->
                       <div id="fotosReporte"></div>
 
-                      <!-- Cola de fotos por subir del ciudadano dueño (el "+" para agregar va
-                           inline en #fotosReporte; aquí solo la previsualización y el botón Subir) -->
+                      <!-- Cola de fotos por subir del ciudadano dueño: previsualización y botón Subir -->
                       <div id="evidenciasReporteEdicion" class="d-none mt-2">
                         <input
                           class="d-none"
@@ -358,9 +356,7 @@
                 <!-- Columna 3: panel único de Acciones (admin y/o técnico responsable) -->
                 <!-- Si queda vacío (ciudadano / técnico de apoyo), el JS la colapsa y deja 2 columnas -->
                 <div class="detalle-col" id="colGestion">
-                  <!-- Sin .detalle-fill/.detalle-fill-cuerpo a propósito: con scroll interno forzado,
-                       la lista desplegable del combobox (position:absolute) empuja el alto scrolleable
-                       y aparece un scroll de la tarjeta completa solo por abrir el select. -->
+                  <!-- Sin .detalle-fill a propósito: rompería el dropdown del combobox (position:absolute) -->
                   <section class="panel" id="panelAcciones">
                     <div class="p-3">
                       <h3 class="panel-titulo-tool"><i class="bi bi-sliders me-1"></i> Acciones</h3>

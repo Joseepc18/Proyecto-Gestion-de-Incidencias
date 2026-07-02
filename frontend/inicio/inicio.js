@@ -77,8 +77,7 @@ async function cargarDashboard() {
   pintarKpis(totales);
   document.getElementById("adminDashboard").classList.remove("d-none");
 
-  // Gráficas y mapa se dibujan por separado: si una librería no cargó (5xx intermitente del
-  // túnel/caché) se reintenta, y el fallo de una parte no debe borrar la otra.
+  // Gráficas y mapa se dibujan por separado: el fallo de una parte no debe borrar la otra
   const hayChart = await asegurarLibreria("Chart", "../assets/vendors/chartjs/chart.umd.min.js");
   if (hayChart) {
     try {
@@ -364,8 +363,7 @@ async function pintarMapa(porProvincia) {
       scrollWheelZoom: true,
       zoomControl: true,
     });
-    // Repinta el coroplético cuando su contenedor cambia de tamaño (reacciona al hecho
-    // real en vez de adivinar con un setTimeout que puede dispararse antes de tiempo).
+    // Reacciona al tamaño real en vez de adivinar con un setTimeout
     if (typeof ResizeObserver !== "undefined") {
       const ro = new ResizeObserver(function () {
         mapaProv.invalidateSize();

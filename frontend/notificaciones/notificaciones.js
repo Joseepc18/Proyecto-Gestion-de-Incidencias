@@ -29,13 +29,11 @@ function actualizarContador(noLeidas) {
   btnTodas.disabled = noLeidas === 0;
 }
 
-// Una fila de notificación (botón que lleva al detalle). Se reutiliza como cabecera
-// de grupo y como hija desplegada. createElement + textContent (sin innerHTML) para no abrir un XSS.
+// createElement + textContent (sin innerHTML) para no abrir un XSS
 function filaNotificacion(n, esHija) {
   const item = document.createElement("button");
   item.type = "button";
-  // Igual que la campana: "notification-alert" para las solicitudes de reapertura (rojo,
-  // incluso leídas) y "no-leida" siempre según el estado real (si no, un clic nunca la marca leída).
+  // "no-leida" sigue el estado real; si no, un clic nunca la marcaría como leída
   const esAlerta = n.tipo_notificacion === "SOLICITUD_REAPERTURA";
   item.className =
     "notification-item notif-page-item" +
@@ -72,8 +70,7 @@ function filaNotificacion(n, esHija) {
   return item;
 }
 
-// Un grupo (varias notificaciones de una misma incidencia): la más reciente como
-// cabecera navegable + chevron que despliega el resto.
+// La más reciente queda como cabecera navegable + chevron que despliega el resto
 function grupoNotificaciones(grupo) {
   const wrap = document.createElement("div");
   wrap.className = "notif-group";
@@ -134,8 +131,7 @@ function render() {
     return;
   }
 
-  // Agrupa conservando el orden (ya viene por fecha desc). Las INCIDENCIA_ELIMINADA
-  // (sin incidencia) van cada una en su propio grupo.
+  // Las INCIDENCIA_ELIMINADA (sin incidencia) van cada una en su propio grupo
   const grupos = [];
   const indice = new Map();
   visibles.forEach(function (n) {

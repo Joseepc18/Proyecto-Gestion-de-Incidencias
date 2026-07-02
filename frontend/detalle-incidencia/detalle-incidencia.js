@@ -1,6 +1,4 @@
-// detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles).
-// Carga la incidencia, pinta lo compartido (info, mapa, fotos, historial, chat) y
-// dispara los "hooks" de los módulos por rol (gestión y edición) cuando hay datos.
+// detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
@@ -152,8 +150,7 @@ function pintarMapaLectura() {
   ]);
 }
 
-// Convierte el mapa de solo-lectura en un selector de ubicación (lo usa el módulo de edición).
-// Devuelve el picker para que el llamador cablee "Usar mi ubicación".
+// Convierte el mapa de solo-lectura en un selector de ubicación (lo usa el módulo de edición)
 function activarMapaPicker(lat, lng, onCambio) {
   if (mapaVista) {
     mapaVista.map.remove();
@@ -190,8 +187,7 @@ function pintarBadgePrioridad(prioridad) {
   }
 }
 
-// Reparte las evidencias en los 2 carriles (reporte / resolución) como carruseles de solo lectura.
-// El módulo de edición sobrescribe #fotosReporte con su grid editable si es el dueño.
+// El módulo de edición sobrescribe #fotosReporte con su grid editable si es el dueño
 function pintarFotos() {
   const evidencias = incActual.evidencias || [];
   const reporte = evidencias.filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
@@ -252,8 +248,7 @@ async function cargarAsignaciones(id) {
   }
 }
 
-// Si el panel de Acciones no tiene ningún grupo visible (ciudadano / técnico de apoyo),
-// se oculta la columna y la grilla pasa de 3 a 2 columnas para no desperdiciar el ancho.
+// Sin grupos visibles en Acciones, oculta la columna y la grilla pasa de 3 a 2 columnas
 function ajustarLayout() {
   const col = document.getElementById("colGestion");
   const grid = document.querySelector(".detalle-grid");

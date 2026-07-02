@@ -12,8 +12,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // Listado de usuarios con filtro de rol. Por defecto oculta los suspendidos
-    // (soft delete); solo los muestra al pedir ?rol=suspendido.
+    // Listado de usuarios con filtro de rol; oculta los suspendidos (soft delete) salvo ?rol=suspendido.
     public function listado(Request $request)
     {
         $query = User::with('rol')->orderBy('name');
@@ -26,8 +25,7 @@ class UserController extends Controller
             }
         }
 
-        // through() envuelve cada usuario en UserResource (incluye foto_perfil, oculta email ajeno)
-        // sin alterar el shape de paginación de nivel superior que consume el frontend.
+        // through() envuelve cada usuario en UserResource sin alterar el shape de paginación que consume el frontend.
         return $query->paginate($this->perPage($request))
             ->through(fn ($usuario) => new UserResource($usuario));
     }

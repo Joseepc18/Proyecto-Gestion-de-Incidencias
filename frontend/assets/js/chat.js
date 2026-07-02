@@ -40,8 +40,7 @@ function obtenerEcho() {
   return echoSingleton;
 }
 
-// idContenedor: div del chat; idIncidencia: hilo; usuario: autenticado (para "Tú").
-// opts.soloLectura: true deshabilita el input y muestra un aviso (incidencia RESUELTO).
+// opts.soloLectura deshabilita el input y muestra un aviso (incidencia RESUELTO)
 function crearChat(idContenedor, idIncidencia, usuario, opts) {
   const cont = document.getElementById(idContenedor);
   if (!cont) return null;

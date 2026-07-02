@@ -2,8 +2,7 @@
 
 /* exported crearMenuAcciones */
 
-// acciones: [{ icon, label, handler, peligro }] — peligro pinta el texto en rojo.
-// icon es una clase Bootstrap Icons ya completa (p. ej. "bi bi-pencil me-2").
+// acciones[].peligro pinta el texto en rojo
 function crearMenuAcciones(acciones) {
   const dropdown = document.createElement("div");
   dropdown.className = "dropdown";

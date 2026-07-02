@@ -1,19 +1,15 @@
 // comboboxBuscable.js — Convierte un <select> oculto en un campo de texto con autocompletado.
-// El <select> real sigue siendo la fuente de verdad (otras funciones lo pueblan/leen igual que
-// antes); este helper solo dibuja una lista filtrable encima y sincroniza select.value + change.
 
 /* exported crearComboboxBuscable */
 
-// idSelect: <select> oculto ya existente. idWrapper: contenedor con .combobox-input + .combobox-lista.
-// Devuelve { resetear } para limpiar el texto cuando algo externo repuebla el select (p. ej. tras asignar).
+// Devuelve { resetear } para limpiar el texto cuando algo externo repuebla el select
 function crearComboboxBuscable(idSelect, idWrapper) {
   const select = document.getElementById(idSelect);
   const wrapper = document.getElementById(idWrapper);
   const input = wrapper.querySelector(".combobox-input");
   const lista = wrapper.querySelector(".combobox-lista");
 
-  // Opciones reales del select (no la de placeholder, ni las ocultas/deshabilitadas por
-  // sincronizarSelects — el técnico ya elegido en el otro combobox no debe aparecer aquí).
+  // Excluye placeholder y opciones ocultas/deshabilitadas por sincronizarSelects
   function opcionesDisponibles(filtro) {
     const texto = (filtro || "").trim().toLowerCase();
     return Array.from(select.options).filter(

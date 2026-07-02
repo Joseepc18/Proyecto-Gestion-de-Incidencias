@@ -2,9 +2,7 @@
 
 /* exported poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe */
 
-// Llena selectHijo con items [{value, text}] ya filtrados por el padre.
-// opcionVacio: texto del <option> cuando no hay padre elegido o sin hijos.
-// Devuelve true si el select quedó habilitado con opciones.
+// Devuelve true si el select quedó habilitado con opciones
 function poblarSelectCascada(selectHijo, items, opcionVacio) {
   selectHijo.innerHTML = "";
   if (!items || items.length === 0) {

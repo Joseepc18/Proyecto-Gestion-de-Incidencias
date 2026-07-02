@@ -27,8 +27,7 @@ function tiempoRelativo(iso) {
   return fecha.toLocaleDateString("es-EC");
 }
 
-// HTML de un "estado vacío" (lista sin datos): icono + título + texto opcional.
-// Es distinto de un error: tono neutro, no rojo. Para tablas usar filaVaciaHtml.
+// Tono neutro, no rojo (distinto de un error); para tablas usar filaVaciaHtml
 function estadoVacioHtml(icono, titulo, texto) {
   return (
     '<div class="estado-vacio">' +
@@ -43,8 +42,7 @@ function estadoVacioHtml(icono, titulo, texto) {
   );
 }
 
-// Garantiza que una librería global (Chart, L) esté cargada; si un 5xx del túnel/caché
-// dejó el <script> sin ejecutar, la reinyecta con cache-buster para saltar la copia mala.
+// Si un 5xx del túnel/caché dejó el <script> sin ejecutar, la reinyecta con cache-buster
 function asegurarLibreria(nombreGlobal, src) {
   if (typeof window[nombreGlobal] !== "undefined") return Promise.resolve(true);
   return new Promise(function (resolve) {

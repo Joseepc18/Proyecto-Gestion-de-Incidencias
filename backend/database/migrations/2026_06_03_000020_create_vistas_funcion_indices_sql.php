@@ -9,8 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Vista v_incidencias_completas: une 6 tablas (incidencia, usuario, subtipo/tipo, ciudad, provincia).
-        // DEMOSTRATIVA (rúbrica "BD avanzada"): la app lista/detalla con Eloquent + eager loading, no la consulta.
+        // Vista v_incidencias_completas: une 6 tablas; DEMOSTRATIVA (rúbrica "BD avanzada"), la app usa Eloquent + eager loading.
         DB::unprepared('
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
@@ -101,8 +100,7 @@ return new class extends Migration
             ORDER BY total DESC;
         ");
 
-        // Función calcular_tiempo_resolucion: días que tardó en resolverse una incidencia (NULL si no está resuelta).
-        // DEMOSTRATIVA (rúbrica "BD avanzada"): es per-incidencia; el dashboard usa promedios agregados, no la invoca.
+        // Función calcular_tiempo_resolucion: días que tardó en resolverse (NULL si no); DEMOSTRATIVA, el dashboard usa agregados.
         DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_tiempo_resolucion(p_id_incidencia BIGINT)
             RETURNS NUMERIC AS $$
@@ -132,8 +130,7 @@ return new class extends Migration
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones(id_usuario);');
         // Acelera el conteo de evidencias por incidencia (trigger fn_limite_evidencias y EvidenciaController@subir).
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_evidencias_incidencia ON evidencias(id_incidencia);');
-        // Postgres no indexa las FK automáticamente. id_ciudad e id_subtipo_incidencia se filtran
-        // (listado) y se joinean (dashboard, vistas de métricas) sin índice.
+        // Postgres no indexa las FK automáticamente: id_ciudad e id_subtipo_incidencia se filtraban/joineaban sin índice.
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_ciudad ON incidencias(id_ciudad);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_subtipo ON incidencias(id_subtipo_incidencia);');
     }

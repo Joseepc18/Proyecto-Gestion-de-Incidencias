@@ -162,9 +162,7 @@
                       </select>
                     </div>
 
-                    <!-- Estado (solo admin) -->
-                    <!-- El estado inicial de toda nueva incidencia es PENDIENTE; el selector se deja
-                         oculto para que el admin no cree una incidencia RESUELTO sin fecha/historial. -->
+                    <!-- Oculto: toda incidencia nueva nace PENDIENTE, nunca RESUELTO sin historial -->
                     <div class="col-sm-3 d-none" aria-hidden="true">
                       <label class="form-label" for="crearEstado">Estado</label>
                       <select class="form-select" id="crearEstado">

@@ -17,8 +17,7 @@ class EliminarIncidenciaRequest extends FormRequest
 
     public function rules(): array
     {
-        // El motivo solo aplica cuando alguien más borra la incidencia de otro (el admin):
-        // el dueño borrando la suya propia no necesita explicarse a sí mismo.
+        // El motivo solo aplica cuando alguien más borra la incidencia de otro (el admin).
         $incidencia = $this->route('incidencia');
         $esPropia = $incidencia && $incidencia->id_usuario === $this->user()?->id;
 
