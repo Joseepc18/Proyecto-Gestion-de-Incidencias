@@ -5,7 +5,7 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Color del punto del historial por estado (no viene de estadoConfig: ahí solo hay clase/icono/texto de badge).
 const colorHistorial = {
@@ -87,7 +87,6 @@ async function cargarDetalle(id) {
     document.getElementById("metaReportadoPor").textContent = reporta;
     document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(inc.ciudad);
     document.getElementById("metaFechaCreacion").textContent = fecha;
-    document.getElementById("metaCreadoHace").textContent = tiempoRelativo(inc.created_at);
 
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
     if (inc.descripcion_incidencia) {
@@ -235,6 +234,10 @@ async function cargarAsignaciones(id) {
     const asignaciones = await apiFetch("/incidencias/" + id + "/asignaciones");
     const responsable = asignaciones.find((a) => a.rol_asignado === "RESPONSABLE");
     responsableActual = responsable || null;
+
+    // Tarjeta de la barra de meta-información (solo el responsable, el apoyo no).
+    document.getElementById("metaTecnicoResponsable").textContent =
+      responsable && responsable.usuario ? responsable.usuario.name : "Sin asignar";
 
     pintarParticipantes();
     actualizarChatFab();

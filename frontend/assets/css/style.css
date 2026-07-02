@@ -2639,7 +2639,7 @@ html[data-theme="dark"] {
   white-space: nowrap;
 }
 
-/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha / Creado hace */
+/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha / Técnico responsable */
 .detalle-meta-bar {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
