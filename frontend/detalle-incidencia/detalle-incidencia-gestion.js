@@ -17,6 +17,12 @@ let comboAyudante = null;
 // Galería de fotos de resolución (gestionada por galeriaFotos.js).
 let galeriaResolucion = null;
 
+// ¿La incidencia está cerrada (RESUELTO)? Prioridad, asignaciones y estado quedan de solo
+// lectura para el admin; solo se reabre con el botón dedicado si hay solicitud pendiente.
+function gestionBloqueada() {
+  return incActual.estado_incidencia === "RESUELTO";
+}
+
 // Hook del núcleo: al cargar el detalle. Revela y cablea lo del admin.
 function gestionAlCargarDetalle(id) {
   if (!esAdmin) return;
@@ -85,12 +91,15 @@ function prepararPrioridad(id) {
 // Resalta el botón de la prioridad actual pintándolo con el mismo color que su badge
 // (prioridadConfig.clase, ej. "text-bg-danger"), para que el distintivo sea consistente.
 function marcarPrioridadActiva() {
+  const bloqueada = gestionBloqueada();
   document.querySelectorAll("#prioridadBotones .btn-tool").forEach(function (b) {
     const cfg = prioridadConfig[b.dataset.prioridad];
     const activa = b.dataset.prioridad === incActual.prioridad_incidencia;
     Object.values(prioridadConfig).forEach((c) => b.classList.remove(...c.clase.split(" ")));
     b.classList.toggle("activa", activa);
     if (activa) b.classList.add(...cfg.clase.split(" "));
+    // En RESUELTO la prioridad es de solo lectura (backend responde 403 igual).
+    b.disabled = bloqueada;
   });
 }
 
@@ -285,8 +294,13 @@ function renderAsignaciones(asignaciones, id) {
     ayudantesLista.innerHTML = '<p class="text-muted small mb-0">Sin ayudantes asignados.</p>';
   }
 
+  // En RESUELTO las asignaciones quedan congeladas: se ocultan los formularios de agregar
+  // (el de quitar se omite en filaTecnico). Solo se muestra quién está asignado, de lectura.
+  const bloqueada = gestionBloqueada();
   const formResp = document.getElementById("responsableForm");
-  if (formResp) formResp.classList.toggle("d-none", !!responsable);
+  if (formResp) formResp.classList.toggle("d-none", bloqueada || !!responsable);
+  const formAyu = document.getElementById("ayudanteForm");
+  if (formAyu) formAyu.classList.toggle("d-none", bloqueada);
 }
 
 // Fila visual de un técnico asignado (avatar + nombre + quitar).
@@ -303,6 +317,9 @@ function filaTecnico(asig, idIncidencia, color) {
   nombre.className = "tecnico-nombre";
   nombre.textContent = asig.usuario ? asig.usuario.name : "—";
   fila.appendChild(nombre);
+
+  // En RESUELTO no se puede quitar (asignaciones congeladas): sin botón de quitar.
+  if (gestionBloqueada()) return fila;
 
   const btn = document.createElement("button");
   btn.type = "button";

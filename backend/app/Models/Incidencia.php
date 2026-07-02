@@ -23,12 +23,14 @@ class Incidencia extends Model
         'id_subtipo_incidencia',
         'id_usuario',
         'fecha_resolucion',
+        'reapertura_solicitada',
     ];
 
     protected $casts = [
         'latitud_incidencia' => 'decimal:8',
         'longitud_incidencia' => 'decimal:8',
         'fecha_resolucion' => 'datetime',
+        'reapertura_solicitada' => 'boolean',
     ];
 
     public function ciudad()

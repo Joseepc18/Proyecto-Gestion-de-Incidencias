@@ -2125,6 +2125,13 @@ html[data-theme="dark"] {
   color: var(--admin-primary);
 }
 
+/* Variante mediana (130px): mismo tamaño que las miniaturas ya subidas, va inline al lado. */
+.foto-agregar-md {
+  width: 130px;
+  height: 130px;
+  font-size: 2rem;
+}
+
 /* Mis incidencias — vista de mapa estilo centro de control */
 .mis-mapa-main {
   position: relative;

@@ -53,9 +53,11 @@ function edicionAlCargarDetalle() {
 // Zona de subida/borrado de fotos del reporte: activa en PENDIENTE y EN_PROCESO (se cierra
 // solo al resolverse). Independiente del modo edición de texto/ubicación (solo PENDIENTE).
 function prepararFotosReporte() {
+  // Modo compacto (sin dropzone grande): el azulejo "+" va inline en la grilla de fotos
+  // (renderEvidenciasReporteEditable), así no se desborda el panel. La cola de fotos por
+  // subir se previsualiza abajo con su botón "Subir".
   galeriaReporte = crearGaleriaFotos({
     input: document.getElementById("editFotos"),
-    dropzone: document.getElementById("dropzoneFotos"),
     preview: document.getElementById("editFotosPreview"),
     error: document.getElementById("editFotosError"),
     cupo: cupoFotos,
@@ -224,17 +226,16 @@ function evidenciasReporte() {
   return (incActual.evidencias || []).filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
 }
 
-// Pinta las fotos del reporte con botón × para eliminación inmediata.
+// Pinta las fotos del reporte (grid) con botón × para borrar, más un azulejo "+" al lado
+// para agregar más (mientras quede cupo). Sin fotos y sin cupo se muestra un texto.
 function renderEvidenciasReporteEditable() {
   const cont = document.getElementById("fotosReporte");
   // Reemplaza el layout del carrusel (flex-columna, lo pone montarCarrusel) por el grid
   // de miniaturas que arma esta función (envolvente, no de una sola foto).
-  cont.className = "d-flex gap-2 flex-wrap";
+  cont.className = "d-flex gap-2 flex-wrap align-items-center";
   cont.innerHTML = "";
   const reporte = evidenciasReporte();
-  if (reporte.length === 0) {
-    cont.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
-  }
+
   reporte.forEach(function (ev) {
     const wrap = document.createElement("div");
     wrap.className = "position-relative";
@@ -257,6 +258,21 @@ function renderEvidenciasReporteEditable() {
     wrap.appendChild(btn);
     cont.appendChild(wrap);
   });
+
+  // Azulejo "+" del tamaño de una miniatura para abrir el selector de archivos.
+  if (cupoFotos() > 0) {
+    const agregar = document.createElement("button");
+    agregar.type = "button";
+    agregar.className = "foto-agregar foto-agregar-md";
+    agregar.title = "Agregar fotos";
+    agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
+    agregar.addEventListener("click", function () {
+      document.getElementById("editFotos").click();
+    });
+    cont.appendChild(agregar);
+  } else if (reporte.length === 0) {
+    cont.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
+  }
 }
 
 // Elimina una foto del backend y actualiza la galería al instante.

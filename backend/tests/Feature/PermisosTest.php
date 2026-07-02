@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
 use App\Models\Evidencia;
+use App\Models\Notificacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -419,23 +420,94 @@ class PermisosTest extends TestCase
         $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
     }
 
-    // Solo 1 solicitud de reapertura pendiente a la vez: una segunda se rechaza (422)
-    // mientras la primera esté sin leer. Si el admin la lee, se libera el cupo.
-    public function test_no_se_puede_pedir_reapertura_doble_si_hay_una_pendiente(): void
+    // Solo 1 solicitud a la vez: mientras el admin no reabra, no se puede pedir otra.
+    // Que el admin LEA la notificación NO libera el cupo (se valida con la bandera, no con
+    // el estado de lectura): así el reportador no puede reenviar hasta que se reabra de verdad.
+    public function test_no_se_puede_pedir_reapertura_doble_hasta_que_el_admin_reabra(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
         $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        $this->crearUsuario('admin');
+        $admin = $this->crearUsuario('admin');
 
         Sanctum::actingAs($reportador);
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
             'motivo' => 'El hueco sigue igual, no lo taparon.',
         ])->assertOk();
 
-        // Segundo intento while la primera sigue sin leer: 422.
+        // El admin lee la notificación (no reabre todavía).
+        $notif = Notificacion::where('id_usuario', $admin->id)
+            ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')->firstOrFail();
+        Sanctum::actingAs($admin);
+        $this->patchJson("/api/notificaciones/{$notif->id_notificacion}/leida")->assertOk();
+
+        // Aunque ya la leyó, sigue pendiente: el botón "Reabrir" debe seguir visible.
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
+            ->assertOk()->assertJson(['reapertura_pendiente' => true]);
+
+        // Y el reportador NO puede reenviar mientras no se reabra: 422.
+        Sanctum::actingAs($reportador);
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
             'motivo' => 'Otro motivo distinto para reintentar.',
         ])->assertStatus(422);
+    }
+
+    // Tras reabrir, la bandera se apaga y el reportador ya podría volver a pedir reapertura.
+    public function test_reabrir_libera_una_nueva_solicitud_de_reapertura(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual.',
+        ])->assertOk();
+
+        // El admin reabre: la bandera se apaga.
+        Sanctum::actingAs($admin);
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
+            'estado_incidencia' => 'EN_PROCESO',
+        ])->assertOk();
+        $this->assertFalse($incidencia->fresh()->reapertura_solicitada);
+    }
+
+    // En RESUELTO ni el admin cambia la prioridad: el expediente queda de solo lectura.
+    public function test_admin_no_puede_cambiar_prioridad_en_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
+            'prioridad_incidencia' => 'ALTA',
+        ])->assertStatus(403);
+
+        $this->assertSame('MEDIA', $incidencia->fresh()->prioridad_incidencia);
+    }
+
+    // En RESUELTO el admin no puede asignar ni quitar técnicos (asignaciones congeladas).
+    public function test_admin_no_puede_asignar_ni_quitar_en_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'), ['estado_incidencia' => 'EN_PROCESO']);
+        $tecnico = $this->crearUsuario('tecnico');
+        $asignacion = AsignacionIncidencia::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'APOYO',
+        ]);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        // No puede asignar un nuevo técnico.
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $this->crearUsuario('tecnico')->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ])->assertStatus(422);
+
+        // Ni quitar la existente.
+        $this->deleteJson("/api/asignaciones/{$asignacion->id_asignacion}")->assertStatus(422);
+        $this->assertDatabaseHas('asignaciones_incidencia', ['id_asignacion' => $asignacion->id_asignacion]);
     }
 }

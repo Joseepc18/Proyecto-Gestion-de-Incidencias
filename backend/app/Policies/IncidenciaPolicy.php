@@ -32,8 +32,14 @@ class IncidenciaPolicy
 
     // Editar los detalles: solo admin o el autor mientras esté PENDIENTE.
     // Los técnicos (responsable incluido) NO editan los detalles de la incidencia.
+    // En RESUELTO queda de solo lectura para todos (incluido el admin y su prioridad):
+    // el expediente está cerrado; para tocarlo hay que reabrir primero (cambiarEstado).
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
+        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+            return Response::deny('La incidencia está resuelta; no se puede editar.');
+        }
+
         if ($user->esAdmin()) {
             return Response::allow();
         }

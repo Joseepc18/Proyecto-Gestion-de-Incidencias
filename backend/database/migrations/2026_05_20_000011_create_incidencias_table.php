@@ -23,6 +23,9 @@ return new class extends Migration
             id_subtipo_incidencia BIGINT NOT NULL,
             id_usuario BIGINT NOT NULL,
             fecha_resolucion TIMESTAMP,
+            -- El reportador pidió reabrir esta incidencia resuelta y el admin aún no lo ha hecho.
+            -- Se enciende al solicitar y se apaga solo cuando el admin reabre (no al leer la notificación).
+            reapertura_solicitada BOOLEAN NOT NULL DEFAULT FALSE,
             FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_subtipo_incidencia) REFERENCES subtipos_incidencia(id_subtipo_incidencia) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,

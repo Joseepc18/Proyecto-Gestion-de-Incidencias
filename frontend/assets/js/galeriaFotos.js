@@ -6,8 +6,8 @@
 
 // Crea (o pinta) la galería para subir fotos. opts:
 //   input     — <input type="file"> original (se le cablea change)
-//   dropzone  — elemento que actúa de zona de arrastre (click no abre selector:
-//               el "agregar más" y el input original siguen funcionando)
+//   dropzone  — OPCIONAL: zona de arrastre; si no se pasa (modo compacto), la página
+//               provee su propio botón de "agregar" y aquí no se pinta el azulejo "+".
 //   preview   — contenedor donde se pintan las miniaturas
 //   error     — elemento <div> para mostrar mensajes (opcional)
 //   cupo      — () => número de fotos que aún se pueden agregar (0 si lleno)
@@ -48,7 +48,7 @@ function crearGaleriaFotos(opts) {
   function render() {
     opts.preview.innerHTML = "";
     const cupo = opts.cupo();
-    opts.dropzone.classList.toggle("d-none", archivos.length > 0 || cupo <= 0);
+    if (opts.dropzone) opts.dropzone.classList.toggle("d-none", archivos.length > 0 || cupo <= 0);
 
     archivos.forEach(function (file, idx) {
       const cont = document.createElement("div");
@@ -77,7 +77,8 @@ function crearGaleriaFotos(opts) {
       opts.preview.appendChild(cont);
     });
 
-    if (archivos.length > 0 && archivos.length < cupo) {
+    // El azulejo "+" solo cuando hay dropzone; en modo compacto la página pone el suyo.
+    if (opts.dropzone && archivos.length > 0 && archivos.length < cupo) {
       const agregar = document.createElement("button");
       agregar.type = "button";
       agregar.className = "foto-agregar";
@@ -96,22 +97,24 @@ function crearGaleriaFotos(opts) {
     this.value = "";
   });
 
-  ["dragenter", "dragover"].forEach(function (ev) {
-    opts.dropzone.addEventListener(ev, function (e) {
+  if (opts.dropzone) {
+    ["dragenter", "dragover"].forEach(function (ev) {
+      opts.dropzone.addEventListener(ev, function (e) {
+        e.preventDefault();
+        opts.dropzone.classList.add("dropzone-fotos--activo");
+      });
+    });
+    ["dragleave", "dragend"].forEach(function (ev) {
+      opts.dropzone.addEventListener(ev, function () {
+        opts.dropzone.classList.remove("dropzone-fotos--activo");
+      });
+    });
+    opts.dropzone.addEventListener("drop", function (e) {
       e.preventDefault();
-      opts.dropzone.classList.add("dropzone-fotos--activo");
-    });
-  });
-  ["dragleave", "dragend"].forEach(function (ev) {
-    opts.dropzone.addEventListener(ev, function () {
       opts.dropzone.classList.remove("dropzone-fotos--activo");
+      procesar(e.dataTransfer.files);
     });
-  });
-  opts.dropzone.addEventListener("drop", function (e) {
-    e.preventDefault();
-    opts.dropzone.classList.remove("dropzone-fotos--activo");
-    procesar(e.dataTransfer.files);
-  });
+  }
 
   if (opts.btnSubir) {
     opts.btnSubir.addEventListener("click", async function () {
