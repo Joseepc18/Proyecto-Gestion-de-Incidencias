@@ -1,7 +1,45 @@
 // modal.js — Modal reutilizable para formularios pequeños (crear/editar). Devuelve Promise<boolean>.
 
-/* exported abrirModal */
+/* exported abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado */
 /* global escaparHtml */
+
+// HTML de un <select> de motivos frecuentes + "Otro" con textarea libre (eliminar incidencia, reapertura, etc.).
+function motivoConOtroHtml(opciones) {
+  const listaOpciones = opciones
+    .map((m) => '<option value="' + m + '">' + m + "</option>")
+    .join("");
+  return (
+    '<label for="modalMotivoTipo" class="form-label">Motivo</label>' +
+    '<select class="form-select" id="modalMotivoTipo" required>' +
+    '<option value="" disabled selected>Selecciona un motivo…</option>' +
+    listaOpciones +
+    '<option value="__otro__">Otro (especificar)</option>' +
+    "</select>" +
+    '<div class="mt-2 d-none" id="modalMotivoOtroWrap">' +
+    '<label for="modalMotivoOtro" class="form-label">Especifica el motivo</label>' +
+    '<textarea class="form-control" id="modalMotivoOtro" rows="3" minlength="5" maxlength="500"></textarea>' +
+    "</div>"
+  );
+}
+
+// Muestra/exige el textarea "Otro" solo al elegirlo; llamar tras abrirModal() con motivoConOtroHtml() en el cuerpo.
+function cablearMotivoConOtro() {
+  const selTipo = document.getElementById("modalMotivoTipo");
+  const wrapOtro = document.getElementById("modalMotivoOtroWrap");
+  const txtOtro = document.getElementById("modalMotivoOtro");
+  selTipo.addEventListener("change", function () {
+    const esOtro = selTipo.value === "__otro__";
+    wrapOtro.classList.toggle("d-none", !esOtro);
+    txtOtro.required = esOtro;
+    if (esOtro) txtOtro.focus();
+  });
+}
+
+// Lee el motivo final del form del modal: el texto libre si eligió "Otro", si no la opción tal cual.
+function leerMotivoSeleccionado(form) {
+  const tipo = form.querySelector("#modalMotivoTipo").value;
+  return tipo === "__otro__" ? form.querySelector("#modalMotivoOtro").value.trim() : tipo;
+}
 
 // alConfirmar(form): callback async; si lanza, el modal queda abierto y muestra el error.
 function abrirModal(opciones = {}) {

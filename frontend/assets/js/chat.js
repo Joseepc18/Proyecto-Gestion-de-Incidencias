@@ -1,20 +1,12 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch, obtenerToken, Echo, Pusher */
+/* global apiFetch, obtenerToken, Echo, Pusher, iniciales */
 /* exported crearChat */
 
 // Etiqueta legible del rol del autor de un mensaje.
 function etiquetaRol(rol) {
   const mapa = { admin: "Administrador", tecnico: "Técnico", normal: "Reportador" };
   return mapa[rol] || "Usuario";
-}
-
-// Iniciales para el avatar del chat cuando el contacto no tiene foto.
-function inicialesChat(nombre) {
-  const p = (nombre || "").trim().split(/\s+/);
-  const a = p[0] ? p[0][0] : "";
-  const b = p[1] ? p[1][0] : "";
-  return (a + b).toUpperCase() || "?";
 }
 
 // Instancia única de Echo para toda la página (evita abrir varias conexiones WebSocket).
@@ -132,7 +124,7 @@ function crearChat(idContenedor, idIncidencia, usuario, opts) {
           img.alt = "";
           avatar.appendChild(img);
         } else {
-          avatar.textContent = inicialesChat(c.usuario ? c.usuario.name : "");
+          avatar.textContent = iniciales(c.usuario ? c.usuario.name : "");
         }
         meta.appendChild(avatar);
       }

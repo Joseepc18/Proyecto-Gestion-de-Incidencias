@@ -3,7 +3,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -406,46 +406,21 @@ function prepararSolicitudReapertura() {
 }
 
 async function solicitarReapertura() {
-  const opciones = MOTIVOS_REAPERTURA.map(
-    (m) => '<option value="' + m + '">' + m + "</option>",
-  ).join("");
-
   const promesaModal = abrirModal({
     titulo: "No quedó resuelto",
     cuerpoHtml:
       '<p class="text-secondary small">Un administrador revisará tu solicitud antes de reabrirla.</p>' +
-      '<label for="modalMotivoTipo" class="form-label">Motivo</label>' +
-      '<select class="form-select" id="modalMotivoTipo" required>' +
-      '<option value="" disabled selected>Selecciona un motivo…</option>' +
-      opciones +
-      '<option value="__otro__">Otro (especificar)</option>' +
-      "</select>" +
-      '<div class="mt-2 d-none" id="modalMotivoOtroWrap">' +
-      '<label for="modalMotivoOtro" class="form-label">Especifica el motivo</label>' +
-      '<textarea class="form-control" id="modalMotivoOtro" rows="3" minlength="5" maxlength="500"></textarea>' +
-      "</div>",
+      motivoConOtroHtml(MOTIVOS_REAPERTURA),
     textoConfirmar: "Enviar solicitud",
     alConfirmar: async function (form) {
-      const tipo = form.querySelector("#modalMotivoTipo").value;
-      const motivo =
-        tipo === "__otro__" ? form.querySelector("#modalMotivoOtro").value.trim() : tipo;
       await apiFetch("/incidencias/" + idActual + "/solicitar-reapertura", {
         method: "POST",
-        body: JSON.stringify({ motivo: motivo }),
+        body: JSON.stringify({ motivo: leerMotivoSeleccionado(form) }),
       });
     },
   });
 
-  // El textarea de "Otro" solo se muestra (y se vuelve obligatorio) al elegir esa opción.
-  const selTipo = document.getElementById("modalMotivoTipo");
-  const wrapOtro = document.getElementById("modalMotivoOtroWrap");
-  const txtOtro = document.getElementById("modalMotivoOtro");
-  selTipo.addEventListener("change", function () {
-    const esOtro = selTipo.value === "__otro__";
-    wrapOtro.classList.toggle("d-none", !esOtro);
-    txtOtro.required = esOtro;
-    if (esOtro) txtOtro.focus();
-  });
+  cablearMotivoConOtro();
 
   const confirmado = await promesaModal;
   if (!confirmado) return;

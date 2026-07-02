@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, prioridadConfig, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let mapa = null;
@@ -200,14 +200,9 @@ async function seleccionarIncidencia(id) {
     const spanEstado = document.getElementById("detalleEstado");
     spanEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
 
-    const pri = prioridadConfig[inc.prioridad_incidencia] || {
-      clase: "",
-      icono: "",
-      texto: inc.prioridad_incidencia,
-    };
-    const spanPri = document.getElementById("detallePrioridad");
-    spanPri.className = "badge " + pri.clase;
-    spanPri.innerHTML = '<i class="bi ' + pri.icono + ' me-1"></i>' + pri.texto;
+    document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(
+      inc.prioridad_incidencia,
+    );
 
     const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ciudad";
     const direccion = inc.direccion_incidencia ? " — " + inc.direccion_incidencia : "";

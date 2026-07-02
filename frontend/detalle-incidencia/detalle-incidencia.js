@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, prioridadConfig, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Color del punto del historial por estado (no viene de estadoConfig: ahí solo hay clase/icono/texto de badge).
 const colorHistorial = {
@@ -164,20 +164,13 @@ function activarMapaPicker(lat, lng, onCambio) {
   return picker;
 }
 
-// Pinta el badge de estado sin reconstruir el elemento (evita perder el id).
 function pintarBadgeEstado(estado) {
-  const span = document.getElementById("detalleEstado");
-  const cfg = estadoConfig[estado] || estadoConfig.PENDIENTE;
-  span.className = "badge " + cfg.clase;
-  span.innerHTML = '<i class="bi ' + cfg.icono + ' me-1"></i>' + cfg.texto;
+  document.getElementById("detalleEstado").innerHTML = badgeEstadoHtml(estado);
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
 function pintarBadgePrioridad(prioridad) {
-  const span = document.getElementById("detallePrioridad");
-  const cfg = prioridadConfig[prioridad] || prioridadConfig.BAJA;
-  span.className = "badge " + cfg.clase + " px-2 py-1";
-  span.innerHTML = '<i class="bi ' + cfg.icono + ' me-1"></i>' + cfg.texto;
+  document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(prioridad);
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {

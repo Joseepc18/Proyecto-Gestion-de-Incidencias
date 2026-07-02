@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, abrirModal, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -50,47 +50,22 @@ document.addEventListener("DOMContentLoaded", async function () {
       return;
     }
 
-    const opciones = MOTIVOS_ELIMINACION.map(
-      (m) => '<option value="' + m + '">' + m + "</option>",
-    ).join("");
-
     const promesaModal = abrirModal({
       titulo: "Eliminar incidencia",
       cuerpoHtml:
         '<p class="text-secondary small">Se notificará al reportador el motivo de la eliminación.</p>' +
-        '<label for="modalMotivoTipo" class="form-label">Motivo</label>' +
-        '<select class="form-select" id="modalMotivoTipo" required>' +
-        '<option value="" disabled selected>Selecciona un motivo…</option>' +
-        opciones +
-        '<option value="__otro__">Otro (especificar)</option>' +
-        "</select>" +
-        '<div class="mt-2 d-none" id="modalMotivoOtroWrap">' +
-        '<label for="modalMotivoOtro" class="form-label">Especifica el motivo</label>' +
-        '<textarea class="form-control" id="modalMotivoOtro" rows="3" minlength="5" maxlength="500"></textarea>' +
-        "</div>",
+        motivoConOtroHtml(MOTIVOS_ELIMINACION),
       textoConfirmar: "Eliminar",
       peligro: true,
       alConfirmar: async function (form) {
-        const tipo = form.querySelector("#modalMotivoTipo").value;
-        const motivo =
-          tipo === "__otro__" ? form.querySelector("#modalMotivoOtro").value.trim() : tipo;
         await apiFetch("/incidencias/" + id, {
           method: "DELETE",
-          body: JSON.stringify({ motivo: motivo }),
+          body: JSON.stringify({ motivo: leerMotivoSeleccionado(form) }),
         });
       },
     });
 
-    // Un required oculto rompería reportValidity (campo inválido no enfocable)
-    const selTipo = document.getElementById("modalMotivoTipo");
-    const wrapOtro = document.getElementById("modalMotivoOtroWrap");
-    const txtOtro = document.getElementById("modalMotivoOtro");
-    selTipo.addEventListener("change", function () {
-      const esOtro = selTipo.value === "__otro__";
-      wrapOtro.classList.toggle("d-none", !esOtro);
-      txtOtro.required = esOtro;
-      if (esOtro) txtOtro.focus();
-    });
+    cablearMotivoConOtro();
 
     const confirmado = await promesaModal;
     if (!confirmado) return;
