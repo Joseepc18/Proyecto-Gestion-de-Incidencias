@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoIncidencia;
 use App\Exceptions\AlmacenamientoException;
 use Illuminate\Database\Eloquent\Model;
 
@@ -66,6 +67,11 @@ class Incidencia extends Model
     public function evidencias()
     {
         return $this->hasMany(Evidencia::class, 'id_incidencia', 'id_incidencia');
+    }
+
+    public function estaResuelta(): bool
+    {
+        return $this->estado_incidencia === EstadoIncidencia::Resuelto->value;
     }
 
     // Acumula las rutas en $rutasGuardadas (por referencia) para que el controller las limpie si la transacción revienta.

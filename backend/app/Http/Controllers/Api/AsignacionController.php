@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\EstadoIncidencia;
 use App\Enums\RolAsignacion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AsignarTecnicoRequest;
@@ -18,7 +17,7 @@ class AsignacionController extends Controller
     // Listar los técnicos disponibles (para el desplegable de asignación).
     public function tecnicos()
     {
-        return User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'tecnico'))
+        return User::conRol('tecnico')
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
@@ -33,7 +32,9 @@ class AsignacionController extends Controller
     // Asignar un técnico a una incidencia (llama al procedimiento asignar_tecnico).
     public function asignar(AsignarTecnicoRequest $request, Incidencia $incidencia)
     {
-        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        $this->authorize('asignarTecnico', $incidencia);
+
+        if ($incidencia->estaResuelta()) {
             return response()->json(['message' => 'La incidencia está resuelta; no se pueden cambiar las asignaciones.'], 422);
         }
 
@@ -68,7 +69,9 @@ class AsignacionController extends Controller
     // Quitar una asignación.
     public function quitar(AsignacionIncidencia $asignacion)
     {
-        if ($asignacion->incidencia && $asignacion->incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        $this->authorize('quitar', $asignacion);
+
+        if ($asignacion->incidencia && $asignacion->incidencia->estaResuelta()) {
             return response()->json(['message' => 'La incidencia está resuelta; no se pueden cambiar las asignaciones.'], 422);
         }
 

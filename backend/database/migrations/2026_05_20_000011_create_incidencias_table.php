@@ -12,7 +12,7 @@ return new class extends Migration
         DB::statement("
         CREATE TABLE incidencias(
             id_incidencia BIGSERIAL PRIMARY KEY,
-            nombre_incidencia VARCHAR(255) NOT NULL,
+            nombre_incidencia VARCHAR(255) NOT NULL CHECK(char_length(nombre_incidencia) >= 5),
             descripcion_incidencia TEXT,
             direccion_incidencia VARCHAR(500),
             latitud_incidencia NUMERIC(10,8) NOT NULL,

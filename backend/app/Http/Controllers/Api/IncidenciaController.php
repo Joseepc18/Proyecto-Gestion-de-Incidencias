@@ -16,6 +16,7 @@ use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\Notificacion;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +103,11 @@ class IncidenciaController extends Controller
             BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@crearIncidencia', $e->getMessage());
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
+        } catch (QueryException $e) {
+            Storage::disk('public')->delete($rutasGuardadas);
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'IncidenciaController@crearIncidencia', $e->getMessage(), $e);
+
+            return response()->json(['message' => 'Error al crear la incidencia'], 500);
         } catch (\Exception $e) {
             Storage::disk('public')->delete($rutasGuardadas);
             BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia', $e->getMessage());
@@ -162,6 +168,10 @@ class IncidenciaController extends Controller
             }
 
             return ['message' => 'Incidencia eliminada'];
+        } catch (QueryException $e) {
+            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'IncidenciaController@eliminarIncidencia', $e->getMessage(), $e);
+
+            return response()->json(['message' => 'Error al eliminar la incidencia'], 500);
         } catch (\Exception $e) {
             BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@eliminarIncidencia', $e->getMessage());
 
@@ -242,7 +252,7 @@ class IncidenciaController extends Controller
 
         $incidencia->update(['reapertura_solicitada' => true]);
 
-        User::whereHas('rol', fn ($q) => $q->where('nombre_rol', 'admin'))
+        User::conRol('admin')
             ->get()
             ->each(function (User $admin) use ($incidencia, $motivo) {
                 Notificacion::create([

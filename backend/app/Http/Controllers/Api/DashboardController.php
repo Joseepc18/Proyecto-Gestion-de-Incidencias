@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
@@ -69,10 +70,8 @@ class DashboardController extends Controller
     // Métricas personales del panel del técnico (solo sus asignaciones); sin caché para reflejar al instante lo resuelto.
     public function metricasTecnico(Request $request)
     {
+        Gate::authorize('ver-metricas-tecnico');
         $user = $request->user();
-        if (! $user->esTecnico()) {
-            return response()->json(['message' => 'No autorizado.'], 403);
-        }
 
         // Base reutilizable: incidencias donde este técnico tiene alguna asignación.
         $asignadas = fn () => DB::table('incidencias as i')

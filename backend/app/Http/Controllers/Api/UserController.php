@@ -21,7 +21,7 @@ class UserController extends Controller
             if ($request->rol === 'suspendido') {
                 $query->onlyTrashed();
             } else {
-                $query->whereHas('rol', fn ($q) => $q->where('nombre_rol', $request->rol));
+                $query->conRol($request->rol);
             }
         }
 

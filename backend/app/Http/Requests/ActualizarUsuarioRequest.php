@@ -3,17 +3,18 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ActualizarUsuarioRequest extends FormRequest
 {
-    // Ruta protegida por el middleware 'admin'; además, los usuarios normales no se editan aquí (solo en Mi perfil).
+    // Ruta ya protegida por el middleware 'admin'; la Policy solo cubre la regla de negocio (no tocar normales).
     public function authorize(): bool
     {
-        $usuario = $this->route('usuario');
+        Gate::authorize('actualizar', $this->route('usuario'));
 
-        return $usuario && ! $usuario->esNormal();
+        return true;
     }
 
     public function rules(): array

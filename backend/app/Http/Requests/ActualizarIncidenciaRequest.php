@@ -21,8 +21,9 @@ class ActualizarIncidenciaRequest extends FormRequest
             'nombre_incidencia' => 'sometimes|string|min:5|max:100',
             'descripcion_incidencia' => 'sometimes|nullable|string|max:500',
             'direccion_incidencia' => 'sometimes|nullable|string|max:500',
-            'latitud_incidencia' => 'sometimes|numeric|between:-5.5,1.8',
-            'longitud_incidencia' => 'sometimes|numeric|between:-82.0,-74.5',
+            // required_with: si se manda una coordenada, la otra tiene que venir igual (no quedan descoordinadas)
+            'latitud_incidencia' => 'required_with:longitud_incidencia|numeric|between:-5.5,1.8',
+            'longitud_incidencia' => 'required_with:latitud_incidencia|numeric|between:-82.0,-74.5',
             'id_ciudad' => 'sometimes|exists:ciudades,id_ciudad',
             'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
         ];

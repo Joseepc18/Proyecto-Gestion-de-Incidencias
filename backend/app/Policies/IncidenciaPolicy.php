@@ -33,7 +33,7 @@ class IncidenciaPolicy
     // Editar los detalles: solo admin o el autor mientras esté PENDIENTE; en RESUELTO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        if ($incidencia->estaResuelta()) {
             return Response::deny('La incidencia está resuelta; no se puede editar.');
         }
 
@@ -77,7 +77,7 @@ class IncidenciaPolicy
     // Subir evidencias: autor (REPORTE) o técnico RESPONSABLE (RESOLUCION); en RESUELTO nadie sube (pedir reapertura).
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        if ($incidencia->estaResuelta()) {
             return Response::deny('No se pueden agregar evidencias a una incidencia resuelta.');
         }
 
@@ -97,7 +97,7 @@ class IncidenciaPolicy
     // Escribir en el chat: mismos roles que verChat, pero NO en RESUELTO (solo lectura).
     public function comentar(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        if ($incidencia->estaResuelta()) {
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
         }
 
@@ -113,9 +113,15 @@ class IncidenciaPolicy
             return Response::deny('No autorizado');
         }
 
-        return $incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value
+        return $incidencia->estaResuelta()
             ? Response::allow()
             : Response::deny('Solo puedes solicitar la reapertura de una incidencia ya resuelta.');
+    }
+
+    // Asignar un técnico: solo admin (el estado RESUELTO ya lo valida el controller con su propio 422).
+    public function asignarTecnico(User $user, Incidencia $incidencia): Response
+    {
+        return $user->esAdmin() ? Response::allow() : Response::deny('No autorizado');
     }
 
     // El técnico está asignado a la incidencia (responsable o de apoyo).

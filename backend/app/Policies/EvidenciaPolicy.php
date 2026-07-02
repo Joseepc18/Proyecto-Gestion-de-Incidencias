@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\EstadoIncidencia;
 use App\Models\Evidencia;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -14,7 +13,7 @@ class EvidenciaPolicy
     {
         $incidencia = $evidencia->incidencia;
 
-        if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto->value) {
+        if ($incidencia->estaResuelta()) {
             return Response::deny('No se pueden eliminar evidencias de una incidencia resuelta.');
         }
 

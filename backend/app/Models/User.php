@@ -41,6 +41,12 @@ class User extends Authenticatable
         return $this->belongsTo(Rol::class, 'id_rol', 'id_rol');
     }
 
+    // Centraliza el whereHas('rol', ...) repetido en varios controllers.
+    public function scopeConRol($query, string $rol)
+    {
+        return $query->whereHas('rol', fn ($q) => $q->where('nombre_rol', $rol));
+    }
+
     // Atajos de rol: centralizan el chequeo repetido nombre_rol === 'x'.
     public function esAdmin(): bool
     {
