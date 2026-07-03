@@ -25,6 +25,7 @@ class Incidencia extends Model
         'id_usuario',
         'fecha_resolucion',
         'reapertura_solicitada',
+        'id_admin_atiende',
     ];
 
     protected $casts = [
@@ -47,6 +48,12 @@ class Incidencia extends Model
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_usuario', 'id');
+    }
+
+    // Admin que reclamó la incidencia (dueño de la atención); NULL si nadie la ha reclamado.
+    public function adminAtiende()
+    {
+        return $this->belongsTo(User::class, 'id_admin_atiende', 'id');
     }
 
     public function asignaciones()
@@ -72,6 +79,17 @@ class Incidencia extends Model
     public function estaResuelta(): bool
     {
         return $this->estado_incidencia === EstadoIncidencia::Resuelto->value;
+    }
+
+    public function estaCerrada(): bool
+    {
+        return $this->estado_incidencia === EstadoIncidencia::Cerrado->value;
+    }
+
+    // RESUELTO o CERRADO: ambos son de solo lectura (editar, comentar, subir evidencias, cambiar asignaciones).
+    public function esTerminal(): bool
+    {
+        return $this->estaResuelta() || $this->estaCerrada();
     }
 
     // Acumula las rutas en $rutasGuardadas (por referencia) para que el controller las limpie si la transacción revienta.

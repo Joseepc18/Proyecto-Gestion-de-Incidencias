@@ -100,6 +100,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   let paginaActual = 1;
   let porPagina = 10;
+  // false = bandeja operativa (activas); true = archivo (solo CERRADO). Son vistas separadas (backlog 🔵).
+  let verArchivo = false;
 
   async function cargarIncidencias() {
     const params = new URLSearchParams();
@@ -109,8 +111,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     const busqueda = document.getElementById("filtroBusqueda").value.trim();
     if (busqueda) params.set("busqueda", busqueda);
 
-    const estado = document.getElementById("filtroEstado").value;
-    if (estado) params.set("estado", estado);
+    if (verArchivo) {
+      params.set("estado", "CERRADO");
+    } else {
+      const estado = document.getElementById("filtroEstado").value;
+      if (estado) params.set("estado", estado);
+    }
 
     const prioridad = document.getElementById("filtroPrioridad").value;
     if (prioridad) params.set("prioridad", prioridad);
@@ -159,12 +165,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     tbody.innerHTML = "";
 
     if (incidencias.length === 0) {
-      tbody.innerHTML = filaVaciaHtml(
-        7,
-        "bi-clipboard-x",
-        "Sin incidencias",
-        "No hay incidencias que coincidan con los filtros.",
-      );
+      tbody.innerHTML = verArchivo
+        ? filaVaciaHtml(8, "bi-archive", "Archivo vacío", "Todavía no hay incidencias archivadas.")
+        : filaVaciaHtml(
+            8,
+            "bi-clipboard-x",
+            "Sin incidencias",
+            "No hay incidencias que coincidan con los filtros.",
+          );
       return;
     }
 
@@ -194,6 +202,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       tr.appendChild(td(nombreTipo, "Tipo", true));
       tr.appendChild(td(nombreCiudad, "Ciudad", true));
+      tr.appendChild(
+        td(inc.admin_atiende ? inc.admin_atiende.name : "Sin reclamar", "Atendido por", true),
+      );
       tr.appendChild(td(fecha, "Fecha", true));
 
       const acciones = [
@@ -220,6 +231,22 @@ document.addEventListener("DOMContentLoaded", async function () {
       tbody.appendChild(tr);
     });
   }
+
+  // Toggle Bandeja/Archivo: el filtro de estado solo tiene sentido en la bandeja (en archivo ya es fijo CERRADO).
+  function cambiarVista(archivo) {
+    if (archivo === verArchivo) return;
+    verArchivo = archivo;
+    document.getElementById("btnVistaBandeja").classList.toggle("active", !archivo);
+    document.getElementById("btnVistaArchivo").classList.toggle("active", archivo);
+    document.getElementById("tituloListado").textContent = archivo
+      ? "Archivo de incidencias"
+      : "Listado de incidencias";
+    document.getElementById("filtroEstado").disabled = archivo;
+    paginaActual = 1;
+    cargarIncidencias();
+  }
+  document.getElementById("btnVistaBandeja").addEventListener("click", () => cambiarVista(false));
+  document.getElementById("btnVistaArchivo").addEventListener("click", () => cambiarVista(true));
 
   document.getElementById("filtroEstado").addEventListener("change", function () {
     paginaActual = 1;

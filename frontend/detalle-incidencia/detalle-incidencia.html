@@ -401,6 +401,29 @@
                         </div>
                       </div>
 
+                      <!-- Reclamar/Archivar (solo admin): "reclamar" v1 sin tiempo real (backlog 🔵) -->
+                      <div class="mb-3 solo-admin d-none">
+                        <label class="form-label small fw-semibold mb-2"
+                          >Atención administrativa</label
+                        >
+                        <p class="small text-muted mb-2" id="atencionAdminInfo">Sin reclamar.</p>
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm w-100 d-none"
+                          id="btnReclamarIncidencia"
+                        >
+                          <i class="bi bi-hand-index-thumb me-1" aria-hidden="true"></i> Reclamar
+                          incidencia
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-dark btn-sm w-100 d-none"
+                          id="btnArchivarIncidencia"
+                        >
+                          <i class="bi bi-archive me-1" aria-hidden="true"></i> Cerrar / Archivar
+                        </button>
+                      </div>
+
                       <!-- Asignación de técnicos (solo admin) -->
                       <div class="solo-admin d-none">
                         <h3 class="panel-titulo-tool">

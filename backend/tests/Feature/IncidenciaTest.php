@@ -12,6 +12,7 @@ use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
 use Tests\TestCase;
@@ -346,5 +347,165 @@ class IncidenciaTest extends TestCase
         // La pendiente (no resuelta) va primero; la resuelta queda al final mesmo siendo la más vieja.
         $this->assertSame($pendiente->id_incidencia, $respuesta->json('data.0.id_incidencia'));
         $this->assertSame($resuelta->id_incidencia, $respuesta->json('data.1.id_incidencia'));
+    }
+
+    // "Reclamar" v1: el primer admin que reclama queda como id_admin_atiende.
+    public function test_admin_reclama_una_incidencia_sin_reclamar(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', $admin->id)
+            ->assertJsonPath('admin_atiende.id', $admin->id);
+
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => $admin->id,
+        ]);
+    }
+
+    // Otro admin no puede reclamar una incidencia que ya tiene dueño.
+    public function test_otro_admin_no_puede_reclamar_incidencia_ya_reclamada(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        Sanctum::actingAs($admin2);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Esta incidencia ya fue reclamada por otro administrador.']);
+
+        // Sigue siendo del primero, no se pisó.
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => $admin1->id,
+        ]);
+    }
+
+    // Solo el admin dueño (id_admin_atiende) puede archivar, y solo si ya está RESUELTO.
+    public function test_solo_el_admin_que_reclamo_puede_archivar_una_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+
+        // Otro admin (que no reclamó) no puede archivarla.
+        Sanctum::actingAs($admin2);
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertStatus(403);
+
+        // El dueño sí puede, y fecha_resolucion se conserva (no se limpia como al reabrir).
+        Sanctum::actingAs($admin1);
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")
+            ->assertOk()
+            ->assertJsonPath('estado_incidencia', 'CERRADO');
+
+        $incidencia->refresh();
+        $this->assertSame('CERRADO', $incidencia->estado_incidencia);
+        $this->assertNotNull($incidencia->fecha_resolucion);
+    }
+
+    // No se puede archivar antes de que la incidencia esté RESUELTO (aunque ya la hayan reclamado).
+    public function test_no_se_puede_archivar_una_incidencia_que_no_esta_resuelta(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Solo se pueden archivar incidencias resueltas.']);
+    }
+
+    // CERRADO es terminal: ni el admin puede volver a cambiarle el estado por la vía genérica.
+    public function test_no_se_puede_cambiar_estado_de_una_incidencia_archivada(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'CERRADO']);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'No se puede cambiar el estado de una incidencia archivada']);
+    }
+
+    // CERRADO tampoco es un destino válido de /estado: solo se llega por /archivar o el job automático.
+    public function test_cambiar_estado_no_acepta_cerrado_como_destino(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now(), 'reapertura_solicitada' => true]);
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'CERRADO'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('estado_incidencia');
+    }
+
+    // El archivo sale del listado activo por defecto, pero se puede pedir explícitamente.
+    public function test_cerrado_no_aparece_en_listado_por_defecto(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $activa = $this->crearIncidencia($autor);
+        $archivada = $this->crearIncidencia($autor);
+        $archivada->update(['estado_incidencia' => 'CERRADO']);
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->getJson('/api/incidencias')
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.id_incidencia', $activa->id_incidencia);
+
+        $this->getJson('/api/incidencias?estado=CERRADO')
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('data.0.id_incidencia', $archivada->id_incidencia);
+    }
+
+    // El job hourly archiva solo lo RESUELTO hace más de 24h y sin solicitud de reapertura pendiente.
+    public function test_comando_archiva_resueltas_de_mas_de_24h_sin_reapertura(): void
+    {
+        $autor = $this->crearUsuario('normal');
+
+        // El trigger tr_fecha_resolucion pisa fecha_resolucion a NOW() en la transición a RESUELTO;
+        // por eso la fecha pasada se fija en un segundo update, ya sin cambio de estado de por medio.
+        $vieja = $this->crearIncidencia($autor);
+        $vieja->update(['estado_incidencia' => 'RESUELTO']);
+        $vieja->update(['fecha_resolucion' => now()->subHours(30)]);
+
+        $reciente = $this->crearIncidencia($autor);
+        $reciente->update(['estado_incidencia' => 'RESUELTO']);
+        $reciente->update(['fecha_resolucion' => now()->subHours(2)]);
+
+        $conReapertura = $this->crearIncidencia($autor);
+        $conReapertura->update(['estado_incidencia' => 'RESUELTO', 'reapertura_solicitada' => true]);
+        $conReapertura->update(['fecha_resolucion' => now()->subHours(30)]);
+
+        Artisan::call('incidencias:archivar-resueltas');
+
+        $this->assertSame('CERRADO', $vieja->fresh()->estado_incidencia);
+        $this->assertSame('RESUELTO', $reciente->fresh()->estado_incidencia);
+        $this->assertSame('RESUELTO', $conReapertura->fresh()->estado_incidencia);
+
+        // El historial atribuye el archivado al sistema (id_usuario NULL), no al reportador.
+        $this->assertDatabaseHas('historial_estados', [
+            'id_incidencia' => $vieja->id_incidencia,
+            'id_usuario' => null,
+            'estado_anterior' => 'RESUELTO',
+            'estado_nuevo' => 'CERRADO',
+        ]);
     }
 }

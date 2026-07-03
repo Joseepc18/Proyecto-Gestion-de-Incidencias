@@ -22,6 +22,12 @@ const estadoConfig = {
     texto: "Resuelto",
     color: "var(--admin-success)",
   },
+  CERRADO: {
+    clase: "badge-estado-cerrado",
+    icono: "bi-archive",
+    texto: "Archivado",
+    color: "var(--admin-muted)",
+  },
 };
 
 // Color asociado a un estado (única fuente de verdad para pines de mapa y puntos del historial).

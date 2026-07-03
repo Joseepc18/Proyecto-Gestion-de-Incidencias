@@ -126,6 +126,32 @@ services:
     networks:
       - incidencias_network
 
+  # 5. Scheduler de Laravel (tareas programadas, ej. auto-archivado de incidencias resueltas)
+  scheduler:
+    restart: unless-stopped
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: incidencias_scheduler
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secreto}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - incidencias_network
+
 
 networks:
   incidencias_network:

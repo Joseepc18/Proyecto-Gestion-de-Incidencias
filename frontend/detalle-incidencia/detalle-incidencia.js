@@ -333,7 +333,9 @@ function configurarChatFlotante(id) {
     pintarParticipantes();
     if (!chatCreado) {
       crearChat("chatContenedor", id, usuarioActual, {
-        soloLectura: incActual && incActual.estado_incidencia === "RESUELTO",
+        soloLectura:
+          incActual &&
+          (incActual.estado_incidencia === "RESUELTO" || incActual.estado_incidencia === "CERRADO"),
       });
       chatCreado = true;
     }

@@ -34,7 +34,7 @@ class AsignacionController extends Controller
     {
         $this->authorize('asignarTecnico', $incidencia);
 
-        if ($incidencia->estaResuelta()) {
+        if ($incidencia->esTerminal()) {
             return response()->json(['message' => 'La incidencia está resuelta; no se pueden cambiar las asignaciones.'], 422);
         }
 
@@ -71,7 +71,7 @@ class AsignacionController extends Controller
     {
         $this->authorize('quitar', $asignacion);
 
-        if ($asignacion->incidencia && $asignacion->incidencia->estaResuelta()) {
+        if ($asignacion->incidencia && $asignacion->incidencia->esTerminal()) {
             return response()->json(['message' => 'La incidencia está resuelta; no se pueden cambiar las asignaciones.'], 422);
         }
 

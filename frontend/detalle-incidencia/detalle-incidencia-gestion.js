@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -14,9 +14,9 @@ let comboAyudante = null;
 // Galería de fotos de resolución (gestionada por galeriaFotos.js).
 let galeriaResolucion = null;
 
-// En RESUELTO, prioridad/asignaciones/estado quedan de solo lectura para el admin
+// En RESUELTO/CERRADO, prioridad/asignaciones/estado quedan de solo lectura para el admin
 function gestionBloqueada() {
-  return incActual.estado_incidencia === "RESUELTO";
+  return incActual.estado_incidencia === "RESUELTO" || incActual.estado_incidencia === "CERRADO";
 }
 
 // Hook del núcleo: al cargar el detalle. Revela y cablea lo del admin.
@@ -27,6 +27,7 @@ function gestionAlCargarDetalle(id) {
   prepararAsignacion(id);
   habilitarGestionEstado(id);
   prepararReaperturaAdmin(id);
+  prepararAtencionAdmin(id);
 }
 
 // Hook del núcleo: al cargar las asignaciones. Habilita al responsable y pinta las listas del admin.
@@ -35,8 +36,8 @@ function gestionAlCargarAsignaciones(asignaciones, id) {
 
   if (esResponsableActual()) {
     habilitarGestionEstado(id);
-    // En RESUELTO el responsable ya no sube/borra fotos (policy 403), solo las ve
-    if (incActual.estado_incidencia !== "RESUELTO") {
+    // En RESUELTO/CERRADO el responsable ya no sube/borra fotos (policy 403), solo las ve
+    if (!gestionBloqueada()) {
       habilitarFotosResolucion(id);
     }
   }
@@ -142,7 +143,7 @@ function prepararEstado(id) {
   });
 }
 
-// RESUELTO queda bloqueado para todos: solo se sale con el botón "Reabrir"
+// RESUELTO/CERRADO quedan bloqueados para todos: RESUELTO solo sale con "Reabrir"; CERRADO ya es definitivo.
 function marcarEstadoActivo() {
   const actual = incActual.estado_incidencia;
   document.querySelectorAll("#estadoBotones .btn-estado-tool").forEach(function (b) {
@@ -152,7 +153,7 @@ function marcarEstadoActivo() {
     Object.values(estadoConfig).forEach((c) => b.classList.remove(c.clase));
     b.classList.toggle("activo", activo);
     if (activo) b.classList.add(cfg.clase);
-    if (activo || actual === "RESUELTO") {
+    if (activo || actual === "RESUELTO" || actual === "CERRADO") {
       b.disabled = true;
     } else if (esAdmin) {
       b.disabled = false;
@@ -200,6 +201,76 @@ function prepararReaperturaAdmin(id) {
       btn.disabled = false;
     }
   });
+}
+
+// Reclamar/Archivar: el primer admin que reclama queda como "Atendido por"; solo ese admin ve "Cerrar/Archivar".
+function prepararAtencionAdmin(id) {
+  pintarAtencionAdmin();
+
+  const btnReclamar = document.getElementById("btnReclamarIncidencia");
+  const btnArchivar = document.getElementById("btnArchivarIncidencia");
+  if (btnReclamar.dataset.cableado === "1") return;
+  btnReclamar.dataset.cableado = "1";
+  btnArchivar.dataset.cableado = "1";
+
+  btnReclamar.addEventListener("click", async function () {
+    btnReclamar.disabled = true;
+    try {
+      const actualizada = await apiFetch("/incidencias/" + id + "/reclamar", { method: "POST" });
+      incActual.id_admin_atiende = actualizada.id_admin_atiende;
+      incActual.admin_atiende = actualizada.admin_atiende;
+      pintarAtencionAdmin();
+      mostrarToast("Incidencia reclamada", "success");
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    } finally {
+      btnReclamar.disabled = false;
+    }
+  });
+
+  btnArchivar.addEventListener("click", async function () {
+    const ok = await confirmar({
+      titulo: "Cerrar / Archivar incidencia",
+      mensaje: "Pasará a Archivado y quedará de solo lectura para todos.",
+      textoConfirmar: "Archivar",
+    });
+    if (!ok) return;
+
+    btnArchivar.disabled = true;
+    try {
+      const actualizada = await apiFetch("/incidencias/" + id + "/archivar", { method: "PATCH" });
+      incActual.estado_incidencia = actualizada.estado_incidencia;
+      pintarBadgeEstado(incActual.estado_incidencia);
+      marcarEstadoActivo();
+      pintarAtencionAdmin();
+      cargarHistorial(id);
+      mostrarToast("Incidencia archivada", "success");
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    } finally {
+      btnArchivar.disabled = false;
+    }
+  });
+}
+
+// Pinta el texto "Atendida por" y decide qué botón mostrar (Reclamar / Archivar / ninguno).
+function pintarAtencionAdmin() {
+  const info = document.getElementById("atencionAdminInfo");
+  const btnReclamar = document.getElementById("btnReclamarIncidencia");
+  const btnArchivar = document.getElementById("btnArchivarIncidencia");
+  const admin = incActual.admin_atiende;
+
+  if (!admin) {
+    info.textContent = "Sin reclamar.";
+    btnReclamar.classList.remove("d-none");
+    btnArchivar.classList.add("d-none");
+    return;
+  }
+
+  const soyYo = usuarioActual && admin.id === usuarioActual.id;
+  info.textContent = "Atendida por: " + admin.name + (soyYo ? " (tú)" : "");
+  btnReclamar.classList.add("d-none");
+  btnArchivar.classList.toggle("d-none", !(soyYo && incActual.estado_incidencia === "RESUELTO"));
 }
 
 let gestionFotosLista = false;

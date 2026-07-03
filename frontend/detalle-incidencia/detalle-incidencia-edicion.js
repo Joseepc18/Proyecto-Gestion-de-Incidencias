@@ -25,7 +25,11 @@ function edicionAlCargarDetalle() {
     prepararSolicitudReapertura();
   }
 
-  if (esDueno && incActual.estado_incidencia !== "RESUELTO") {
+  if (
+    esDueno &&
+    incActual.estado_incidencia !== "RESUELTO" &&
+    incActual.estado_incidencia !== "CERRADO"
+  ) {
     prepararFotosReporte();
   }
 

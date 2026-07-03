@@ -20,7 +20,8 @@ class CambiarEstadoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'estado_incidencia' => ['required', Rule::enum(EstadoIncidencia::class)],
+            // CERRADO no se pone por acá: solo por /archivar (admin dueño) o el job de auto-archivado.
+            'estado_incidencia' => ['required', Rule::enum(EstadoIncidencia::class)->except(EstadoIncidencia::Cerrado)],
         ];
     }
 }

@@ -1492,7 +1492,8 @@ html[data-theme="dark"] {
 #tablaIncidencias .badge,
 .badge-estado-pendiente,
 .badge-estado-proceso,
-.badge-estado-resuelto {
+.badge-estado-resuelto,
+.badge-estado-cerrado {
   font-size: var(--fs-xs);
   font-weight: 600;
   padding: 5px 12px;
@@ -1510,6 +1511,10 @@ html[data-theme="dark"] {
 .badge-estado-resuelto {
   color: #fff;
   background-color: var(--admin-secondary, #6c757d);
+}
+.badge-estado-cerrado {
+  color: #fff;
+  background-color: var(--admin-muted, #6b7280);
 }
 
 /* Tarjetas de la lista maestro-detalle (Mis incidencias) */
@@ -2948,6 +2953,9 @@ html[data-theme="dark"] {
   border: 1px solid var(--admin-border);
   border-radius: 12px;
   background: var(--admin-surface);
+  /* Sin esto, el item de grid no encoge por debajo del texto en white-space:nowrap
+     de .meta-tile-valor y empuja la barra fuera de la pantalla en vez de truncar con "…". */
+  min-width: 0;
 }
 
 .meta-tile-icono {
@@ -3343,7 +3351,8 @@ html[data-theme="dark"] .meta-tile-icono {
 /* Badges/pills suaves: fondo teñido + texto del color, coherentes en claro/oscuro */
 .badge-estado-pendiente,
 .badge-estado-proceso,
-.badge-estado-resuelto {
+.badge-estado-resuelto,
+.badge-estado-cerrado {
   border: 1px solid transparent;
 }
 
@@ -3365,6 +3374,12 @@ html[data-theme="dark"] .meta-tile-icono {
   border-color: rgba(22, 163, 74, 0.24);
 }
 
+.badge-estado-cerrado {
+  color: #4b5563;
+  background-color: rgba(107, 114, 128, 0.14);
+  border-color: rgba(107, 114, 128, 0.24);
+}
+
 html[data-theme="dark"] .badge-estado-pendiente {
   color: #fca5a5;
 }
@@ -3375,6 +3390,10 @@ html[data-theme="dark"] .badge-estado-proceso {
 
 html[data-theme="dark"] .badge-estado-resuelto {
   color: #86efac;
+}
+
+html[data-theme="dark"] .badge-estado-cerrado {
+  color: #d1d5db;
 }
 
 /* Pills de rol (Usuarios): mismo estilo suave por rol */

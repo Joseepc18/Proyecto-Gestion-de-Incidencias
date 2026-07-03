@@ -8,12 +8,12 @@ use Illuminate\Auth\Access\Response;
 
 class EvidenciaPolicy
 {
-    // Eliminar una foto: admin, autor o técnico RESPONSABLE; en RESUELTO nadie borra (expediente cerrado).
+    // Eliminar una foto: admin, autor o técnico RESPONSABLE; en RESUELTO/CERRADO nadie borra (expediente cerrado).
     public function eliminar(User $user, Evidencia $evidencia): Response
     {
         $incidencia = $evidencia->incidencia;
 
-        if ($incidencia->estaResuelta()) {
+        if ($incidencia->esTerminal()) {
             return Response::deny('No se pueden eliminar evidencias de una incidencia resuelta.');
         }
 

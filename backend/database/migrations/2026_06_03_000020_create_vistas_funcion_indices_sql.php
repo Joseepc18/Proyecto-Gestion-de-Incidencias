@@ -135,6 +135,8 @@ return new class extends Migration
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_subtipo ON incidencias(id_subtipo_incidencia);');
         // El UNIQUE(id_incidencia, id_usuario) no sirve para filtrar solo por id_usuario (esResponsableDe, DashboardController).
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_asignaciones_usuario ON asignaciones_incidencia(id_usuario);');
+        // Acelera "reclamar" (whereNull/where id_admin_atiende) y la columna "Atendido por" del listado.
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_admin_atiende ON incidencias(id_admin_atiende);');
     }
 
     /**
@@ -155,5 +157,6 @@ return new class extends Migration
         DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_ciudad;');
         DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_subtipo;');
         DB::unprepared('DROP INDEX IF EXISTS idx_asignaciones_usuario;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_admin_atiende;');
     }
 };

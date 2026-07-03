@@ -32,6 +32,8 @@ class IncidenciaResource extends JsonResource
             'updated_at' => $this->updated_at,
             // Habilita el botón "Reabrir" del admin cuando el reportador ya lo pidió (solo relevante en RESUELTO).
             'reapertura_pendiente' => (bool) $this->reapertura_solicitada,
+            // Admin que reclamó la incidencia (columna "Atendido por" y botón "Archivar").
+            'id_admin_atiende' => $this->id_admin_atiende,
             // Relaciones: solo se incluyen si el controller las cargó.
             'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
             'subtipo' => $this->whenLoaded('subtipo'),
@@ -39,6 +41,7 @@ class IncidenciaResource extends JsonResource
             'evidencias' => $this->whenLoaded('evidencias'),
             'historial_estados' => $this->whenLoaded('historialEstados'),
             'asignaciones' => $this->whenLoaded('asignaciones'),
+            'admin_atiende' => $this->whenLoaded('adminAtiende', fn () => $this->adminAtiende ? new UserResource($this->adminAtiende) : null),
         ];
     }
 }

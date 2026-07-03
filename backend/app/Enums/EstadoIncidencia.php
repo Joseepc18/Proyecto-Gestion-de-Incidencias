@@ -8,4 +8,5 @@ enum EstadoIncidencia: string
     case Pendiente = 'PENDIENTE';
     case EnProceso = 'EN_PROCESO';
     case Resuelto = 'RESUELTO';
+    case Cerrado = 'CERRADO';
 }

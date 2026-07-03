@@ -84,7 +84,7 @@ class DashboardController extends Controller
             ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS en_proceso", [EstadoIncidencia::EnProceso->value])
             ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS resueltas", [EstadoIncidencia::Resuelto->value])
             ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ? AND i.fecha_resolucion >= ?) AS resueltas_mes", [EstadoIncidencia::Resuelto->value, now()->startOfMonth()])
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'APOYO' AND i.estado_incidencia <> ?) AS apoyo_activas", [EstadoIncidencia::Resuelto->value])
+            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'APOYO' AND i.estado_incidencia NOT IN (?, ?)) AS apoyo_activas", [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
             ->first();
 
         // Resueltas por semana (últimas 8), rellenando con 0 las semanas sin cierres.
@@ -105,7 +105,7 @@ class DashboardController extends Controller
 
         // Sus incidencias sin resolver (mapa y lista): prioridad ALTA primero y las más viejas arriba.
         $activas = $asignadas()
-            ->where('i.estado_incidencia', '<>', EstadoIncidencia::Resuelto->value)
+            ->whereNotIn('i.estado_incidencia', [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
             ->orderByRaw('CASE i.prioridad_incidencia WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END', [PrioridadIncidencia::Alta->value, PrioridadIncidencia::Media->value])
             ->orderBy('i.created_at')
             ->select('i.id_incidencia', 'i.nombre_incidencia', 'i.prioridad_incidencia', 'i.estado_incidencia',

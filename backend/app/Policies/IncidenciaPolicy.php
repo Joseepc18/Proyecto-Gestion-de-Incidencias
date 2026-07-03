@@ -30,10 +30,10 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE; en RESUELTO es de solo lectura para todos.
+    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estaResuelta()) {
+        if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; no se puede editar.');
         }
 
@@ -74,10 +74,10 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Subir evidencias: autor (REPORTE) o técnico RESPONSABLE (RESOLUCION); en RESUELTO nadie sube (pedir reapertura).
+    // Subir evidencias: autor (REPORTE) o técnico RESPONSABLE (RESOLUCION); en RESUELTO/CERRADO nadie sube (pedir reapertura).
     public function subirEvidencia(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estaResuelta()) {
+        if ($incidencia->esTerminal()) {
             return Response::deny('No se pueden agregar evidencias a una incidencia resuelta.');
         }
 
@@ -94,10 +94,10 @@ class IncidenciaPolicy
             : Response::deny('No autorizado');
     }
 
-    // Escribir en el chat: mismos roles que verChat, pero NO en RESUELTO (solo lectura).
+    // Escribir en el chat: mismos roles que verChat, pero NO en RESUELTO/CERRADO (solo lectura).
     public function comentar(User $user, Incidencia $incidencia): Response
     {
-        if ($incidencia->estaResuelta()) {
+        if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
         }
 
@@ -122,6 +122,26 @@ class IncidenciaPolicy
     public function asignarTecnico(User $user, Incidencia $incidencia): Response
     {
         return $user->esAdmin() ? Response::allow() : Response::deny('No autorizado');
+    }
+
+    // Reclamar: cualquier admin puede intentarlo; el controller valida de forma atómica que nadie se le adelante.
+    public function reclamar(User $user, Incidencia $incidencia): Response
+    {
+        if (! $user->esAdmin()) {
+            return Response::deny('No autorizado');
+        }
+
+        return $incidencia->estaCerrada()
+            ? Response::deny('No se puede reclamar una incidencia archivada.')
+            : Response::allow();
+    }
+
+    // Archivar/cerrar: solo el admin que reclamó esta incidencia (el controller valida que esté RESUELTO).
+    public function archivar(User $user, Incidencia $incidencia): Response
+    {
+        return $incidencia->id_admin_atiende === $user->id
+            ? Response::allow()
+            : Response::deny('Solo el administrador que reclamó esta incidencia puede archivarla.');
     }
 
     // El técnico está asignado a la incidencia (responsable o de apoyo).

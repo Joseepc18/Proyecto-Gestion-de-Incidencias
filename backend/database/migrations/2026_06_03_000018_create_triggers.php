@@ -8,6 +8,8 @@ return new class extends Migration
     public function up(): void
     {
         // 1) fn_registrar_cambio_estado: guarda cada cambio de estado atribuyéndolo al EJECUTOR (app.actor_id), no al dueño.
+        // Si nadie fijó app.actor_id (el job de archivado automático no lo hace), queda NULL = lo hizo el sistema,
+        // no se le atribuye al reportador (id_usuario es nullable en historial_estados justo para este caso).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
             RETURNS TRIGGER AS \$\$
@@ -17,9 +19,6 @@ return new class extends Migration
                 IF NEW.estado_incidencia <> OLD.estado_incidencia THEN
                     -- true evita el error si la variable no fue seteada.
                     v_actor := NULLIF(current_setting('app.actor_id', true), '')::BIGINT;
-                    IF v_actor IS NULL THEN
-                        v_actor := NEW.id_usuario;
-                    END IF;
 
                     INSERT INTO historial_estados (id_incidencia, id_usuario, estado_anterior, estado_nuevo)
                     VALUES (NEW.id_incidencia, v_actor, OLD.estado_incidencia, NEW.estado_incidencia);
@@ -37,6 +36,8 @@ return new class extends Migration
         ');
 
         // 2) fn_fecha_resolucion: setea/limpia fecha_resolucion según el estado (BEFORE).
+        // Al archivar (RESUELTO -> CERRADO) NO se limpia: el job de auto-archivado la necesita (fecha_resolucion
+        // <= now() - 24h) y además es la fecha real en que se resolvió, se conserva como dato histórico.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_fecha_resolucion()
             RETURNS TRIGGER AS \$\$
@@ -44,7 +45,7 @@ return new class extends Migration
                 IF NEW.estado_incidencia = 'RESUELTO' AND OLD.estado_incidencia <> 'RESUELTO' THEN
                     NEW.fecha_resolucion = NOW();
                 END IF;
-                IF NEW.estado_incidencia <> 'RESUELTO' AND OLD.estado_incidencia = 'RESUELTO' THEN
+                IF NEW.estado_incidencia NOT IN ('RESUELTO', 'CERRADO') AND OLD.estado_incidencia = 'RESUELTO' THEN
                     NEW.fecha_resolucion = NULL;
                 END IF;
                 RETURN NEW;
@@ -195,7 +196,9 @@ return new class extends Migration
             EXECUTE FUNCTION fn_notificar_asignacion();
         ');
 
-        // 7) fn_notificar_cambio_estado: en cambios distintos de RESUELTO avisa a reportador y técnicos menos al actor; si venía de RESUELTO usa el tipo SOLICITUD_REAPERTURA.
+        // 7) fn_notificar_cambio_estado: en cambios distintos de RESUELTO avisa a reportador y técnicos menos al actor;
+        // solo RESUELTO -> EN_PROCESO es la reapertura real (SOLICITUD_REAPERTURA); RESUELTO -> CERRADO (archivado)
+        // usa el mensaje genérico de CAMBIO_ESTADO, no el de reapertura.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_cambio_estado()
             RETURNS TRIGGER AS \$\$
@@ -209,7 +212,7 @@ return new class extends Migration
                    AND NEW.estado_incidencia <> 'RESUELTO' THEN
                     v_actor := NULLIF(current_setting('app.actor_id', true), '')::BIGINT;
 
-                    IF OLD.estado_incidencia = 'RESUELTO' THEN
+                    IF OLD.estado_incidencia = 'RESUELTO' AND NEW.estado_incidencia = 'EN_PROCESO' THEN
                         v_tipo := 'SOLICITUD_REAPERTURA';
                         v_msg_reportador := 'Tu incidencia fue reabierta: ' || NEW.nombre_incidencia;
                         v_msg_tecnicos := 'La incidencia fue reabierta: ' || NEW.nombre_incidencia;

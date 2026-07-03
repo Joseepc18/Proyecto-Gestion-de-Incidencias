@@ -54,8 +54,20 @@
                 <div>
                   <h2 class="h5 mb-1 section-title">
                     <i class="bi bi-funnel" aria-hidden="true"></i>
-                    <span>Listado de incidencias</span>
+                    <span id="tituloListado">Listado de incidencias</span>
                   </h2>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Bandeja o archivo">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary active"
+                    id="btnVistaBandeja"
+                  >
+                    <i class="bi bi-inbox me-1" aria-hidden="true"></i> Bandeja
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="btnVistaArchivo">
+                    <i class="bi bi-archive me-1" aria-hidden="true"></i> Archivo
+                  </button>
                 </div>
               </div>
 
@@ -143,6 +155,7 @@
                       <th>Prioridad</th>
                       <th>Tipo</th>
                       <th>Ciudad</th>
+                      <th>Atendido por</th>
                       <th>Fecha</th>
                       <th class="text-end">Acciones</th>
                     </tr>

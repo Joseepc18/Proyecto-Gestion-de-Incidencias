@@ -7,9 +7,11 @@ use App\Enums\PrioridadIncidencia;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
+use App\Http\Requests\ArchivarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
 use App\Http\Requests\EliminarIncidenciaRequest;
+use App\Http\Requests\ReclamarIncidenciaRequest;
 use App\Http\Requests\SolicitarReaperturaRequest;
 use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
@@ -28,12 +30,15 @@ class IncidenciaController extends Controller
     public function listadoIncidencias(Request $request)
     {
         // Resueltas al final; dentro de cada bloque, las más recientes primero.
-        $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad'])
+        $query = Incidencia::with(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende'])
             ->orderByRaw('(estado_incidencia = ?) ASC', [EstadoIncidencia::Resuelto->value])
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('estado')) {
             $query->where('estado_incidencia', $request->estado);
+        } else {
+            // CERRADO (archivo) sale del listado activo por defecto; se ve pidiendo ?estado=CERRADO explícito.
+            $query->where('estado_incidencia', '<>', EstadoIncidencia::Cerrado->value);
         }
         if ($request->filled('prioridad')) {
             $query->where('prioridad_incidencia', $request->prioridad);
@@ -122,7 +127,7 @@ class IncidenciaController extends Controller
         $this->authorize('ver', $incidencia);
 
         return new IncidenciaResource(
-            $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia', 'evidencias'])
+            $incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia', 'evidencias', 'adminAtiende'])
         );
     }
 
@@ -192,6 +197,11 @@ class IncidenciaController extends Controller
     {
         $nuevo = $request->estado_incidencia;
         $actual = $incidencia->estado_incidencia;
+
+        // CERRADO es terminal sin excepciones: se sale del archivo con /archivar o el job, nunca desde acá.
+        if ($actual === EstadoIncidencia::Cerrado->value) {
+            return response()->json(['message' => 'No se puede cambiar el estado de una incidencia archivada'], 422);
+        }
 
         // Única excepción al "RESUELTO es terminal": el admin reabre a EN_PROCESO solo si el reportador lo pidió (bandera reapertura_solicitada).
         $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto->value
@@ -264,5 +274,45 @@ class IncidenciaController extends Controller
             });
 
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
+    }
+
+    // "Reclamar" v1 sin tiempo real: el primer admin que reclama queda como dueño.
+    // El UPDATE ... WHERE id_admin_atiende IS NULL es atómico: si dos admins reclaman a la vez, uno solo gana la fila.
+    public function reclamarIncidencia(ReclamarIncidenciaRequest $request, Incidencia $incidencia)
+    {
+        if ($incidencia->id_admin_atiende !== null) {
+            $mensaje = $incidencia->id_admin_atiende === $request->user()->id
+                ? 'Ya reclamaste esta incidencia.'
+                : 'Esta incidencia ya fue reclamada por otro administrador.';
+
+            return response()->json(['message' => $mensaje], 422);
+        }
+
+        $reclamada = Incidencia::where('id_incidencia', $incidencia->id_incidencia)
+            ->whereNull('id_admin_atiende')
+            ->update(['id_admin_atiende' => $request->user()->id]);
+
+        if ($reclamada === 0) {
+            return response()->json(['message' => 'Esta incidencia ya fue reclamada por otro administrador.'], 422);
+        }
+
+        return new IncidenciaResource($incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']));
+    }
+
+    // Cerrar/archivar: solo el admin dueño (id_admin_atiende), y solo desde RESUELTO.
+    public function archivarIncidencia(ArchivarIncidenciaRequest $request, Incidencia $incidencia)
+    {
+        if (! $incidencia->estaResuelta()) {
+            return response()->json(['message' => 'Solo se pueden archivar incidencias resueltas.'], 422);
+        }
+
+        DB::transaction(function () use ($incidencia, $request) {
+            DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
+            $incidencia->update(['estado_incidencia' => EstadoIncidencia::Cerrado->value]);
+        });
+
+        Cache::forget('dashboard_metricas');
+
+        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']));
     }
 }
