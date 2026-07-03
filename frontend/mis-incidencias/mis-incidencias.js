@@ -229,11 +229,11 @@ async function seleccionarIncidencia(id) {
     document.getElementById("detalleContenido").classList.remove("d-none");
 
     // En movil se pasa a la vista de detalle (mapa + tarjeta). El mapa estaba oculto,
-    // asi que tras mostrarlo hay que recalcular su tamano o sale en gris.
+    // asi que tras mostrarlo Mapbox debe recalcular su tamano (resize) o sale en gris.
     document.querySelector(".mis-mapa-main").classList.add("mis-ver-detalle");
     requestAnimationFrame(function () {
       if (mapa) {
-        mapa.map.invalidateSize();
+        mapa.map.resize();
         mapa.enfocar(id);
       }
     });
