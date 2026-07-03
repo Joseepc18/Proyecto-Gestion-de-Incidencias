@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\NotificacionController;
+use App\Http\Controllers\Api\PermisoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
@@ -82,28 +83,38 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Métricas del panel del técnico (el rol se valida en el controller)
     Route::get('/dashboard/tecnico', [DashboardController::class, 'metricasTecnico']);
-    Route::middleware('admin')->group(function () {
+
+    // Gestión operativa de incidencias (admin y super_admin): asignar técnicos y dashboard.
+    Route::middleware('permiso:incidencias.gestionar')->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
+        Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
+    });
 
-        // CRUD de catálogos de tipos y subtipos (solo admin)
+    // CRUD de catálogos de tipos y subtipos (solo super_admin).
+    Route::middleware('permiso:catalogos.administrar')->group(function () {
         Route::post('/tipos-incidencia', [CatalogoAdminController::class, 'crearTipo']);
         Route::put('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'actualizarTipo']);
         Route::delete('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'eliminarTipo']);
         Route::post('/subtipos-incidencia', [CatalogoAdminController::class, 'crearSubtipo']);
         Route::put('/subtipos-incidencia/{subtipo}', [CatalogoAdminController::class, 'actualizarSubtipo']);
         Route::delete('/subtipos-incidencia/{subtipo}', [CatalogoAdminController::class, 'eliminarSubtipo']);
+    });
 
-        // Métricas del dashboard (solo admin)
-        Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
-
-        // Gestión de usuarios (solo admin)
+    // Gestión de usuarios (solo super_admin).
+    Route::middleware('permiso:usuarios.administrar')->group(function () {
         Route::get('/usuarios', [UserController::class, 'listado']);
         Route::post('/usuarios', [UserController::class, 'crear']);
         Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
         Route::delete('/usuarios/{usuario}', [UserController::class, 'eliminar']);
         Route::post('/usuarios/{id}/restaurar', [UserController::class, 'restaurar'])->where('id', '[0-9]+');
         Route::get('/roles', [UserController::class, 'roles']);
+    });
+
+    // Asignación de permisos por rol (solo super_admin).
+    Route::middleware('permiso:permisos.administrar')->group(function () {
+        Route::get('/permisos', [PermisoController::class, 'index']);
+        Route::put('/roles/{rol}/permisos', [PermisoController::class, 'sincronizar']);
     });
 });

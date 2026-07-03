@@ -60,7 +60,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // 3) fn_notificar_nuevo_comentario: avisa al chat (reportador + admins + responsable) menos al autor; consolida en la notificación sin leer existente (uq_notif_comentario_pendiente).
+        // 3) fn_notificar_nuevo_comentario: avisa al chat (reportador + quienes gestionan + responsable) menos al autor; consolida en la notificación sin leer existente (uq_notif_comentario_pendiente).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_nuevo_comentario()
             RETURNS TRIGGER AS \$\$
@@ -79,8 +79,9 @@ return new class extends Migration
                     SELECT v_reportador AS id_usuario
                     UNION
                     SELECT u.id FROM users u
-                        JOIN roles r ON u.id_rol = r.id_rol
-                        WHERE r.nombre_rol = 'admin'
+                        JOIN rol_permiso rp ON rp.id_rol = u.id_rol
+                        JOIN permisos p ON p.id_permiso = rp.id_permiso
+                        WHERE p.clave_permiso = 'incidencias.gestionar'
                     UNION
                     SELECT a.id_usuario FROM asignaciones_incidencia a
                         WHERE a.id_incidencia = NEW.id_incidencia
@@ -136,7 +137,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_limite_evidencias();
         ');
 
-        // 5) fn_notificar_nueva_incidencia: al crear una incidencia, avisa a los administradores.
+        // 5) fn_notificar_nueva_incidencia: al crear una incidencia, avisa a quienes pueden gestionar incidencias.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_notificar_nueva_incidencia()
             RETURNS TRIGGER AS \$\$
@@ -145,8 +146,9 @@ return new class extends Migration
                 SELECT u.id, NEW.id_incidencia, 'NUEVA_INCIDENCIA',
                        'Nueva incidencia reportada: ' || NEW.nombre_incidencia
                 FROM users u
-                JOIN roles r ON u.id_rol = r.id_rol
-                WHERE r.nombre_rol = 'admin'
+                JOIN rol_permiso rp ON rp.id_rol = u.id_rol
+                JOIN permisos p ON p.id_permiso = rp.id_permiso
+                WHERE p.clave_permiso = 'incidencias.gestionar'
                   AND u.id <> NEW.id_usuario;   -- nunca al propio creador
                 RETURN NEW;
             END;

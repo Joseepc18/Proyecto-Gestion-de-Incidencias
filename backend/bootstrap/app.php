@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\CheckPermiso;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Models\BitacoraError;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'admin' => CheckAdmin::class,
+            'permiso' => CheckPermiso::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

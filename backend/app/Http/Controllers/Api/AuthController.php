@@ -41,7 +41,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
-            'user' => new UserResource($user->load('rol')),
+            'user' => new UserResource($user->load('rol.permisos')),
         ], 201);
     }
 
@@ -63,7 +63,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
-            'user' => new UserResource($user->load('rol')),
+            'user' => new UserResource($user->load('rol.permisos')),
         ], 200);
     }
 
@@ -80,7 +80,7 @@ class AuthController extends Controller
     // Perfil del usuario autenticado (con su rol).
     public function me(Request $request)
     {
-        return new UserResource($request->user()->load('rol'));
+        return new UserResource($request->user()->load('rol.permisos'));
     }
 
     // El usuario edita su propio perfil (nombre, correo y, opcionalmente, contraseña y foto).
@@ -116,7 +116,7 @@ class AuthController extends Controller
 
         $user->save();
 
-        return new UserResource($user->load('rol'));
+        return new UserResource($user->load('rol.permisos'));
     }
 
     // Borra del disco la foto de perfil actual (si la hay) para no dejar archivos huérfanos.

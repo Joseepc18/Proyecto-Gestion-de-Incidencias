@@ -9,7 +9,7 @@ use Illuminate\Validation\Rules\Password;
 
 class ActualizarUsuarioRequest extends FormRequest
 {
-    // Ruta ya protegida por el middleware 'admin'; la Policy solo cubre la regla de negocio (no tocar normales).
+    // Ruta ya protegida por 'permiso:usuarios.administrar'; la Policy cubre el permiso + la regla de negocio (no tocar normales).
     public function authorize(): bool
     {
         Gate::authorize('actualizar', $this->route('usuario'));

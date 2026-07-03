@@ -357,10 +357,10 @@ class RolesYCoberturaTest extends TestCase
         $this->assertDatabaseMissing('asignaciones_incidencia', ['id_asignacion' => $asignacion->id_asignacion]);
     }
 
-    // El admin edita un tipo y un subtipo de incidencia.
-    public function test_admin_edita_tipo_y_subtipo(): void
+    // El super_admin edita un tipo y un subtipo de incidencia (los catálogos son suyos).
+    public function test_super_admin_edita_tipo_y_subtipo(): void
     {
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
 
         $tipo = TipoIncidencia::create(['nombre_tipo_incidencia' => 'Vialidad']);
         $this->putJson("/api/tipos-incidencia/{$tipo->id_tipo_incidencia}", [
@@ -396,12 +396,12 @@ class RolesYCoberturaTest extends TestCase
         ]);
     }
 
-    // El admin actualiza y luego elimina (borrado lógico) a otro usuario.
-    public function test_admin_actualiza_y_elimina_usuario(): void
+    // El super_admin actualiza y luego elimina (borrado lógico) a otro usuario.
+    public function test_super_admin_actualiza_y_elimina_usuario(): void
     {
         $rolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
         $objetivo = $this->crearUsuario('tecnico');
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
 
         $this->putJson("/api/usuarios/{$objetivo->id}", [
             'name' => 'Técnico Promovido',

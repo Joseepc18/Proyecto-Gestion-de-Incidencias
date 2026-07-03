@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -29,15 +29,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
   if (!usuario) return;
 
-  if (!usuario.rol || usuario.rol.nombre_rol !== "admin") {
-    window.location.replace(inicioSegunRol(usuario.rol ? usuario.rol.nombre_rol : ""));
+  const rol = usuario.rol ? usuario.rol.nombre_rol : "";
+  if (!tienePermiso("incidencias.gestionar")) {
+    window.location.replace(inicioSegunRol(rol));
     return;
   }
 
   document.getElementById("nombreUsuario").textContent = usuario.name;
   document.getElementById("saludoNombre").textContent = usuario.name;
 
-  aplicarMenuRol("admin");
+  aplicarMenuRol(rol, usuario.permisos);
   // Cableamos logout y tema ANTES del dashboard: si este falla, el admin siempre puede salir.
   cablearLogout();
   observarCambioDeTema(repintarPorTema);

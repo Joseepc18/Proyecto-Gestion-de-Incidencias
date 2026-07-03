@@ -1,6 +1,6 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y suspender en modal.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, filaVaciaHtml, requerirSesion, cablearLogout */
 
 let usuarioActualId = null;
 // Roles que el admin puede asignar (los normales nacen por auto-registro, no se crean aquí).
@@ -10,9 +10,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
 
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
 
-  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+  if (!tienePermiso("usuarios.administrar")) {
     window.location.href = "../inicio/inicio.html";
     return;
   }

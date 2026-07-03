@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       const usuario = await apiFetch("/user", { sinSpinner: true });
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
       if (rol) localStorage.setItem("rol_usuario", rol);
+      if (Array.isArray(usuario.permisos)) {
+        localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+      }
       localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
       window.location.replace(inicioSegunRol(rol));
       return;
@@ -53,6 +56,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       const usuario = data.user || {};
       const rol = usuario.rol ? usuario.rol.nombre_rol : "";
       if (rol) localStorage.setItem("rol_usuario", rol);
+      if (Array.isArray(usuario.permisos)) {
+        localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+      }
       // Cachea la foto para que el navbar la pinte ya en la primera pantalla tras iniciar sesión.
       localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
       toastFlash("Bienvenido", "success");

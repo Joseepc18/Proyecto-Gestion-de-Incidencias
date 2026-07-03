@@ -14,7 +14,7 @@ let previewUrl = null;
 document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
   if (!usuario) return;
-  aplicarMenuRol(usuario.rol ? usuario.rol.nombre_rol : "");
+  aplicarMenuRol(usuario.rol ? usuario.rol.nombre_rol : "", usuario.permisos);
 
   document.getElementById("perfilNombre").value = usuario.name;
   document.getElementById("perfilEmail").value = usuario.email;

@@ -12,6 +12,10 @@ async function requerirSesion() {
   }
   try {
     const usuario = await apiFetch("/user");
+    // Cachea los permisos para que los guards de página (tienePermiso) funcionen antes de pintar el menú.
+    if (Array.isArray(usuario.permisos)) {
+      localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+    }
     // Pinta el nombre en el navbar compartido (todas las páginas admin lo tienen).
     const el = document.getElementById("nombreUsuario");
     if (el) el.textContent = usuario.name;

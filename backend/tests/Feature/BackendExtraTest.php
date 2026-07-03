@@ -91,9 +91,9 @@ class BackendExtraTest extends TestCase
         Storage::disk('public')->assertExists($usuario->foto_perfil);
     }
 
-    public function test_admin_crea_tipo_y_no_puede_borrarlo_con_subtipos(): void
+    public function test_super_admin_crea_tipo_y_no_puede_borrarlo_con_subtipos(): void
     {
-        Sanctum::actingAs($this->crearUsuario('admin'));
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
 
         // Crear un tipo.
         $resp = $this->postJson('/api/tipos-incidencia', [
@@ -121,5 +121,17 @@ class BackendExtraTest extends TestCase
 
         // Evita un tipo huérfano si por error se llegara a crear.
         $this->assertDatabaseMissing('tipos_incidencia', ['nombre_tipo_incidencia' => 'Intento sin permiso']);
+    }
+
+    // El admin operativo perdió el acceso a los catálogos (ahora es exclusivo de super_admin).
+    public function test_admin_ya_no_puede_crear_tipos(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->postJson('/api/tipos-incidencia', [
+            'nombre_tipo_incidencia' => 'Intento como admin',
+        ])->assertStatus(403);
+
+        $this->assertDatabaseMissing('tipos_incidencia', ['nombre_tipo_incidencia' => 'Intento como admin']);
     }
 }

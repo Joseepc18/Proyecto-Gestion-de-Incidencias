@@ -1,6 +1,6 @@
 // api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
-/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, escaparHtml, hayCargaActiva */
+/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, tienePermiso, escaparHtml, hayCargaActiva */
 /* global toastFlash */
 
 const API_BASE = "/api";
@@ -32,6 +32,17 @@ function eliminarToken() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem("perfil_foto");
   localStorage.removeItem("rol_usuario");
+  localStorage.removeItem("permisos_usuario");
+}
+
+// ¿El usuario autenticado tiene esta clave de permiso? (cacheada en localStorage por requerirSesion/login).
+function tienePermiso(clave) {
+  try {
+    const lista = JSON.parse(localStorage.getItem("permisos_usuario") || "[]");
+    return Array.isArray(lista) && lista.includes(clave);
+  } catch {
+    return false;
+  }
 }
 
 // Spinner global (solo aparece si la petición tarda más de 300ms)
@@ -165,38 +176,40 @@ async function apiFetch(endpoint, opciones = {}) {
   }
 }
 
-// Muestra/oculta los enlaces del menú según el rol (el normal arranca en "Mis incidencias").
-function aplicarMenuRol(rol) {
+// Muestra/oculta los enlaces del menú por permiso (no por nombre de rol); el rol solo distingue técnico/normal.
+function aplicarMenuRol(rol, permisos) {
   if (rol) localStorage.setItem("rol_usuario", rol);
-  const esAdmin = rol === "admin";
+  if (Array.isArray(permisos)) localStorage.setItem("permisos_usuario", JSON.stringify(permisos));
   const esNormal = rol === "normal";
   const esTecnico = rol === "tecnico";
+  const gestiona = tienePermiso("incidencias.gestionar");
 
   function mostrar(id, visible) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("d-none", !visible);
   }
 
-  mostrar("navInicio", esAdmin || esTecnico);
+  mostrar("navInicio", gestiona || esTecnico);
 
   // El "Inicio" del técnico es su propio panel (el href por defecto apunta al del admin).
   const navInicio = document.getElementById("navInicio");
   if (navInicio && esTecnico) navInicio.href = "../inicio-tecnico/inicio-tecnico.html";
-  mostrar("navIncidencias", esAdmin);
-  mostrar("navUsuarios", esAdmin);
-  mostrar("navCatalogos", esAdmin);
-  mostrar("navMisIncidencias", !esAdmin);
-  mostrar("navRegistrar", esAdmin || esNormal);
+  mostrar("navIncidencias", gestiona);
+  mostrar("navUsuarios", tienePermiso("usuarios.administrar"));
+  mostrar("navCatalogos", tienePermiso("catalogos.administrar"));
+  mostrar("navPermisos", tienePermiso("permisos.administrar"));
+  mostrar("navMisIncidencias", !gestiona);
+  mostrar("navRegistrar", gestiona || esNormal);
 
   const navMis = document.getElementById("navMisIncidencias");
   const textoMis = navMis ? navMis.querySelector(".nav-text") : null;
   if (textoMis) textoMis.textContent = rol === "tecnico" ? "Mis asignaciones" : "Mis reportes";
 }
 
-// Pantalla de arranque según el rol: admin y técnico tienen su propio Inicio; el normal va a "Mis incidencias".
+// Pantalla de arranque según el rol: admin/super_admin y técnico tienen su propio Inicio; el normal va a "Mis incidencias".
 /* exported inicioSegunRol */
 function inicioSegunRol(rol) {
-  if (rol === "admin") return "../inicio/inicio.html";
+  if (rol === "admin" || rol === "super_admin") return "../inicio/inicio.html";
   if (rol === "tecnico") return "../inicio-tecnico/inicio-tecnico.html";
   return "../mis-incidencias/mis-incidencias.html";
 }

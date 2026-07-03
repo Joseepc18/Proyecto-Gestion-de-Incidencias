@@ -1,14 +1,14 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
   cablearLogout();
 
-  const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+  const esAdmin = tienePermiso("incidencias.gestionar");
   if (esAdmin) {
     document.querySelectorAll(".solo-admin").forEach(function (el) {
       el.classList.remove("d-none");

@@ -1,14 +1,14 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
 
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
 
-  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+  if (!tienePermiso("incidencias.gestionar")) {
     window.location.href = "../mis-incidencias/mis-incidencias.html";
     return;
   }
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       return;
     }
 
-    const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+    const esAdmin = tienePermiso("incidencias.gestionar");
 
     incidencias.forEach(function (inc) {
       const tr = document.createElement("tr");

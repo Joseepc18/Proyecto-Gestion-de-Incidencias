@@ -47,10 +47,34 @@ class User extends Authenticatable
         return $query->whereHas('rol', fn ($q) => $q->where('nombre_rol', $rol));
     }
 
+    // Usuarios cuyo rol tiene el permiso indicado; se usa para notificar a quienes pueden gestionar.
+    public function scopeConPermiso($query, string $clave)
+    {
+        return $query->whereHas('rol.permisos', fn ($q) => $q->where('clave_permiso', $clave));
+    }
+
     // Atajos de rol: centralizan el chequeo repetido nombre_rol === 'x'.
+    // super_admin es superset de admin: hereda todo el poder operativo (asignar, prioridades, borrar, etc.).
     public function esAdmin(): bool
     {
-        return $this->rol && $this->rol->nombre_rol === 'admin';
+        return $this->rol && in_array($this->rol->nombre_rol, ['admin', 'super_admin'], true);
+    }
+
+    public function esSuperAdmin(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === 'super_admin';
+    }
+
+    // Fuente única de verdad para autorizar por permiso (middleware, policies y recurso de sesión).
+    public function tienePermiso(string $clave): bool
+    {
+        return $this->rol && $this->rol->permisos->contains('clave_permiso', $clave);
+    }
+
+    // Lista de claves de permiso del rol; la consume UserResource para el frontend.
+    public function permisosClaves(): array
+    {
+        return $this->rol ? $this->rol->permisos->pluck('clave_permiso')->all() : [];
     }
 
     public function esTecnico(): bool

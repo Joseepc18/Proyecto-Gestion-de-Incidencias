@@ -1,6 +1,6 @@
 // catalogos.js — Tipos y subtipos de incidencia (solo admin): tabla única con toggle, crear/editar en modal.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, escaparHtml, abrirModal, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
 
 // Catálogo completo (tipos con sus subtipos anidados) cacheado para paginar en cliente.
 let tipos = [];
@@ -13,9 +13,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
 
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
 
-  if (!usuarioActual.rol || usuarioActual.rol.nombre_rol !== "admin") {
+  if (!tienePermiso("catalogos.administrar")) {
     window.location.href = "../inicio/inicio.html";
     return;
   }

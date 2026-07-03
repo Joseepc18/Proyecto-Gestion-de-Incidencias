@@ -60,7 +60,7 @@ class EvidenciaController extends Controller
         $nombre = $incidencia->nombre_incidencia;
 
         if ($user->id === $incidencia->id_usuario) {
-            $destinos = User::conRol('admin')
+            $destinos = User::conPermiso('incidencias.gestionar')
                 ->pluck('id')
                 ->merge($incidencia->asignaciones()->pluck('id_usuario'))
                 ->unique()

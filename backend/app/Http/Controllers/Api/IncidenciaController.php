@@ -262,7 +262,7 @@ class IncidenciaController extends Controller
 
         $incidencia->update(['reapertura_solicitada' => true]);
 
-        User::conRol('admin')
+        User::conPermiso('incidencias.gestionar')
             ->get()
             ->each(function (User $admin) use ($incidencia, $motivo) {
                 Notificacion::create([

@@ -63,6 +63,14 @@
       oculto: true,
     },
     {
+      page: "permisos",
+      id: "navPermisos",
+      href: "../permisos/permisos.html",
+      icon: "bi-shield-lock",
+      texto: "Permisos",
+      oculto: true,
+    },
+    {
       page: "notificaciones",
       href: "../notificaciones/notificaciones.html",
       icon: "bi-mailbox",

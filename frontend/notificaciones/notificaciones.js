@@ -167,7 +167,7 @@ async function cargar() {
 document.addEventListener("DOMContentLoaded", async function () {
   usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
   cablearLogout();
 
   document.querySelectorAll("[data-filtro]").forEach(function (btn) {

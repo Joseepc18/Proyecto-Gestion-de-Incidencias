@@ -6,18 +6,18 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckAdmin
+class CheckPermiso
 {
     /**
-     * Handle an incoming request.
+     * Bloquea la ruta si el usuario autenticado no tiene el permiso indicado.
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $permiso): Response
     {
         $user = $request->user();
 
-        if (! $user || ! $user->rol || $user->rol->nombre_rol !== 'admin') {
+        if (! $user || ! $user->tienePermiso($permiso)) {
             return response()->json(['message' => 'Acceso denegado'], 403);
         }
 

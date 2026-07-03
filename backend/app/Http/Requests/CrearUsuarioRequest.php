@@ -8,7 +8,7 @@ use Illuminate\Validation\Rules\Password;
 
 class CrearUsuarioRequest extends FormRequest
 {
-    // Ruta protegida por el middleware 'admin'.
+    // Ruta protegida por el middleware 'permiso:usuarios.administrar'.
     public function authorize(): bool
     {
         return true;

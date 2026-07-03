@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 let incActual = null;
 let usuarioActual = null;
@@ -27,8 +27,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
   let rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
-  esAdmin = rol === "admin";
-  aplicarMenuRol(rol);
+  esAdmin = tienePermiso("incidencias.gestionar");
+  aplicarMenuRol(rol, usuarioActual.permisos);
 
   const btnVolver = document.getElementById("btnVolver");
   btnVolver.href = rutaLista(rol);
@@ -380,7 +380,7 @@ function pintarInterlocutorCabecera() {
     nombre = responsableActual.usuario.name;
     rol = "Técnico responsable";
     foto = responsableActual.usuario.foto_perfil || null;
-  } else if (usuarioActual.rol && usuarioActual.rol.nombre_rol !== "admin") {
+  } else if (!tienePermiso("incidencias.gestionar")) {
     nombre = "Administración";
     rol = "Administrador";
   }

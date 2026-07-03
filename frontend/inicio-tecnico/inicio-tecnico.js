@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("saludoNombre").textContent = usuario.name;
 
-  aplicarMenuRol("tecnico");
+  aplicarMenuRol(rol, usuario.permisos);
   // Cableamos logout y tema ANTES del panel: si este falla, el técnico siempre puede salir.
   cablearLogout();
   observarCambioDeTema(repintarPorTema);

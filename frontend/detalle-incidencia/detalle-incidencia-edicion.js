@@ -3,7 +3,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -91,7 +91,7 @@ async function entrarEdicion() {
   document.getElementById("editCiudad").value = incActual.id_ciudad || "";
 
   // Rol normal: provincia/ciudad se autocompletan al marcar en el mapa, así que se ocultan.
-  const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+  const esAdmin = tienePermiso("incidencias.gestionar");
   if (!esAdmin) {
     document.getElementById("campoEditProvincia").classList.add("d-none");
     document.getElementById("campoEditCiudad").classList.add("d-none");

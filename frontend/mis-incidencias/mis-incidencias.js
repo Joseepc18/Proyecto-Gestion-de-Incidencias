@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let mapa = null;
@@ -8,7 +8,7 @@ let mapa = null;
 document.addEventListener("DOMContentLoaded", async function () {
   usuarioActual = await requerirSesion();
   if (!usuarioActual) return;
-  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "");
+  aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
   cablearLogout();
 
   let timerBusqueda = null;
@@ -186,7 +186,7 @@ async function seleccionarIncidencia(id) {
   try {
     const inc = await apiFetch("/incidencias/" + id);
 
-    const esAdmin = usuarioActual.rol && usuarioActual.rol.nombre_rol === "admin";
+    const esAdmin = tienePermiso("incidencias.gestionar");
     const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
     document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
 
