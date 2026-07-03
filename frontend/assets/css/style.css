@@ -51,6 +51,13 @@ html {
   min-height: 100%;
 }
 
+html,
+body {
+  /* Red de seguridad: ningún componente aislado (ej. .row de Bootstrap con márgenes
+     negativos) debe poder abrir scroll horizontal de la página completa. */
+  overflow-x: hidden;
+}
+
 body {
   min-height: 100vh;
   min-height: 100dvh;
@@ -1557,17 +1564,10 @@ html[data-theme="dark"] {
   backdrop-filter: blur(4px);
 }
 
-/* Evita que el menú de 3 puntos se recorte dentro de la tabla. Bootstrap pone
-   overflow:auto en .table-responsive y, con pocas filas, recorta el dropdown
-   (aparece una barra de scroll). En escritorio lo dejamos visible; en móvil
-   mantenemos el scroll horizontal para tablas anchas. */
+/* El menú de 3 puntos (menuAcciones.js) usa Popper con strategy:"fixed", así no lo
+   recorta este scroll aunque la tabla sea más ancha que su contenedor. */
 .table-responsive {
-  overflow: visible;
-}
-@media (max-width: 767.98px) {
-  .table-responsive {
-    overflow-x: auto;
-  }
+  overflow-x: auto;
 }
 
 /* Spinner global — pin georreferenciado que rebota y recorre los estados */

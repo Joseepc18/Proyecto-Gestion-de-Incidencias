@@ -1,6 +1,7 @@
 // menuAcciones.js — Menú desplegable de 3 puntos reutilizable (Editar / Eliminar / ...).
 
 /* exported crearMenuAcciones */
+/* global bootstrap */
 
 // acciones[].peligro pinta el texto en rojo
 function crearMenuAcciones(acciones) {
@@ -32,5 +33,13 @@ function crearMenuAcciones(acciones) {
     li.appendChild(enlace);
     menu.appendChild(li);
   });
+
+  // Estrategia "fixed": el menú se posiciona respecto a la ventana, no al contenedor de la
+  // tabla, así no lo recorta el scroll horizontal de .table-responsive.
+  const boton = dropdown.querySelector("button");
+  bootstrap.Dropdown.getOrCreateInstance(boton, {
+    popperConfig: (config) => ({ ...config, strategy: "fixed" }),
+  });
+
   return dropdown;
 }
