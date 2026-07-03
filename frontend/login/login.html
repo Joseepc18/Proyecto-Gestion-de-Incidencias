@@ -6,12 +6,38 @@
     <meta name="description" content="Acceso - Sistema de Gestión de Incidencias" />
     <title>Acceso | Gestión de Incidencias</title>
 
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <script>
+      // Si ya hay sesión guardada, oculta el formulario mientras se valida el token (sin flash del login).
+      try {
+        if (localStorage.getItem("access_token")) {
+          document.documentElement.classList.add("verificando-sesion");
+        }
+      } catch (e) {
+        /* localStorage no disponible */
+      }
+    </script>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
   <body class="auth-body">
+    <!-- Spinner a pantalla completa mientras se valida la sesión (solo si ya había token) -->
+    <div class="sesion-loader" aria-hidden="true">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando…</span>
+      </div>
+    </div>
+
     <button
       class="icon-button theme-toggle auth-theme-toggle"
       type="button"

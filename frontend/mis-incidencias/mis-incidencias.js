@@ -1,16 +1,9 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
 
 let usuarioActual = null;
 let mapa = null;
-
-// Color del pin según el estado de la incidencia
-const colorEstado = {
-  PENDIENTE: "#dc2626",
-  EN_PROCESO: "#d97706",
-  RESUELTO: "#16a34a",
-};
 
 document.addEventListener("DOMContentLoaded", async function () {
   usuarioActual = await requerirSesion();
@@ -125,7 +118,7 @@ async function cargarLista() {
             lng: Number(i.longitud_incidencia),
             // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
             titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
-            color: colorEstado[i.estado_incidencia] || "#2563eb",
+            color: colorEstado(i.estado_incidencia),
           };
         });
       mapa.pintarPines(pines, seleccionarIncidencia);

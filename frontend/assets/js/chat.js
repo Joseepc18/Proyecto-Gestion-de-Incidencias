@@ -120,7 +120,7 @@ function crearChat(idContenedor, idIncidencia, usuario, opts) {
         const foto = c.usuario && c.usuario.foto_perfil;
         if (foto) {
           const img = document.createElement("img");
-          img.src = "/storage/" + foto;
+          img.src = "/storage/" + encodeURIComponent(foto);
           img.alt = "";
           avatar.appendChild(img);
         } else {

@@ -3,14 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
-
-// Color del punto del historial por estado (no viene de estadoConfig: ahí solo hay clase/icono/texto de badge).
-const colorHistorial = {
-  PENDIENTE: "var(--admin-danger)",
-  EN_PROCESO: "var(--admin-primary)",
-  RESUELTO: "var(--admin-success)",
-};
+/* global apiFetch, aplicarMenuRol, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
 
 let incActual = null;
 let usuarioActual = null;
@@ -283,7 +276,7 @@ async function cargarHistorial(id) {
 
       const punto = document.createElement("span");
       punto.className = "historial-punto";
-      punto.style.background = colorHistorial[ev.estado] || colorHistorial.PENDIENTE;
+      punto.style.background = colorEstado(ev.estado);
       fila.appendChild(punto);
 
       const texto = document.createElement("span");
@@ -399,7 +392,7 @@ function pintarInterlocutorCabecera() {
   avatar.className = "chat-interlocutor-avatar";
   if (foto) {
     const img = document.createElement("img");
-    img.src = "/storage/" + foto;
+    img.src = "/storage/" + encodeURIComponent(foto);
     img.alt = "";
     avatar.appendChild(img);
   } else {

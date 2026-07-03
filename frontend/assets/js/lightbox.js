@@ -5,6 +5,9 @@
 function abrirLightbox(url) {
   const overlay = document.createElement("div");
   overlay.className = "lightbox-overlay";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "Imagen ampliada");
 
   const btnCerrar = document.createElement("button");
   btnCerrar.className = "lightbox-close";
@@ -22,6 +25,10 @@ function abrirLightbox(url) {
   requestAnimationFrame(function () {
     overlay.classList.add("lightbox-visible");
   });
+  // Foco al botón de cerrar (accesibilidad, igual que los modales).
+  setTimeout(function () {
+    btnCerrar.focus();
+  }, 50);
 
   function cerrar() {
     overlay.classList.remove("lightbox-visible");

@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -11,11 +11,6 @@ let mapaProv = null;
 let capaProv = null;
 let leyendaProv = null;
 let geojsonProv = null;
-
-// Lee un color de las variables --admin-* (cambian solas en modo claro/oscuro).
-function colorVar(nombre) {
-  return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
-}
 
 // Devuelve los últimos n meses como { clave: 'YYYY-MM', etiqueta: 'ene 26' }.
 function ultimosMeses(n) {
@@ -28,11 +23,6 @@ function ultimosMeses(n) {
     meses.push({ clave, etiqueta });
   }
   return meses;
-}
-
-// Normaliza un nombre de provincia (sin tildes, minúsculas) para cruzar BD y GeoJSON.
-function normalizar(texto) {
-  return (texto || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -50,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   aplicarMenuRol("admin");
   // Cableamos logout y tema ANTES del dashboard: si este falla, el admin siempre puede salir.
   cablearLogout();
-  observarCambioDeTema();
+  observarCambioDeTema(repintarPorTema);
 
   // El dashboard va aparte: si su render falla NO debe cerrar la sesión.
   await cargarDashboard();
@@ -312,7 +302,9 @@ function desplazarCoords(coords, dx, dy) {
 
 // Acerca Galápagos al continente (inset) para que el mapa no quede dominado por el océano.
 function acercarGalapagos(geojson) {
-  const isla = geojson.features.find((f) => normalizar(f.properties.provincia) === "galapagos");
+  const isla = geojson.features.find(
+    (f) => normalizarTexto(f.properties.provincia) === "galapagos",
+  );
   if (isla) desplazarCoords(isla.geometry.coordinates, 7, -1.5);
 }
 
@@ -343,12 +335,12 @@ async function pintarMapa(porProvincia) {
 
   const conteo = {};
   porProvincia.forEach(function (p) {
-    conteo[normalizar(p.nombre_provincia)] = Number(p.total || 0);
+    conteo[normalizarTexto(p.nombre_provincia)] = Number(p.total || 0);
   });
   const maximo = Math.max(1, ...Object.values(conteo));
 
   function estilo(feature) {
-    const valor = conteo[normalizar(feature.properties.provincia)] || 0;
+    const valor = conteo[normalizarTexto(feature.properties.provincia)] || 0;
     return {
       fillColor: colorProvincia(valor, maximo),
       weight: 1,
@@ -376,7 +368,7 @@ async function pintarMapa(porProvincia) {
   capaProv = L.geoJSON(geojsonProv, {
     style: estilo,
     onEachFeature: function (feature, layer) {
-      const valor = conteo[normalizar(feature.properties.provincia)] || 0;
+      const valor = conteo[normalizarTexto(feature.properties.provincia)] || 0;
       layer.bindTooltip(feature.properties.provincia + ": " + valor, { sticky: true });
       layer.on({ mouseover: resaltarProvincia, mouseout: quitarResaltado });
     },
@@ -411,22 +403,16 @@ function dibujarLeyenda(maximo) {
   leyendaProv.addTo(mapaProv);
 }
 
-// Observa el atributo data-theme del <html> para repintar gráficas y mapa al cambiar de tema.
-function observarCambioDeTema() {
-  const observador = new MutationObserver(function () {
-    if (!metricasCache) return;
-    if (graficos.length) pintarGraficas(metricasCache);
-    if (capaProv) {
-      capaProv.setStyle({ color: colorVar("--admin-surface") });
-      const maximo = Math.max(
-        1,
-        ...(metricasCache.por_provincia || []).map((p) => Number(p.total || 0)),
-      );
-      dibujarLeyenda(maximo);
-    }
-  });
-  observador.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["data-theme"],
-  });
+// Repinta gráficas y mapa al cambiar de tema (lo dispara observarCambioDeTema de dashboard.js).
+function repintarPorTema() {
+  if (!metricasCache) return;
+  if (graficos.length) pintarGraficas(metricasCache);
+  if (capaProv) {
+    capaProv.setStyle({ color: colorVar("--admin-surface") });
+    const maximo = Math.max(
+      1,
+      ...(metricasCache.por_provincia || []).map((p) => Number(p.total || 0)),
+    );
+    dibujarLeyenda(maximo);
+  }
 }

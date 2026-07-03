@@ -1,16 +1,11 @@
 // inicio-tecnico.js — Panel de inicio del técnico: sus KPIs, mapa de asignadas, lista y gráficas.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema */
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
 let datosCache = null;
-
-// Lee un color de las variables --admin-* (cambian solas en modo claro/oscuro).
-function colorVar(nombre) {
-  return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
-}
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
@@ -27,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   aplicarMenuRol("tecnico");
   // Cableamos logout y tema ANTES del panel: si este falla, el técnico siempre puede salir.
   cablearLogout();
-  observarCambioDeTema();
+  observarCambioDeTema(repintarPorTema);
 
   await cargarPanel();
 });
@@ -138,11 +133,6 @@ function pintarLista(activas) {
 
 // Mapa con un pin por incidencia activa (color según estado); el clic lleva al detalle.
 function pintarMapa(activas) {
-  const colorEstado = {
-    PENDIENTE: colorVar("--admin-danger"),
-    EN_PROCESO: colorVar("--admin-warning"),
-  };
-
   if (!activas.length) {
     document.getElementById("mapaAsignadas").innerHTML =
       '<p class="text-muted small p-3 mb-0">No hay incidencias activas que ubicar.</p>';
@@ -155,7 +145,7 @@ function pintarMapa(activas) {
       lat: Number(inc.latitud_incidencia),
       lng: Number(inc.longitud_incidencia),
       titulo: codigoIncidencia(inc.id_incidencia) + " — " + inc.nombre_incidencia,
-      color: colorEstado[inc.estado_incidencia] || colorVar("--admin-primary"),
+      color: colorEstado(inc.estado_incidencia),
     };
   });
 
@@ -247,13 +237,7 @@ function pintarGraficas(datos) {
   );
 }
 
-// Observa el atributo data-theme del <html> para repintar las gráficas al cambiar de tema.
-function observarCambioDeTema() {
-  const observador = new MutationObserver(function () {
-    if (datosCache && graficos.length) pintarGraficas(datosCache);
-  });
-  observador.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["data-theme"],
-  });
+// Repinta las gráficas al cambiar de tema (lo dispara observarCambioDeTema de dashboard.js).
+function repintarPorTema() {
+  if (datosCache && graficos.length) pintarGraficas(datosCache);
 }

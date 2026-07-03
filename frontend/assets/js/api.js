@@ -131,7 +131,20 @@ async function apiFetch(endpoint, opciones = {}) {
       return new Promise(function () {});
     }
 
-    const data = await respuesta.json();
+    let data;
+    try {
+      data = await respuesta.json();
+    } catch {
+      // Respuesta sin JSON (502/HTML del túnel o Nginx, o 204 sin cuerpo): mensaje legible.
+      if (!respuesta.ok) {
+        throw new Error(
+          respuesta.status >= 500
+            ? "El servidor no está disponible. Intenta de nuevo en unos minutos."
+            : "No se pudo completar la petición (" + respuesta.status + ").",
+        );
+      }
+      return {};
+    }
 
     if (!respuesta.ok) {
       let mensaje = data.message || "Error en la petición";

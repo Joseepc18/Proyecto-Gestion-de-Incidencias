@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -40,23 +40,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   try {
     catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
-    const selectTipo = document.getElementById("crearTipo");
-    catalogoTipos.forEach(function (tipo) {
-      const op = document.createElement("option");
-      op.value = tipo.id_tipo_incidencia;
-      op.textContent = tipo.nombre_tipo_incidencia;
-      selectTipo.appendChild(op);
-    });
+    agregarOpciones(
+      document.getElementById("crearTipo"),
+      catalogoTipos,
+      "id_tipo_incidencia",
+      "nombre_tipo_incidencia",
+    );
 
     catalogoCiudades = await apiFetch("/catalogos/ciudades");
     const provincias = await apiFetch("/catalogos/provincias");
-    const selectProvincia = document.getElementById("crearProvincia");
-    provincias.forEach(function (provincia) {
-      const op = document.createElement("option");
-      op.value = provincia.id_provincia;
-      op.textContent = provincia.nombre_provincia;
-      selectProvincia.appendChild(op);
-    });
+    agregarOpciones(
+      document.getElementById("crearProvincia"),
+      provincias,
+      "id_provincia",
+      "nombre_provincia",
+    );
   } catch {
     mostrarToast("No se pudieron cargar los catálogos. Recarga la página.", "error");
   }

@@ -13,7 +13,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       window.location.replace(inicioSegunRol(rol));
       return;
     } catch {
+      // Token inválido/expirado: se limpia y se revela el formulario de login.
       eliminarToken();
+      document.documentElement.classList.remove("verificando-sesion");
     }
   }
 

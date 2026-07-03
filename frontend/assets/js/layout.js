@@ -1,5 +1,7 @@
 // layout.js — Inyecta el sidebar y navbar compartidos; el enlace activo se marca con data-page del <body>.
 
+/* global aplicarMenuRol */
+
 (function () {
   const sidebar = document.getElementById("adminSidebar");
   const navbar = document.getElementById("adminNavbar");
@@ -144,14 +146,25 @@
     const cont = document.getElementById("navbarAvatar");
     if (!cont) return;
     if (foto) {
-      cont.innerHTML =
-        '<img src="/storage/' +
-        foto +
-        '" alt="Foto de perfil" class="navbar-avatar-img" loading="lazy" />';
+      // Construido por DOM (no innerHTML): la ruta de la foto nunca se interpola como HTML.
+      const img = document.createElement("img");
+      img.src = "/storage/" + encodeURIComponent(foto);
+      img.alt = "Foto de perfil";
+      img.className = "navbar-avatar-img";
+      img.loading = "lazy";
+      cont.replaceChildren(img);
     } else {
-      cont.innerHTML = '<i class="bi bi-person-circle" aria-hidden="true"></i>';
+      const icono = document.createElement("i");
+      icono.className = "bi bi-person-circle";
+      icono.setAttribute("aria-hidden", "true");
+      cont.replaceChildren(icono);
     }
   };
 
   window.pintarAvatarNavbar(localStorage.getItem("perfil_foto") || "");
+
+  // Pinta el menú del rol cacheado de inmediato: evita el parpadeo hasta que /user responda.
+  if (typeof aplicarMenuRol === "function") {
+    aplicarMenuRol(localStorage.getItem("rol_usuario") || "");
+  }
 })();

@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   fotoActual = usuario.foto_perfil || null;
   cachearFotoNavbar(fotoActual);
-  mostrarAvatar(fotoActual ? "/storage/" + fotoActual : null);
+  mostrarAvatar(fotoActual ? "/storage/" + encodeURIComponent(fotoActual) : null);
 
   cablearLogout();
 
@@ -124,7 +124,7 @@ async function guardarPerfil(e) {
     quitarFoto = false;
     document.getElementById("perfilPassword").value = "";
     document.getElementById("perfilPasswordConfirm").value = "";
-    mostrarAvatar(fotoActual ? "/storage/" + fotoActual : null);
+    mostrarAvatar(fotoActual ? "/storage/" + encodeURIComponent(fotoActual) : null);
 
     document.getElementById("nombreUsuario").textContent = usuario.name;
     cachearFotoNavbar(fotoActual);

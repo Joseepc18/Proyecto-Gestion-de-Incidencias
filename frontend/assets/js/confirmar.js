@@ -53,9 +53,24 @@ function confirmar(opciones = {}) {
       resolve(resultado);
     }
 
-    // Cierre con Escape (cancela), igual que modal.js.
+    // Cierre con Escape (cancela) y foco atrapado dentro del diálogo, igual que modal.js.
     function alPulsarTecla(e) {
-      if (e.key === "Escape") cerrar(false);
+      if (e.key === "Escape") {
+        cerrar(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focos = overlay.querySelectorAll("button:not([disabled])");
+      if (!focos.length) return;
+      const primero = focos[0];
+      const ultimo = focos[focos.length - 1];
+      if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      }
     }
     document.addEventListener("keydown", alPulsarTecla);
 

@@ -106,7 +106,25 @@ function abrirModal(opciones = {}) {
     }
 
     function alPulsarTecla(e) {
-      if (e.key === "Escape") cerrar(false);
+      if (e.key === "Escape") {
+        cerrar(false);
+        return;
+      }
+      // Atrapa el foco dentro del modal: el Tab cicla entre sus controles, no se va al fondo.
+      if (e.key !== "Tab") return;
+      const focos = overlay.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focos.length) return;
+      const primero = focos[0];
+      const ultimo = focos[focos.length - 1];
+      if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      }
     }
     document.addEventListener("keydown", alPulsarTecla);
 

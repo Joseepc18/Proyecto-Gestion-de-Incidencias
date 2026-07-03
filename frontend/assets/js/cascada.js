@@ -1,6 +1,16 @@
 // cascada.js — Helpers de cascada para selects de formulario (tipo→subtipo, provincia→ciudad).
 
-/* exported poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe */
+/* exported poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones */
+
+// Añade <option> desde una lista a un select (conserva el placeholder que ya trae el HTML).
+function agregarOpciones(select, items, valueKey, textKey) {
+  items.forEach(function (it) {
+    const op = document.createElement("option");
+    op.value = it[valueKey];
+    op.textContent = it[textKey];
+    select.appendChild(op);
+  });
+}
 
 // Devuelve true si el select quedó habilitado con opciones
 function poblarSelectCascada(selectHijo, items, opcionVacio) {

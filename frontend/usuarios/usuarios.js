@@ -164,7 +164,7 @@ function crearAvatar(u) {
   avatar.className = "tabla-avatar tabla-avatar-" + (nombreRol || "normal");
   if (u.foto_perfil) {
     const img = document.createElement("img");
-    img.src = "/storage/" + u.foto_perfil;
+    img.src = "/storage/" + encodeURIComponent(u.foto_perfil);
     img.alt = "";
     avatar.appendChild(img);
   } else {
@@ -242,10 +242,14 @@ function abrirModalUsuario(u) {
     "</div></div>" +
     '<div class="mb-3">' +
     '<label class="form-label" for="mPassword2">Confirmar contraseña</label>' +
+    '<div class="input-group input-group-sm">' +
     '<input class="form-control form-control-sm" id="mPassword2" type="password" minlength="8" ' +
     (editando ? 'placeholder="Dejar vacío para no cambiar"' : "required") +
     " />" +
-    "</div>" +
+    '<button class="btn toggle-password" type="button" data-target="mPassword2" ' +
+    'aria-label="Mostrar contraseña" aria-pressed="false">' +
+    '<i class="bi bi-eye" aria-hidden="true"></i></button>' +
+    "</div></div>" +
     '<div class="mb-1">' +
     '<label class="form-label" for="mRol">Rol</label>' +
     '<select class="form-select form-select-sm" id="mRol" required>' +

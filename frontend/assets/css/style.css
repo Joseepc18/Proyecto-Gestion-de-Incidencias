@@ -837,7 +837,7 @@ a {
 
 /* Tablas en modo tarjeta: en movil cada fila se apila como tarjeta (sin scroll lateral).
    Se activa con la clase .tabla-cards en la <table> y usa data-label en cada <td>. */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .tabla-cards thead {
     display: none;
   }
@@ -918,6 +918,26 @@ a {
   min-height: 100vh;
   min-height: 100dvh;
   background: linear-gradient(135deg, #f8fbff 0%, #eaf2ff 44%, #eef8f6 100%);
+}
+
+/* Spinner de "verificando sesión": tapa el login mientras se valida el token guardado */
+.sesion-loader {
+  display: none;
+}
+
+html.verificando-sesion .sesion-loader {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-bg);
+}
+
+html.verificando-sesion .auth-page,
+html.verificando-sesion .auth-theme-toggle {
+  visibility: hidden;
 }
 
 .auth-page {
@@ -1544,7 +1564,7 @@ html[data-theme="dark"] {
 .table-responsive {
   overflow: visible;
 }
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .table-responsive {
     overflow-x: auto;
   }
@@ -2139,7 +2159,7 @@ html[data-theme="dark"] {
 }
 
 /* Móvil: sin deslizamiento, solo cambia de formulario */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .auth-slider,
   .auth-page--full .auth-slider {
     flex-direction: column;
@@ -2631,7 +2651,7 @@ html[data-theme="dark"] {
 
 /* En movil el mapa deja de ser pantalla completa con paneles flotantes encima:
    se apila en columna (mapa arriba, feed y detalle debajo) y la pagina scrollea. */
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .mis-mapa-main {
     height: auto;
     min-height: calc(100vh - var(--navbar-h));
@@ -3083,6 +3103,15 @@ html[data-theme="dark"] .meta-tile-icono {
 /* Mapa más bajo en este layout */
 .detalle-grid .mapa-detalle {
   height: 200px;
+}
+
+/* En tablet aprovechamos el ancho con 2 columnas (en móvil sigue apilado, en desktop pasa a 3) */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .detalle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+  }
 }
 
 @media (min-width: 1200px) {

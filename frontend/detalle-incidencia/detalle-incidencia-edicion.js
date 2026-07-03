@@ -3,7 +3,7 @@
 /* exported edicionAlCargarDetalle */
 
 // Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 let catalogoTipos = [];
 let catalogoCiudades = [];
@@ -146,12 +146,7 @@ async function cargarCatalogos() {
   try {
     catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
     const selectTipo = document.getElementById("editTipo");
-    catalogoTipos.forEach(function (t) {
-      const op = document.createElement("option");
-      op.value = t.id_tipo_incidencia;
-      op.textContent = t.nombre_tipo_incidencia;
-      selectTipo.appendChild(op);
-    });
+    agregarOpciones(selectTipo, catalogoTipos, "id_tipo_incidencia", "nombre_tipo_incidencia");
 
     catalogoCiudades = await apiFetch("/catalogos/ciudades");
     fetch("../assets/geo/ecuador-cantones.geojson")
@@ -164,12 +159,7 @@ async function cargarCatalogos() {
       .catch(function () {});
     const provincias = await apiFetch("/catalogos/provincias");
     const selectProvincia = document.getElementById("editProvincia");
-    provincias.forEach(function (p) {
-      const op = document.createElement("option");
-      op.value = p.id_provincia;
-      op.textContent = p.nombre_provincia;
-      selectProvincia.appendChild(op);
-    });
+    agregarOpciones(selectProvincia, provincias, "id_provincia", "nombre_provincia");
 
     selectTipo.addEventListener("change", function () {
       poblarSubtipos(parseInt(this.value));
