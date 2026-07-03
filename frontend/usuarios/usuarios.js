@@ -74,20 +74,23 @@ async function cargarUsuarios() {
       if (suspendidos) tr.classList.add("table-secondary");
 
       const tdAvatar = document.createElement("td");
-      tdAvatar.style.width = "48px";
+      tdAvatar.className = "td-avatar";
       tdAvatar.appendChild(crearAvatar(u));
       tr.appendChild(tdAvatar);
 
       const tdNombre = document.createElement("td");
+      tdNombre.dataset.label = "Nombre";
       tdNombre.textContent = u.name;
       if (suspendidos) tdNombre.classList.add("text-decoration-line-through");
       tr.appendChild(tdNombre);
 
       const tdEmail = document.createElement("td");
+      tdEmail.dataset.label = "Correo";
       tdEmail.textContent = u.email;
       tr.appendChild(tdEmail);
 
       const tdRol = document.createElement("td");
+      tdRol.dataset.label = "Rol";
       const nombreRol = u.rol ? u.rol.nombre_rol : "";
       const badge = document.createElement("span");
       badge.className = "badge-rol badge-rol-" + (nombreRol || "normal");

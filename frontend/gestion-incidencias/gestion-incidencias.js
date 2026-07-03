@@ -144,8 +144,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Construye una celda con texto escapado para evitar XSS en innerHTML.
-  function td(texto) {
+  // label alimenta el data-label que se muestra como encabezado en la vista de tarjeta (movil).
+  function td(texto, label) {
     const celda = document.createElement("td");
+    if (label) celda.dataset.label = label;
     celda.textContent = texto;
     return celda;
   }
@@ -176,19 +178,21 @@ document.addEventListener("DOMContentLoaded", async function () {
       const fecha = new Date(inc.created_at).toLocaleDateString("es-EC");
       const esAutor = inc.id_usuario === usuarioActual.id;
 
-      tr.appendChild(td(inc.nombre_incidencia));
+      tr.appendChild(td(inc.nombre_incidencia, "Título"));
 
       const tdEstado = document.createElement("td");
+      tdEstado.dataset.label = "Estado";
       tdEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
       tr.appendChild(tdEstado);
 
       const tdPri = document.createElement("td");
+      tdPri.dataset.label = "Prioridad";
       tdPri.innerHTML = badgePrioridadHtml(inc.prioridad_incidencia);
       tr.appendChild(tdPri);
 
-      tr.appendChild(td(nombreTipo));
-      tr.appendChild(td(nombreCiudad));
-      tr.appendChild(td(fecha));
+      tr.appendChild(td(nombreTipo, "Tipo"));
+      tr.appendChild(td(nombreCiudad, "Ciudad"));
+      tr.appendChild(td(fecha, "Fecha"));
 
       const acciones = [
         {

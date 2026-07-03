@@ -166,15 +166,18 @@ function filaTipo(t) {
   const tr = document.createElement("tr");
 
   const tdNombre = document.createElement("td");
+  tdNombre.dataset.label = "Nombre";
   tdNombre.textContent = t.nombre_tipo_incidencia;
   tr.appendChild(tdNombre);
 
   const tdDesc = document.createElement("td");
+  tdDesc.dataset.label = "Descripción";
   tdDesc.className = "text-muted";
   tdDesc.textContent = t.descripcion_tipo_incidencia || "—";
   tr.appendChild(tdDesc);
 
   const tdConteo = document.createElement("td");
+  tdConteo.dataset.label = "Subtipos";
   tdConteo.className = "text-center";
   const badge = document.createElement("span");
   badge.className = "badge text-bg-secondary";
@@ -201,10 +204,12 @@ function filaSubtipo(fila) {
   const tr = document.createElement("tr");
 
   const tdNombre = document.createElement("td");
+  tdNombre.dataset.label = "Subtipo";
   tdNombre.textContent = s.nombre_subtipo_incidencia;
   tr.appendChild(tdNombre);
 
   const tdTipo = document.createElement("td");
+  tdTipo.dataset.label = "Tipo padre";
   const badge = document.createElement("span");
   badge.className = "badge text-bg-light";
   badge.textContent = fila.nombreTipo;
@@ -212,6 +217,7 @@ function filaSubtipo(fila) {
   tr.appendChild(tdTipo);
 
   const tdDesc = document.createElement("td");
+  tdDesc.dataset.label = "Descripción";
   tdDesc.className = "text-muted";
   tdDesc.textContent = s.descripcion_subtipo_incidencia || "—";
   tr.appendChild(tdDesc);

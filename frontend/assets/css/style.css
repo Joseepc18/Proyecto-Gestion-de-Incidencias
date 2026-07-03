@@ -1,6 +1,29 @@
 :root {
   --sidebar-width: 280px;
   --sidebar-mini-width: 84px;
+  /* Altura del navbar superior; la usan el propio navbar y los calc() de alto completo */
+  --navbar-h: 72px;
+  /* Escala tipografica fluida global: clamp(min movil, preferido, max escritorio).
+     Toda la app usa estos tokens en vez de tamanos fijos, asi el texto escala solo. */
+  --fs-2xs: clamp(0.62rem, 0.58rem + 0.18vw, 0.7rem);
+  --fs-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.78rem);
+  --fs-sm: clamp(0.8rem, 0.77rem + 0.16vw, 0.85rem);
+  --fs-md: clamp(0.86rem, 0.82rem + 0.2vw, 0.92rem);
+  --fs-base: clamp(0.95rem, 0.92rem + 0.16vw, 1rem);
+  --fs-lg: clamp(1.05rem, 0.98rem + 0.32vw, 1.15rem);
+  --fs-xl: clamp(1.2rem, 1.05rem + 0.7vw, 1.4rem);
+  --fs-2xl: clamp(1.4rem, 1.2rem + 0.95vw, 1.6rem);
+  --fs-3xl: clamp(1.65rem, 1.35rem + 1.5vw, 2.18rem);
+  --fs-4xl: clamp(1.9rem, 1.4rem + 2.4vw, 2.6rem);
+  --fs-display: clamp(2.2rem, 1.4rem + 3.8vw, 3.4rem);
+  /* Escala de espaciado reutilizable (paddings, margenes, gaps) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
   --admin-bg: #f5f7fb;
   --admin-surface: #ffffff;
   --admin-surface-soft: #f8fafc;
@@ -30,10 +53,12 @@ html {
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background: linear-gradient(180deg, #f8fbff 0%, var(--admin-bg) 42%, #eef4fa 100%);
   color: var(--admin-text);
   font-family: "Segoe UI", Arial, sans-serif;
+  font-size: var(--fs-base);
 }
 
 a {
@@ -42,6 +67,7 @@ a {
 
 .admin-shell {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .admin-sidebar {
@@ -115,13 +141,13 @@ a {
 }
 
 .brand-title {
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   font-weight: 800;
 }
 
 .brand-subtitle {
   color: #9ca3af;
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
 }
 
 .sidebar-nav {
@@ -161,7 +187,7 @@ a {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   color: #bfdbfe;
-  font-size: 0.76rem;
+  font-size: var(--fs-xs);
 }
 
 .sidebar-footer {
@@ -173,7 +199,7 @@ a {
   padding: 1rem 0;
   color: #d1d5db;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   white-space: nowrap;
 }
 
@@ -200,6 +226,7 @@ a {
   width: auto;
   min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   margin-left: var(--sidebar-width);
   transition: margin-left 0.2s ease;
 }
@@ -208,7 +235,7 @@ a {
   position: sticky;
   top: 0;
   z-index: 1020;
-  min-height: 72px;
+  min-height: var(--navbar-h);
   border-bottom: 1px solid var(--admin-border);
   box-shadow: var(--admin-shadow-sm);
   background-color: var(--admin-surface);
@@ -295,7 +322,7 @@ a {
 
 .notification-time {
   color: var(--admin-muted);
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
 }
 
 .notification-badge {
@@ -308,7 +335,7 @@ a {
   border-radius: 9px;
   background: var(--admin-danger);
   color: #ffffff;
-  font-size: 0.68rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   line-height: 18px;
   text-align: center;
@@ -327,7 +354,7 @@ a {
   background: none;
   padding: 0;
   color: var(--admin-primary);
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
@@ -380,7 +407,7 @@ a {
 }
 
 .notification-msg {
-  font-size: 0.88rem;
+  font-size: var(--fs-md);
   line-height: 1.3;
 }
 
@@ -388,7 +415,7 @@ a {
   margin: 0;
   padding: 1.2rem 0.9rem;
   color: var(--admin-muted);
-  font-size: 0.86rem;
+  font-size: var(--fs-md);
   text-align: center;
 }
 
@@ -411,7 +438,7 @@ a {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   background: rgba(37, 99, 235, 0.1);
   color: var(--admin-primary);
 }
@@ -460,7 +487,7 @@ a {
   margin-left: auto;
   align-self: center;
   flex: none;
-  font-size: 0.7rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   line-height: 1;
   padding: 0.15rem 0.45rem;
@@ -514,7 +541,7 @@ a {
   height: 240px;
   background: linear-gradient(135deg, #2563eb, #0f766e);
   color: #ffffff;
-  font-size: 3.4rem;
+  font-size: var(--fs-display);
 }
 
 .perfil-avatar img {
@@ -525,6 +552,7 @@ a {
 
 .dashboard-content {
   min-height: calc(100vh - 132px);
+  min-height: calc(100dvh - 132px);
 }
 
 .dashboard-content > .container-fluid {
@@ -551,7 +579,7 @@ a {
 
 .eyebrow {
   color: var(--admin-primary);
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -634,7 +662,7 @@ a {
 
 .metric-label {
   color: var(--admin-muted);
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -663,7 +691,7 @@ a {
 .metric-value {
   margin-top: 1rem;
   color: var(--admin-text);
-  font-size: 2.18rem;
+  font-size: var(--fs-3xl);
   font-weight: 800;
   line-height: 1;
 }
@@ -683,7 +711,7 @@ a {
 }
 
 .panel-header p {
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
 }
 
 .chart-wrap {
@@ -751,14 +779,14 @@ a {
 .atender-nombre {
   display: block;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--fs-md);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .atender-meta {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--admin-muted);
 }
 
@@ -769,7 +797,7 @@ a {
   border-radius: 8px;
   border: 1px solid var(--admin-border);
   box-shadow: var(--admin-shadow-sm);
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   line-height: 1.5;
 }
 
@@ -786,9 +814,56 @@ a {
   --bs-table-bg: transparent;
 }
 
+.table .td-avatar {
+  width: 48px;
+}
+
+/* Tablas en modo tarjeta: en movil cada fila se apila como tarjeta (sin scroll lateral).
+   Se activa con la clase .tabla-cards en la <table> y usa data-label en cada <td>. */
+@media (max-width: 767px) {
+  .tabla-cards thead {
+    display: none;
+  }
+  .tabla-cards tbody tr {
+    display: block;
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    background: var(--admin-surface);
+  }
+  .tabla-cards tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-width: 0;
+    padding: var(--space-1) 0;
+    border: 0;
+    text-align: right;
+  }
+  .tabla-cards tbody td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--admin-muted);
+    text-align: left;
+  }
+  .tabla-cards tbody td.text-end {
+    justify-content: flex-end;
+  }
+  .tabla-cards .td-avatar {
+    width: auto;
+    justify-content: flex-start;
+  }
+}
+
 .table thead th {
   color: var(--admin-muted);
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -820,11 +895,13 @@ a {
 
 .auth-body {
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, #f8fbff 0%, #eaf2ff 44%, #eef8f6 100%);
 }
 
 .auth-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 1.5rem;
@@ -838,7 +915,7 @@ a {
 .auth-footer {
   margin-top: 1.2rem;
   text-align: center;
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
 }
 
 @media (min-width: 992px) {
@@ -915,7 +992,7 @@ a {
   }
 
   .metric-value {
-    font-size: 1.85rem;
+    font-size: var(--fs-3xl);
   }
 
   .metric-card,
@@ -970,15 +1047,15 @@ html[data-theme="dark"] body {
 }
 
 .brand-icon {
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
 }
 
 .nav-icon {
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
 }
 
 .theme-toggle i {
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 
 .admin-navbar,
@@ -1014,7 +1091,7 @@ html[data-theme="dark"] .admin-navbar {
 .page-icon {
   width: 48px;
   height: 48px;
-  font-size: 1.25rem;
+  font-size: var(--fs-xl);
 }
 
 .section-title {
@@ -1026,7 +1103,7 @@ html[data-theme="dark"] .admin-navbar {
 .section-title i {
   width: 34px;
   height: 34px;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
 }
 
 html[data-theme="dark"] .page-icon,
@@ -1368,7 +1445,7 @@ html[data-theme="dark"] {
 .badge-estado-pendiente,
 .badge-estado-proceso,
 .badge-estado-resuelto {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 20px;
@@ -1409,7 +1486,7 @@ html[data-theme="dark"] {
   box-shadow: var(--admin-ring);
 }
 .incidencia-card .card-codigo {
-  font-size: 0.78rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--admin-primary);
   letter-spacing: 0.02em;
@@ -1420,7 +1497,7 @@ html[data-theme="dark"] {
   margin: 0.15rem 0;
 }
 .incidencia-card .card-ubicacion {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--admin-muted);
 }
 
@@ -1559,7 +1636,7 @@ html[data-theme="dark"] {
   border-radius: 50%;
   background: var(--admin-primary);
   color: #fff;
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 .toast-cuerpo {
   flex: 1;
@@ -1568,11 +1645,11 @@ html[data-theme="dark"] {
 .toast-titulo {
   margin: 0 0 0.1rem;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
 }
 .toast-msg {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   color: var(--admin-muted);
 }
 .toast-close {
@@ -1588,7 +1665,7 @@ html[data-theme="dark"] {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  font-size: 1.15rem;
+  font-size: var(--fs-lg);
   line-height: 1;
   cursor: pointer;
   color: var(--admin-muted);
@@ -1709,7 +1786,7 @@ html[data-theme="dark"] {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   line-height: 1;
   cursor: pointer;
 }
@@ -1746,12 +1823,12 @@ html[data-theme="dark"] {
   transform: scale(1);
 }
 .confirm-titulo {
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   margin: 0 0 0.5rem;
 }
 .confirm-mensaje {
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   color: var(--admin-muted);
   margin: 0 0 1.25rem;
 }
@@ -1800,7 +1877,7 @@ html[data-theme="dark"] {
   border-bottom: 1px solid var(--admin-border);
 }
 .modal-titulo {
-  font-size: 1.05rem;
+  font-size: var(--fs-lg);
   font-weight: 700;
   margin: 0;
 }
@@ -1808,7 +1885,7 @@ html[data-theme="dark"] {
   border: 0;
   background: transparent;
   color: var(--admin-muted);
-  font-size: 1rem;
+  font-size: var(--fs-base);
   line-height: 1;
   padding: 0.25rem;
   cursor: pointer;
@@ -1820,7 +1897,7 @@ html[data-theme="dark"] {
   padding: 1.25rem;
 }
 .modal-error {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   margin: 0 1.25rem;
 }
 .modal-acciones {
@@ -1854,7 +1931,7 @@ html[data-theme="dark"] {
   color: var(--admin-text);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -1912,6 +1989,7 @@ html[data-theme="dark"] {
 .auth-page--full .auth-slider {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   max-width: none;
   border-radius: 0;
   box-shadow: none;
@@ -1951,18 +2029,18 @@ html[data-theme="dark"] {
   gap: 0.5rem;
   margin-bottom: 1rem;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
 }
 .auth-hero-brand i {
   color: var(--admin-primary);
 }
 .auth-hero-content h2 {
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   font-weight: 800;
   margin-bottom: 0.5rem;
 }
 .auth-hero-content p {
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   opacity: 0.85;
   margin: 0;
   max-width: 320px;
@@ -2025,12 +2103,17 @@ html[data-theme="dark"] {
 
 /* Móvil: sin deslizamiento, solo cambia de formulario */
 @media (max-width: 767px) {
-  .auth-slider {
+  .auth-slider,
+  .auth-page--full .auth-slider {
     flex-direction: column;
     width: 100%;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
     border-radius: 0;
+    /* En movil el contenido puede ser mas alto que la pantalla: se scrollea en vez de recortarse */
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .auth-hero,
   .auth-panel {
@@ -2088,7 +2171,7 @@ html[data-theme="dark"] {
 }
 
 .dropzone-icon {
-  font-size: 2rem;
+  font-size: var(--fs-3xl);
   line-height: 1;
   color: var(--admin-primary);
 }
@@ -2099,7 +2182,7 @@ html[data-theme="dark"] {
 }
 
 .dropzone-sub {
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
 }
 
 /* Azulejo "+" para agregar más fotos (mismo tamaño que las miniaturas) */
@@ -2113,7 +2196,7 @@ html[data-theme="dark"] {
   border-radius: 8px;
   background: var(--admin-surface-soft);
   color: var(--admin-muted);
-  font-size: 1.5rem;
+  font-size: var(--fs-2xl);
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -2129,13 +2212,14 @@ html[data-theme="dark"] {
 .foto-agregar-md {
   width: 130px;
   height: 130px;
-  font-size: 2rem;
+  font-size: var(--fs-3xl);
 }
 
 /* Mis incidencias — vista de mapa estilo centro de control */
 .mis-mapa-main {
   position: relative;
-  height: calc(100vh - 72px);
+  height: calc(100vh - var(--navbar-h));
+  height: calc(100dvh - var(--navbar-h));
   padding: 0 !important;
 }
 
@@ -2190,7 +2274,7 @@ html[data-theme="dark"] {
   border-radius: 6px;
   background: var(--admin-surface);
   color: var(--admin-text);
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   line-height: 1;
 }
 
@@ -2206,7 +2290,7 @@ html[data-theme="dark"] {
 }
 
 .mis-pag-info {
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--admin-muted);
   white-space: nowrap;
 }
@@ -2261,7 +2345,7 @@ html[data-theme="dark"] {
   justify-content: center;
   width: 29px;
   height: 29px;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   color: #333;
   background: #fff;
   border: 0;
@@ -2278,6 +2362,7 @@ html[data-theme="dark"] {
   flex-direction: column;
   height: 540px;
   max-height: calc(100vh - 160px);
+  max-height: calc(100dvh - 160px);
   overflow: hidden;
   padding: 0;
 }
@@ -2334,7 +2419,7 @@ html[data-theme="dark"] {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--admin-muted);
   margin: 0 0 3px;
 }
@@ -2348,7 +2433,7 @@ html[data-theme="dark"] {
   place-items: center;
   background: var(--admin-primary);
   color: #ffffff;
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -2366,7 +2451,7 @@ html[data-theme="dark"] {
   border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 8px 11px;
-  font-size: 0.88rem;
+  font-size: var(--fs-md);
 }
 
 .chat-texto {
@@ -2377,7 +2462,7 @@ html[data-theme="dark"] {
 .chat-hora {
   margin-top: 4px;
   align-self: flex-end;
-  font-size: 0.68rem;
+  font-size: var(--fs-2xs);
   opacity: 0.75;
 }
 
@@ -2393,7 +2478,7 @@ html[data-theme="dark"] {
   margin: 4px 0;
   padding: 3px 12px;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: var(--fs-2xs);
   color: var(--admin-muted);
   background: color-mix(in srgb, var(--admin-surface) 80%, transparent);
   border: 1px solid var(--admin-border);
@@ -2417,7 +2502,7 @@ html[data-theme="dark"] {
   place-items: center;
   background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  font-size: 0.7rem;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -2436,19 +2521,19 @@ html[data-theme="dark"] {
 }
 
 .chat-interlocutor-nombre {
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
 .chat-interlocutor-rol {
-  font-size: 0.68rem;
+  font-size: var(--fs-2xs);
   opacity: 0.8;
 }
 
 .chat-vacio {
   text-align: center;
   color: var(--admin-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-sm);
   margin: auto;
 }
 
@@ -2458,7 +2543,7 @@ html[data-theme="dark"] {
   padding: 10px;
   border-top: 1px solid var(--admin-border);
   text-align: center;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   color: var(--admin-danger);
   background: rgba(220, 38, 38, 0.06);
 }
@@ -2492,18 +2577,33 @@ html[data-theme="dark"] {
   background: var(--admin-primary-dark);
 }
 
-/* En pantallas chicas los paneles se angostan */
+/* En movil el mapa deja de ser pantalla completa con paneles flotantes encima:
+   se apila en columna (mapa arriba, feed y detalle debajo) y la pagina scrollea. */
 @media (max-width: 768px) {
   .mis-mapa-main {
-    height: calc(100vh - 64px);
+    height: auto;
+    min-height: calc(100vh - var(--navbar-h));
+    min-height: calc(100dvh - var(--navbar-h));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) !important;
   }
-  .mis-feed {
-    width: calc(100% - 32px);
-    max-height: 42%;
+  .mis-mapa {
+    position: relative;
+    inset: auto;
+    height: 45vh;
+    min-height: 260px;
+    border-radius: 14px;
+    overflow: hidden;
   }
+  .mis-feed,
   .mis-detalle {
-    width: calc(100% - 32px);
-    max-height: 52%;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: none;
+    max-height: none;
   }
 }
 
@@ -2526,7 +2626,7 @@ html[data-theme="dark"] {
 
 /* Detalle admin: herramientas de gestión (columna derecha) */
 .panel-titulo-tool {
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2549,7 +2649,7 @@ html[data-theme="dark"] {
   background: var(--admin-surface);
   color: var(--admin-muted);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   transition:
     border-color 0.15s,
     background 0.15s,
@@ -2577,7 +2677,7 @@ html[data-theme="dark"] {
   background: var(--admin-surface);
   color: var(--admin-text);
   font-weight: 600;
-  font-size: 0.84rem;
+  font-size: var(--fs-sm);
   transition:
     background 0.15s,
     border-color 0.15s;
@@ -2626,7 +2726,7 @@ html[data-theme="dark"] {
 .combobox-opcion {
   padding: 6px 10px;
   border-radius: 6px;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   cursor: pointer;
 }
 
@@ -2636,7 +2736,7 @@ html[data-theme="dark"] {
 
 .combobox-vacio {
   padding: 6px 10px;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   color: var(--admin-muted);
 }
 
@@ -2659,12 +2759,12 @@ html[data-theme="dark"] {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: var(--fs-sm);
   flex-shrink: 0;
 }
 
 .tecnico-nombre {
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   font-weight: 500;
 }
 
@@ -2678,7 +2778,7 @@ html[data-theme="dark"] {
   place-items: center;
   background: var(--admin-primary);
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -2729,12 +2829,12 @@ html[data-theme="dark"] {
 
 .historial-texto {
   flex: 1;
-  font-size: 0.82rem;
+  font-size: var(--fs-sm);
   font-weight: 600;
 }
 
 .historial-fecha {
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   color: var(--admin-muted);
   white-space: nowrap;
 }
@@ -2766,7 +2866,7 @@ html[data-theme="dark"] {
   border-radius: 8px;
   background: #eaf2ff;
   color: var(--admin-primary);
-  font-size: 1rem;
+  font-size: var(--fs-base);
 }
 
 html[data-theme="dark"] .meta-tile-icono {
@@ -2781,7 +2881,7 @@ html[data-theme="dark"] .meta-tile-icono {
 }
 
 .meta-tile-label {
-  font-size: 0.68rem;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2789,7 +2889,7 @@ html[data-theme="dark"] .meta-tile-icono {
 }
 
 .meta-tile-valor {
-  font-size: 0.88rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2916,6 +3016,7 @@ html[data-theme="dark"] .meta-tile-icono {
   /* La pantalla del detalle se ancla al alto de la ventana: no scrollea la página */
   .detalle-shell {
     height: 100vh;
+    height: 100dvh;
     min-height: 0;
     overflow: hidden;
     display: flex;
@@ -3012,7 +3113,7 @@ html[data-theme="dark"] .meta-tile-icono {
   border: none;
   background: var(--admin-primary);
   color: #ffffff;
-  font-size: 1.4rem;
+  font-size: var(--fs-xl);
   box-shadow: var(--admin-shadow);
   z-index: 1190;
   display: flex;
@@ -3048,7 +3149,7 @@ html[data-theme="dark"] .meta-tile-icono {
 }
 
 .chat-participantes-vacio {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   color: var(--admin-muted);
 }
 
@@ -3070,7 +3171,7 @@ html[data-theme="dark"] .meta-tile-icono {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   flex-shrink: 0;
 }
 
@@ -3081,12 +3182,12 @@ html[data-theme="dark"] .meta-tile-icono {
 }
 
 .chat-contacto-nombre {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
 }
 
 .chat-contacto-rol {
-  font-size: 0.65rem;
+  font-size: var(--fs-2xs);
   color: var(--admin-muted);
 }
 
@@ -3103,7 +3204,7 @@ html[data-theme="dark"] .meta-tile-icono {
 }
 
 .estado-vacio-icono {
-  font-size: 2.4rem;
+  font-size: var(--fs-4xl);
   line-height: 1;
   color: var(--admin-border);
 }
@@ -3116,7 +3217,7 @@ html[data-theme="dark"] .meta-tile-icono {
 
 .estado-vacio-texto {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
 }
 
 /* Búsqueda con lupa integrada (envuelve un input de filtro) */
@@ -3176,7 +3277,7 @@ html[data-theme="dark"] .badge-estado-resuelto {
 
 /* Pills de rol (Usuarios): mismo estilo suave por rol */
 .badge-rol {
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 20px;
@@ -3217,6 +3318,7 @@ html[data-theme="dark"] .badge-rol-normal {
 /* Páginas de error (404 / 500): centradas, con branding */
 .error-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3246,7 +3348,7 @@ html[data-theme="dark"] .badge-rol-normal {
 }
 
 .error-icono {
-  font-size: 2.6rem;
+  font-size: var(--fs-4xl);
   color: var(--admin-border);
   margin-bottom: 0.5rem;
 }

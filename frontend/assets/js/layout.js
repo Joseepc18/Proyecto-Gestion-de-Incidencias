@@ -7,6 +7,10 @@
 
   const paginaActual = document.body.dataset.page || "";
 
+  const cfg = window.APP_CONFIG || {};
+  const appNombre = cfg.nombre || "Incidencias UPSE";
+  const appSubtitulo = cfg.subtitulo || "Gestión georreferenciada";
+
   const enlaces = [
     {
       page: "inicio",
@@ -92,8 +96,12 @@
     '<div class="sidebar-header">' +
     '<a class="brand-mark" href="../inicio/inicio.html">' +
     '<span class="brand-icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>' +
-    '<span class="brand-copy"><span class="brand-title">Incidencias UPSE</span>' +
-    '<span class="brand-subtitle">Gestión georreferenciada</span></span></a></div>' +
+    '<span class="brand-copy"><span class="brand-title">' +
+    appNombre +
+    "</span>" +
+    '<span class="brand-subtitle">' +
+    appSubtitulo +
+    "</span></span></a></div>" +
     '<nav class="sidebar-nav">' +
     navHtml +
     "</nav>" +
