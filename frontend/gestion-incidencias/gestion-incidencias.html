@@ -50,64 +50,76 @@
                 </div>
               </div>
 
-              <!-- Fila de filtros -->
+              <!-- Fila de filtros: busqueda siempre visible; el resto se colapsa en movil -->
               <div class="px-3 pb-3">
-                <div class="row g-2">
-                  <div class="col-12 col-md-3">
-                    <div class="campo-busqueda">
-                      <i class="bi bi-search busqueda-icono" aria-hidden="true"></i>
-                      <input
-                        class="form-control form-control-sm"
-                        type="search"
-                        id="filtroBusqueda"
-                        placeholder="Buscar por título..."
-                        aria-label="Buscar incidencias"
-                      />
+                <div class="d-flex gap-2 align-items-center">
+                  <div class="campo-busqueda flex-grow-1">
+                    <i class="bi bi-search busqueda-icono" aria-hidden="true"></i>
+                    <input
+                      class="form-control form-control-sm"
+                      type="search"
+                      id="filtroBusqueda"
+                      placeholder="Buscar por título..."
+                      aria-label="Buscar incidencias"
+                    />
+                  </div>
+                  <button
+                    class="btn btn-outline-secondary btn-sm d-md-none flex-shrink-0"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#filtrosGestion"
+                    aria-expanded="false"
+                    aria-controls="filtrosGestion"
+                  >
+                    <i class="bi bi-funnel" aria-hidden="true"></i> Filtros
+                  </button>
+                </div>
+                <div class="collapse d-md-block mt-2" id="filtrosGestion">
+                  <div class="row g-2">
+                    <div class="col-12 col-md-3">
+                      <select
+                        class="form-select form-select-sm"
+                        id="filtroEstado"
+                        aria-label="Filtrar por estado"
+                      >
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="EN_PROCESO">En proceso</option>
+                        <option value="RESUELTO">Resuelto</option>
+                      </select>
                     </div>
-                  </div>
-                  <div class="col-12 col-md-2">
-                    <select
-                      class="form-select form-select-sm"
-                      id="filtroEstado"
-                      aria-label="Filtrar por estado"
-                    >
-                      <option value="">Todos los estados</option>
-                      <option value="PENDIENTE">Pendiente</option>
-                      <option value="EN_PROCESO">En proceso</option>
-                      <option value="RESUELTO">Resuelto</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-2">
-                    <select
-                      class="form-select form-select-sm"
-                      id="filtroPrioridad"
-                      aria-label="Filtrar por prioridad"
-                    >
-                      <option value="">Todas las prioridades</option>
-                      <option value="ALTA">Alta</option>
-                      <option value="MEDIA">Media</option>
-                      <option value="BAJA">Baja</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <select
-                      class="form-select form-select-sm"
-                      id="filtroTipo"
-                      aria-label="Filtrar por tipo"
-                    >
-                      <option value="">Todos los tipos</option>
-                      <!-- gestion-incidencias.js llena esto con GET /api/catalogos/tipos-incidencia -->
-                    </select>
-                  </div>
-                  <div class="col-12 col-md-2">
-                    <select
-                      class="form-select form-select-sm"
-                      id="filtroCiudad"
-                      aria-label="Filtrar por ciudad"
-                    >
-                      <option value="">Todas las ciudades</option>
-                      <!-- gestion-incidencias.js llena esto con GET /api/catalogos/ciudades -->
-                    </select>
+                    <div class="col-12 col-md-3">
+                      <select
+                        class="form-select form-select-sm"
+                        id="filtroPrioridad"
+                        aria-label="Filtrar por prioridad"
+                      >
+                        <option value="">Todas las prioridades</option>
+                        <option value="ALTA">Alta</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="BAJA">Baja</option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <select
+                        class="form-select form-select-sm"
+                        id="filtroTipo"
+                        aria-label="Filtrar por tipo"
+                      >
+                        <option value="">Todos los tipos</option>
+                        <!-- gestion-incidencias.js llena esto con GET /api/catalogos/tipos-incidencia -->
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <select
+                        class="form-select form-select-sm"
+                        id="filtroCiudad"
+                        aria-label="Filtrar por ciudad"
+                      >
+                        <option value="">Todas las ciudades</option>
+                        <!-- gestion-incidencias.js llena esto con GET /api/catalogos/ciudades -->
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>

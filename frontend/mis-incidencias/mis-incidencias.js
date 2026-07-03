@@ -33,6 +33,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     seleccionarIncidencia(Number(card.dataset.id));
   });
 
+  // Boton Volver (solo movil): regresa de la vista de detalle a la lista.
+  document.getElementById("btnVolverMapa").addEventListener("click", function () {
+    document.querySelector(".mis-mapa-main").classList.remove("mis-ver-detalle");
+  });
+
   mapa = crearMapaIncidencias("mapaMisIncidencias");
 
   cargarLista();
@@ -223,7 +228,15 @@ async function seleccionarIncidencia(id) {
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
 
-    if (mapa) mapa.enfocar(id);
+    // En movil se pasa a la vista de detalle (mapa + tarjeta). El mapa estaba oculto,
+    // asi que tras mostrarlo hay que recalcular su tamano o sale en gris.
+    document.querySelector(".mis-mapa-main").classList.add("mis-ver-detalle");
+    requestAnimationFrame(function () {
+      if (mapa) {
+        mapa.map.invalidateSize();
+        mapa.enfocar(id);
+      }
+    });
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
   }

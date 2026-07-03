@@ -172,7 +172,7 @@ function filaTipo(t) {
 
   const tdDesc = document.createElement("td");
   tdDesc.dataset.label = "Descripción";
-  tdDesc.className = "text-muted";
+  tdDesc.className = "text-muted td-secundario";
   tdDesc.textContent = t.descripcion_tipo_incidencia || "—";
   tr.appendChild(tdDesc);
 
@@ -218,7 +218,7 @@ function filaSubtipo(fila) {
 
   const tdDesc = document.createElement("td");
   tdDesc.dataset.label = "Descripción";
-  tdDesc.className = "text-muted";
+  tdDesc.className = "text-muted td-secundario";
   tdDesc.textContent = s.descripcion_subtipo_incidencia || "—";
   tr.appendChild(tdDesc);
 

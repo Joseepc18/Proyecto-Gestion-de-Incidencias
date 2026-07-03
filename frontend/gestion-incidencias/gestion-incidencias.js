@@ -145,9 +145,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Construye una celda con texto escapado para evitar XSS en innerHTML.
   // label alimenta el data-label que se muestra como encabezado en la vista de tarjeta (movil).
-  function td(texto, label) {
+  // secundario oculta la celda en la tarjeta movil (el dato sigue en la pagina de detalle).
+  function td(texto, label, secundario) {
     const celda = document.createElement("td");
     if (label) celda.dataset.label = label;
+    if (secundario) celda.classList.add("td-secundario");
     celda.textContent = texto;
     return celda;
   }
@@ -190,9 +192,9 @@ document.addEventListener("DOMContentLoaded", async function () {
       tdPri.innerHTML = badgePrioridadHtml(inc.prioridad_incidencia);
       tr.appendChild(tdPri);
 
-      tr.appendChild(td(nombreTipo, "Tipo"));
-      tr.appendChild(td(nombreCiudad, "Ciudad"));
-      tr.appendChild(td(fecha, "Fecha"));
+      tr.appendChild(td(nombreTipo, "Tipo", true));
+      tr.appendChild(td(nombreCiudad, "Ciudad", true));
+      tr.appendChild(td(fecha, "Fecha", true));
 
       const acciones = [
         {

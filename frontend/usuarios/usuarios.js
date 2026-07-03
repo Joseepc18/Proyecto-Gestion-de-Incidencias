@@ -86,6 +86,7 @@ async function cargarUsuarios() {
 
       const tdEmail = document.createElement("td");
       tdEmail.dataset.label = "Correo";
+      tdEmail.classList.add("td-secundario");
       tdEmail.textContent = u.email;
       tr.appendChild(tdEmail);
 
