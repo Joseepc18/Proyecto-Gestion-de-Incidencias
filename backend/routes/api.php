@@ -76,7 +76,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de notificaciones (del usuario autenticado)
     Route::get('/notificaciones', [NotificacionController::class, 'listado']);
     Route::patch('/notificaciones/leer-todas', [NotificacionController::class, 'marcarTodas']);
-    Route::patch('/notificaciones/{notificacion}/leida', [NotificacionController::class, 'marcarLeida']);
+    Route::patch('/notificaciones/{id}/leida', [NotificacionController::class, 'marcarLeida']);
 
     // Apis de asignaciones (responsable / apoyo)
     Route::get('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'listado']);

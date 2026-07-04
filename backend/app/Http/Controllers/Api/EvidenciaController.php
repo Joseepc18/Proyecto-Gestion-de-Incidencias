@@ -9,10 +9,11 @@ use App\Http\Requests\SubirEvidenciaRequest;
 use App\Models\BitacoraError;
 use App\Models\Evidencia;
 use App\Models\Incidencia;
-use App\Models\Notificacion;
 use App\Models\User;
+use App\Notifications\IncidenciaNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class EvidenciaController extends Controller
@@ -72,14 +73,8 @@ class EvidenciaController extends Controller
             $mensaje = 'Se agregó evidencia a tu incidencia: '.$nombre;
         }
 
-        foreach ($destinos as $idDestino) {
-            Notificacion::create([
-                'id_usuario' => $idDestino,
-                'id_incidencia' => $incidencia->id_incidencia,
-                'tipo_notificacion' => 'EVIDENCIA',
-                'mensaje_notificacion' => $mensaje,
-            ]);
-        }
+        $usuarios = User::whereIn('id', $destinos)->get();
+        Notification::send($usuarios, new IncidenciaNotification('EVIDENCIA', $mensaje, $incidencia->id_incidencia));
     }
 
     // Eliminar una foto (evidencia).

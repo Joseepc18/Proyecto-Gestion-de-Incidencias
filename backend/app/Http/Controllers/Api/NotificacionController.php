@@ -3,40 +3,40 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notificacion;
 use Illuminate\Http\Request;
 
 class NotificacionController extends Controller
 {
     // Listar las notificaciones del usuario autenticado + cuántas sin leer.
+    // El "tipo" y el "mensaje" viven dentro de data (json); se aplanan al formato que consume el front.
     public function listado(Request $request)
     {
         $usuario = $request->user();
 
-        $notificaciones = Notificacion::where('id_usuario', $usuario->id)
-            ->orderBy('created_at', 'desc')
+        $notificaciones = $usuario->notifications()
+            ->latest()
             ->limit(50)
-            ->get();
-
-        $noLeidas = Notificacion::where('id_usuario', $usuario->id)
-            ->where('estado_lectura', false)
-            ->count();
+            ->get()
+            ->map(fn ($n) => [
+                'id' => $n->id,
+                'tipo' => $n->data['tipo'] ?? null,
+                'mensaje' => $n->data['mensaje'] ?? '',
+                'id_incidencia' => $n->data['id_incidencia'] ?? null,
+                'contador' => $n->data['contador'] ?? 1,
+                'estado_lectura' => $n->read_at !== null,
+                'created_at' => $n->created_at,
+            ]);
 
         return [
             'notificaciones' => $notificaciones,
-            'no_leidas' => $noLeidas,
+            'no_leidas' => $usuario->unreadNotifications()->count(),
         ];
     }
 
-    // Marcar una notificación como leída (solo si es del usuario).
-    public function marcarLeida(Request $request, Notificacion $notificacion)
+    // Marcar una notificación como leída; findOrFail sobre la relación del usuario impide tocar ajenas.
+    public function marcarLeida(Request $request, string $id)
     {
-        $this->authorize('marcar', $notificacion);
-
-        $notificacion->update([
-            'estado_lectura' => true,
-            'fecha_lectura' => now(),
-        ]);
+        $request->user()->notifications()->findOrFail($id)->markAsRead();
 
         return ['message' => 'Notificación marcada como leída'];
     }
@@ -44,12 +44,7 @@ class NotificacionController extends Controller
     // Marcar todas las notificaciones del usuario como leídas.
     public function marcarTodas(Request $request)
     {
-        Notificacion::where('id_usuario', $request->user()->id)
-            ->where('estado_lectura', false)
-            ->update([
-                'estado_lectura' => true,
-                'fecha_lectura' => now(),
-            ]);
+        $request->user()->unreadNotifications->markAsRead();
 
         return ['message' => 'Todas marcadas como leídas'];
     }

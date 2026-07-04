@@ -90,17 +90,16 @@ class AdminPermisosTest extends TestCase
             ->assertJsonValidationErrors('permisos.0');
     }
 
-    // Las notificaciones operativas (trigger de nueva incidencia) llegan al super_admin por su permiso.
+    // Las notificaciones operativas (nueva incidencia) llegan al super_admin por su permiso.
     public function test_las_notificaciones_operativas_llegan_al_super_admin(): void
     {
         $superAdmin = $this->crearUsuario('super_admin');
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $reportador = $this->crearUsuario('normal');
+        Sanctum::actingAs($reportador);
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $superAdmin->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'NUEVA_INCIDENCIA',
-        ]);
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos())->assertCreated();
+
+        $this->assertNotificado($superAdmin, 'NUEVA_INCIDENCIA');
     }
 
     // End-to-end: dar 'usuarios.administrar' a un rol le abre la gestión de usuarios.

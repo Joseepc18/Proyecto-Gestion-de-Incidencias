@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
+use App\Events\IncidenciaCambioEstado;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
@@ -16,12 +17,13 @@ use App\Http\Requests\SolicitarReaperturaRequest;
 use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
-use App\Models\Notificacion;
 use App\Models\User;
+use App\Notifications\IncidenciaNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class IncidenciaController extends Controller
@@ -94,6 +96,13 @@ class IncidenciaController extends Controller
                 return $incidencia;
             });
 
+            // Ya commiteada: avisa a quienes gestionan. Si la notificación falla, se bitácoriza pero no rompe la creación.
+            try {
+                $this->notificarNuevaIncidencia($incidencia, $request->user()->id);
+            } catch (\Throwable $e) {
+                BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia (notificación)', $e->getMessage());
+            }
+
             return response()->json(
                 new IncidenciaResource($incidencia->load([
                     'usuario',
@@ -119,6 +128,19 @@ class IncidenciaController extends Controller
 
             return response()->json(['message' => 'Error al crear la incidencia'], 500);
         }
+    }
+
+    // Avisa a quienes pueden gestionar (nunca al propio creador) que hay una incidencia nueva.
+    private function notificarNuevaIncidencia(Incidencia $incidencia, int $creadorId): void
+    {
+        $destinatarios = User::conPermiso('incidencias.gestionar')
+            ->where('id', '!=', $creadorId)
+            ->get();
+
+        Notification::send(
+            $destinatarios,
+            new IncidenciaNotification('NUEVA_INCIDENCIA', 'Nueva incidencia reportada: '.$incidencia->nombre_incidencia, $incidencia->id_incidencia)
+        );
     }
 
     // Obtener el detalle completo de una incidencia.
@@ -154,15 +176,17 @@ class IncidenciaController extends Controller
                 $incidencia->comentarios()->delete();
                 $incidencia->historialEstados()->delete();
                 $incidencia->asignaciones()->delete();
+
+                // Reemplaza el ON DELETE CASCADE que tenía la tabla propia: borra las notificaciones de esta incidencia.
+                DatabaseNotification::where('data->id_incidencia', (string) $incidencia->id_incidencia)->delete();
+
                 $incidencia->delete();
 
                 if (! $esPropia) {
-                    Notificacion::create([
-                        'id_incidencia' => null,
-                        'id_usuario' => $idReportador,
-                        'tipo_notificacion' => 'INCIDENCIA_ELIMINADA',
-                        'mensaje_notificacion' => 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo,
-                    ]);
+                    // id_incidencia null: la fila ya no existe, la notificación debe sobrevivir sin apuntar a ella.
+                    User::find($idReportador)?->notify(
+                        new IncidenciaNotification('INCIDENCIA_ELIMINADA', 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo, null)
+                    );
                 }
             });
 
@@ -237,16 +261,18 @@ class IncidenciaController extends Controller
             });
         }
 
-        // La rama del SP (resolver_incidencia) es SQL crudo y no dispara el observer: se invalida la caché a mano.
-        Cache::forget('dashboard_metricas');
-
-        // Ya se atendió la solicitud: se marcan leídas las notificaciones de reapertura de todos los admins.
+        // Ya se atendió la solicitud: se marcan leídas las de los admins ANTES de emitir el evento,
+        // para que el aviso "reabierta" que crea el listener a continuación llegue sin leer.
         if ($esReaperturaDeAdmin) {
-            Notificacion::where('id_incidencia', $incidencia->id_incidencia)
-                ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')
-                ->where('estado_lectura', false)
-                ->update(['estado_lectura' => true, 'fecha_lectura' => now()]);
+            DatabaseNotification::whereNull('read_at')
+                ->where('data->tipo', 'SOLICITUD_REAPERTURA')
+                ->where('data->id_incidencia', (string) $incidencia->id_incidencia)
+                ->update(['read_at' => now()]);
         }
+
+        // Dispara los listeners: notificar (BD + broadcast) e invalidar la caché del dashboard
+        // (cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent).
+        event(new IncidenciaCambioEstado($incidencia, $actual, $nuevo, $request->user()->id));
 
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
     }
@@ -262,16 +288,11 @@ class IncidenciaController extends Controller
 
         $incidencia->update(['reapertura_solicitada' => true]);
 
-        User::conPermiso('incidencias.gestionar')
-            ->get()
-            ->each(function (User $admin) use ($incidencia, $motivo) {
-                Notificacion::create([
-                    'id_incidencia' => $incidencia->id_incidencia,
-                    'id_usuario' => $admin->id,
-                    'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
-                    'mensaje_notificacion' => 'Piden reabrir "'.$incidencia->nombre_incidencia.'". Motivo: '.$motivo,
-                ]);
-            });
+        $admins = User::conPermiso('incidencias.gestionar')->get();
+        Notification::send(
+            $admins,
+            new IncidenciaNotification('SOLICITUD_REAPERTURA', 'Piden reabrir "'.$incidencia->nombre_incidencia.'". Motivo: '.$motivo, $incidencia->id_incidencia)
+        );
 
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
     }
@@ -311,7 +332,8 @@ class IncidenciaController extends Controller
             $incidencia->update(['estado_incidencia' => EstadoIncidencia::Cerrado->value]);
         });
 
-        Cache::forget('dashboard_metricas');
+        // Notifica el archivado (RESUELTO -> CERRADO) e invalida la caché vía listeners.
+        event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, $request->user()->id));
 
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']));
     }

@@ -68,7 +68,9 @@ return new class extends Migration
         \$\$;
         ");
 
-        // Procedimiento resolver_incidencia: pasa a RESUELTO y notifica a reportador y técnicos (menos al actor), los triggers hacen historial y fecha.
+        // Procedimiento resolver_incidencia: pasa a RESUELTO; los triggers hacen historial y fecha.
+        // Las notificaciones ya NO se insertan aquí: las emite el listener EnviarNotificacionCambioEstado
+        // (evento IncidenciaCambioEstado disparado desde el controller tras la resolución).
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,
@@ -79,9 +81,6 @@ return new class extends Migration
         DECLARE
             v_existe        INT;
             v_estado_actual VARCHAR;
-            v_nombre        VARCHAR;
-            v_reportador_id BIGINT;
-            v_tecnico_id    BIGINT;
         BEGIN
             -- Validación 1: ¿existe la incidencia?
             SELECT COUNT(*) INTO v_existe
@@ -92,8 +91,7 @@ return new class extends Migration
             END IF;
 
             -- Validación 2: ¿ya está resuelta?
-            SELECT estado_incidencia, nombre_incidencia, id_usuario
-            INTO v_estado_actual, v_nombre, v_reportador_id
+            SELECT estado_incidencia INTO v_estado_actual
             FROM incidencias WHERE id_incidencia = p_id_incidencia;
 
             IF v_estado_actual = 'RESUELTO' THEN
@@ -110,24 +108,6 @@ return new class extends Migration
             SET estado_incidencia = 'RESUELTO',
                 updated_at = NOW()
             WHERE id_incidencia = p_id_incidencia;
-
-            -- Notifica al reportador, salvo que sea quien resuelve.
-            IF v_reportador_id IS DISTINCT FROM p_id_usuario THEN
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                VALUES (v_reportador_id, p_id_incidencia, 'CAMBIO_ESTADO',
-                        'Tu incidencia ha sido resuelta: ' || v_nombre);
-            END IF;
-
-            -- Notifica a cada técnico asignado, menos al actor.
-            FOR v_tecnico_id IN
-                SELECT id_usuario FROM asignaciones_incidencia
-                WHERE id_incidencia = p_id_incidencia
-                  AND id_usuario IS DISTINCT FROM p_id_usuario
-            LOOP
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                VALUES (v_tecnico_id, p_id_incidencia, 'CAMBIO_ESTADO',
-                        'La incidencia ha sido marcada como resuelta: ' || v_nombre);
-            END LOOP;
 
         END;
         \$\$;

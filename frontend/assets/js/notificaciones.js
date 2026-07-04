@@ -35,18 +35,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const item = document.createElement("button");
       item.type = "button";
       // "no-leida" sigue el estado real; el CSS de alerta la pinta roja igual aunque se marque leída
-      const esAlerta = n.tipo_notificacion === "SOLICITUD_REAPERTURA";
+      const esAlerta = n.tipo === "SOLICITUD_REAPERTURA";
       const clases = ["notification-item"];
       if (esAlerta) clases.push("notification-alert");
       if (!n.estado_lectura) clases.push("no-leida");
       item.className = clases.join(" ");
-      item.dataset.id = n.id_notificacion;
+      item.dataset.id = n.id;
       item.dataset.incidencia = n.id_incidencia;
-      item.dataset.tipo = n.tipo_notificacion;
+      item.dataset.tipo = n.tipo;
 
       const msg = document.createElement("span");
       msg.className = "notification-msg";
-      msg.textContent = n.mensaje_notificacion;
+      msg.textContent = n.mensaje;
 
       const hora = document.createElement("span");
       hora.className = "notification-time";

@@ -2,7 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 
-// Los 7 triggers del sistema, en su versión final (definición completa, sin ALTERs posteriores).
+// Triggers del sistema, en su versión final (definición completa, sin ALTERs posteriores).
+// Las notificaciones ya no viven en triggers: pasaron a Events/Listeners + Notifications de Laravel.
 return new class extends Migration
 {
     public function up(): void
@@ -60,55 +61,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // 3) fn_notificar_nuevo_comentario: avisa al chat (reportador + quienes gestionan + responsable) menos al autor; consolida en la notificación sin leer existente (uq_notif_comentario_pendiente).
-        DB::unprepared("
-        CREATE OR REPLACE FUNCTION fn_notificar_nuevo_comentario()
-            RETURNS TRIGGER AS \$\$
-            DECLARE
-                v_reportador BIGINT;
-                v_nombre     VARCHAR;
-            BEGIN
-                SELECT id_usuario, nombre_incidencia
-                INTO v_reportador, v_nombre
-                FROM incidencias WHERE id_incidencia = NEW.id_incidencia;
-
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion, contador)
-                SELECT DISTINCT d.id_usuario, NEW.id_incidencia, 'COMENTARIO',
-                       'Nuevo comentario en la incidencia: ' || v_nombre, 1
-                FROM (
-                    SELECT v_reportador AS id_usuario
-                    UNION
-                    SELECT u.id FROM users u
-                        JOIN rol_permiso rp ON rp.id_rol = u.id_rol
-                        JOIN permisos p ON p.id_permiso = rp.id_permiso
-                        WHERE p.clave_permiso = 'incidencias.gestionar'
-                    UNION
-                    SELECT a.id_usuario FROM asignaciones_incidencia a
-                        WHERE a.id_incidencia = NEW.id_incidencia
-                          AND a.rol_asignado = 'RESPONSABLE'
-                ) d
-                WHERE d.id_usuario IS NOT NULL
-                  AND d.id_usuario <> NEW.id_usuario   -- nunca al autor
-                ON CONFLICT (id_usuario, id_incidencia)
-                    WHERE tipo_notificacion = 'COMENTARIO' AND estado_lectura = false
-                DO UPDATE SET
-                    contador             = notificaciones.contador + 1,
-                    mensaje_notificacion = (notificaciones.contador + 1) || ' comentarios nuevos en la incidencia: ' || v_nombre,
-                    created_at           = NOW(),
-                    updated_at           = NOW();
-                RETURN NEW;
-            END;
-            \$\$ LANGUAGE plpgsql;
-        ");
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;');
-        DB::unprepared('
-        CREATE TRIGGER tr_notificar_nuevo_comentario
-            AFTER INSERT ON comentarios
-            FOR EACH ROW
-            EXECUTE FUNCTION fn_notificar_nuevo_comentario();
-        ');
-
-        // 4) fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION) (BEFORE INSERT).
+        // 3) fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION) (BEFORE INSERT).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_limite_evidencias()
             RETURNS TRIGGER AS \$\$
@@ -136,118 +89,6 @@ return new class extends Migration
             FOR EACH ROW
             EXECUTE FUNCTION fn_limite_evidencias();
         ');
-
-        // 5) fn_notificar_nueva_incidencia: al crear una incidencia, avisa a quienes pueden gestionar incidencias.
-        DB::unprepared("
-        CREATE OR REPLACE FUNCTION fn_notificar_nueva_incidencia()
-            RETURNS TRIGGER AS \$\$
-            BEGIN
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                SELECT u.id, NEW.id_incidencia, 'NUEVA_INCIDENCIA',
-                       'Nueva incidencia reportada: ' || NEW.nombre_incidencia
-                FROM users u
-                JOIN rol_permiso rp ON rp.id_rol = u.id_rol
-                JOIN permisos p ON p.id_permiso = rp.id_permiso
-                WHERE p.clave_permiso = 'incidencias.gestionar'
-                  AND u.id <> NEW.id_usuario;   -- nunca al propio creador
-                RETURN NEW;
-            END;
-            \$\$ LANGUAGE plpgsql;
-        ");
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nueva_incidencia ON incidencias;');
-        DB::unprepared('
-        CREATE TRIGGER tr_notificar_nueva_incidencia
-            AFTER INSERT ON incidencias
-            FOR EACH ROW
-            EXECUTE FUNCTION fn_notificar_nueva_incidencia();
-        ');
-
-        // 6) fn_notificar_asignacion: avisa al técnico asignado y, si es RESPONSABLE, también al reportador.
-        DB::unprepared("
-        CREATE OR REPLACE FUNCTION fn_notificar_asignacion()
-            RETURNS TRIGGER AS \$\$
-            DECLARE
-                v_reportador BIGINT;
-                v_nombre     VARCHAR;
-            BEGIN
-                SELECT id_usuario, nombre_incidencia
-                INTO v_reportador, v_nombre
-                FROM incidencias WHERE id_incidencia = NEW.id_incidencia;
-
-                -- Al técnico asignado.
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                VALUES (NEW.id_usuario, NEW.id_incidencia, 'ASIGNACION',
-                        'Te asignaron a una incidencia (' || NEW.rol_asignado || '): ' || v_nombre);
-
-                -- Al reportador, solo cuando se nombra un RESPONSABLE.
-                IF NEW.rol_asignado = 'RESPONSABLE' AND v_reportador <> NEW.id_usuario THEN
-                    INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                    VALUES (v_reportador, NEW.id_incidencia, 'ASIGNACION',
-                            'Tu incidencia ya tiene un responsable asignado: ' || v_nombre);
-                END IF;
-
-                RETURN NEW;
-            END;
-            \$\$ LANGUAGE plpgsql;
-        ");
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_asignacion ON asignaciones_incidencia;');
-        DB::unprepared('
-        CREATE TRIGGER tr_notificar_asignacion
-            AFTER INSERT ON asignaciones_incidencia
-            FOR EACH ROW
-            EXECUTE FUNCTION fn_notificar_asignacion();
-        ');
-
-        // 7) fn_notificar_cambio_estado: en cambios distintos de RESUELTO avisa a reportador y técnicos menos al actor;
-        // solo RESUELTO -> EN_PROCESO es la reapertura real (SOLICITUD_REAPERTURA); RESUELTO -> CERRADO (archivado)
-        // usa el mensaje genérico de CAMBIO_ESTADO, no el de reapertura.
-        DB::unprepared("
-        CREATE OR REPLACE FUNCTION fn_notificar_cambio_estado()
-            RETURNS TRIGGER AS \$\$
-            DECLARE
-                v_actor BIGINT;
-                v_tipo VARCHAR;
-                v_msg_reportador VARCHAR;
-                v_msg_tecnicos VARCHAR;
-            BEGIN
-                IF NEW.estado_incidencia <> OLD.estado_incidencia
-                   AND NEW.estado_incidencia <> 'RESUELTO' THEN
-                    v_actor := NULLIF(current_setting('app.actor_id', true), '')::BIGINT;
-
-                    IF OLD.estado_incidencia = 'RESUELTO' AND NEW.estado_incidencia = 'EN_PROCESO' THEN
-                        v_tipo := 'SOLICITUD_REAPERTURA';
-                        v_msg_reportador := 'Tu incidencia fue reabierta: ' || NEW.nombre_incidencia;
-                        v_msg_tecnicos := 'La incidencia fue reabierta: ' || NEW.nombre_incidencia;
-                    ELSE
-                        v_tipo := 'CAMBIO_ESTADO';
-                        v_msg_reportador := 'Tu incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia;
-                        v_msg_tecnicos := 'La incidencia cambió a ' || NEW.estado_incidencia || ': ' || NEW.nombre_incidencia;
-                    END IF;
-
-                    -- Al reportador (IS DISTINCT FROM trata bien el actor NULL).
-                    IF NEW.id_usuario IS DISTINCT FROM v_actor THEN
-                        INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                        VALUES (NEW.id_usuario, NEW.id_incidencia, v_tipo, v_msg_reportador);
-                    END IF;
-
-                    -- A los técnicos asignados (responsable y apoyo), menos el actor.
-                    INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                    SELECT a.id_usuario, NEW.id_incidencia, v_tipo, v_msg_tecnicos
-                    FROM asignaciones_incidencia a
-                    WHERE a.id_incidencia = NEW.id_incidencia
-                      AND a.id_usuario IS DISTINCT FROM v_actor;
-                END IF;
-                RETURN NEW;
-            END;
-            \$\$ LANGUAGE plpgsql;
-        ");
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_cambio_estado ON incidencias;');
-        DB::unprepared('
-        CREATE TRIGGER tr_notificar_cambio_estado
-            AFTER UPDATE ON incidencias
-            FOR EACH ROW
-            EXECUTE FUNCTION fn_notificar_cambio_estado();
-        ');
     }
 
     public function down(): void
@@ -256,15 +97,7 @@ return new class extends Migration
         DB::unprepared('DROP FUNCTION IF EXISTS fn_registrar_cambio_estado();');
         DB::unprepared('DROP TRIGGER IF EXISTS tr_fecha_resolucion ON incidencias;');
         DB::unprepared('DROP FUNCTION IF EXISTS fn_fecha_resolucion();');
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nuevo_comentario ON comentarios;');
-        DB::unprepared('DROP FUNCTION IF EXISTS fn_notificar_nuevo_comentario();');
         DB::unprepared('DROP TRIGGER IF EXISTS tr_limite_evidencias ON evidencias;');
         DB::unprepared('DROP FUNCTION IF EXISTS fn_limite_evidencias();');
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_nueva_incidencia ON incidencias;');
-        DB::unprepared('DROP FUNCTION IF EXISTS fn_notificar_nueva_incidencia();');
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_asignacion ON asignaciones_incidencia;');
-        DB::unprepared('DROP FUNCTION IF EXISTS fn_notificar_asignacion();');
-        DB::unprepared('DROP TRIGGER IF EXISTS tr_notificar_cambio_estado ON incidencias;');
-        DB::unprepared('DROP FUNCTION IF EXISTS fn_notificar_cambio_estado();');
     }
 };

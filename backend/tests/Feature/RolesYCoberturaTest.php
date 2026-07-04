@@ -4,14 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
 use App\Models\Evidencia;
-use App\Models\Notificacion;
 use App\Models\Rol;
 use App\Models\TipoIncidencia;
+use App\Notifications\IncidenciaNotification;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
@@ -141,13 +142,11 @@ class RolesYCoberturaTest extends TestCase
         Storage::fake('public');
         $autor = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($autor);
-        // Un admin como destino para que se intente crear la notificación.
+        // Un admin como destino para que se intente enviar la notificación.
         $this->crearUsuario('admin');
 
-        // Forzamos que crear cualquier Notificacion explote.
-        Notificacion::creating(function () {
-            throw new \RuntimeException('falla de notificación');
-        });
+        // Forzamos que el envío de la notificación explote.
+        Notification::shouldReceive('send')->andThrow(new \RuntimeException('falla de notificación'));
 
         Sanctum::actingAs($autor);
 
@@ -155,8 +154,6 @@ class RolesYCoberturaTest extends TestCase
             'fotos' => [UploadedFile::fake()->image('foto.jpg')],
             'tipo_evidencia' => 'REPORTE',
         ], ['Accept' => 'application/json'])->assertOk();
-
-        Notificacion::flushEventListeners();
 
         // La foto quedó guardada pese al fallo, y el error se registró en la bitácora.
         $this->assertDatabaseHas('evidencias', [
@@ -253,11 +250,7 @@ class RolesYCoberturaTest extends TestCase
 
         $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia);
         foreach ([$admin1, $admin2] as $admin) {
-            $this->assertDatabaseHas('notificaciones', [
-                'id_usuario' => $admin->id,
-                'id_incidencia' => $incidencia->id_incidencia,
-                'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
-            ]);
+            $this->assertNotificado($admin, 'SOLICITUD_REAPERTURA');
         }
 
         // El detalle expone la bandera que habilita el botón "Reabrir" del admin.
@@ -381,19 +374,13 @@ class RolesYCoberturaTest extends TestCase
     {
         $usuario = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($usuario);
-        $notificacion = Notificacion::create([
-            'id_usuario' => $usuario->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'CAMBIO_ESTADO',
-            'mensaje_notificacion' => 'Tu incidencia cambió de estado.',
-        ]);
+        $usuario->notify(new IncidenciaNotification('CAMBIO_ESTADO', 'Tu incidencia cambió de estado.', $incidencia->id_incidencia));
+        $notificacion = $usuario->notifications()->firstOrFail();
 
         Sanctum::actingAs($usuario);
-        $this->patchJson("/api/notificaciones/{$notificacion->id_notificacion}/leida")->assertOk();
-        $this->assertDatabaseHas('notificaciones', [
-            'id_notificacion' => $notificacion->id_notificacion,
-            'estado_lectura' => true,
-        ]);
+        $this->patchJson("/api/notificaciones/{$notificacion->id}/leida")->assertOk();
+
+        $this->assertNotNull($notificacion->fresh()->read_at);
     }
 
     // El super_admin actualiza y luego elimina (borrado lógico) a otro usuario.

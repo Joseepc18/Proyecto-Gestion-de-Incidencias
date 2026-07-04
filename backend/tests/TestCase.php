@@ -8,9 +8,36 @@ use App\Models\Rol;
 use App\Models\SubtipoIncidencia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Collection;
 
 abstract class TestCase extends BaseTestCase
 {
+    // Notificaciones nativas de un usuario cuyo data->tipo coincide (tipo viaja dentro del payload json).
+    protected function notificacionesDe(User $usuario, string $tipo): Collection
+    {
+        return DatabaseNotification::where('notifiable_type', User::class)
+            ->where('notifiable_id', $usuario->id)
+            ->where('data->tipo', $tipo)
+            ->get();
+    }
+
+    protected function assertNotificado(User $usuario, string $tipo): void
+    {
+        $this->assertTrue(
+            $this->notificacionesDe($usuario, $tipo)->isNotEmpty(),
+            "Se esperaba una notificación {$tipo} para el usuario {$usuario->id}."
+        );
+    }
+
+    protected function assertNoNotificado(User $usuario, string $tipo): void
+    {
+        $this->assertTrue(
+            $this->notificacionesDe($usuario, $tipo)->isEmpty(),
+            "No se esperaba una notificación {$tipo} para el usuario {$usuario->id}."
+        );
+    }
+
     // Crea un usuario con el rol indicado (id_rol es NOT NULL, por eso se pasa).
     protected function crearUsuario(string $nombreRol = 'normal'): User
     {

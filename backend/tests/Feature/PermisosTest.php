@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
 use App\Models\Evidencia;
-use App\Models\Notificacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -277,20 +276,13 @@ class PermisosTest extends TestCase
         // Responsable y apoyo ven la misma alerta (SOLICITUD_REAPERTURA) que la del admin,
         // no el aviso azul genérico de CAMBIO_ESTADO.
         foreach ([$responsable, $apoyo] as $tecnico) {
-            $this->assertDatabaseHas('notificaciones', [
-                'id_usuario' => $tecnico->id,
-                'id_incidencia' => $incidencia->id_incidencia,
-                'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
-            ]);
+            $this->assertNotificado($tecnico, 'SOLICITUD_REAPERTURA');
         }
 
         // La solicitud del admin (destinatario admin) quedó marcada como leída.
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $admin->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'SOLICITUD_REAPERTURA',
-            'estado_lectura' => true,
-        ]);
+        $adminNotif = $this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->first();
+        $this->assertNotNull($adminNotif);
+        $this->assertNotNull($adminNotif->read_at, 'La solicitud del admin debe quedar leída.');
     }
 
     // Sin una solicitud de reapertura pendiente, ni el admin puede reabrir: RESUELTO
@@ -436,10 +428,9 @@ class PermisosTest extends TestCase
         ])->assertOk();
 
         // El admin lee la notificación (no reabre todavía).
-        $notif = Notificacion::where('id_usuario', $admin->id)
-            ->where('tipo_notificacion', 'SOLICITUD_REAPERTURA')->firstOrFail();
+        $notif = $this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->firstOrFail();
         Sanctum::actingAs($admin);
-        $this->patchJson("/api/notificaciones/{$notif->id_notificacion}/leida")->assertOk();
+        $this->patchJson("/api/notificaciones/{$notif->id}/leida")->assertOk();
 
         // Aunque ya la leyó, sigue pendiente: el botón "Reabrir" debe seguir visible.
         $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")

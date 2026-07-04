@@ -4,9 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
 use App\Models\Ciudad;
-use App\Models\Comentario;
 use App\Models\Evidencia;
-use App\Models\Notificacion;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -64,11 +62,8 @@ class BaseDatosAvanzadaTest extends TestCase
         $incidencia->refresh();
         $this->assertNotNull($incidencia->fecha_resolucion);
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $reportador->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'CAMBIO_ESTADO',
-        ]);
+        // La notificación de resolución la emite ahora el listener EnviarNotificacionCambioEstado.
+        $this->assertNotificado($reportador, 'CAMBIO_ESTADO');
 
         // Al resolver vía procedimiento, el historial también atribuye al admin (H-02).
         $this->assertDatabaseHas('historial_estados', [
@@ -124,90 +119,73 @@ class BaseDatosAvanzadaTest extends TestCase
         ]);
     }
 
-    // Trigger fn_notificar_nuevo_comentario: notifica al reportador si comenta otro.
+    // Listener NotificarNuevoComentario: al comentar por la API se notifica al reportador.
     public function test_nuevo_comentario_notifica_al_reportador(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
 
-        Comentario::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $this->crearUsuario('tecnico')->id,
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
             'comentario' => 'Estamos revisando tu reporte.',
-        ]);
+        ])->assertCreated();
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $reportador->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'COMENTARIO',
-        ]);
+        $this->assertNotificado($reportador, 'COMENTARIO');
     }
 
-    // Varios comentarios sin leer se consolidan en UNA sola notificación con contador.
+    // Varios comentarios sin leer se consolidan en UNA sola notificación con contador (ahora en la app).
     public function test_comentarios_seguidos_se_consolidan_en_una_notificacion(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
-        $autor = $this->crearUsuario('tecnico');
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
 
         foreach (['Primero', 'Segundo', 'Tercero'] as $texto) {
-            Comentario::create([
-                'id_incidencia' => $incidencia->id_incidencia,
-                'id_usuario' => $autor->id,
+            $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
                 'comentario' => $texto,
-            ]);
+            ])->assertCreated();
         }
 
-        $notifs = Notificacion::where('id_usuario', $reportador->id)
-            ->where('id_incidencia', $incidencia->id_incidencia)
-            ->where('tipo_notificacion', 'COMENTARIO')
-            ->get();
+        $notifs = $this->notificacionesDe($reportador, 'COMENTARIO');
 
         $this->assertCount(1, $notifs, 'Los comentarios sin leer no deben acumular filas.');
-        $this->assertEquals(3, $notifs->first()->contador);
-        $this->assertStringContainsString('3 comentarios nuevos', $notifs->first()->mensaje_notificacion);
+        $this->assertEquals(3, $notifs->first()->data['contador']);
+        $this->assertStringContainsString('3 comentarios nuevos', $notifs->first()->data['mensaje']);
     }
 
-    // #1 — Trigger fn_notificar_nueva_incidencia: avisa a los administradores.
+    // #1 — Al crear una incidencia por la API se avisa a los administradores.
     public function test_nueva_incidencia_notifica_a_los_admin(): void
     {
         $admin = $this->crearUsuario('admin');
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $reportador = $this->crearUsuario('normal');
+        Sanctum::actingAs($reportador);
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $admin->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'NUEVA_INCIDENCIA',
-        ]);
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos())->assertCreated();
+
+        $this->assertNotificado($admin, 'NUEVA_INCIDENCIA');
     }
 
-    // #2/#3 — Trigger fn_notificar_asignacion: al nombrar RESPONSABLE avisa al
-    // técnico asignado y al reportador.
+    // #2/#3 — Al nombrar RESPONSABLE por la API se avisa al técnico asignado y al reportador.
     public function test_asignar_responsable_notifica_tecnico_y_reportador(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
         $tecnico = $this->crearUsuario('tecnico');
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
 
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
             'id_usuario' => $tecnico->id,
             'rol_asignado' => 'RESPONSABLE',
-        ]);
+        ])->assertCreated();
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $tecnico->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'ASIGNACION',
-        ]);
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $reportador->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'ASIGNACION',
-        ]);
+        $this->assertNotificado($tecnico, 'ASIGNACION');
+        $this->assertNotificado($reportador, 'ASIGNACION');
     }
 
-    // #6 — Trigger fn_notificar_cambio_estado: avisa al reportador, nunca al actor.
+    // #6 — Listener de cambio de estado: avisa al reportador, nunca al actor.
     public function test_cambio_a_en_proceso_notifica_reportador_no_actor(): void
     {
         $reportador = $this->crearUsuario('normal');
@@ -219,21 +197,12 @@ class BaseDatosAvanzadaTest extends TestCase
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertOk();
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $reportador->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'CAMBIO_ESTADO',
-        ]);
+        $this->assertNotificado($reportador, 'CAMBIO_ESTADO');
         // El admin que ejecutó el cambio NO se notifica a sí mismo.
-        $this->assertDatabaseMissing('notificaciones', [
-            'id_usuario' => $admin->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'CAMBIO_ESTADO',
-        ]);
+        $this->assertNoNotificado($admin, 'CAMBIO_ESTADO');
     }
 
-    // #7 — Trigger ampliado: el comentario avisa a reportador, admins y
-    // responsable; nunca al autor del comentario.
+    // #7 — El comentario avisa a reportador, admins y responsable; nunca al autor.
     public function test_comentario_notifica_a_chat_menos_autor(): void
     {
         $reportador = $this->crearUsuario('normal');
@@ -245,26 +214,18 @@ class BaseDatosAvanzadaTest extends TestCase
             'id_usuario' => $responsable->id,
             'rol_asignado' => 'RESPONSABLE',
         ]);
-        $autor = $this->crearUsuario('tecnico');
+        // El autor es otro admin (tiene acceso al chat); debe quedar excluido de la notificación.
+        $autor = $this->crearUsuario('admin');
+        Sanctum::actingAs($autor);
 
-        Comentario::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $autor->id,
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
             'comentario' => 'En camino al sitio.',
-        ]);
+        ])->assertCreated();
 
         foreach ([$reportador, $admin, $responsable] as $destino) {
-            $this->assertDatabaseHas('notificaciones', [
-                'id_usuario' => $destino->id,
-                'id_incidencia' => $incidencia->id_incidencia,
-                'tipo_notificacion' => 'COMENTARIO',
-            ]);
+            $this->assertNotificado($destino, 'COMENTARIO');
         }
-        $this->assertDatabaseMissing('notificaciones', [
-            'id_usuario' => $autor->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'COMENTARIO',
-        ]);
+        $this->assertNoNotificado($autor, 'COMENTARIO');
     }
 
     // H-B — Vista v_metricas_por_ubicacion: agrupa los conteos por ciudad y
@@ -308,11 +269,7 @@ class BaseDatosAvanzadaTest extends TestCase
             'tipo_evidencia' => 'REPORTE',
         ], ['Accept' => 'application/json'])->assertOk();
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $admin->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'EVIDENCIA',
-        ]);
+        $this->assertNotificado($admin, 'EVIDENCIA');
     }
 
     // #9 — Evidencia subida por un técnico: avisa al reportador.
@@ -334,10 +291,6 @@ class BaseDatosAvanzadaTest extends TestCase
             'tipo_evidencia' => 'RESOLUCION',
         ], ['Accept' => 'application/json'])->assertOk();
 
-        $this->assertDatabaseHas('notificaciones', [
-            'id_usuario' => $reportador->id,
-            'id_incidencia' => $incidencia->id_incidencia,
-            'tipo_notificacion' => 'EVIDENCIA',
-        ]);
+        $this->assertNotificado($reportador, 'EVIDENCIA');
     }
 }

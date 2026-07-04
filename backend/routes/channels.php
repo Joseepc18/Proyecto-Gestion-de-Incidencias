@@ -8,3 +8,8 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('incidencia.{incidencia}', function (User $user, Incidencia $incidencia) {
     return $user->can('verChat', $incidencia);
 });
+
+// Canal privado de cada usuario para las notificaciones broadcast (campana en vivo, sesión posterior).
+Broadcast::channel('App.Models.User.{id}', function (User $user, int $id) {
+    return $user->id === $id;
+});

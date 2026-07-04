@@ -9,6 +9,7 @@ use App\Models\AsignacionIncidencia;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\User;
+use App\Notifications\IncidenciaNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -58,11 +59,34 @@ class AsignacionController extends Controller
                 $datos['rol_asignado'],
             ]);
 
+            // Ya asignado: si la notificación falla, se bitácoriza pero no rompe la asignación.
+            try {
+                $this->notificarAsignacion($incidencia, (int) $datos['id_usuario'], $datos['rol_asignado']);
+            } catch (\Throwable $e) {
+                BitacoraError::registrar($request->user(), 'SERVIDOR', 'AsignacionController@asignar (notificación)', $e->getMessage());
+            }
+
             return response()->json($incidencia->load('asignaciones.usuario'), 201);
         } catch (QueryException $e) {
             BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage(), $e);
 
             return response()->json(['message' => 'No se pudo asignar el técnico. Inténtalo de nuevo.'], 422);
+        }
+    }
+
+    // Avisa al técnico asignado y, si es RESPONSABLE, también al reportador (reemplaza al trigger fn_notificar_asignacion).
+    private function notificarAsignacion(Incidencia $incidencia, int $idTecnico, string $rol): void
+    {
+        $nombre = $incidencia->nombre_incidencia;
+
+        if ($tecnico = User::find($idTecnico)) {
+            $tecnico->notify(new IncidenciaNotification('ASIGNACION', 'Te asignaron a una incidencia ('.$rol.'): '.$nombre, $incidencia->id_incidencia));
+        }
+
+        if ($rol === RolAsignacion::Responsable->value && $incidencia->id_usuario !== $idTecnico) {
+            if ($reportador = User::find($incidencia->id_usuario)) {
+                $reportador->notify(new IncidenciaNotification('ASIGNACION', 'Tu incidencia ya tiene un responsable asignado: '.$nombre, $incidencia->id_incidencia));
+            }
         }
     }
 

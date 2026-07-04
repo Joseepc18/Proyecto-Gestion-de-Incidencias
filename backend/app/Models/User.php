@@ -116,11 +116,6 @@ class User extends Authenticatable
         return $this->hasMany(Evidencia::class, 'id_usuario', 'id');
     }
 
-    public function notificaciones()
-    {
-        return $this->hasMany(Notificacion::class, 'id_usuario', 'id');
-    }
-
     public function historialEstados()
     {
         return $this->hasMany(HistorialEstado::class, 'id_usuario', 'id');

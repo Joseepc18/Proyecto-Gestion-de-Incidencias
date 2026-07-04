@@ -34,15 +34,15 @@ function filaNotificacion(n, esHija) {
   const item = document.createElement("button");
   item.type = "button";
   // "no-leida" sigue el estado real; si no, un clic nunca la marcaría como leída
-  const esAlerta = n.tipo_notificacion === "SOLICITUD_REAPERTURA";
+  const esAlerta = n.tipo === "SOLICITUD_REAPERTURA";
   item.className =
     "notification-item notif-page-item" +
     (esAlerta ? " notification-alert" : "") +
     (n.estado_lectura ? "" : " no-leida") +
     (esHija ? " notif-hija" : "");
-  item.dataset.id = n.id_notificacion;
+  item.dataset.id = n.id;
   item.dataset.incidencia = n.id_incidencia;
-  item.dataset.tipo = n.tipo_notificacion;
+  item.dataset.tipo = n.tipo;
 
   const linea = document.createElement("div");
   linea.className = "notif-line";
@@ -50,7 +50,7 @@ function filaNotificacion(n, esHija) {
   const icono = document.createElement("span");
   icono.className = "notif-icon";
   const i = document.createElement("i");
-  i.className = "bi " + iconoTipo(n.tipo_notificacion);
+  i.className = "bi " + iconoTipo(n.tipo);
   icono.appendChild(i);
 
   const body = document.createElement("div");
@@ -58,7 +58,7 @@ function filaNotificacion(n, esHija) {
 
   const msg = document.createElement("span");
   msg.className = "notification-msg";
-  msg.textContent = n.mensaje_notificacion;
+  msg.textContent = n.mensaje;
 
   const hora = document.createElement("span");
   hora.className = "notification-time";
@@ -135,7 +135,7 @@ function render() {
   const grupos = [];
   const indice = new Map();
   visibles.forEach(function (n) {
-    const clave = n.id_incidencia ? "i" + n.id_incidencia : "n" + n.id_notificacion;
+    const clave = n.id_incidencia ? "i" + n.id_incidencia : "n" + n.id;
     let grupo = indice.get(clave);
     if (!grupo) {
       grupo = [];
