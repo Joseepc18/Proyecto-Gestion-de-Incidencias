@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 
 class GuardarSubtipoRequest extends FormRequest
 {
-    // Ruta protegida por el middleware 'admin'.
+    // Ruta protegida por el middleware 'permiso:catalogos.administrar'.
     public function authorize(): bool
     {
         return true;

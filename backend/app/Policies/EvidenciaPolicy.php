@@ -17,7 +17,7 @@ class EvidenciaPolicy
             return Response::deny('No se pueden eliminar evidencias de una incidencia resuelta.');
         }
 
-        return ($user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia))
+        return $user->participaEn($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }

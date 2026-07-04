@@ -95,6 +95,12 @@ class User extends Authenticatable
             ->exists();
     }
 
+    // Participa en la incidencia (ver detalle/chat): admin, el reportador o el técnico responsable. Fuente única para las policies.
+    public function participaEn(Incidencia $incidencia): bool
+    {
+        return $this->esAdmin() || $incidencia->id_usuario === $this->id || $this->esResponsableDe($incidencia);
+    }
+
     public function incidencias()
     {
         return $this->hasMany(Incidencia::class, 'id_usuario', 'id');

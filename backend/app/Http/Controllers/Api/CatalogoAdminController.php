@@ -8,7 +8,7 @@ use App\Http\Requests\GuardarTipoRequest;
 use App\Models\SubtipoIncidencia;
 use App\Models\TipoIncidencia;
 
-// CRUD de tipos y subtipos de incidencia (solo admin; rutas bajo el middleware 'admin').
+// CRUD de tipos y subtipos de incidencia (solo super_admin; rutas bajo el middleware 'permiso:catalogos.administrar').
 class CatalogoAdminController extends Controller
 {
     // Tipos

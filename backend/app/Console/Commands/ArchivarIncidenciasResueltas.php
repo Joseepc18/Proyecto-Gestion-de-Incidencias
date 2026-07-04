@@ -6,7 +6,6 @@ use App\Enums\EstadoIncidencia;
 use App\Events\IncidenciaCambioEstado;
 use App\Models\Incidencia;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 class ArchivarIncidenciasResueltas extends Command
 {
@@ -23,13 +22,10 @@ class ArchivarIncidenciasResueltas extends Command
             ->get();
 
         foreach ($incidencias as $incidencia) {
+            // El update dispara el IncidenciaObserver y el event dispara InvalidarCacheDashboard: la caché ya se limpia sola.
             $incidencia->update(['estado_incidencia' => EstadoIncidencia::Cerrado->value]);
             // actor null = lo archivó el sistema: el listener avisa a reportador y técnicos sin excluir a nadie.
             event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, null));
-        }
-
-        if ($incidencias->isNotEmpty()) {
-            Cache::forget('dashboard_metricas');
         }
 
         $this->info($incidencias->count().' incidencia(s) archivada(s).');

@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class AsignarTecnicoRequest extends FormRequest
 {
-    // La autorización (solo admin) la cubre el middleware 'admin' de la ruta.
+    // La autorización (solo admin) la cubre el middleware 'permiso:incidencias.gestionar' de la ruta.
     public function authorize(): bool
     {
         return true;

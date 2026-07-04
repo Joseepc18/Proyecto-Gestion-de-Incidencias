@@ -57,7 +57,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION).
+        // fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION); v_limite debe coincidir con Incidencia::LIMITE_EVIDENCIAS_POR_TIPO.
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_limite_evidencias()
             RETURNS TRIGGER AS \$\$

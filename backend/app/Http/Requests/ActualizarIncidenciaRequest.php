@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PrioridadIncidencia;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ActualizarIncidenciaRequest extends FormRequest
 {
@@ -29,7 +31,7 @@ class ActualizarIncidenciaRequest extends FormRequest
         ];
 
         if ($this->user()?->esAdmin()) {
-            $reglas['prioridad_incidencia'] = 'sometimes|in:ALTA,MEDIA,BAJA';
+            $reglas['prioridad_incidencia'] = ['sometimes', Rule::enum(PrioridadIncidencia::class)];
         }
 
         return $reglas;

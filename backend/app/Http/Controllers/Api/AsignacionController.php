@@ -6,6 +6,8 @@ use App\Enums\RolAsignacion;
 use App\Events\AsignacionCambiada;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AsignarTecnicoRequest;
+use App\Http\Resources\AsignacionResource;
+use App\Http\Resources\IncidenciaResource;
 use App\Models\AsignacionIncidencia;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
@@ -25,10 +27,12 @@ class AsignacionController extends Controller
             ->get();
     }
 
-    // Listar las asignaciones (responsable + apoyo) de una incidencia.
+    // Listar las asignaciones (responsable + apoyo) de una incidencia; mismas reglas de visibilidad que ver el detalle.
     public function listado(Incidencia $incidencia)
     {
-        return $incidencia->asignaciones()->with('usuario')->get();
+        $this->authorize('ver', $incidencia);
+
+        return AsignacionResource::collection($incidencia->asignaciones()->with('usuario')->get());
     }
 
     // Asignar un técnico a una incidencia (llama al procedimiento asignar_tecnico).
@@ -61,16 +65,18 @@ class AsignacionController extends Controller
             ]);
 
             // Ya asignado: si la notificación falla, se bitácoriza pero no rompe la asignación.
-            try {
-                $this->notificarAsignacion($incidencia, (int) $datos['id_usuario'], $datos['rol_asignado']);
-            } catch (\Throwable $e) {
-                BitacoraError::registrar($request->user(), 'SERVIDOR', 'AsignacionController@asignar (notificación)', $e->getMessage());
-            }
+            $this->notificarSinRomper(
+                fn () => $this->notificarAsignacion($incidencia, (int) $datos['id_usuario'], $datos['rol_asignado']),
+                $request->user(),
+                'AsignacionController@asignar (notificación)'
+            );
 
             // Refresca el detalle abierto y la cola del técnico recién asignado.
             broadcast(new AsignacionCambiada($incidencia->id_incidencia, 'asignada', $datos['rol_asignado'], (int) $datos['id_usuario']));
 
-            return response()->json($incidencia->load('asignaciones.usuario'), 201);
+            return (new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE)))
+                ->response()
+                ->setStatusCode(201);
         } catch (QueryException $e) {
             BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage(), $e);
 

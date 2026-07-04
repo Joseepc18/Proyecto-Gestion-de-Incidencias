@@ -6,6 +6,7 @@ use App\Events\ComentarioCreado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CrearComentarioRequest;
 use App\Http\Requests\EditarComentarioRequest;
+use App\Http\Resources\ComentarioResource;
 use App\Models\Comentario;
 use App\Models\Incidencia;
 use Illuminate\Http\Request;
@@ -17,7 +18,9 @@ class ComentarioController extends Controller
     {
         $this->authorize('verChat', $incidencia);
 
-        return $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get();
+        return ComentarioResource::collection(
+            $incidencia->comentarios()->with('usuario.rol')->orderBy('created_at', 'asc')->get()
+        );
     }
 
     // Crear un comentario en una incidencia.
@@ -32,7 +35,9 @@ class ComentarioController extends Controller
 
         event(new ComentarioCreado($comentario));
 
-        return response()->json($comentario->load('usuario.rol'), 201);
+        return (new ComentarioResource($comentario->load('usuario.rol')))
+            ->response()
+            ->setStatusCode(201);
     }
 
     // Editar un comentario propio (la autorización la resuelve el FormRequest).
@@ -40,6 +45,6 @@ class ComentarioController extends Controller
     {
         $comentario->update($request->validated());
 
-        return $comentario->load('usuario.rol');
+        return new ComentarioResource($comentario->load('usuario.rol'));
     }
 }

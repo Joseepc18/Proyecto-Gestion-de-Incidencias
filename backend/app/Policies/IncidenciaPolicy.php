@@ -89,7 +89,7 @@ class IncidenciaPolicy
     // Ver el chat (lectura): reportador, admin y técnico RESPONSABLE; sigue permitido en RESUELTO (se conserva el historial).
     public function verChat(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)
+        return $user->participaEn($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }
@@ -101,7 +101,7 @@ class IncidenciaPolicy
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
         }
 
-        return $user->esAdmin() || $incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)
+        return $user->participaEn($incidencia)
             ? Response::allow()
             : Response::deny('No autorizado');
     }

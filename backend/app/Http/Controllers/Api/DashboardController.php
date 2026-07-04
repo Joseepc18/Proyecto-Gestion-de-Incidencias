@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
+use App\Enums\RolAsignacion;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -80,17 +81,17 @@ class DashboardController extends Controller
 
         // Conteos como RESPONSABLE (KPIs y dona) más las activas donde solo es APOYO.
         $totales = $asignadas()
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS pendientes", [EstadoIncidencia::Pendiente->value])
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS en_proceso", [EstadoIncidencia::EnProceso->value])
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ?) AS resueltas", [EstadoIncidencia::Resuelto->value])
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'RESPONSABLE' AND i.estado_incidencia = ? AND i.fecha_resolucion >= ?) AS resueltas_mes", [EstadoIncidencia::Resuelto->value, now()->startOfMonth()])
-            ->selectRaw("COUNT(*) FILTER (WHERE a.rol_asignado = 'APOYO' AND i.estado_incidencia NOT IN (?, ?)) AS apoyo_activas", [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
+            ->selectRaw('COUNT(*) FILTER (WHERE a.rol_asignado = ? AND i.estado_incidencia = ?) AS pendientes', [RolAsignacion::Responsable->value, EstadoIncidencia::Pendiente->value])
+            ->selectRaw('COUNT(*) FILTER (WHERE a.rol_asignado = ? AND i.estado_incidencia = ?) AS en_proceso', [RolAsignacion::Responsable->value, EstadoIncidencia::EnProceso->value])
+            ->selectRaw('COUNT(*) FILTER (WHERE a.rol_asignado = ? AND i.estado_incidencia = ?) AS resueltas', [RolAsignacion::Responsable->value, EstadoIncidencia::Resuelto->value])
+            ->selectRaw('COUNT(*) FILTER (WHERE a.rol_asignado = ? AND i.estado_incidencia = ? AND i.fecha_resolucion >= ?) AS resueltas_mes', [RolAsignacion::Responsable->value, EstadoIncidencia::Resuelto->value, now()->startOfMonth()])
+            ->selectRaw('COUNT(*) FILTER (WHERE a.rol_asignado = ? AND i.estado_incidencia NOT IN (?, ?)) AS apoyo_activas', [RolAsignacion::Apoyo->value, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
             ->first();
 
         // Resueltas por semana (últimas 8), rellenando con 0 las semanas sin cierres.
         $inicioSemanas = now()->startOfWeek()->subWeeks(7);
         $cierres = $asignadas()
-            ->where('a.rol_asignado', 'RESPONSABLE')
+            ->where('a.rol_asignado', RolAsignacion::Responsable->value)
             ->whereNotNull('i.fecha_resolucion')
             ->where('i.fecha_resolucion', '>=', $inicioSemanas)
             ->groupByRaw("date_trunc('week', i.fecha_resolucion)")

@@ -18,6 +18,7 @@ use App\Http\Requests\EliminarIncidenciaRequest;
 use App\Http\Requests\LiberarReclamoRequest;
 use App\Http\Requests\ReclamarIncidenciaRequest;
 use App\Http\Requests\SolicitarReaperturaRequest;
+use App\Http\Resources\HistorialEstadoResource;
 use App\Http\Resources\IncidenciaResource;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
@@ -67,7 +68,8 @@ class IncidenciaController extends Controller
             $query->whereHas('asignaciones', fn ($q) => $q->where('id_usuario', $user->id));
         }
 
-        return $query->paginate($this->perPage($request));
+        return $query->paginate($this->perPage($request))
+            ->through(fn ($incidencia) => new IncidenciaResource($incidencia));
     }
 
     // Crear una nueva incidencia adjuntando opcionalmente fotos (evidencias).
@@ -101,11 +103,11 @@ class IncidenciaController extends Controller
             });
 
             // Ya commiteada: avisa a quienes gestionan. Si la notificación falla, se bitácoriza pero no rompe la creación.
-            try {
-                $this->notificarNuevaIncidencia($incidencia, $request->user()->id);
-            } catch (\Throwable $e) {
-                BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia (notificación)', $e->getMessage());
-            }
+            $this->notificarSinRomper(
+                fn () => $this->notificarNuevaIncidencia($incidencia, $request->user()->id),
+                $request->user(),
+                'IncidenciaController@crearIncidencia (notificación)'
+            );
 
             // Aparece sola en el tablero de gestión de los admins (aparte de la campana, que es la notificación).
             broadcast(new IncidenciaCreada($incidencia));
@@ -172,7 +174,7 @@ class IncidenciaController extends Controller
             broadcast(new IncidenciaActualizada($incidencia));
         }
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia']));
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
     // Si la borra alguien más (el admin), se notifica el motivo al dueño con id_incidencia null (la fila está por desaparecer).
@@ -227,7 +229,9 @@ class IncidenciaController extends Controller
     {
         $this->authorize('verHistorial', $incidencia);
 
-        return $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get();
+        return HistorialEstadoResource::collection(
+            $incidencia->historialEstados()->with('usuario')->orderBy('created_at', 'desc')->get()
+        );
     }
 
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
@@ -288,7 +292,7 @@ class IncidenciaController extends Controller
         // (cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent).
         event(new IncidenciaCambioEstado($incidencia, $actual, $nuevo, $request->user()->id));
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad']));
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
     // No cambia el estado: solo enciende la bandera y avisa a los admins; solo reabrir (no leer) libera el cupo para otra solicitud.
@@ -344,7 +348,7 @@ class IncidenciaController extends Controller
             return response()->json(['message' => 'Esta incidencia ya fue reclamada por otro administrador.'], 422);
         }
 
-        $incidencia = $incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']);
+        $incidencia = $incidencia->fresh()->load(Incidencia::RELACIONES_DETALLE);
         broadcast(new ReclamoCambiado($incidencia));
 
         return new IncidenciaResource($incidencia);
@@ -369,7 +373,7 @@ class IncidenciaController extends Controller
 
         $incidencia->update(['id_admin_atiende' => null, 'reclamo_visto_en' => null]);
 
-        $incidencia = $incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']);
+        $incidencia = $incidencia->fresh()->load(Incidencia::RELACIONES_DETALLE);
         broadcast(new ReclamoCambiado($incidencia));
 
         return new IncidenciaResource($incidencia);
@@ -400,6 +404,6 @@ class IncidenciaController extends Controller
         // Notifica el archivado (RESUELTO -> CERRADO) e invalida la caché vía listeners.
         event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, $request->user()->id));
 
-        return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']));
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 }

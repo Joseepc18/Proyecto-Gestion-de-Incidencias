@@ -15,6 +15,12 @@ class Incidencia extends Model
     // Segundos sin latido tras los cuales el reclamo de un admin se considera vencido (abandonado).
     public const RECLAMO_TTL_SEGUNDOS = 120;
 
+    // Tope de fotos por tipo de evidencia (REPORTE/RESOLUCION); debe coincidir con v_limite del trigger fn_limite_evidencias.
+    public const LIMITE_EVIDENCIAS_POR_TIPO = 3;
+
+    // Set de relaciones para la respuesta de detalle tras mutar la incidencia; un solo lugar para todos los endpoints.
+    public const RELACIONES_DETALLE = ['usuario', 'subtipo.tipo', 'ciudad.provincia', 'adminAtiende'];
+
     protected $fillable = [
         'nombre_incidencia',
         'descripcion_incidencia',
