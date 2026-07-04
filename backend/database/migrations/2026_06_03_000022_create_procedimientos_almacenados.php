@@ -68,9 +68,7 @@ return new class extends Migration
         \$\$;
         ");
 
-        // Procedimiento resolver_incidencia: pasa a RESUELTO; los triggers hacen historial y fecha.
-        // Las notificaciones ya NO se insertan aquí: las emite el listener EnviarNotificacionCambioEstado
-        // (evento IncidenciaCambioEstado disparado desde el controller tras la resolución).
+        // Procedimiento resolver_incidencia: pasa a RESUELTO (los triggers hacen historial y fecha); las notificaciones las emite el listener EnviarNotificacionCambioEstado, ya no se insertan aquí.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,
@@ -101,9 +99,7 @@ return new class extends Migration
             -- Publica el actor para el trigger de historial (local a la transacción).
             PERFORM set_config('app.actor_id', p_id_usuario::text, true);
 
-            -- Cambia el estado a RESUELTO y refresca updated_at
-            -- El trigger tr_fecha_resolucion llena fecha_resolucion automáticamente
-            -- El trigger tr_cambio_estado_incidencias guarda el historial automáticamente
+            -- Cambia el estado a RESUELTO; los triggers de fecha e historial hacen el resto automáticamente.
             UPDATE incidencias
             SET estado_incidencia = 'RESUELTO',
                 updated_at = NOW()

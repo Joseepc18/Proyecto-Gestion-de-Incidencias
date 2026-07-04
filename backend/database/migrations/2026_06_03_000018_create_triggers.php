@@ -8,9 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1) fn_registrar_cambio_estado: guarda cada cambio de estado atribuyéndolo al EJECUTOR (app.actor_id), no al dueño.
-        // Si nadie fijó app.actor_id (el job de archivado automático no lo hace), queda NULL = lo hizo el sistema,
-        // no se le atribuye al reportador (id_usuario es nullable en historial_estados justo para este caso).
+        // fn_registrar_cambio_estado: guarda cada cambio de estado atribuyéndolo al EJECUTOR (app.actor_id), no al dueño; si nadie lo fijó queda NULL (lo hizo el sistema).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_registrar_cambio_estado()
             RETURNS TRIGGER AS \$\$
@@ -36,9 +34,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_registrar_cambio_estado();
         ');
 
-        // 2) fn_fecha_resolucion: setea/limpia fecha_resolucion según el estado (BEFORE).
-        // Al archivar (RESUELTO -> CERRADO) NO se limpia: el job de auto-archivado la necesita (fecha_resolucion
-        // <= now() - 24h) y además es la fecha real en que se resolvió, se conserva como dato histórico.
+        // fn_fecha_resolucion: setea/limpia fecha_resolucion según el estado; al archivar (RESUELTO->CERRADO) NO se limpia (la usa el auto-archivado y es dato histórico).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_fecha_resolucion()
             RETURNS TRIGGER AS \$\$
@@ -61,7 +57,7 @@ return new class extends Migration
             EXECUTE FUNCTION fn_fecha_resolucion();
         ');
 
-        // 3) fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION) (BEFORE INSERT).
+        // fn_limite_evidencias: tope de 3 fotos por tipo (REPORTE y RESOLUCION).
         DB::unprepared("
         CREATE OR REPLACE FUNCTION fn_limite_evidencias()
             RETURNS TRIGGER AS \$\$

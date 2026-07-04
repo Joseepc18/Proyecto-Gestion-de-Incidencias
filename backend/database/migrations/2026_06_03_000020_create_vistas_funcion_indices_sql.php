@@ -13,7 +13,6 @@ return new class extends Migration
         DB::unprepared('
             CREATE OR REPLACE VIEW v_incidencias_completas AS
             SELECT
-                -- Datos de la incidencia
                 i.id_incidencia,
                 i.nombre_incidencia,
                 i.descripcion_incidencia,
@@ -25,18 +24,15 @@ return new class extends Migration
                 i.fecha_resolucion,
                 i.created_at,
 
-                -- Quién la reportó
                 u.id            AS id_usuario,
                 u.name          AS nombre_usuario,
                 u.email         AS email_usuario,
 
-                -- Subtipo y tipo de incidencia
                 s.id_subtipo_incidencia,
                 s.nombre_subtipo_incidencia,
                 t.id_tipo_incidencia,
                 t.nombre_tipo_incidencia,
 
-                -- Ubicación geográfica
                 c.id_ciudad,
                 c.nombre_ciudad,
                 p.id_provincia,
@@ -54,17 +50,15 @@ return new class extends Migration
         DB::unprepared("
             CREATE OR REPLACE VIEW v_metricas_por_tipo AS
             SELECT
-                -- El tipo de incidencia
                 t.id_tipo_incidencia,
                 t.nombre_tipo_incidencia,
 
-                -- Conteos por estado
                 COUNT(i.id_incidencia)                                          AS total,
                 COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'PENDIENTE')   AS total_pendientes,
                 COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'EN_PROCESO')  AS total_en_proceso,
                 COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'RESUELTO')    AS total_resueltas,
 
-                -- Promedio de días que tarda en resolverse (solo las que ya se resolvieron)
+                -- Promedio de días de resolución (solo las incidencias ya resueltas)
                 ROUND(
                     AVG(
                         EXTRACT(EPOCH FROM (i.fecha_resolucion - i.created_at)) / 86400
@@ -82,12 +76,10 @@ return new class extends Migration
         DB::unprepared("
             CREATE OR REPLACE VIEW v_metricas_por_ubicacion AS
             SELECT
-                -- Ubicación
                 c.id_ciudad,
                 c.nombre_ciudad,
                 p.nombre_provincia,
 
-                -- Conteos por estado
                 COUNT(i.id_incidencia)                                                   AS total,
                 COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'PENDIENTE')   AS total_pendientes,
                 COUNT(i.id_incidencia) FILTER (WHERE i.estado_incidencia = 'EN_PROCESO')  AS total_en_proceso,
@@ -107,7 +99,6 @@ return new class extends Migration
             DECLARE
                 v_dias NUMERIC;
             BEGIN
-                -- Calcula la diferencia entre resolución y creación en días
                 SELECT ROUND(
                     EXTRACT(EPOCH FROM (fecha_resolucion - created_at)) / 86400
                 , 2)
@@ -116,7 +107,7 @@ return new class extends Migration
                 WHERE id_incidencia = p_id_incidencia
                 AND fecha_resolucion IS NOT NULL;
 
-                -- Si no está resuelta aún, retorna NULL
+                -- Queda NULL si la incidencia todavía no se resuelve
                 RETURN v_dias;
             END;
             $$ LANGUAGE plpgsql;

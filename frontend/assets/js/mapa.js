@@ -118,9 +118,7 @@ function agregarControlEstilo(map) {
   let estiloActual = MAPBOX_ESTILO_3D;
   function cambiarA(estilo, btnActivo, btnOtro) {
     if (estiloActual === estilo) return;
-    // diff:false fuerza recarga completa del estilo. El diff por defecto falla al
-    // alternar entre estilos Standard (satelite <-> maqueta, que usan imports) y a
-    // veces no cambiaba nada al hacer click. La camara y los marcadores se conservan.
+    // diff:false fuerza recarga completa: el diff por defecto no alternaba entre estilos Standard (satélite/maqueta).
     map.setStyle(estilo, { diff: false });
     estiloActual = estilo;
     btnActivo.classList.add("active");

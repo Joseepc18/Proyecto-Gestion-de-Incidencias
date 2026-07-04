@@ -1,14 +1,5 @@
 // paginacion.js — Helper global para la paginación de tablas con diseño inteligente.
 
-/**
- * Renderiza los controles de paginación en un contenedor.
- * @param {Object} options
- * @param {Object} options.respuesta - Objeto de respuesta de Laravel (con current_page, last_page, total, etc.)
- * @param {string} options.idContenedor - ID del contenedor donde se inyectará la paginación.
- * @param {Function} options.onPageChange - Callback que recibe la nueva página a cargar.
- * @param {Function} options.onPerPageChange - Callback que recibe la nueva cantidad de registros por página.
- * @param {number} options.perPage - Cantidad actual de ítems por página.
- */
 /* exported renderizarPaginacion */
 
 // "…" solo cuando oculta más de una página; si oculta una sola, se muestra ese número
@@ -99,7 +90,6 @@ function renderizarPaginacion({
     </div>
   `;
 
-  // Attach events
   contenedor.querySelectorAll("[data-page]").forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();

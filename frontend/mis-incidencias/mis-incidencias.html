@@ -25,21 +25,18 @@
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
-      <!-- Sidebar -->
       <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
 
       <div class="admin-main">
-        <!-- Navbar -->
         <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
 
-        <!-- Contenido: mapa de fondo + paneles flotantes (estilo centro de control) -->
+        <!-- Mapa de fondo + paneles flotantes (estilo centro de control) -->
         <main class="dashboard-content mis-mapa-main">
           <!-- Barra Volver (solo movil, al ver el detalle de una incidencia) -->
           <button type="button" class="mis-volver" id="btnVolverMapa">
             <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis incidencias
           </button>
 
-          <!-- Mapa -->
           <div id="mapaMisIncidencias" class="mis-mapa"></div>
 
           <!-- Panel flotante izquierdo: feed de incidencias -->
@@ -133,12 +130,10 @@
       </div>
     </div>
 
-    <!-- JS compartido -->
     <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
     <script defer src="../assets/vendors/main.js"></script>
     <script defer src="../assets/js/config.js"></script>
     <script defer src="../assets/js/api.js"></script>
-    <!-- Mapas de estado/prioridad compartidos -->
     <script defer src="../assets/js/estados.js"></script>
     <script defer src="../assets/js/util.js"></script>
     <script defer src="../assets/js/sesion.js"></script>
@@ -150,11 +145,9 @@
     <script defer src="../assets/vendors/reverb/echo.iife.js"></script>
     <script defer src="../assets/js/realtime.js"></script>
     <script defer src="../assets/js/notificaciones.js"></script>
-    <!-- Mapa -->
     <script defer src="../assets/vendors/mapbox-gl/mapbox-gl.js"></script>
     <script defer src="../assets/js/mapbox-config.js"></script>
     <script defer src="../assets/js/mapa.js"></script>
-    <!-- Lógica propia -->
     <script defer src="mis-incidencias.js"></script>
   </body>
 </html>

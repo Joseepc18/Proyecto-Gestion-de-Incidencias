@@ -8,16 +8,13 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-// Notificación única y reutilizable del dominio: el "tipo" viaja como dato, igual que lo consume el front.
-// Multicanal: se guarda en la tabla notifications (database), se emite por Reverb (broadcast) y,
-// cuando $correo es true, también se manda por email con plantilla Markdown.
+// Notificación única y reutilizable: multicanal (BD, broadcast Reverb y, si $correo es true, email Markdown).
 // ShouldQueue: el envío completo se difiere a la cola para no bloquear la respuesta HTTP.
 class IncidenciaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     // $contador solo lo usa COMENTARIO (agrupación); el resto queda en 1.
-    // $correo solo lo activan los avisos del alcance (reportador al cambiar estado, técnico al asignarlo).
     public function __construct(
         public string $tipo,
         public string $mensaje,

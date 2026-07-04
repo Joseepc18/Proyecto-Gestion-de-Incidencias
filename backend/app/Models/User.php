@@ -53,7 +53,6 @@ class User extends Authenticatable
         return $query->whereHas('rol.permisos', fn ($q) => $q->where('clave_permiso', $clave));
     }
 
-    // Atajos de rol: centralizan el chequeo repetido nombre_rol === 'x'.
     // super_admin es superset de admin: hereda todo el poder operativo (asignar, prioridades, borrar, etc.).
     public function esAdmin(): bool
     {

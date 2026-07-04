@@ -6,9 +6,7 @@ use App\Models\Incidencia;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-// Hecho de dominio: una incidencia cambió de estado. Lo disparan los puntos que cambian el estado
-// (cambiarEstado, archivar, el comando de auto-archivado). Sus listeners reaccionan por separado:
-// uno notifica (BD + broadcast), otro invalida la caché del dashboard.
+// Hecho de dominio: lo disparan los puntos que cambian el estado; los listeners notifican e invalidan caché por separado.
 class IncidenciaCambioEstado
 {
     use Dispatchable, SerializesModels;

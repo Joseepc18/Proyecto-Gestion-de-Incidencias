@@ -3,8 +3,7 @@
   --sidebar-mini-width: 84px;
   /* Altura del navbar superior; la usan el propio navbar y los calc() de alto completo */
   --navbar-h: 72px;
-  /* Escala tipografica fluida global: clamp(min movil, preferido, max escritorio).
-     Toda la app usa estos tokens en vez de tamanos fijos, asi el texto escala solo. */
+  /* Escala tipografica fluida: clamp(min movil, preferido, max escritorio), sin tamanos fijos. */
   --fs-2xs: clamp(0.62rem, 0.58rem + 0.18vw, 0.7rem);
   --fs-xs: clamp(0.72rem, 0.68rem + 0.2vw, 0.78rem);
   --fs-sm: clamp(0.8rem, 0.77rem + 0.16vw, 0.85rem);
@@ -53,8 +52,7 @@ html {
 
 html,
 body {
-  /* Red de seguridad: ningún componente aislado (ej. .row de Bootstrap con márgenes
-     negativos) debe poder abrir scroll horizontal de la página completa. */
+  /* Red de seguridad: ningún componente aislado no debe abrir scroll horizontal de la página. */
   overflow-x: hidden;
 }
 
@@ -86,7 +84,7 @@ a {
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-  /* Reserve scrollbar gutter to keep inner content width stable so header/footer dividers align with scrollbar */
+  /* Reserva el gutter del scrollbar para que el ancho no salte al aparecer/desaparecer */
   scrollbar-gutter: stable;
   background: var(--admin-sidebar);
   color: #ffffff;
@@ -317,8 +315,7 @@ a {
   box-shadow: var(--admin-shadow);
 }
 
-/* En telefonos el dropdown de notificaciones se ancla acotado entre margenes
-   (Popper tiende a sacarlo de la pantalla si el boton esta pegado al borde). */
+/* Se ancla acotado entre márgenes: Popper lo saca de pantalla si el botón está pegado al borde */
 @media (max-width: 575.98px) {
   .notification-menu.dropdown-menu {
     position: fixed !important;
@@ -532,8 +529,7 @@ a {
   font-weight: 700;
 }
 
-/* El avatar ya indica que es un menu; quitamos la flecha (caret) de Bootstrap que se
-   veia suelta y descuadrada, sobre todo en movil donde el nombre esta oculto. */
+/* El avatar ya indica que es un menú: quitamos el caret de Bootstrap (quedaba suelto en móvil) */
 .profile-button.dropdown-toggle::after {
   display: none;
 }
@@ -842,8 +838,7 @@ a {
   width: 48px;
 }
 
-/* Tablas en modo tarjeta: en movil cada fila se apila como tarjeta (sin scroll lateral).
-   Se activa con la clase .tabla-cards en la <table> y usa data-label en cada <td>. */
+/* Tablas en modo tarjeta (.tabla-cards + data-label en cada <td>): en móvil cada fila se apila */
 @media (max-width: 767.98px) {
   .tabla-cards thead {
     display: none;
@@ -1569,8 +1564,7 @@ html[data-theme="dark"] {
   backdrop-filter: blur(4px);
 }
 
-/* El menú de 3 puntos (menuAcciones.js) usa Popper con strategy:"fixed", así no lo
-   recorta este scroll aunque la tabla sea más ancha que su contenedor. */
+/* El menú de 3 puntos usa Popper strategy:"fixed", así este scroll no lo recorta */
 .table-responsive {
   overflow-x: auto;
 }
@@ -1649,8 +1643,7 @@ html[data-theme="dark"] {
 }
 .toast-item {
   position: relative;
-  /* .toast-container choca con la clase de Bootstrap (pointer-events: none);
-     devolvemos los clics al toast para que la X funcione. */
+  /* .toast-container tiene pointer-events:none de Bootstrap; se lo devolvemos al toast para la X */
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
@@ -1953,8 +1946,7 @@ html[data-theme="dark"] {
   padding: 0.75rem 1.25rem 1.25rem;
 }
 
-/* En telefonos el modal se ancla abajo a ancho completo (bottom sheet): no puede
-   desbordarse horizontalmente y es mas comodo de alcanzar con el pulgar. */
+/* En móvil el modal se ancla abajo a ancho completo (bottom sheet), más fácil con el pulgar */
 @media (max-width: 575.98px) {
   .modal-overlay {
     align-items: flex-end;
@@ -2331,8 +2323,7 @@ html[data-theme="dark"] {
   overflow-y: auto;
 }
 
-/* Paginación de flechas (‹ ›) exclusiva del feed de Mis Incidencias:
-   compacta y pegada al listado, evita el scroll vertical del helper de números. */
+/* Paginación de flechas (‹ ›) del feed de Mis Incidencias: evita el scroll del helper de números */
 .mis-pag-flechas {
   display: flex;
   align-items: center;
@@ -2654,8 +2645,7 @@ html[data-theme="dark"] {
   background: var(--admin-primary-dark);
 }
 
-/* En movil el mapa deja de ser pantalla completa con paneles flotantes encima:
-   se apila en columna (mapa arriba, feed y detalle debajo) y la pagina scrollea. */
+/* En móvil se apila en columna (mapa, feed, detalle) y la página scrollea en vez de flotar */
 @media (max-width: 767.98px) {
   .mis-mapa-main {
     height: auto;
@@ -2689,8 +2679,7 @@ html[data-theme="dark"] {
   .mis-detalle {
     display: none;
   }
-  /* Al seleccionar una incidencia (.mis-ver-detalle): se oculta la lista y aparecen
-     el boton Volver, el mapa enfocado y la tarjeta de detalle. */
+  /* Al seleccionar (.mis-ver-detalle): oculta la lista y muestra Volver + mapa + detalle */
   .mis-mapa-main.mis-ver-detalle .mis-feed {
     display: none;
   }
@@ -2732,8 +2721,7 @@ html[data-theme="dark"] {
   margin-bottom: 12px;
 }
 
-/* Selector de prioridad: 3 botones lado a lado. El activo se pinta con el color de su
-   badge (prioridadConfig.clase se agrega/quita por JS), por eso no hay color aquí. */
+/* El botón activo se pinta con el color de su badge vía JS (prioridadConfig.clase), no aquí */
 .btn-grupo-tool {
   display: flex;
   gap: 8px;
@@ -2762,8 +2750,7 @@ html[data-theme="dark"] {
   border-color: transparent;
 }
 
-/* Botones de cambio de estado (apilados). El activo se pinta con el color de su badge
-   (estadoConfig.clase se agrega/quita por JS), por eso no hay color de fondo aquí. */
+/* El botón activo se pinta con el color de su badge vía JS (estadoConfig.clase), no aquí */
 .btn-estado-tool {
   display: flex;
   align-items: center;
@@ -2953,8 +2940,7 @@ html[data-theme="dark"] {
   border: 1px solid var(--admin-border);
   border-radius: 12px;
   background: var(--admin-surface);
-  /* Sin esto, el item de grid no encoge por debajo del texto en white-space:nowrap
-     de .meta-tile-valor y empuja la barra fuera de la pantalla en vez de truncar con "…". */
+  /* Sin esto el item no encoge bajo el nowrap de .meta-tile-valor y empuja la barra fuera */
   min-width: 0;
 }
 
@@ -3188,16 +3174,14 @@ html[data-theme="dark"] .meta-tile-icono {
     overflow-y: auto;
   }
 
-  /* Tarjeta de Fotos: el carrusel (una sola foto, altura fija) no debe scrollear —
-     se ajusta al espacio disponible en vez de forzar overflow por unos pixeles de más. */
+  /* El carrusel (altura fija) no debe scrollear: se ajusta al espacio en vez de forzar overflow */
   #fotosReporteBloque .detalle-fill-cuerpo {
     display: flex;
     flex-direction: column;
     overflow-y: hidden;
   }
 
-  /* Se aplica al contenedor que en ese momento tiene un carrusel montado (#fotosReporte en modo
-     lectura, o #fotosResolucion) — NO a #fotosReporte cuando el ciudadano lo usa como grid editable. */
+  /* Solo al contenedor con carrusel montado, NO a #fotosReporte cuando es grid editable */
   .carrusel-fotos-wrap,
   #fotosResolucionBloque {
     display: flex;
