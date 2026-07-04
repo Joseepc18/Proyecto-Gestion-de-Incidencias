@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
+use App\Events\IncidenciaActualizada;
 use App\Events\IncidenciaCambioEstado;
+use App\Events\IncidenciaCreada;
+use App\Events\ReclamoCambiado;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
@@ -12,6 +15,7 @@ use App\Http\Requests\ArchivarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
 use App\Http\Requests\EliminarIncidenciaRequest;
+use App\Http\Requests\LiberarReclamoRequest;
 use App\Http\Requests\ReclamarIncidenciaRequest;
 use App\Http\Requests\SolicitarReaperturaRequest;
 use App\Http\Resources\IncidenciaResource;
@@ -103,6 +107,9 @@ class IncidenciaController extends Controller
                 BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia (notificación)', $e->getMessage());
             }
 
+            // Aparece sola en el tablero de gestión de los admins (aparte de la campana, que es la notificación).
+            broadcast(new IncidenciaCreada($incidencia));
+
             return response()->json(
                 new IncidenciaResource($incidencia->load([
                     'usuario',
@@ -156,7 +163,14 @@ class IncidenciaController extends Controller
     // Actualizar datos básicos de la incidencia (solo autor si está PENDIENTE).
     public function actualizarIncidencia(ActualizarIncidenciaRequest $request, Incidencia $incidencia)
     {
+        $prioridadAnterior = $incidencia->prioridad_incidencia;
+
         $incidencia->update($request->validated());
+
+        // La prioridad es lo único de esta ruta que se ve en vivo; el estado va por su propio evento de dominio.
+        if ($incidencia->prioridad_incidencia !== $prioridadAnterior) {
+            broadcast(new IncidenciaActualizada($incidencia));
+        }
 
         return new IncidenciaResource($incidencia->load(['usuario', 'subtipo.tipo', 'ciudad.provincia']));
     }
@@ -297,27 +311,78 @@ class IncidenciaController extends Controller
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
     }
 
-    // "Reclamar" v1 sin tiempo real: el primer admin que reclama queda como dueño.
-    // El UPDATE ... WHERE id_admin_atiende IS NULL es atómico: si dos admins reclaman a la vez, uno solo gana la fila.
+    // "Reclamar" v2: el candado es un lease con latido. El primer admin que reclama queda como dueño,
+    // pero si su latido caduca (cerró la app), otro admin puede tomarlo. El UPDATE es atómico:
+    // ante dos reclamos simultáneos, solo uno gana la fila.
     public function reclamarIncidencia(ReclamarIncidenciaRequest $request, Incidencia $incidencia)
     {
-        if ($incidencia->id_admin_atiende !== null) {
-            $mensaje = $incidencia->id_admin_atiende === $request->user()->id
-                ? 'Ya reclamaste esta incidencia.'
-                : 'Esta incidencia ya fue reclamada por otro administrador.';
+        $userId = $request->user()->id;
 
-            return response()->json(['message' => $mensaje], 422);
+        // Ya lo tengo yo y el lease sigue vivo: nada que reclamar.
+        if ($incidencia->id_admin_atiende === $userId && ! $incidencia->reclamoVencido()) {
+            return response()->json(['message' => 'Ya reclamaste esta incidencia.'], 422);
         }
 
+        // Otro admin lo atiende y su lease sigue activo: no se puede tomar.
+        if ($incidencia->id_admin_atiende !== null
+            && $incidencia->id_admin_atiende !== $userId
+            && ! $incidencia->reclamoVencido()) {
+            return response()->json(['message' => 'Esta incidencia ya fue reclamada por otro administrador.'], 422);
+        }
+
+        // Toma la fila si está libre o si el reclamo anterior venció (sin latido reciente).
+        $limite = now()->subSeconds(Incidencia::RECLAMO_TTL_SEGUNDOS);
         $reclamada = Incidencia::where('id_incidencia', $incidencia->id_incidencia)
-            ->whereNull('id_admin_atiende')
-            ->update(['id_admin_atiende' => $request->user()->id]);
+            ->where(function ($q) use ($limite) {
+                $q->whereNull('id_admin_atiende')
+                    ->orWhereNull('reclamo_visto_en')
+                    ->orWhere('reclamo_visto_en', '<', $limite);
+            })
+            ->update(['id_admin_atiende' => $userId, 'reclamo_visto_en' => now()]);
 
         if ($reclamada === 0) {
             return response()->json(['message' => 'Esta incidencia ya fue reclamada por otro administrador.'], 422);
         }
 
-        return new IncidenciaResource($incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']));
+        $incidencia = $incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']);
+        broadcast(new ReclamoCambiado($incidencia));
+
+        return new IncidenciaResource($incidencia);
+    }
+
+    // Liberar el candado: el dueño puede soltar el suyo cuando quiera; super_admin siempre;
+    // otro admin solo si el lease venció (el dueño abandonó la app).
+    public function liberarReclamo(LiberarReclamoRequest $request, Incidencia $incidencia)
+    {
+        if ($incidencia->id_admin_atiende === null) {
+            return response()->json(['message' => 'Esta incidencia no está reclamada.'], 422);
+        }
+
+        $user = $request->user();
+        $puede = $incidencia->id_admin_atiende === $user->id
+            || $user->esSuperAdmin()
+            || $incidencia->reclamoVencido();
+
+        if (! $puede) {
+            return response()->json(['message' => 'El administrador sigue atendiendo esta incidencia.'], 422);
+        }
+
+        $incidencia->update(['id_admin_atiende' => null, 'reclamo_visto_en' => null]);
+
+        $incidencia = $incidencia->fresh()->load(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende']);
+        broadcast(new ReclamoCambiado($incidencia));
+
+        return new IncidenciaResource($incidencia);
+    }
+
+    // Latido del candado: mientras el admin tiene la app abierta refresca el lease de todos sus reclamos.
+    // Silencioso (sin broadcast); solo evita que sus reclamos venzan.
+    public function heartbeatReclamo(Request $request)
+    {
+        Incidencia::where('id_admin_atiende', $request->user()->id)
+            ->update(['reclamo_visto_en' => now()]);
+
+        return response()->noContent();
     }
 
     // Cerrar/archivar: solo el admin dueño (id_admin_atiende), y solo desde RESUELTO.

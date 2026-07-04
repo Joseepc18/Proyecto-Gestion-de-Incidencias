@@ -19,6 +19,9 @@ async function requerirSesion() {
     // Pinta el nombre en el navbar compartido (todas las páginas admin lo tienen).
     const el = document.getElementById("nombreUsuario");
     if (el) el.textContent = usuario.name;
+    // Cachea el id y avisa: la campana (script aparte) lo usa para su canal privado de notificaciones.
+    localStorage.setItem("usuario_id", usuario.id);
+    window.dispatchEvent(new CustomEvent("sesion-lista", { detail: usuario }));
     return usuario;
   } catch {
     eliminarToken();

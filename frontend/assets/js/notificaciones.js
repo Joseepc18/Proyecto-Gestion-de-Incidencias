@@ -1,6 +1,6 @@
 // notificaciones.js — Campana del navbar: lista, contador sin leer y marcar como leídas.
 
-/* global apiFetch, obtenerToken, rutaDetalleIncidencia, tiempoRelativo */
+/* global apiFetch, obtenerToken, obtenerEcho, rutaDetalleIncidencia, tiempoRelativo */
 
 document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btnNotificaciones");
@@ -103,26 +103,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  let timerNotif;
-  function programarRefresco() {
-    clearTimeout(timerNotif);
-    if (!document.hidden) {
-      timerNotif = setTimeout(async function () {
-        await cargar();
-        programarRefresco();
-      }, 30000);
-    }
+  // Push en vivo: la campana se actualiza sola en cuanto llega una notificación por WebSocket.
+  let suscrito = false;
+  function suscribir(idUsuario) {
+    if (suscrito || !idUsuario) return;
+    const echo = obtenerEcho();
+    if (!echo) return;
+    suscrito = true;
+    // .notification() escucha el evento nativo que Laravel emite al canal privado del usuario.
+    echo.private("App.Models.User." + idUsuario).notification(function () {
+      cargar();
+    });
   }
 
+  // El id puede estar ya cacheado (páginas siguientes) o llegar cuando requerirSesion resuelve.
+  suscribir(localStorage.getItem("usuario_id"));
+  window.addEventListener("sesion-lista", function (e) {
+    suscribir(e.detail.id);
+  });
+
+  // Al volver a la pestaña, reconciliamos por si algún push se perdió mientras estaba oculta.
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) {
-      cargar();
-      programarRefresco();
-    } else {
-      clearTimeout(timerNotif);
-    }
+    if (!document.hidden) cargar();
   });
 
   cargar();
-  programarRefresco();
 });

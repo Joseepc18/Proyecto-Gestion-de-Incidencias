@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\RolAsignacion;
+use App\Events\AsignacionCambiada;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AsignarTecnicoRequest;
 use App\Models\AsignacionIncidencia;
@@ -66,6 +67,9 @@ class AsignacionController extends Controller
                 BitacoraError::registrar($request->user(), 'SERVIDOR', 'AsignacionController@asignar (notificación)', $e->getMessage());
             }
 
+            // Refresca el detalle abierto y la cola del técnico recién asignado.
+            broadcast(new AsignacionCambiada($incidencia->id_incidencia, 'asignada', $datos['rol_asignado'], (int) $datos['id_usuario']));
+
             return response()->json($incidencia->load('asignaciones.usuario'), 201);
         } catch (QueryException $e) {
             BitacoraError::registrar($request->user(), 'BASE_DATOS', 'AsignacionController@asignar', $e->getMessage(), $e);
@@ -100,7 +104,14 @@ class AsignacionController extends Controller
             return response()->json(['message' => 'La incidencia está resuelta; no se pueden cambiar las asignaciones.'], 422);
         }
 
+        $idIncidencia = $asignacion->id_incidencia;
+        $rol = $asignacion->rol_asignado;
+        $idUsuario = $asignacion->id_usuario;
+
         $asignacion->delete();
+
+        // Refresca el detalle abierto y quita la incidencia de la cola del técnico afectado.
+        broadcast(new AsignacionCambiada($idIncidencia, 'quitada', $rol, (int) $idUsuario));
 
         return ['message' => 'Asignación eliminada'];
     }

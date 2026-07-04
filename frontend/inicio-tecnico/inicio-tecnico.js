@@ -1,6 +1,6 @@
 // inicio-tecnico.js — Panel de inicio del técnico: sus KPIs, mapa de asignadas, lista y gráficas.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema, obtenerEcho */
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
 let graficos = [];
@@ -25,7 +25,22 @@ document.addEventListener("DOMContentLoaded", async function () {
   observarCambioDeTema(repintarPorTema);
 
   await cargarPanel();
+  conectarTiempoReal(usuario.id);
 });
+
+// La cola de activas se mueve sola: al asignarle una nueva o quitarle una, se repinta el panel entero
+// (KPIs + lista + mapa) refrescando /dashboard/tecnico, que es la vía simple y correcta.
+function conectarTiempoReal(idUsuario) {
+  const echo = obtenerEcho();
+  if (!echo) return;
+  const canal = echo.private("App.Models.User." + idUsuario);
+  canal.notification(function (n) {
+    if (n.tipo === "ASIGNACION") cargarPanel();
+  });
+  canal.listen(".AsignacionCambiada", function (e) {
+    if (e.accion === "quitada") cargarPanel();
+  });
+}
 
 // Pide las métricas del técnico y pinta KPIs + lista + mapa + gráficas.
 async function cargarPanel() {

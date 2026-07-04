@@ -28,6 +28,9 @@ return new class extends Migration
             reapertura_solicitada BOOLEAN NOT NULL DEFAULT FALSE,
             -- Admin que reclamo la incidencia (el primero en reclamar queda como dueño); NULL si nadie la ha reclamado.
             id_admin_atiende BIGINT NULL,
+            -- Ultimo latido (heartbeat) del admin que atiende: mientras tiene la app abierta lo refresca cada pocos segundos.
+            -- Si deja de latir mas del TTL, el reclamo se considera vencido y otro admin puede tomarlo.
+            reclamo_visto_en TIMESTAMP NULL,
             FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_subtipo_incidencia) REFERENCES subtipos_incidencia(id_subtipo_incidencia) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,

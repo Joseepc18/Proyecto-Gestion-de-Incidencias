@@ -1,9 +1,14 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let mapa = null;
+// Incidencias de la página actual y la seleccionada, para actualizarlas en vivo sin recargar.
+let incidenciasActuales = [];
+let seleccionadaId = null;
+// Canales de updates suscritos (uno por incidencia visible); se limpian al repintar la lista.
+const canalesSuscritos = new Set();
 
 document.addEventListener("DOMContentLoaded", async function () {
   usuarioActual = await requerirSesion();
@@ -56,6 +61,8 @@ async function cargarLista() {
     const respuesta = await apiFetch("/incidencias?" + params.toString());
     const incidencias = respuesta.data;
 
+    incidenciasActuales = incidencias;
+
     if (incidencias.length === 0) {
       const hayFiltro = busqueda || filtroEstado;
       contenedor.innerHTML = hayFiltro
@@ -70,35 +77,12 @@ async function cargarLista() {
             "Cuando reportes una incidencia aparecerá aquí.",
           );
       document.getElementById("paginacionMis").innerHTML = "";
-      if (mapa) mapa.pintarPines([], seleccionarIncidencia);
+      refrescarMapa();
+      suscribirIncidencias();
       return;
     }
 
-    contenedor.innerHTML = incidencias
-      .map(function (inc) {
-        const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
-        const id = inc.id_incidencia;
-
-        return (
-          '<div class="incidencia-card" data-id="' +
-          id +
-          '">' +
-          '<div class="d-flex justify-content-between align-items-start gap-2">' +
-          '<span class="card-codigo">' +
-          codigoIncidencia(id) +
-          "</span>" +
-          badgeEstadoHtml(inc.estado_incidencia) +
-          "</div>" +
-          '<p class="card-titulo">' +
-          escaparHtml(inc.nombre_incidencia) +
-          "</p>" +
-          '<span class="card-ubicacion"><i class="bi bi-geo-alt me-1"></i>' +
-          escaparHtml(ciudad) +
-          "</span>" +
-          "</div>"
-        );
-      })
-      .join("");
+    contenedor.innerHTML = incidencias.map(tarjetaHtml).join("");
 
     // Paginación simple de flechas (‹ ›): no requiere hacer scroll hacia los números.
     const current = respuesta.current_page || 1;
@@ -106,27 +90,94 @@ async function cargarLista() {
     const total = respuesta.total || 0;
     renderFlechasPaginacion(current, last, total, respuesta.from || 0, respuesta.to || 0);
 
-    if (mapa) {
-      const pines = incidencias
-        .filter(function (i) {
-          return i.latitud_incidencia != null && i.longitud_incidencia != null;
-        })
-        .map(function (i) {
-          return {
-            id: i.id_incidencia,
-            lat: Number(i.latitud_incidencia),
-            lng: Number(i.longitud_incidencia),
-            // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
-            titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
-            color: colorEstado(i.estado_incidencia),
-          };
-        });
-      mapa.pintarPines(pines, seleccionarIncidencia);
-    }
+    refrescarMapa();
+    suscribirIncidencias();
   } catch (error) {
     contenedor.innerHTML =
       '<p class="text-danger small text-center py-4 mb-0">' + escaparHtml(error.message) + "</p>";
   }
+}
+
+// HTML de una tarjeta del feed (reutilizado al pintar la lista y al actualizar una en vivo).
+function tarjetaHtml(inc) {
+  const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
+  const id = inc.id_incidencia;
+  return (
+    '<div class="incidencia-card' +
+    (id === seleccionadaId ? " activa" : "") +
+    '" data-id="' +
+    id +
+    '">' +
+    '<div class="d-flex justify-content-between align-items-start gap-2">' +
+    '<span class="card-codigo">' +
+    codigoIncidencia(id) +
+    "</span>" +
+    badgeEstadoHtml(inc.estado_incidencia) +
+    "</div>" +
+    '<p class="card-titulo">' +
+    escaparHtml(inc.nombre_incidencia) +
+    "</p>" +
+    '<span class="card-ubicacion"><i class="bi bi-geo-alt me-1"></i>' +
+    escaparHtml(ciudad) +
+    "</span>" +
+    "</div>"
+  );
+}
+
+// Repinta los pines del mapa desde incidenciasActuales (recolorea según estado).
+function refrescarMapa() {
+  if (!mapa) return;
+  const pines = incidenciasActuales
+    .filter(function (i) {
+      return i.latitud_incidencia != null && i.longitud_incidencia != null;
+    })
+    .map(function (i) {
+      return {
+        id: i.id_incidencia,
+        lat: Number(i.latitud_incidencia),
+        lng: Number(i.longitud_incidencia),
+        // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
+        titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
+        color: colorEstado(i.estado_incidencia),
+      };
+    });
+  mapa.pintarPines(pines, seleccionarIncidencia);
+}
+
+// Suscribe cada incidencia visible a su canal de updates; deja las de la página anterior que ya no están.
+function suscribirIncidencias() {
+  const echo = obtenerEcho();
+  if (!echo) return;
+
+  const vigentes = new Set(incidenciasActuales.map((i) => String(i.id_incidencia)));
+
+  // Baja las que ya no están en pantalla.
+  canalesSuscritos.forEach(function (id) {
+    if (!vigentes.has(id)) {
+      echo.leave("incidencia.updates." + id);
+      canalesSuscritos.delete(id);
+    }
+  });
+
+  // Sube las nuevas.
+  vigentes.forEach(function (id) {
+    if (canalesSuscritos.has(id)) return;
+    canalesSuscritos.add(id);
+    echo.private("incidencia.updates." + id).listen(".IncidenciaActualizada", actualizarEnVivo);
+  });
+}
+
+// Aplica un cambio de estado/prioridad en vivo: tarjeta + pin + panel embebido si es la seleccionada.
+function actualizarEnVivo(e) {
+  const inc = incidenciasActuales.find((i) => i.id_incidencia === e.id_incidencia);
+  if (!inc) return;
+  inc.estado_incidencia = e.estado_incidencia;
+  inc.prioridad_incidencia = e.prioridad_incidencia;
+
+  const card = document.querySelector('.incidencia-card[data-id="' + e.id_incidencia + '"]');
+  if (card) card.outerHTML = tarjetaHtml(inc);
+  refrescarMapa();
+  if (seleccionadaId === e.id_incidencia) seleccionarIncidencia(e.id_incidencia);
 }
 
 // No usa paginacion.js: evita forzar el scroll del panel hacia los números
@@ -179,6 +230,7 @@ function renderFlechasPaginacion(current, last, total, from, to) {
 
 // Paso 3 — Carga el resumen liviano de la incidencia en la tarjeta derecha.
 async function seleccionarIncidencia(id) {
+  seleccionadaId = id;
   document.querySelectorAll(".incidencia-card").forEach(function (card) {
     card.classList.toggle("activa", Number(card.dataset.id) === id);
   });

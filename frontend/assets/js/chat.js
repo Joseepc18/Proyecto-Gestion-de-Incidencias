@@ -1,35 +1,12 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch, obtenerToken, Echo, Pusher, iniciales */
+/* global apiFetch, obtenerEcho, iniciales */
 /* exported crearChat */
 
 // Etiqueta legible del rol del autor de un mensaje.
 function etiquetaRol(rol) {
   const mapa = { admin: "Administrador", tecnico: "Técnico", normal: "Reportador" };
   return mapa[rol] || "Usuario";
-}
-
-// Instancia única de Echo para toda la página (evita abrir varias conexiones WebSocket).
-let echoSingleton = null;
-
-// Crea (o reutiliza) el cliente de Echo apuntando al servidor Reverb por detrás de Nginx.
-function obtenerEcho() {
-  if (echoSingleton) return echoSingleton;
-  if (typeof Echo === "undefined" || typeof Pusher === "undefined") return null;
-
-  const esHttps = window.location.protocol === "https:";
-  echoSingleton = new Echo({
-    broadcaster: "reverb",
-    key: "incidencias-key",
-    wsHost: window.location.hostname,
-    wsPort: esHttps ? 443 : 80,
-    wssPort: esHttps ? 443 : 80,
-    forceTLS: esHttps,
-    enabledTransports: ["ws", "wss"],
-    authEndpoint: "/api/broadcasting/auth",
-    auth: { headers: { Authorization: "Bearer " + obtenerToken() } },
-  });
-  return echoSingleton;
 }
 
 // opts.soloLectura deshabilita el input y muestra un aviso (incidencia RESUELTO)
@@ -238,7 +215,7 @@ function crearChat(idContenedor, idIncidencia, usuario, opts) {
 
   // Cierra la suscripción del canal (lo llama la página al cambiar de incidencia).
   function detener() {
-    if (canal && echoSingleton) echoSingleton.leave("incidencia." + idIncidencia);
+    if (canal && echo) echo.leave("incidencia." + idIncidencia);
   }
 
   recargar();

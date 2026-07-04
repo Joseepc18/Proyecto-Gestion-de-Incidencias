@@ -12,6 +12,9 @@ class Incidencia extends Model
 
     protected $primaryKey = 'id_incidencia';
 
+    // Segundos sin latido tras los cuales el reclamo de un admin se considera vencido (abandonado).
+    public const RECLAMO_TTL_SEGUNDOS = 120;
+
     protected $fillable = [
         'nombre_incidencia',
         'descripcion_incidencia',
@@ -26,6 +29,7 @@ class Incidencia extends Model
         'fecha_resolucion',
         'reapertura_solicitada',
         'id_admin_atiende',
+        'reclamo_visto_en',
     ];
 
     protected $casts = [
@@ -33,6 +37,7 @@ class Incidencia extends Model
         'longitud_incidencia' => 'decimal:8',
         'fecha_resolucion' => 'datetime',
         'reapertura_solicitada' => 'boolean',
+        'reclamo_visto_en' => 'datetime',
     ];
 
     public function ciudad()
@@ -84,6 +89,14 @@ class Incidencia extends Model
     public function estaCerrada(): bool
     {
         return $this->estado_incidencia === EstadoIncidencia::Cerrado->value;
+    }
+
+    // El reclamo está vencido si hay un admin atendiendo pero su último latido caducó (abandonó la app).
+    public function reclamoVencido(): bool
+    {
+        return $this->id_admin_atiende !== null
+            && ($this->reclamo_visto_en === null
+                || $this->reclamo_visto_en->lt(now()->subSeconds(self::RECLAMO_TTL_SEGUNDOS)));
     }
 
     // RESUELTO o CERRADO: ambos son de solo lectura (editar, comentar, subir evidencias, cambiar asignaciones).

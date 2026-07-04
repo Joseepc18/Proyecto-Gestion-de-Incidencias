@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout, obtenerEcho, iniciarHeartbeatReclamo */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -273,6 +273,41 @@ document.addEventListener("DOMContentLoaded", async function () {
       cargarIncidencias();
     }, 400);
   });
+
+  // Actualiza una fila ya pintada sin recargar la tabla (badges de estado/prioridad y "Atendido por").
+  function parcharFila(id, cambios) {
+    const tr = document.querySelector('#tbodyIncidencias tr[data-id="' + id + '"]');
+    if (!tr) return;
+    if (cambios.estado) tr.children[1].innerHTML = badgeEstadoHtml(cambios.estado);
+    if (cambios.prioridad) tr.children[2].innerHTML = badgePrioridadHtml(cambios.prioridad);
+    if ("atendidoPor" in cambios)
+      tr.children[5].textContent = cambios.atendidoPor || "Sin reclamar";
+  }
+
+  // Tablero en vivo: nuevas incidencias, cambios de estado/prioridad y de candado, sin recargar la página.
+  function conectarTablero() {
+    const echo = obtenerEcho();
+    if (!echo) return;
+    const tablero = echo.join("tablero");
+
+    // La nueva incidencia solo interesa en la bandeja activa; recargamos para respetar filtros y paginación.
+    tablero.listen(".IncidenciaCreada", function () {
+      if (!verArchivo) cargarIncidencias();
+    });
+    tablero.listen(".IncidenciaActualizada", function (e) {
+      parcharFila(e.id_incidencia, {
+        estado: e.estado_incidencia,
+        prioridad: e.prioridad_incidencia,
+      });
+    });
+    tablero.listen(".ReclamoCambiado", function (e) {
+      parcharFila(e.id_incidencia, { atendidoPor: e.admin_atiende ? e.admin_atiende.name : "" });
+    });
+  }
+
+  conectarTablero();
+  // Mantiene vivo el candado del admin mientras tenga la gestión abierta.
+  iniciarHeartbeatReclamo();
 
   cargarCatalogos();
   cargarIncidencias();

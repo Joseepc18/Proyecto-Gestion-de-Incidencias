@@ -1,6 +1,6 @@
 // detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable)
 
-/* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
 /* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
@@ -203,28 +203,70 @@ function prepararReaperturaAdmin(id) {
   });
 }
 
-// Reclamar/Archivar: el primer admin que reclama queda como "Atendido por"; solo ese admin ve "Cerrar/Archivar".
+// Milisegundos sin latido tras los que el candado se ve "vencido" en el cliente (igual al TTL del backend).
+const RECLAMO_TTL_MS = 120000;
+
+// ¿Quien mira es super_admin? (puede forzar liberar un reclamo activo de otro admin).
+function soySuperAdmin() {
+  return !!(usuarioActual && usuarioActual.rol && usuarioActual.rol.nombre_rol === "super_admin");
+}
+
+// Recalcula "vencido" en el cliente desde el último latido; el servidor revalida al liberar (fuente de verdad).
+function reclamoVencidoCliente() {
+  if (!incActual.id_admin_atiende) return false;
+  if (!incActual.reclamo_visto_en) return true;
+  return Date.now() - new Date(incActual.reclamo_visto_en).getTime() > RECLAMO_TTL_MS;
+}
+
+// Reclamar/Liberar/Archivar (candado v2). El lease se refresca con el heartbeat; si vence, otro admin lo toma.
 function prepararAtencionAdmin(id) {
   pintarAtencionAdmin();
 
   const btnReclamar = document.getElementById("btnReclamarIncidencia");
+  const btnForzar = document.getElementById("btnForzarLiberar");
   const btnArchivar = document.getElementById("btnArchivarIncidencia");
   if (btnReclamar.dataset.cableado === "1") return;
   btnReclamar.dataset.cableado = "1";
+  btnForzar.dataset.cableado = "1";
   btnArchivar.dataset.cableado = "1";
+
+  // Repinta cada 15s para revelar el botón de tomar/forzar cuando el lease de otro admin caduca, sin recargar.
+  setInterval(pintarAtencionAdmin, 15000);
 
   btnReclamar.addEventListener("click", async function () {
     btnReclamar.disabled = true;
     try {
       const actualizada = await apiFetch("/incidencias/" + id + "/reclamar", { method: "POST" });
-      incActual.id_admin_atiende = actualizada.id_admin_atiende;
-      incActual.admin_atiende = actualizada.admin_atiende;
-      pintarAtencionAdmin();
+      aplicarReclamo(actualizada);
       mostrarToast("Incidencia reclamada", "success");
     } catch (error) {
       mostrarToast(error.message, "error");
     } finally {
       btnReclamar.disabled = false;
+    }
+  });
+
+  btnForzar.addEventListener("click", async function () {
+    const soyYo = incActual.admin_atiende && incActual.admin_atiende.id === usuarioActual.id;
+    const ok = await confirmar({
+      titulo: soyYo ? "Liberar atención" : "Forzar liberar",
+      mensaje: soyYo
+        ? "Dejará de estar a tu cargo y otro administrador podrá tomarla."
+        : "Quitarás la atención al administrador actual para que quede libre.",
+      textoConfirmar: soyYo ? "Liberar" : "Forzar",
+      peligro: !soyYo,
+    });
+    if (!ok) return;
+
+    btnForzar.disabled = true;
+    try {
+      const actualizada = await apiFetch("/incidencias/" + id + "/reclamar", { method: "DELETE" });
+      aplicarReclamo(actualizada);
+      mostrarToast("Atención liberada", "success");
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    } finally {
+      btnForzar.disabled = false;
     }
   });
 
@@ -253,24 +295,67 @@ function prepararAtencionAdmin(id) {
   });
 }
 
-// Pinta el texto "Atendida por" y decide qué botón mostrar (Reclamar / Archivar / ninguno).
+// Vuelca en incActual la respuesta de reclamar/liberar y repinta la sección de atención.
+function aplicarReclamo(actualizada) {
+  incActual.id_admin_atiende = actualizada.id_admin_atiende;
+  incActual.admin_atiende = actualizada.admin_atiende;
+  incActual.reclamo_visto_en = actualizada.reclamo_visto_en;
+  incActual.reclamo_vencido = actualizada.reclamo_vencido;
+  pintarAtencionAdmin();
+}
+
+// Pinta "Atendida por" y decide los botones: Reclamar (libre o vencido) / Liberar-Forzar / Archivar.
 function pintarAtencionAdmin() {
   const info = document.getElementById("atencionAdminInfo");
   const btnReclamar = document.getElementById("btnReclamarIncidencia");
+  const btnForzar = document.getElementById("btnForzarLiberar");
   const btnArchivar = document.getElementById("btnArchivarIncidencia");
   const admin = incActual.admin_atiende;
 
   if (!admin) {
     info.textContent = "Sin reclamar.";
     btnReclamar.classList.remove("d-none");
+    btnForzar.classList.add("d-none");
     btnArchivar.classList.add("d-none");
     return;
   }
 
   const soyYo = usuarioActual && admin.id === usuarioActual.id;
-  info.textContent = "Atendida por: " + admin.name + (soyYo ? " (tú)" : "");
-  btnReclamar.classList.add("d-none");
+  const vencido = reclamoVencidoCliente();
+  info.textContent =
+    "Atendida por: " + admin.name + (soyYo ? " (tú)" : vencido ? " (inactivo)" : "");
+
+  // Otro admin puede tomar el candado directamente cuando el lease del dueño venció.
+  btnReclamar.classList.toggle("d-none", !(vencido && !soyYo));
+  // El dueño libera el suyo cuando quiera; super_admin fuerza un lease activo de otro.
+  btnForzar.textContent = "";
+  const iconoForzar = document.createElement("i");
+  iconoForzar.className = "bi bi-unlock me-1";
+  btnForzar.append(iconoForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
+  btnForzar.classList.toggle("d-none", !(soyYo || (!vencido && soySuperAdmin())));
+  // Archivar solo el dueño y solo si está RESUELTO.
   btnArchivar.classList.toggle("d-none", !(soyYo && incActual.estado_incidencia === "RESUELTO"));
+}
+
+// Hook del núcleo: llegó un cambio de estado/prioridad en vivo. Refleja botones y visibilidad del admin.
+function gestionAlActualizarEnVivo() {
+  if (!esAdmin && !esResponsableActual()) return;
+  marcarEstadoActivo();
+  if (!esAdmin) return;
+  marcarPrioridadActiva();
+  pintarAtencionAdmin();
+  const btnReabrir = document.getElementById("btnReabrirIncidencia");
+  if (btnReabrir) {
+    btnReabrir.classList.toggle(
+      "d-none",
+      !(incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente),
+    );
+  }
+}
+
+// Hook del núcleo: llegó un cambio de candado en vivo (otro admin reclamó/liberó).
+function gestionAlCambiarReclamo() {
+  if (esAdmin) pintarAtencionAdmin();
 }
 
 let gestionFotosLista = false;

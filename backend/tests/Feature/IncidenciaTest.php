@@ -380,6 +380,109 @@ class IncidenciaTest extends TestCase
         ]);
     }
 
+    // Reclamo v2: si el lease del dueño vence (dejó de latir), otro admin puede tomarlo.
+    public function test_admin_puede_tomar_un_reclamo_vencido(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // Pasa el TTL sin latido: el reclamo de admin1 queda vencido.
+        $this->travel(Incidencia::RECLAMO_TTL_SEGUNDOS + 10)->seconds();
+
+        Sanctum::actingAs($admin2);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', $admin2->id);
+
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => $admin2->id,
+        ]);
+    }
+
+    // El heartbeat refresca el lease: mientras el dueño late, otro admin no puede tomar el reclamo.
+    public function test_heartbeat_mantiene_vivo_el_reclamo(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // Casi vence, pero admin1 late y renueva el lease.
+        $this->travel(Incidencia::RECLAMO_TTL_SEGUNDOS - 10)->seconds();
+        $this->postJson('/api/incidencias/reclamo/heartbeat')->assertNoContent();
+
+        // Un poco más de tiempo: sin el latido habría vencido, pero sigue vivo.
+        $this->travel(20)->seconds();
+        Sanctum::actingAs($admin2);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertStatus(422);
+
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => $admin1->id,
+        ]);
+    }
+
+    // El dueño puede liberar su propio reclamo en cualquier momento.
+    public function test_el_dueno_puede_liberar_su_reclamo(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', null);
+
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => null,
+        ]);
+    }
+
+    // Otro admin no puede liberar un reclamo activo (con latido reciente) de un colega.
+    public function test_otro_admin_no_puede_liberar_reclamo_activo(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        Sanctum::actingAs($admin2);
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertStatus(422)
+            ->assertJson(['message' => 'El administrador sigue atendiendo esta incidencia.']);
+
+        $this->assertDatabaseHas('incidencias', [
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_admin_atiende' => $admin1->id,
+        ]);
+    }
+
+    // super_admin sí puede forzar liberar un reclamo activo de otro admin.
+    public function test_super_admin_puede_liberar_reclamo_activo(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', null);
+    }
+
     // Solo el admin dueño (id_admin_atiende) puede archivar, y solo si ya está RESUELTO.
     public function test_solo_el_admin_que_reclamo_puede_archivar_una_resuelta(): void
     {

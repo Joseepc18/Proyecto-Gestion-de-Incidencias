@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de incidencias
     Route::get('/incidencias', [IncidenciaController::class, 'listadoIncidencias']);
     Route::post('/incidencias', [IncidenciaController::class, 'crearIncidencia']);
+    // Latido del candado (sin {incidencia}): refresca el lease de todos los reclamos del admin. Va antes del binding.
+    Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo']);
     Route::get('/incidencias/{incidencia}', [IncidenciaController::class, 'verIncidencia']);
     Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
@@ -62,6 +64,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado']);
     Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura']);
     Route::post('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'reclamarIncidencia']);
+    Route::delete('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'liberarReclamo']);
     Route::patch('/incidencias/{incidencia}/archivar', [IncidenciaController::class, 'archivarIncidencia']);
 
     // Apis de comentarios

@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -50,7 +50,42 @@ document.addEventListener("DOMContentLoaded", async function () {
   cargarAsignaciones(id);
   cargarHistorial(id);
   configurarChatFlotante(id);
+  conectarTiempoReal(id);
+  // El admin mantiene vivo su candado mientras tenga el detalle abierto.
+  if (esAdmin) iniciarHeartbeatReclamo();
 });
+
+// Suscripción central del detalle: estado/prioridad, asignaciones y candado llegan solos a los 3 roles.
+function conectarTiempoReal(id) {
+  const echo = obtenerEcho();
+  if (!echo) return;
+  const canal = echo.private("incidencia.updates." + id);
+
+  canal.listen(".IncidenciaActualizada", function (e) {
+    if (!incActual) return;
+    incActual.estado_incidencia = e.estado_incidencia;
+    incActual.prioridad_incidencia = e.prioridad_incidencia;
+    incActual.reapertura_pendiente = e.reapertura_pendiente;
+    pintarBadgeEstado(e.estado_incidencia);
+    pintarBadgePrioridad(e.prioridad_incidencia);
+    cargarHistorial(id);
+    if (typeof gestionAlActualizarEnVivo === "function") gestionAlActualizarEnVivo();
+  });
+
+  canal.listen(".AsignacionCambiada", function () {
+    cargarAsignaciones(id);
+  });
+
+  canal.listen(".ReclamoCambiado", function (e) {
+    if (!incActual) return;
+    incActual.id_admin_atiende = e.id_admin_atiende;
+    incActual.admin_atiende = e.admin_atiende;
+    incActual.reclamo_visto_en = e.reclamo_visto_en;
+    // Un reclamo recién hecho/liberado no está vencido; el detalle lo reevalúa con su timer.
+    incActual.reclamo_vencido = false;
+    if (typeof gestionAlCambiarReclamo === "function") gestionAlCambiarReclamo();
+  });
+}
 
 async function cargarDetalle(id) {
   const cargando = document.getElementById("detalleCargando");

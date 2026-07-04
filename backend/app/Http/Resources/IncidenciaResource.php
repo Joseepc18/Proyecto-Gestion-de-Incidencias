@@ -34,6 +34,9 @@ class IncidenciaResource extends JsonResource
             'reapertura_pendiente' => (bool) $this->reapertura_solicitada,
             // Admin que reclamó la incidencia (columna "Atendido por" y botón "Archivar").
             'id_admin_atiende' => $this->id_admin_atiende,
+            // Lease del candado: el último latido y si ya venció, para decidir el botón "Forzar liberar".
+            'reclamo_visto_en' => $this->reclamo_visto_en,
+            'reclamo_vencido' => $this->reclamoVencido(),
             // Relaciones: solo se incluyen si el controller las cargó.
             'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
             'subtipo' => $this->whenLoaded('subtipo'),
