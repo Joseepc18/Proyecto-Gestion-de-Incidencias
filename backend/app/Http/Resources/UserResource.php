@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $esAdmin || $esPropietario ? $this->email : null,
             'foto_perfil' => $this->foto_perfil,
+            'email_verificado' => $this->email_verified_at !== null,
             'id_rol' => $this->id_rol,
             'rol' => $this->whenLoaded('rol'),
             'permisos' => $permisos,

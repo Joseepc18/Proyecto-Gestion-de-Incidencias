@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Rol;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -36,6 +37,9 @@ class UsuariosTest extends TestCase
             'email' => 'otro.admin@sistema.com',
             'id_rol' => Rol::where('nombre_rol', 'admin')->value('id_rol'),
         ]))->assertCreated();
+
+        // El usuario creado por el super_admin nace verificado (no arrastra el aviso de verificar correo).
+        $this->assertNotNull(User::where('email', 'tecnico.nuevo@sistema.com')->value('email_verified_at'));
     }
 
     public function test_super_admin_no_puede_crear_usuario_normal(): void

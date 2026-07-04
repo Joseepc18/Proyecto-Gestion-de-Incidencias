@@ -63,6 +63,8 @@ class UserController extends Controller
             'email' => $datos['email'],
             'password' => $datos['password'],
             'id_rol' => $datos['id_rol'],
+            // Lo crea un super_admin autenticado: la cuenta nace verificada (sin correo de verificación).
+            'email_verified_at' => now(),
         ]);
 
         return response()->json(new UserResource($user->load('rol')), 201);

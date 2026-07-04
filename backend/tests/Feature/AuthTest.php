@@ -3,8 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\RestablecerPasswordNotification;
+use App\Notifications\VerificarEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use Laravel\Socialite\Facades\Socialite;
@@ -249,6 +254,178 @@ class AuthTest extends TestCase
         }
 
         $this->postJson('/api/login', $credenciales)->assertStatus(429);
+    }
+
+    public function test_registro_envia_correo_de_verificacion(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', [
+            'name' => 'Nuevo Usuario',
+            'email' => 'porverificar@ejemplo.com',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
+        ])->assertCreated();
+
+        $usuario = User::where('email', 'porverificar@ejemplo.com')->first();
+        // Nace sin verificar y con su correo de verificación enviado.
+        $this->assertNull($usuario->email_verified_at);
+        Notification::assertSentTo($usuario, VerificarEmailNotification::class);
+    }
+
+    public function test_olvide_password_envia_enlace_a_usuario_existente(): void
+    {
+        Notification::fake();
+
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email' => 'existe@ejemplo.com'])->save();
+
+        $this->postJson('/api/password/olvide', ['email' => 'existe@ejemplo.com'])->assertOk();
+
+        Notification::assertSentTo($usuario, RestablecerPasswordNotification::class);
+    }
+
+    public function test_olvide_password_no_revela_correos_inexistentes(): void
+    {
+        Notification::fake();
+
+        // Mismo 200 genérico aunque el correo no exista: no se filtra qué cuentas están registradas.
+        $this->postJson('/api/password/olvide', ['email' => 'fantasma@ejemplo.com'])->assertOk();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_restablecer_password_con_token_valido_cambia_la_clave_y_cierra_sesiones(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email' => 'reset@ejemplo.com', 'password' => 'Password123'])->save();
+
+        // Una sesión viva que el cambio de clave debe invalidar.
+        $usuario->createToken('auth_token');
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        $token = Password::createToken($usuario);
+
+        $this->postJson('/api/password/restablecer', [
+            'token' => $token,
+            'email' => 'reset@ejemplo.com',
+            'password' => 'NuevaClave123',
+            'password_confirmation' => 'NuevaClave123',
+        ])->assertOk();
+
+        // Los tokens previos se borraron al cambiar la contraseña.
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+
+        // La clave vieja ya no sirve; la nueva sí.
+        $this->postJson('/api/login', ['email' => 'reset@ejemplo.com', 'password' => 'Password123'])
+            ->assertStatus(401);
+        $this->postJson('/api/login', ['email' => 'reset@ejemplo.com', 'password' => 'NuevaClave123'])
+            ->assertOk();
+    }
+
+    public function test_restablecer_password_con_token_invalido_devuelve_422(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email' => 'reset2@ejemplo.com'])->save();
+
+        $this->postJson('/api/password/restablecer', [
+            'token' => 'token-invalido',
+            'email' => 'reset2@ejemplo.com',
+            'password' => 'NuevaClave123',
+            'password_confirmation' => 'NuevaClave123',
+        ])->assertStatus(422);
+    }
+
+    public function test_verificar_email_con_firma_valida_marca_verificado_y_redirige(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email' => 'verifica@ejemplo.com', 'email_verified_at' => null])->save();
+
+        $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
+            'id' => $usuario->id,
+            'hash' => sha1($usuario->getEmailForVerification()),
+        ]);
+
+        $this->get($url)->assertRedirect('https://example.test/login/login.html?verificado=1');
+
+        $this->assertNotNull($usuario->fresh()->email_verified_at);
+    }
+
+    public function test_verificar_email_con_firma_invalida_redirige_con_error(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email_verified_at' => null])->save();
+
+        // Sin los parámetros de firma la URL no es válida: redirige con error y no verifica.
+        $this->get('/api/email/verificar/'.$usuario->id.'/'.sha1($usuario->getEmailForVerification()))
+            ->assertRedirect('https://example.test/login/login.html?error=verificacion');
+
+        $this->assertNull($usuario->fresh()->email_verified_at);
+    }
+
+    public function test_reenviar_verificacion_a_usuario_no_verificado(): void
+    {
+        Notification::fake();
+
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email_verified_at' => null])->save();
+        Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/email/reenviar-verificacion')->assertOk();
+
+        Notification::assertSentTo($usuario, VerificarEmailNotification::class);
+    }
+
+    public function test_reenviar_verificacion_no_reenvia_si_ya_esta_verificado(): void
+    {
+        Notification::fake();
+
+        // El factory crea el usuario ya verificado.
+        $usuario = $this->crearUsuario('normal');
+        Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/email/reenviar-verificacion')->assertOk();
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_usuario_no_verificado_no_puede_crear_incidencia(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $usuario->forceFill(['email_verified_at' => null])->save();
+        Sanctum::actingAs($usuario);
+
+        // El middleware 'verificado' corta antes de la validación: 403, no 422.
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos())->assertStatus(403);
+    }
+
+    public function test_usuario_verificado_pasa_el_middleware_y_crea_incidencia(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        Sanctum::actingAs($usuario);
+
+        $this->postJson('/api/incidencias', $this->datosIncidenciaValidos())->assertCreated();
+    }
+
+    public function test_callback_google_marca_el_correo_como_verificado(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        $googleUser = (new SocialiteUser)->setRaw(['email_verified' => true])->map([
+            'email' => 'googleverificado@gmail.com',
+            'name' => 'Google Verificado',
+        ]);
+        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+
+        $this->get('/api/auth/google/callback');
+
+        // La cuenta creada por Google nace verificada (Google ya validó el correo).
+        $usuario = User::where('email', 'googleverificado@gmail.com')->first();
+        $this->assertNotNull($usuario->email_verified_at);
     }
 
     public function test_quitar_foto_borra_la_foto_de_perfil(): void

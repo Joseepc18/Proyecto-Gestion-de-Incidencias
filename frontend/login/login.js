@@ -3,6 +3,21 @@
 /* global apiFetch, guardarToken, obtenerToken, eliminarToken, mostrarToast, toastFlash, inicioSegunRol */
 
 document.addEventListener("DOMContentLoaded", async function () {
+  // Mensajes que vienen del enlace de verificación de correo (?verificado=1 o ?error=verificacion).
+  const paramsUrl = new URLSearchParams(window.location.search);
+  const avisoVerif =
+    paramsUrl.get("verificado") === "1"
+      ? ["Tu correo fue verificado. Ya puedes reportar incidencias.", "success"]
+      : paramsUrl.get("error") === "verificacion"
+        ? ["El enlace de verificación no es válido o ya expiró.", "error"]
+        : null;
+  if (avisoVerif) {
+    window.history.replaceState({}, "", window.location.pathname);
+    // Con sesión activa se redirige enseguida: el flash sobrevive a la navegación.
+    if (obtenerToken()) toastFlash(avisoVerif[0], avisoVerif[1]);
+    else mostrarToast(avisoVerif[0], avisoVerif[1]);
+  }
+
   // Valida el token contra el backend antes de redirigir, para evitar un "flash" con uno inválido
   if (obtenerToken()) {
     try {

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Restablecer contraseña - Sistema de Gestión de Incidencias" />
+    <title>Restablecer contraseña | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body class="auth-body">
+    <button
+      class="icon-button theme-toggle auth-theme-toggle"
+      type="button"
+      data-theme-toggle
+      aria-label="Cambiar tema"
+      title="Cambiar tema"
+    >
+      <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+    </button>
+
+    <main class="auth-page">
+      <div class="card shadow-sm auth-solo-card">
+        <div class="card-body p-4 p-sm-5">
+          <form id="restablecerForm" class="needs-validation" novalidate>
+            <div class="mb-4">
+              <p class="eyebrow mb-1">Acceso seguro</p>
+              <h1 class="h3 mb-1">Nueva contraseña</h1>
+              <p class="text-muted mb-0">Elige una contraseña nueva para tu cuenta.</p>
+            </div>
+
+            <div id="restablecerError" class="alert alert-danger d-none" role="alert"></div>
+
+            <div class="mb-3">
+              <label class="form-label" for="nuevaPassword">Nueva contraseña</label>
+              <div class="input-group has-validation">
+                <input
+                  class="form-control"
+                  id="nuevaPassword"
+                  type="password"
+                  minlength="8"
+                  required
+                />
+                <button
+                  class="btn toggle-password"
+                  type="button"
+                  data-target="nuevaPassword"
+                  aria-label="Mostrar contraseña"
+                  aria-pressed="false"
+                >
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+                <div class="invalid-feedback">Mínimo 8 caracteres.</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="confirmarPassword">Confirmar contraseña</label>
+              <div class="input-group has-validation">
+                <input
+                  class="form-control"
+                  id="confirmarPassword"
+                  type="password"
+                  minlength="8"
+                  required
+                />
+                <button
+                  class="btn toggle-password"
+                  type="button"
+                  data-target="confirmarPassword"
+                  aria-label="Mostrar contraseña"
+                  aria-pressed="false"
+                >
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+                <div class="invalid-feedback">Repite la contraseña.</div>
+              </div>
+            </div>
+
+            <button id="restablecerSubmit" class="btn btn-primary w-100" type="submit">
+              <span
+                id="restablecerSpinner"
+                class="spinner-border spinner-border-sm d-none"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              <i class="bi bi-check2-circle" aria-hidden="true"></i> Restablecer contraseña
+            </button>
+
+            <div class="auth-footer">
+              <a href="login.html" class="auth-link">Volver a iniciar sesión</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="../assets/js/password.js"></script>
+    <script defer src="restablecer.js"></script>
+  </body>
+</html>

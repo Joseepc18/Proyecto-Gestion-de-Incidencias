@@ -36,12 +36,22 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
+// Restablecer contraseña (público): el token del correo es la credencial.
+Route::post('/password/olvide', [AuthController::class, 'olvidePassword'])->middleware('throttle:5,1');
+Route::post('/password/restablecer', [AuthController::class, 'restablecerPassword'])->middleware('throttle:5,1');
+
+// Verificación de email vía enlace firmado (navegación del navegador, devuelve redirección al frontend).
+Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEmail'])
+    ->name('verification.verify')
+    ->middleware('throttle:6,1');
+
 // Rutas protegidas (token Sanctum). throttle:120,1 = 120 req/min por usuario (Laravel keyea por id, no por IP); holgado para el polling de la campana.
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario
     Route::get('/user', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/email/reenviar-verificacion', [AuthController::class, 'reenviarVerificacion'])->middleware('throttle:6,1');
 
     // Autorización de canales privados de WebSocket (Reverb); valida con el token Sanctum.
     Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
@@ -54,7 +64,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
 
     // Apis de incidencias
     Route::get('/incidencias', [IncidenciaController::class, 'listadoIncidencias']);
-    Route::post('/incidencias', [IncidenciaController::class, 'crearIncidencia']);
+    Route::post('/incidencias', [IncidenciaController::class, 'crearIncidencia'])->middleware('verificado');
     // Latido del candado (sin {incidencia}): refresca el lease de todos los reclamos del admin. Va antes del binding.
     Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo']);
     Route::get('/incidencias/{incidencia}', [IncidenciaController::class, 'verIncidencia']);

@@ -42,8 +42,9 @@ class IncidenciaResource extends JsonResource
             'subtipo' => $this->whenLoaded('subtipo'),
             'ciudad' => $this->whenLoaded('ciudad'),
             'evidencias' => $this->whenLoaded('evidencias'),
-            'historial_estados' => $this->whenLoaded('historialEstados'),
-            'asignaciones' => $this->whenLoaded('asignaciones'),
+            // Por sus Resources para que el usuario anidado pase por UserResource y no filtre email.
+            'historial_estados' => HistorialEstadoResource::collection($this->whenLoaded('historialEstados')),
+            'asignaciones' => AsignacionResource::collection($this->whenLoaded('asignaciones')),
             'admin_atiende' => $this->whenLoaded('adminAtiende', fn () => $this->adminAtiende ? new UserResource($this->adminAtiende) : null),
         ];
     }

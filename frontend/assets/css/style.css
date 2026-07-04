@@ -950,6 +950,11 @@ html.verificando-sesion .auth-theme-toggle {
   padding: 1.5rem;
 }
 
+/* Tarjeta centrada de las páginas de recuperar/restablecer contraseña (sin el slider del login). */
+.auth-solo-card {
+  width: min(100%, 440px);
+}
+
 
 .auth-footer {
   color: var(--admin-muted);
