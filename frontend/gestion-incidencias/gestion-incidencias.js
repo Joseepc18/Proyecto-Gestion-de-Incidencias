@@ -192,19 +192,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const tdEstado = document.createElement("td");
       tdEstado.dataset.label = "Estado";
+      tdEstado.dataset.col = "estado";
       tdEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
       tr.appendChild(tdEstado);
 
       const tdPri = document.createElement("td");
       tdPri.dataset.label = "Prioridad";
+      tdPri.dataset.col = "prioridad";
       tdPri.innerHTML = badgePrioridadHtml(inc.prioridad_incidencia);
       tr.appendChild(tdPri);
 
       tr.appendChild(td(nombreTipo, "Tipo", true));
       tr.appendChild(td(nombreCiudad, "Ciudad", true));
-      tr.appendChild(
-        td(inc.admin_atiende ? inc.admin_atiende.name : "Sin reclamar", "Atendido por", true),
+      const tdAtendido = td(
+        inc.admin_atiende ? inc.admin_atiende.name : "Sin reclamar",
+        "Atendido por",
+        true,
       );
+      tdAtendido.dataset.col = "atendido";
+      tr.appendChild(tdAtendido);
       tr.appendChild(td(fecha, "Fecha", true));
 
       const acciones = [
@@ -275,13 +281,22 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Actualiza una fila ya pintada sin recargar la tabla (badges de estado/prioridad y "Atendido por").
+  // Ubica cada celda por su data-col para no depender del orden de columnas.
   function parcharFila(id, cambios) {
     const tr = document.querySelector('#tbodyIncidencias tr[data-id="' + id + '"]');
     if (!tr) return;
-    if (cambios.estado) tr.children[1].innerHTML = badgeEstadoHtml(cambios.estado);
-    if (cambios.prioridad) tr.children[2].innerHTML = badgePrioridadHtml(cambios.prioridad);
-    if ("atendidoPor" in cambios)
-      tr.children[5].textContent = cambios.atendidoPor || "Sin reclamar";
+    if (cambios.estado) {
+      const celda = tr.querySelector('[data-col="estado"]');
+      if (celda) celda.innerHTML = badgeEstadoHtml(cambios.estado);
+    }
+    if (cambios.prioridad) {
+      const celda = tr.querySelector('[data-col="prioridad"]');
+      if (celda) celda.innerHTML = badgePrioridadHtml(cambios.prioridad);
+    }
+    if ("atendidoPor" in cambios) {
+      const celda = tr.querySelector('[data-col="atendido"]');
+      if (celda) celda.textContent = cambios.atendidoPor || "Sin reclamar";
+    }
   }
 
   // Tablero en vivo: nuevas incidencias, cambios de estado/prioridad y de candado, sin recargar la página.

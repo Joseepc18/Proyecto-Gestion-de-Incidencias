@@ -2,7 +2,7 @@
 // Cambiar el nombre aqui lo actualiza en toda la interfaz: sidebar, login, errores y pestanas.
 
 window.APP_CONFIG = {
-  nombre: " QUICKMAP",
+  nombre: "QUICKMAP",
   subtitulo: "Gestión georreferenciada",
 };
 

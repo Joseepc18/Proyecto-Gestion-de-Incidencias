@@ -1,6 +1,6 @@
 // registrar.js — Registrar incidencia: catálogos, cascada tipo→subtipo, fotos, envío.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, toastFlash, mostrarToast, crearMapaPicker, bootstrap, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, crearGaleriaFotos, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, toastFlash, mostrarToast, crearMapaPicker, bootstrap, crearCatalogosIncidencia, crearGaleriaFotos, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -25,62 +25,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     bootstrap.Tooltip.getOrCreateInstance(el);
   });
 
-  let catalogoTipos = [];
-  let catalogoCiudades = [];
-  // Polígonos de cantón para resolver la ciudad exacta al marcar en el mapa (carga en segundo plano).
-  let cantonesGeo = null;
-  fetch("../assets/geo/ecuador-cantones.geojson")
-    .then(function (r) {
-      return r.json();
-    })
-    .then(function (g) {
-      cantonesGeo = g;
-    })
-    .catch(function () {});
-
+  // Catálogos + cascadas tipo→subtipo y provincia→ciudad (helper compartido con la edición del detalle).
+  const catalogos = crearCatalogosIncidencia({
+    tipo: "crearTipo",
+    subtipo: "crearSubtipo",
+    provincia: "crearProvincia",
+    ciudad: "crearCiudad",
+  });
   try {
-    catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
-    agregarOpciones(
-      document.getElementById("crearTipo"),
-      catalogoTipos,
-      "id_tipo_incidencia",
-      "nombre_tipo_incidencia",
-    );
-
-    catalogoCiudades = await apiFetch("/catalogos/ciudades");
-    const provincias = await apiFetch("/catalogos/provincias");
-    agregarOpciones(
-      document.getElementById("crearProvincia"),
-      provincias,
-      "id_provincia",
-      "nombre_provincia",
-    );
+    await catalogos.cargar();
   } catch {
     mostrarToast("No se pudieron cargar los catálogos. Recarga la página.", "error");
   }
-
-  // Cascada provincia→ciudad (helper compartido).
-  document.getElementById("crearProvincia").addEventListener("change", function () {
-    const provinciaId = parseInt(this.value);
-    poblarSelectCascada(
-      document.getElementById("crearCiudad"),
-      itemsCiudadesDe(catalogoCiudades, provinciaId),
-      "Primero selecciona una provincia",
-    );
-  });
-
-  // Cascada tipo→subtipo (helper compartido).
-  document.getElementById("crearTipo").addEventListener("change", function () {
-    const tipoId = parseInt(this.value);
-    const tipo = catalogoTipos.find(function (t) {
-      return t.id_tipo_incidencia === tipoId;
-    });
-    poblarSelectCascada(
-      document.getElementById("crearSubtipo"),
-      itemsSubtiposDe(tipo),
-      "Primero selecciona un tipo",
-    );
-  });
 
   // Galería de fotos (compressión + preview + revocación vía galeriaFotos.js).
   const galeriaFotos = crearGaleriaFotos({
@@ -94,24 +50,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     textoCupo: "Máximo 3 fotos permitidas.",
   });
 
-  // Marca en el mapa → resuelve la ciudad por el cantón que contiene el punto y rellena provincia + ciudad.
-  function autocompletarUbicacion(lat, lng) {
-    const ciudad = ciudadEnPunto(cantonesGeo, catalogoCiudades, lat, lng);
-    if (!ciudad) return;
-    document.getElementById("crearProvincia").value = ciudad.id_provincia;
-    poblarSelectCascada(
-      document.getElementById("crearCiudad"),
-      itemsCiudadesDe(catalogoCiudades, ciudad.id_provincia),
-      "Primero selecciona una provincia",
-    );
-    document.getElementById("crearCiudad").value = ciudad.id_ciudad;
-  }
-
   const picker = crearMapaPicker("mapaPicker", function (lat, lng) {
     document.getElementById("crearLatitud").value = lat.toFixed(6);
     document.getElementById("crearLongitud").value = lng.toFixed(6);
     document.getElementById("ubicacionError").classList.add("d-none");
-    autocompletarUbicacion(lat, lng);
+    // Autocompleta provincia + ciudad por el cantón que contiene el punto.
+    catalogos.autocompletarUbicacion(lat, lng);
   });
 
   document.getElementById("btnMiUbicacion").addEventListener("click", function () {

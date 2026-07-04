@@ -2,13 +2,15 @@
 
 /* exported edicionAlCargarDetalle */
 
-// Catálogos para los selects de edición (se cargan una sola vez).
-/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, poblarSelectCascada, itemsSubtiposDe, itemsCiudadesDe, agregarOpciones, ciudadEnPunto, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
-let catalogoTipos = [];
-let catalogoCiudades = [];
-// Polígonos de cantón para resolver la ciudad exacta al marcar en el mapa.
-let cantonesGeo = null;
+// Catálogos + cascadas (helper compartido con registrar-incidencia); se cargan una sola vez.
+const catalogos = crearCatalogosIncidencia({
+  tipo: "editTipo",
+  subtipo: "editSubtipo",
+  provincia: "editProvincia",
+  ciudad: "editCiudad",
+});
 // Ubicación elegida en el picker (arranca con la de la incidencia).
 let latEdit = null;
 let lngEdit = null;
@@ -78,16 +80,16 @@ async function entrarEdicion() {
   const idTipo =
     incActual.subtipo && incActual.subtipo.tipo ? incActual.subtipo.tipo.id_tipo_incidencia : "";
   document.getElementById("editTipo").value = idTipo || "";
-  poblarSubtipos(idTipo);
+  catalogos.poblarSubtipos(idTipo);
   if (incActual.subtipo) {
     document.getElementById("editSubtipo").value = incActual.subtipo.id_subtipo_incidencia;
   }
-  const ciudadActual = catalogoCiudades.find(function (c) {
+  const ciudadActual = catalogos.estado.ciudades.find(function (c) {
     return c.id_ciudad === incActual.id_ciudad;
   });
   const idProvincia = ciudadActual ? ciudadActual.id_provincia : "";
   document.getElementById("editProvincia").value = idProvincia || "";
-  poblarCiudades(idProvincia);
+  catalogos.poblarCiudades(idProvincia);
   document.getElementById("editCiudad").value = incActual.id_ciudad || "";
 
   // Rol normal: provincia/ciudad se autocompletan al marcar en el mapa, así que se ocultan.
@@ -109,7 +111,7 @@ async function entrarEdicion() {
   pickerEdicion = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
     latEdit = lat;
     lngEdit = lng;
-    autocompletarUbicacionEdit(lat, lng);
+    catalogos.autocompletarUbicacion(lat, lng);
   });
   const controles = document.getElementById("mapaEditControles");
   controles.classList.remove("d-none");
@@ -144,67 +146,14 @@ function salirEdicion() {
   pintarMapaLectura();
 }
 
-// Carga los catálogos de tipos y ciudades en los selects (solo la 1.ª vez).
+// Carga los catálogos en los selects de edición (solo la 1.ª vez); el helper cablea las cascadas.
 async function cargarCatalogos() {
-  if (catalogoTipos.length > 0) return;
+  if (catalogos.estado.tipos.length) return;
   try {
-    catalogoTipos = await apiFetch("/catalogos/tipos-incidencia");
-    const selectTipo = document.getElementById("editTipo");
-    agregarOpciones(selectTipo, catalogoTipos, "id_tipo_incidencia", "nombre_tipo_incidencia");
-
-    catalogoCiudades = await apiFetch("/catalogos/ciudades");
-    fetch("../assets/geo/ecuador-cantones.geojson")
-      .then(function (r) {
-        return r.json();
-      })
-      .then(function (g) {
-        cantonesGeo = g;
-      })
-      .catch(function () {});
-    const provincias = await apiFetch("/catalogos/provincias");
-    const selectProvincia = document.getElementById("editProvincia");
-    agregarOpciones(selectProvincia, provincias, "id_provincia", "nombre_provincia");
-
-    selectTipo.addEventListener("change", function () {
-      poblarSubtipos(parseInt(this.value));
-    });
-
-    selectProvincia.addEventListener("change", function () {
-      poblarCiudades(parseInt(this.value));
-    });
+    await catalogos.cargar();
   } catch (error) {
     mostrarToast("No se pudieron cargar los catálogos: " + error.message, "error");
   }
-}
-
-// Llena el select de subtipos según el tipo elegido (cascada reutilizable).
-function poblarSubtipos(idTipo) {
-  const tipo = catalogoTipos.find(function (t) {
-    return t.id_tipo_incidencia === parseInt(idTipo);
-  });
-  poblarSelectCascada(
-    document.getElementById("editSubtipo"),
-    itemsSubtiposDe(tipo),
-    "Primero selecciona un tipo",
-  );
-}
-
-// Llena el select de ciudades según la provincia elegida (cascada reutilizable).
-function poblarCiudades(idProvincia) {
-  poblarSelectCascada(
-    document.getElementById("editCiudad"),
-    itemsCiudadesDe(catalogoCiudades, idProvincia),
-    "Primero selecciona una provincia",
-  );
-}
-
-// Marca en el mapa → autocompleta provincia + ciudad por el cantón que contiene el punto.
-function autocompletarUbicacionEdit(lat, lng) {
-  const ciudad = ciudadEnPunto(cantonesGeo, catalogoCiudades, lat, lng);
-  if (!ciudad) return;
-  document.getElementById("editProvincia").value = ciudad.id_provincia;
-  poblarCiudades(ciudad.id_provincia);
-  document.getElementById("editCiudad").value = ciudad.id_ciudad;
 }
 
 // Evidencias del reporte que se conservan (las de tipo RESOLUCION no las toca el ciudadano).

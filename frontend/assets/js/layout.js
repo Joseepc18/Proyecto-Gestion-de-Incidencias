@@ -1,6 +1,6 @@
 // layout.js — Inyecta el sidebar y navbar compartidos; el enlace activo se marca con data-page del <body>.
 
-/* global aplicarMenuRol */
+/* global aplicarMenuRol, escaparHtml */
 
 (function () {
   const sidebar = document.getElementById("adminSidebar");
@@ -10,8 +10,9 @@
   const paginaActual = document.body.dataset.page || "";
 
   const cfg = window.APP_CONFIG || {};
-  const appNombre = cfg.nombre || "Incidencias UPSE";
-  const appSubtitulo = cfg.subtitulo || "Gestión georreferenciada";
+  // Se inyectan como HTML más abajo: se escapan por si APP_CONFIG llega a ser dinámico.
+  const appNombre = escaparHtml(cfg.nombre || "Incidencias UPSE");
+  const appSubtitulo = escaparHtml(cfg.subtitulo || "Gestión georreferenciada");
 
   const enlaces = [
     {

@@ -1,6 +1,6 @@
 // inicio-tecnico.js — Panel de inicio del técnico: sus KPIs, mapa de asignadas, lista y gráficas.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, obtenerEcho */
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
 let graficos = [];
@@ -181,44 +181,15 @@ function pintarGraficas(datos) {
   graficos.forEach((g) => g.destroy());
   graficos = [];
 
-  const colorPendiente = colorVar("--admin-danger");
-  const colorProceso = colorVar("--admin-warning");
   const colorResuelto = colorVar("--admin-success");
   const colorTexto = colorVar("--admin-muted");
   const colorGrid = colorVar("--admin-border");
-  const colorSurface = colorVar("--admin-surface");
 
-  Chart.defaults.color = colorTexto;
-  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  aplicarTemaChart();
 
   const totales = datos.totales || {};
 
-  graficos.push(
-    new Chart(document.getElementById("graficoEstado"), {
-      type: "doughnut",
-      data: {
-        labels: ["Pendientes", "En proceso", "Resueltas"],
-        datasets: [
-          {
-            data: [
-              Number(totales.pendientes || 0),
-              Number(totales.en_proceso || 0),
-              Number(totales.resueltas || 0),
-            ],
-            backgroundColor: [colorPendiente, colorProceso, colorResuelto],
-            borderWidth: 2,
-            borderColor: colorSurface,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: "62%",
-        plugins: { legend: { position: "bottom" } },
-      },
-    }),
-  );
+  graficos.push(crearDonaEstado(document.getElementById("graficoEstado"), totales));
 
   const semanas = datos.por_semana || [];
   graficos.push(

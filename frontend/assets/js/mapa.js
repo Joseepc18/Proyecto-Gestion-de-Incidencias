@@ -1,7 +1,7 @@
 // mapa.js — Helper reutilizable de Mapbox GL JS: mapa 3D con edificios + pines de incidencias.
 
-/* global mapboxgl, MAPBOX_TOKEN, escaparHtml */
-/* exported ciudadMasCercana, ciudadEnPunto, observarTamanoMapa */
+/* global mapboxgl, MAPBOX_TOKEN, escaparHtml, normalizarTexto */
+/* exported ciudadEnPunto */
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -46,11 +46,6 @@ function ciudadMasCercana(ciudades, lat, lng) {
   return cercana;
 }
 
-// Normaliza un nombre para comparar (sin tildes, minúsculas, espacios colapsados).
-function normalizarNombre(s) {
-  return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
 // Ray-casting con regla par/impar: los agujeros se descuentan solos al contar cruces
 function puntoEnAnillos(lng, lat, anillos) {
   let dentro = false;
@@ -82,13 +77,13 @@ function ciudadEnPunto(cantonesGeo, ciudades, lat, lng) {
       return puntoEnGeometria(lng, lat, f.geometry);
     });
     if (feat) {
-      const ciudadZ = normalizarNombre(feat.properties.ciudad);
-      const provZ = normalizarNombre(feat.properties.provincia);
+      const ciudadZ = normalizarTexto(feat.properties.ciudad);
+      const provZ = normalizarTexto(feat.properties.provincia);
       const match = ciudades.find(function (c) {
         return (
-          normalizarNombre(c.nombre_ciudad) === ciudadZ &&
+          normalizarTexto(c.nombre_ciudad) === ciudadZ &&
           c.provincia &&
-          normalizarNombre(c.provincia.nombre_provincia) === provZ
+          normalizarTexto(c.provincia.nombre_provincia) === provZ
         );
       });
       if (match) return match;

@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema, aplicarTemaChart, crearDonaEstado */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -113,39 +113,13 @@ function pintarGraficas(datos) {
   const colorGrid = colorVar("--admin-border");
   const colorSurface = colorVar("--admin-surface");
 
-  Chart.defaults.color = colorTexto;
-  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  aplicarTemaChart();
 
   const totales = datos.totales || {};
   const porTipo = (datos.por_tipo || []).filter((t) => Number(t.total || 0) > 0);
   const prioridad = datos.por_prioridad || {};
 
-  graficos.push(
-    new Chart(document.getElementById("graficoEstado"), {
-      type: "doughnut",
-      data: {
-        labels: ["Pendientes", "En proceso", "Resueltas"],
-        datasets: [
-          {
-            data: [
-              Number(totales.pendientes || 0),
-              Number(totales.en_proceso || 0),
-              Number(totales.resueltas || 0),
-            ],
-            backgroundColor: [colorPendiente, colorProceso, colorResuelto],
-            borderWidth: 2,
-            borderColor: colorSurface,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: "62%",
-        plugins: { legend: { position: "bottom" } },
-      },
-    }),
-  );
+  graficos.push(crearDonaEstado(document.getElementById("graficoEstado"), totales));
 
   graficos.push(
     new Chart(document.getElementById("graficoTipo"), {

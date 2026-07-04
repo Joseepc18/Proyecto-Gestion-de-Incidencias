@@ -1,7 +1,17 @@
 // util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto */
 /* global escaparHtml */
+
+// Normaliza un texto (sin tildes, minúsculas, espacios colapsados) para cruzar nombres o GeoJSON.
+function normalizarTexto(texto) {
+  return (texto || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 // Iniciales de un nombre (hasta 2 letras); fallback "?" si está vacío.
 function iniciales(nombre) {
