@@ -36,6 +36,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'verificado' => AsegurarEmailVerificado::class,
             '2fa' => RequiereDosFactor::class,
         ]);
+
+        // Invitado sin sesión en una ruta web (panel Blade) → al login del panel.
+        // No afecta a /api/*: ForceJsonResponse hace que respondan 401 JSON, sin redirección.
+        $middleware->redirectGuestsTo('/panel/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Respaldo: cualquier error en /api/* se renderiza como JSON (no HTML).
