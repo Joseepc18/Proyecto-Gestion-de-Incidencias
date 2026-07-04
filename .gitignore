@@ -34,3 +34,6 @@ docs/
 CLAUDE.md
 database/*.sqlite
 AGENTS.md
+
+# Secreto del Basic Auth de Horizon (se crea a mano en cada entorno)
+nginx/horizon.htpasswd

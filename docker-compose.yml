@@ -94,6 +94,8 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      # Credenciales del Basic Auth de /horizon; se crea a mano en cada entorno (gitignored)
+      - ./nginx/horizon.htpasswd:/etc/nginx/horizon.htpasswd:ro
       # Fotos subidas: con PHP-FPM ya no las sirve artisan, las sirve Nginx directo (solo lectura)
       - ./backend/storage/app/public:/var/www/storage:ro
     depends_on:
@@ -126,7 +128,34 @@ services:
     networks:
       - incidencias_network
 
-  # 5. Scheduler de Laravel (tareas programadas, ej. auto-archivado de incidencias resueltas)
+  # 5. Worker de colas (Laravel Horizon sobre Redis): procesa mail y notificaciones diferidas
+  # para que no bloqueen la respuesta HTTP. Tras cada deploy hay que reiniciarlo (carga el código en memoria).
+  horizon:
+    restart: unless-stopped
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: incidencias_horizon
+    command: php artisan horizon
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secreto}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - incidencias_network
+
+  # 6. Scheduler de Laravel (tareas programadas, ej. auto-archivado de incidencias resueltas)
   scheduler:
     restart: unless-stopped
     mem_limit: 128m

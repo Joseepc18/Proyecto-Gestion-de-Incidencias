@@ -19,9 +19,9 @@ class EnviarNotificacionCambioEstado
 
         [$tipo, $msgReportador, $msgTecnicos] = $this->mensajes($evento->estadoAnterior, $evento->estadoNuevo, $nombre);
 
-        // Al reportador, salvo que sea quien hizo el cambio.
+        // Al reportador, salvo que sea quien hizo el cambio. correo: true → también le llega por email.
         if ($incidencia->id_usuario !== $actor && ($reportador = User::find($incidencia->id_usuario))) {
-            $reportador->notify(new IncidenciaNotification($tipo, $msgReportador, $incidencia->id_incidencia));
+            $reportador->notify(new IncidenciaNotification($tipo, $msgReportador, $incidencia->id_incidencia, correo: true));
         }
 
         // A cada técnico asignado (responsable y apoyo), menos el actor.

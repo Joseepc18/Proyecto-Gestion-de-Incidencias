@@ -79,8 +79,9 @@ class AsignacionController extends Controller
     {
         $nombre = $incidencia->nombre_incidencia;
 
+        // correo: true → al técnico también le llega el aviso por email.
         if ($tecnico = User::find($idTecnico)) {
-            $tecnico->notify(new IncidenciaNotification('ASIGNACION', 'Te asignaron a una incidencia ('.$rol.'): '.$nombre, $incidencia->id_incidencia));
+            $tecnico->notify(new IncidenciaNotification('ASIGNACION', 'Te asignaron a una incidencia ('.$rol.'): '.$nombre, $incidencia->id_incidencia, correo: true));
         }
 
         if ($rol === RolAsignacion::Responsable->value && $incidencia->id_usuario !== $idTecnico) {
