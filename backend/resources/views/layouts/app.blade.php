@@ -28,12 +28,22 @@
           </a>
         </div>
         <nav class="sidebar-nav">
-          <a class="nav-link {{ ($pagina ?? '') === 'usuarios' ? 'active' : '' }}"
-             href="/panel"
-             @if (($pagina ?? '') === 'usuarios') aria-current="page" @endif>
-            <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
-            <span class="nav-text">Usuarios</span>
-          </a>
+          @if (auth()->user()->tienePermiso('usuarios.administrar'))
+            <a class="nav-link {{ ($pagina ?? '') === 'usuarios' ? 'active' : '' }}"
+               href="{{ route('panel.usuarios') }}"
+               @if (($pagina ?? '') === 'usuarios') aria-current="page" @endif>
+              <span class="nav-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+              <span class="nav-text">Usuarios</span>
+            </a>
+          @endif
+          @if (auth()->user()->tienePermiso('catalogos.administrar'))
+            <a class="nav-link {{ ($pagina ?? '') === 'catalogos' ? 'active' : '' }}"
+               href="{{ route('panel.catalogos') }}"
+               @if (($pagina ?? '') === 'catalogos') aria-current="page" @endif>
+              <span class="nav-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
+              <span class="nav-text">Tipos de incidencia</span>
+            </a>
+          @endif
         </nav>
         <div class="sidebar-footer">
           <span class="status-dot"></span>
@@ -80,7 +90,18 @@
       </div>
     </div>
 
+    @if (session('exito') || session('error'))
+      <div id="panelFlash" hidden
+           data-mensaje="{{ session('exito') ?? session('error') }}"
+           data-tipo="{{ session('exito') ? 'success' : 'error' }}"></div>
+    @endif
+
     <script defer src="/assets/js/bootstrap.bundle.min.js"></script>
+    {{-- Diálogos propios reutilizados del frontend (nada de alert()/confirm() del navegador). --}}
+    <script defer src="/assets/js/toast.js"></script>
+    <script defer src="/assets/js/confirmar.js"></script>
+    <script defer src="/assets/js/password.js"></script>
+    <script defer src="/assets/js/panel.js"></script>
     {{-- Toggles de tema y sidebar (versión mínima del panel, sin el main.js de la plantilla). --}}
     <script>
       document.querySelector("[data-theme-toggle]")?.addEventListener("click", function () {

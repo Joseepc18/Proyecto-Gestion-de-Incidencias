@@ -41,8 +41,9 @@ class PanelAuthController extends Controller
             ]);
         }
 
-        // Por ahora el panel Blade es solo administrativo: exige el permiso de gestión de usuarios.
-        if (! Auth::user()->tienePermiso('usuarios.administrar')) {
+        // El panel Blade es administrativo: exige al menos uno de sus permisos de gestión.
+        if (! Auth::user()->tienePermiso('usuarios.administrar')
+            && ! Auth::user()->tienePermiso('catalogos.administrar')) {
             Auth::logout();
             throw ValidationException::withMessages([
                 'email' => 'Tu cuenta no tiene acceso al panel.',
