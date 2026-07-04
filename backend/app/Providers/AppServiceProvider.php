@@ -21,6 +21,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // Usamos solo el backend de 2FA de Fortify (trait + actions); su login/perfil/reset por sesión no aplican a nuestra API por token.
         Fortify::ignoreRoutes();
+
+        // Telescope solo en local: ni sus rutas ni sus watchers se registran en prod (composer.json lo excluye
+        // del auto-discovery vía "dont-discover", así que hay que registrarlo a mano aquí).
+        if ($this->app->environment('local')) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 
     /**
