@@ -81,7 +81,7 @@ class PermisosTest extends TestCase
         // El nombre sí cambió...
         $this->assertSame('Bache con prioridad inflada', $incidencia->nombre_incidencia);
         // ...pero la prioridad se ignoró: sigue en MEDIA.
-        $this->assertSame('MEDIA', $incidencia->prioridad_incidencia);
+        $this->assertSame('MEDIA', $incidencia->prioridad_incidencia->value);
     }
 
     // H-E: el admin sí puede cambiar la prioridad de una incidencia.
@@ -94,7 +94,7 @@ class PermisosTest extends TestCase
             'prioridad_incidencia' => 'ALTA',
         ])->assertOk();
 
-        $this->assertSame('ALTA', $incidencia->fresh()->prioridad_incidencia);
+        $this->assertSame('ALTA', $incidencia->fresh()->prioridad_incidencia->value);
     }
 
     public function test_no_admin_no_accede_a_la_gestion_de_usuarios(): void
@@ -230,7 +230,7 @@ class PermisosTest extends TestCase
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertOk();
 
-        $this->assertSame('EN_PROCESO', $incidencia->fresh()->estado_incidencia);
+        $this->assertSame('EN_PROCESO', $incidencia->fresh()->estado_incidencia->value);
     }
 
     // Única excepción a "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
@@ -268,7 +268,7 @@ class PermisosTest extends TestCase
         ])->assertOk()->json();
 
         $fresca = $incidencia->fresh();
-        $this->assertSame('EN_PROCESO', $fresca->estado_incidencia);
+        $this->assertSame('EN_PROCESO', $fresca->estado_incidencia->value);
         $this->assertNull($fresca->fecha_resolucion);
         // Ya no queda pendiente: se atendió la solicitud.
         $this->assertFalse($respuesta['reapertura_pendiente']);
@@ -297,7 +297,7 @@ class PermisosTest extends TestCase
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertStatus(422);
 
-        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia);
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia->value);
     }
 
     // El admin no puede saltar de RESUELTO a PENDIENTE (solo la reapertura a EN_PROCESO tiene sentido).
@@ -475,7 +475,7 @@ class PermisosTest extends TestCase
             'prioridad_incidencia' => 'ALTA',
         ])->assertStatus(403);
 
-        $this->assertSame('MEDIA', $incidencia->fresh()->prioridad_incidencia);
+        $this->assertSame('MEDIA', $incidencia->fresh()->prioridad_incidencia->value);
     }
 
     // En RESUELTO el admin no puede asignar ni quitar técnicos (asignaciones congeladas).

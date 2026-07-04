@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
 use App\Models\Incidencia;
 use App\Models\User;
@@ -24,7 +23,7 @@ class EscalarIncidenciasAntiguas extends Command
 
     public function handle(): int
     {
-        $incidencias = Incidencia::where('estado_incidencia', EstadoIncidencia::Pendiente->value)
+        $incidencias = Incidencia::pendientes()
             ->whereNull('id_admin_atiende')
             ->where('created_at', '<=', now()->subHours(24))
             ->where('prioridad_incidencia', '!=', PrioridadIncidencia::Alta->value)
@@ -33,7 +32,7 @@ class EscalarIncidenciasAntiguas extends Command
         $admins = User::conPermiso('incidencias.gestionar')->get();
 
         foreach ($incidencias as $incidencia) {
-            $anterior = $incidencia->prioridad_incidencia;
+            $anterior = $incidencia->prioridad_incidencia->value;
             // El observer invalida la caché del dashboard con el update, igual que cualquier otro cambio.
             $incidencia->update(['prioridad_incidencia' => self::SIGUIENTE_PRIORIDAD[$anterior]]);
 

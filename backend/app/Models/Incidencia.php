@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EstadoIncidencia;
+use App\Enums\PrioridadIncidencia;
 use App\Exceptions\AlmacenamientoException;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,12 +40,30 @@ class Incidencia extends Model
     ];
 
     protected $casts = [
+        'estado_incidencia' => EstadoIncidencia::class,
+        'prioridad_incidencia' => PrioridadIncidencia::class,
         'latitud_incidencia' => 'decimal:8',
         'longitud_incidencia' => 'decimal:8',
         'fecha_resolucion' => 'datetime',
         'reapertura_solicitada' => 'boolean',
         'reclamo_visto_en' => 'datetime',
     ];
+
+    public function scopePendientes($query)
+    {
+        return $query->where('estado_incidencia', EstadoIncidencia::Pendiente->value);
+    }
+
+    public function scopeResueltas($query)
+    {
+        return $query->where('estado_incidencia', EstadoIncidencia::Resuelto->value);
+    }
+
+    // Todo lo que no está archivado: el listado activo por defecto.
+    public function scopeActivas($query)
+    {
+        return $query->where('estado_incidencia', '<>', EstadoIncidencia::Cerrado->value);
+    }
 
     public function ciudad()
     {
@@ -89,12 +108,12 @@ class Incidencia extends Model
 
     public function estaResuelta(): bool
     {
-        return $this->estado_incidencia === EstadoIncidencia::Resuelto->value;
+        return $this->estado_incidencia === EstadoIncidencia::Resuelto;
     }
 
     public function estaCerrada(): bool
     {
-        return $this->estado_incidencia === EstadoIncidencia::Cerrado->value;
+        return $this->estado_incidencia === EstadoIncidencia::Cerrado;
     }
 
     // El reclamo está vencido si hay un admin atendiendo pero su último latido caducó (abandonó la app).

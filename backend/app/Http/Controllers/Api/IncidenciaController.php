@@ -45,7 +45,7 @@ class IncidenciaController extends Controller
             $query->where('estado_incidencia', $request->estado);
         } else {
             // CERRADO (archivo) sale del listado activo por defecto; se ve pidiendo ?estado=CERRADO explícito.
-            $query->where('estado_incidencia', '<>', EstadoIncidencia::Cerrado->value);
+            $query->activas();
         }
         if ($request->filled('prioridad')) {
             $query->where('prioridad_incidencia', $request->prioridad);
@@ -87,7 +87,7 @@ class IncidenciaController extends Controller
                 $incidencia = Incidencia::create($datos);
 
                 // Nacer en EN_PROCESO se salta el flujo PENDIENTE→EN_PROCESO, que el trigger AFTER UPDATE nunca vería.
-                if ($incidencia->estado_incidencia === EstadoIncidencia::EnProceso->value) {
+                if ($incidencia->estado_incidencia === EstadoIncidencia::EnProceso) {
                     $incidencia->historialEstados()->create([
                         'id_usuario' => $request->user()->id,
                         'estado_anterior' => EstadoIncidencia::Pendiente->value,
@@ -237,34 +237,36 @@ class IncidenciaController extends Controller
     // Cambiar el estado (flujo de trabajo): admin o técnico asignado.
     public function cambiarEstado(CambiarEstadoRequest $request, Incidencia $incidencia)
     {
-        $nuevo = $request->estado_incidencia;
+        $nuevo = EstadoIncidencia::from($request->estado_incidencia);
         $actual = $incidencia->estado_incidencia;
 
         // CERRADO es terminal sin excepciones: se sale del archivo con /archivar o el job, nunca desde acá.
-        if ($actual === EstadoIncidencia::Cerrado->value) {
+        if ($actual === EstadoIncidencia::Cerrado) {
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia archivada'], 422);
         }
 
         // Única excepción al "RESUELTO es terminal": el admin reabre a EN_PROCESO solo si el reportador lo pidió (bandera reapertura_solicitada).
-        $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto->value
-            && $nuevo === EstadoIncidencia::EnProceso->value
+        $esReaperturaDeAdmin = $actual === EstadoIncidencia::Resuelto
+            && $nuevo === EstadoIncidencia::EnProceso
             && $request->user()->esAdmin()
             && $incidencia->reapertura_solicitada;
 
-        if ($actual === EstadoIncidencia::Resuelto->value && ! $esReaperturaDeAdmin) {
+        if ($actual === EstadoIncidencia::Resuelto && ! $esReaperturaDeAdmin) {
             return response()->json(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta'], 422);
         }
 
-        if (! $request->user()->esAdmin()) {
-            $siguientePermitido = [
-                EstadoIncidencia::EnProceso->value => EstadoIncidencia::Resuelto->value,
-            ];
-            if (($siguientePermitido[$actual] ?? null) !== $nuevo) {
-                return response()->json(['message' => 'Transición de estado no permitida'], 422);
-            }
+        // Guarda estructural (aplica a todos): rechaza saltos que no existen en el grafo del flujo.
+        if (! $actual->puedeTransicionarA($nuevo)) {
+            return response()->json(['message' => 'Transición de estado no permitida'], 422);
         }
 
-        if ($nuevo === EstadoIncidencia::Resuelto->value && $actual !== EstadoIncidencia::Resuelto->value) {
+        // Regla de rol (no de la máquina): el técnico responsable solo cierra EN_PROCESO→RESUELTO.
+        if (! $request->user()->esAdmin()
+            && ! ($actual === EstadoIncidencia::EnProceso && $nuevo === EstadoIncidencia::Resuelto)) {
+            return response()->json(['message' => 'Transición de estado no permitida'], 422);
+        }
+
+        if ($nuevo === EstadoIncidencia::Resuelto && $actual !== EstadoIncidencia::Resuelto) {
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {
@@ -290,7 +292,7 @@ class IncidenciaController extends Controller
 
         // Dispara los listeners: notificar (BD + broadcast) e invalidar la caché del dashboard
         // (cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent).
-        event(new IncidenciaCambioEstado($incidencia, $actual, $nuevo, $request->user()->id));
+        event(new IncidenciaCambioEstado($incidencia, $actual->value, $nuevo->value, $request->user()->id));
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }

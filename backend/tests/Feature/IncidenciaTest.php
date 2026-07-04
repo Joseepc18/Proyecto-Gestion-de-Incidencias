@@ -506,7 +506,7 @@ class IncidenciaTest extends TestCase
             ->assertJsonPath('estado_incidencia', 'CERRADO');
 
         $incidencia->refresh();
-        $this->assertSame('CERRADO', $incidencia->estado_incidencia);
+        $this->assertSame('CERRADO', $incidencia->estado_incidencia->value);
         $this->assertNotNull($incidencia->fecha_resolucion);
     }
 
@@ -590,9 +590,9 @@ class IncidenciaTest extends TestCase
 
         Artisan::call('incidencias:archivar-resueltas');
 
-        $this->assertSame('CERRADO', $vieja->fresh()->estado_incidencia);
-        $this->assertSame('RESUELTO', $reciente->fresh()->estado_incidencia);
-        $this->assertSame('RESUELTO', $conReapertura->fresh()->estado_incidencia);
+        $this->assertSame('CERRADO', $vieja->fresh()->estado_incidencia->value);
+        $this->assertSame('RESUELTO', $reciente->fresh()->estado_incidencia->value);
+        $this->assertSame('RESUELTO', $conReapertura->fresh()->estado_incidencia->value);
 
         // El historial atribuye el archivado al sistema (id_usuario NULL), no al reportador.
         $this->assertDatabaseHas('historial_estados', [

@@ -248,7 +248,7 @@ class RolesYCoberturaTest extends TestCase
             'motivo' => 'El hueco sigue igual, no lo taparon.',
         ])->assertOk();
 
-        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia);
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia->value);
         foreach ([$admin1, $admin2] as $admin) {
             $this->assertNotificado($admin, 'SOLICITUD_REAPERTURA');
         }

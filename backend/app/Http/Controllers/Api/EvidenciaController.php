@@ -3,18 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\TipoEvidencia;
+use App\Events\EvidenciaSubida;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubirEvidenciaRequest;
 use App\Models\BitacoraError;
 use App\Models\Evidencia;
 use App\Models\Incidencia;
-use App\Models\User;
-use App\Notifications\IncidenciaNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class EvidenciaController extends Controller
@@ -55,34 +53,12 @@ class EvidenciaController extends Controller
 
         // La subida ya está commiteada: si la notificación falla, se bitácoriza pero NO rompe la respuesta.
         $this->notificarSinRomper(
-            fn () => $this->notificarEvidencia($incidencia, $user),
+            fn () => event(new EvidenciaSubida($incidencia, $user)),
             $user,
             'EvidenciaController@subir (notificación)'
         );
 
         return $incidencia->load('evidencias');
-    }
-
-    // Notifica según quién sube la foto (nunca al actor): el ciudadano → admins+técnicos; el técnico/admin → reportador.
-    private function notificarEvidencia(Incidencia $incidencia, User $user): void
-    {
-        $nombre = $incidencia->nombre_incidencia;
-
-        if ($user->id === $incidencia->id_usuario) {
-            $destinos = User::conPermiso('incidencias.gestionar')
-                ->pluck('id')
-                ->merge($incidencia->asignaciones()->pluck('id_usuario'))
-                ->unique()
-                ->reject(fn ($id) => (int) $id === $user->id);
-            $mensaje = 'Nueva evidencia en la incidencia: '.$nombre;
-        } else {
-            $destinos = collect([$incidencia->id_usuario])
-                ->reject(fn ($id) => (int) $id === $user->id);
-            $mensaje = 'Se agregó evidencia a tu incidencia: '.$nombre;
-        }
-
-        $usuarios = User::whereIn('id', $destinos)->get();
-        Notification::send($usuarios, new IncidenciaNotification('EVIDENCIA', $mensaje, $incidencia->id_incidencia));
     }
 
     // Eliminar una foto (evidencia).

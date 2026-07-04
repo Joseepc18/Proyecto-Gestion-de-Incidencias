@@ -42,7 +42,7 @@ class IncidenciaPolicy
         }
 
         if ($incidencia->id_usuario === $user->id) {
-            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente->value
+            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente
                 ? Response::allow()
                 : Response::deny('No puedes editar esta incidencia porque ya está en proceso. Usa los comentarios para comunicarte con el equipo.');
         }
@@ -58,7 +58,7 @@ class IncidenciaPolicy
         }
 
         if ($incidencia->id_usuario === $user->id) {
-            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente->value
+            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente
                 ? Response::allow()
                 : Response::deny('No puedes eliminar esta incidencia porque ya está en proceso o resuelta.');
         }

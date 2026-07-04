@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\EstadoIncidencia;
 use App\Mail\ResumenDiarioMail;
 use App\Models\Incidencia;
 use App\Models\User;
@@ -20,7 +19,7 @@ class DigestDiarioAdmin extends Command
         $creadasHoy = Incidencia::whereDate('created_at', today())->count();
         $resueltasHoy = Incidencia::whereDate('fecha_resolucion', today())->count();
 
-        $pendientesPorPrioridad = Incidencia::where('estado_incidencia', EstadoIncidencia::Pendiente->value)
+        $pendientesPorPrioridad = Incidencia::pendientes()
             ->selectRaw('prioridad_incidencia, count(*) as total')
             ->groupBy('prioridad_incidencia')
             ->pluck('total', 'prioridad_incidencia');
