@@ -31,6 +31,9 @@ class UserResource extends JsonResource
             'id_rol' => $this->id_rol,
             'rol' => $this->whenLoaded('rol'),
             'permisos' => $permisos,
+            // Solo al dueño: si tiene 2FA activo y si su rol lo exige (para que el front lo guíe a configurarlo).
+            'two_factor_enabled' => $esPropietario ? $this->hasEnabledTwoFactorAuthentication() : null,
+            'two_factor_required' => $esPropietario ? ($this->esAdmin() && ! $this->hasEnabledTwoFactorAuthentication()) : null,
         ];
     }
 }

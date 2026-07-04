@@ -2,6 +2,9 @@
 
 /* global apiFetch, guardarToken, obtenerToken, eliminarToken, mostrarToast, toastFlash, inicioSegunRol */
 
+// Token efímero del reto 2FA: lo devuelve /login cuando el usuario tiene segundo factor.
+let challengeToken = null;
+
 document.addEventListener("DOMContentLoaded", async function () {
   // Mensajes que vienen del enlace de verificación de correo (?verificado=1 o ?error=verificacion).
   const paramsUrl = new URLSearchParams(window.location.search);
@@ -28,6 +31,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
       }
       localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
+      // Rol privilegiado sin 2FA: lo mandamos a configurarlo antes de que choque con un 403 en el panel.
+      if (usuario.two_factor_required) {
+        toastFlash("Activa la verificación en dos pasos para gestionar el sistema.", "warning");
+        window.location.replace("../perfil/perfil.html");
+        return;
+      }
       window.location.replace(inicioSegunRol(rol));
       return;
     } catch {
@@ -42,8 +51,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   const boton = document.getElementById("loginSubmit");
   const spinner = document.getElementById("loginSpinner");
 
-  if (new URLSearchParams(window.location.search).get("error") === "google") {
-    mostrarToast("No se pudo iniciar sesión con Google. Intenta de nuevo.", "error");
+  // Mensajes de vuelta del login con Google (todos llegan por ?error=...).
+  const erroresGoogle = {
+    google: "No se pudo iniciar sesión con Google. Intenta de nuevo.",
+    google_email: "Tu cuenta de Google no tiene el correo verificado.",
+    google_privilegiado: "Esa cuenta debe iniciar sesión con correo y contraseña.",
+    google_state: "La conexión con Google expiró o no es válida. Intenta de nuevo.",
+  };
+  const errGoogle = paramsUrl.get("error");
+  if (erroresGoogle[errGoogle]) {
+    mostrarToast(erroresGoogle[errGoogle], "error");
     window.history.replaceState({}, "", window.location.pathname);
   }
 
@@ -66,18 +83,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         body: JSON.stringify({ email, password }),
         sinSpinner: true,
       });
-      guardarToken(data.access_token);
-      // /login ya devuelve el user con su rol: lo usamos y evitamos un segundo request a /user.
-      const usuario = data.user || {};
-      const rol = usuario.rol ? usuario.rol.nombre_rol : "";
-      if (rol) localStorage.setItem("rol_usuario", rol);
-      if (Array.isArray(usuario.permisos)) {
-        localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+      // Con 2FA activo el backend no emite token todavía: pide el segundo factor.
+      if (data.two_factor) {
+        challengeToken = data.challenge_token;
+        mostrarReto();
+        return;
       }
-      // Cachea la foto para que el navbar la pinte ya en la primera pantalla tras iniciar sesión.
-      localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
-      toastFlash("Bienvenido", "success");
-      window.location.href = inicioSegunRol(rol);
+      entrarConSesion(data);
     } catch (error) {
       errorBox.textContent = error.message;
       errorBox.classList.remove("d-none");
@@ -85,6 +97,49 @@ document.addEventListener("DOMContentLoaded", async function () {
       boton.disabled = false;
       spinner.classList.add("d-none");
     }
+  });
+
+  // Segundo factor: envía el challenge_token + el código y, si es válido, entra.
+  const challengeForm = document.getElementById("challengeForm");
+  const challengeError = document.getElementById("challengeError");
+  const challengeBoton = document.getElementById("challengeSubmit");
+  const challengeSpinner = document.getElementById("challengeSpinner");
+
+  challengeForm.addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    if (!challengeForm.checkValidity()) {
+      return;
+    }
+    challengeError.classList.add("d-none");
+    challengeBoton.disabled = true;
+    challengeSpinner.classList.remove("d-none");
+
+    try {
+      const data = await apiFetch("/2fa/challenge", {
+        method: "POST",
+        body: JSON.stringify({
+          challenge_token: challengeToken,
+          code: document.getElementById("challengeCode").value.trim(),
+        }),
+        sinSpinner: true,
+      });
+      entrarConSesion(data);
+    } catch (error) {
+      challengeError.textContent = error.message;
+      challengeError.classList.remove("d-none");
+    } finally {
+      challengeBoton.disabled = false;
+      challengeSpinner.classList.add("d-none");
+    }
+  });
+
+  // "Volver": descarta el reto y regresa al formulario de login.
+  document.getElementById("btnVolverLogin").addEventListener("click", () => {
+    challengeToken = null;
+    document.getElementById("challengeCode").value = "";
+    challengeError.classList.add("d-none");
+    challengeForm.classList.add("d-none");
+    form.classList.remove("d-none");
   });
 
   const btnIrRegistro = document.getElementById("btnIrRegistro");
@@ -97,6 +152,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     btnIrLogin.addEventListener("click", () => toggleAuth(false));
   }
 });
+
+// Guarda el token, cachea rol/permisos/foto y redirige al inicio del rol. Compartido por login y reto 2FA.
+function entrarConSesion(data) {
+  guardarToken(data.access_token);
+  // La respuesta ya trae el user con su rol: lo usamos y evitamos un segundo request a /user.
+  const usuario = data.user || {};
+  const rol = usuario.rol ? usuario.rol.nombre_rol : "";
+  if (rol) localStorage.setItem("rol_usuario", rol);
+  if (Array.isArray(usuario.permisos)) {
+    localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+  }
+  // Cachea la foto para que el navbar la pinte ya en la primera pantalla tras iniciar sesión.
+  localStorage.setItem("perfil_foto", usuario.foto_perfil || "");
+  // Rol privilegiado sin 2FA: lo encaminamos a configurarlo antes que al panel (que daría 403).
+  if (usuario.two_factor_required) {
+    toastFlash("Activa la verificación en dos pasos para gestionar el sistema.", "warning");
+    window.location.href = "../perfil/perfil.html";
+    return;
+  }
+  toastFlash("Bienvenido", "success");
+  window.location.href = inicioSegunRol(rol);
+}
+
+// Oculta el formulario de login y revela el del segundo factor.
+function mostrarReto() {
+  document.getElementById("loginForm").classList.add("d-none");
+  const challengeForm = document.getElementById("challengeForm");
+  challengeForm.classList.remove("d-none");
+  document.getElementById("challengeCode").focus();
+}
 
 // Alterna entre login y registro (animación deslizante).
 function toggleAuth(registrando) {

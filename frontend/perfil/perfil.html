@@ -150,6 +150,116 @@
                 </form>
               </div>
             </section>
+
+            <section class="panel mt-4" id="dosFactorPanel">
+              <div class="panel-header">
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                  <span>Verificación en dos pasos</span>
+                </h2>
+              </div>
+              <div class="p-3 p-lg-4">
+                <div id="dfRequeridoAviso" class="alert alert-warning d-none" role="alert">
+                  <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                  Tu rol requiere activar la verificación en dos pasos para gestionar el sistema.
+                </div>
+
+                <p class="text-muted">
+                  Añade un segundo factor con una app de autenticación (Google Authenticator,
+                  Authy…) para proteger tu cuenta aunque roben tu contraseña.
+                </p>
+
+                <!-- Estado + acción principal -->
+                <div id="dfResumen" class="d-flex flex-wrap align-items-center gap-3">
+                  <span id="dfEstado" class="badge">…</span>
+                  <button class="btn btn-primary btn-sm d-none" type="button" id="btnDfActivar">
+                    <i class="bi bi-shield-plus" aria-hidden="true"></i> Activar
+                  </button>
+                  <button
+                    class="btn btn-outline-danger btn-sm d-none"
+                    type="button"
+                    id="btnDfDesactivar"
+                  >
+                    <i class="bi bi-shield-x" aria-hidden="true"></i> Desactivar
+                  </button>
+                </div>
+
+                <!-- Setup: QR + códigos de recuperación + confirmación (oculto hasta Activar) -->
+                <div id="dfSetup" class="d-none mt-4">
+                  <p class="text-muted">
+                    Escanea el código con tu app y confirma con el código de 6 dígitos que muestre.
+                  </p>
+                  <div class="row g-4">
+                    <div class="col-12 col-md-auto text-center">
+                      <div id="dfQr" class="df-qr d-inline-block p-2 bg-white rounded"></div>
+                    </div>
+                    <div class="col">
+                      <label class="form-label">Códigos de recuperación</label>
+                      <p class="text-muted small mb-2">
+                        Guárdalos en un lugar seguro: te permiten entrar si pierdes el teléfono.
+                        Cada uno sirve una sola vez.
+                      </p>
+                      <ul
+                        id="dfRecovery"
+                        class="df-recovery list-unstyled font-monospace mb-0"
+                      ></ul>
+                    </div>
+                  </div>
+                  <form id="dfConfirmForm" class="row g-2 align-items-end mt-2" novalidate>
+                    <div class="col-auto">
+                      <label class="form-label" for="dfConfirmCode">Código de la app</label>
+                      <input
+                        class="form-control"
+                        id="dfConfirmCode"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        required
+                      />
+                    </div>
+                    <div class="col-auto">
+                      <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar
+                      </button>
+                    </div>
+                    <div class="col-auto">
+                      <button class="btn btn-outline-secondary" type="button" id="btnDfCancelar">
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Desactivar: pide un código válido (oculto hasta Desactivar) -->
+                <form id="dfDisableForm" class="d-none row g-2 align-items-end mt-3" novalidate>
+                  <div class="col-auto">
+                    <label class="form-label" for="dfDisableCode">Código para desactivar</label>
+                    <input
+                      class="form-control"
+                      id="dfDisableCode"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      required
+                    />
+                  </div>
+                  <div class="col-auto">
+                    <button class="btn btn-danger" type="submit">
+                      <i class="bi bi-shield-x" aria-hidden="true"></i> Confirmar desactivación
+                    </button>
+                  </div>
+                  <div class="col-auto">
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      id="btnDfDisableCancelar"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
           </div>
         </main>
       </div>

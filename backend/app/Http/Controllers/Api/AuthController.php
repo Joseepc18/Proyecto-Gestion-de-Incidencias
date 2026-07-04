@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarPerfilRequest;
+use App\Http\Requests\DosFactorChallengeRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\OlvidePasswordRequest;
 use App\Http\Requests\RegisterRequest;
@@ -16,6 +17,8 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
@@ -39,17 +42,7 @@ class AuthController extends Controller
         // Registro por email/clave: enviamos el correo de verificación (llamada explícita, no dependemos del listener).
         $user->sendEmailVerificationNotification();
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // El dueño de la cuenta recién creada ve su propio email en la respuesta.
-        Auth::setUser($user);
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
-            'user' => new UserResource($user->load('rol.permisos')),
-        ], 201);
+        return $this->respuestaConToken($user, 201);
     }
 
     // Validar credenciales y devolver un token nuevo.
@@ -61,9 +54,41 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
         }
 
+        // Con 2FA activo no se emite el token todavía: se pide el segundo factor (paso /2fa/challenge).
+        if ($user->hasEnabledTwoFactorAuthentication()) {
+            return $this->retoDosFactor($user);
+        }
+
+        return $this->respuestaConToken($user);
+    }
+
+    // Segundo factor: valida el challenge_token efímero + el código y recién ahí emite el token de sesión.
+    public function dosFactorChallenge(DosFactorChallengeRequest $request)
+    {
+        $clave = $this->claveReto($request->challenge_token);
+        $idUsuario = Cache::get($clave);
+
+        if (! $idUsuario) {
+            return response()->json(['message' => 'El proceso de verificación expiró. Inicia sesión de nuevo.'], 422);
+        }
+
+        $user = User::find($idUsuario);
+        if (! $user || ! $user->verificarCodigoDosFactor($request->code)) {
+            return response()->json(['message' => 'El código de verificación es incorrecto.'], 422);
+        }
+
+        // El reto es de un solo uso: se consume al validarlo.
+        Cache::forget($clave);
+
+        return $this->respuestaConToken($user);
+    }
+
+    // Emite un token de sesión y arma la respuesta estándar (usado por register, login y el reto 2FA).
+    private function respuestaConToken(User $user, int $status = 200)
+    {
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // El dueño que inicia sesión ve su propio email en la respuesta.
+        // El dueño ve su propio email en la respuesta.
         Auth::setUser($user);
 
         return response()->json([
@@ -71,7 +96,25 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             // Cargamos el rol para que el front tenga el rol sin re-pedir /user.
             'user' => new UserResource($user->load('rol.permisos')),
-        ], 200);
+        ], $status);
+    }
+
+    // Genera un challenge_token efímero (5 min, en caché) que autoriza a pedir el segundo factor sin reenviar la contraseña.
+    private function retoDosFactor(User $user)
+    {
+        $challenge = Str::random(64);
+        Cache::put($this->claveReto($challenge), $user->id, now()->addMinutes(5));
+
+        return response()->json([
+            'two_factor' => true,
+            'challenge_token' => $challenge,
+        ]);
+    }
+
+    // Guardamos el hash del challenge (no el valor crudo) para que un volcado de caché no filtre tokens usables.
+    private function claveReto(string $challenge): string
+    {
+        return '2fa:challenge:'.hash('sha256', $challenge);
     }
 
     // Cerrar sesión: borra el token actual.
@@ -179,8 +222,8 @@ class AuthController extends Controller
     {
         $frontend = rtrim(config('services.frontend_url'), '/');
 
-        // Validamos la firma a mano para poder redirigir con un mensaje en vez de soltar un 403 crudo.
-        if (! $request->hasValidSignature()) {
+        // Validamos la firma (relativa) a mano para poder redirigir con un mensaje en vez de soltar un 403 crudo.
+        if (! $request->hasValidSignature(absolute: false)) {
             return redirect($frontend.'/login/login.html?error=verificacion');
         }
 
@@ -212,15 +255,31 @@ class AuthController extends Controller
     }
 
     // Paso 1 del login con Google: redirige a Google. stateless() = API por token, sin sesión.
-    public function redirectToGoogle()
+    // stateless() apaga el 'state' de Socialite (que vive en sesión); lo reponemos a mano vía cookie para conservar la protección CSRF del flujo OAuth.
+    public function redirectToGoogle(Request $request)
     {
-        return Socialite::driver('google')->stateless()->redirect();
+        $state = Str::random(40);
+
+        // Cookie efímera (5 min), httpOnly y SameSite=Lax; secure solo si la conexión ya es HTTPS (permite el dev local por http).
+        $cookie = Cookie::make('oauth_state', $state, 5, null, null, $request->isSecure(), true, false, 'lax');
+
+        return Socialite::driver('google')->stateless()->with(['state' => $state])->redirect()->withCookie($cookie);
     }
 
     // Paso 2: Google vuelve aquí. Busca el usuario por email o lo crea (rol 'normal') y lo loguea.
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         $frontend = rtrim(config('services.frontend_url'), '/');
+
+        // Al salir siempre limpiamos la cookie del state (de un solo uso).
+        $olvidarState = Cookie::forget('oauth_state');
+
+        // Anti-CSRF: el 'state' devuelto por Google debe coincidir con el de la cookie que fijamos al redirigir.
+        $stateEsperado = $request->cookie('oauth_state');
+        $stateRecibido = $request->query('state');
+        if (! $stateEsperado || ! $stateRecibido || ! hash_equals($stateEsperado, (string) $stateRecibido)) {
+            return redirect($frontend.'/login/login.html?error=google_state')->withCookie($olvidarState);
+        }
 
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
@@ -228,13 +287,13 @@ class AuthController extends Controller
             // (a) Solo aceptamos cuentas con el email verificado por Google.
             $emailVerificado = $googleUser->user['email_verified'] ?? $googleUser->user['verified_email'] ?? false;
             if (! $emailVerificado) {
-                return redirect($frontend.'/login/login.html?error=google_email');
+                return redirect($frontend.'/login/login.html?error=google_email')->withCookie($olvidarState);
             }
 
             // (b) Si ese email ya es de un admin o técnico, no permitimos Google (evita entrar como cuenta privilegiada por Gmail).
             $existente = User::where('email', $googleUser->getEmail())->first();
             if ($existente && ($existente->esAdmin() || $existente->esTecnico())) {
-                return redirect($frontend.'/login/login.html?error=google_privilegiado');
+                return redirect($frontend.'/login/login.html?error=google_privilegiado')->withCookie($olvidarState);
             }
 
             $rolNormal = Rol::where('nombre_rol', 'normal')->firstOrFail();
@@ -258,11 +317,11 @@ class AuthController extends Controller
                 $url .= '&nuevo=1';
             }
 
-            return redirect($url);
+            return redirect($url)->withCookie($olvidarState);
         } catch (\Exception $e) {
             BitacoraError::registrar(null, 'AUTENTICACION', 'AuthController@handleGoogleCallback', get_class($e).' (detalles omitidos por seguridad)');
 
-            return redirect($frontend.'/login/login.html?error=google');
+            return redirect($frontend.'/login/login.html?error=google')->withCookie($olvidarState);
         }
     }
 }

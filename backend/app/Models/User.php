@@ -11,11 +11,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
+use Laravel\Fortify\Fortify;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, MustVerifyEmailTrait, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, MustVerifyEmailTrait, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     protected $table = 'users';
 
@@ -31,6 +34,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -100,6 +105,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function esNormal(): bool
     {
         return $this->rol && $this->rol->nombre_rol === 'normal';
+    }
+
+    // Valida un código de 2FA: primero como TOTP del authenticator, si no como recovery code (que se consume al usarlo).
+    public function verificarCodigoDosFactor(string $code): bool
+    {
+        if (! $this->two_factor_secret) {
+            return false;
+        }
+
+        $secreto = Fortify::currentEncrypter()->decrypt($this->two_factor_secret);
+        if (app(TwoFactorAuthenticationProvider::class)->verify($secreto, $code)) {
+            return true;
+        }
+
+        if ($this->two_factor_recovery_codes && in_array($code, $this->recoveryCodes(), true)) {
+            $this->replaceRecoveryCode($code);
+
+            return true;
+        }
+
+        return false;
     }
 
     // Es el técnico RESPONSABLE de la incidencia (el de APOYO no cuenta). Fuente única para las policies.

@@ -33,6 +33,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("btnQuitarFoto").addEventListener("click", quitarLaFoto);
 
   document.getElementById("formPerfil").addEventListener("submit", guardarPerfil);
+
+  iniciarDosFactor(usuario);
 });
 
 // Comprime la foto elegida y la muestra como preview.
@@ -135,6 +137,101 @@ async function guardarPerfil(e) {
   } finally {
     btn.disabled = false;
     spinner.classList.add("d-none");
+  }
+}
+
+// ¿El rol exige 2FA? (admin/super_admin); se usa para reponer el aviso al desactivar.
+let esRolPrivilegiado = false;
+
+// Cablea el panel de verificación en dos pasos con el estado que trae /user.
+function iniciarDosFactor(usuario) {
+  esRolPrivilegiado = ["admin", "super_admin"].includes(usuario.rol ? usuario.rol.nombre_rol : "");
+  pintarEstadoDosFactor(usuario.two_factor_enabled === true);
+
+  document.getElementById("btnDfActivar").addEventListener("click", activarDosFactor);
+  document.getElementById("btnDfDesactivar").addEventListener("click", () => {
+    document.getElementById("dfDisableForm").classList.remove("d-none");
+    document.getElementById("dfDisableCode").focus();
+  });
+  document
+    .getElementById("btnDfCancelar")
+    .addEventListener("click", () => pintarEstadoDosFactor(false));
+  document
+    .getElementById("btnDfDisableCancelar")
+    .addEventListener("click", () => pintarEstadoDosFactor(true));
+  document.getElementById("dfConfirmForm").addEventListener("submit", confirmarDosFactor);
+  document.getElementById("dfDisableForm").addEventListener("submit", desactivarDosFactor);
+}
+
+// Pinta el estado (activa/inactiva), muestra la acción que toca y oculta los sub-formularios.
+function pintarEstadoDosFactor(activa) {
+  const badge = document.getElementById("dfEstado");
+  badge.textContent = activa ? "Activa" : "Inactiva";
+  badge.className = "badge " + (activa ? "bg-success" : "bg-secondary");
+
+  document.getElementById("btnDfActivar").classList.toggle("d-none", activa);
+  document.getElementById("btnDfDesactivar").classList.toggle("d-none", !activa);
+  // El aviso de obligatoriedad solo aplica a roles privilegiados sin 2FA activo.
+  document
+    .getElementById("dfRequeridoAviso")
+    .classList.toggle("d-none", !(esRolPrivilegiado && !activa));
+
+  document.getElementById("dfSetup").classList.add("d-none");
+  document.getElementById("dfDisableForm").classList.add("d-none");
+  document.getElementById("dfConfirmCode").value = "";
+  document.getElementById("dfDisableCode").value = "";
+}
+
+// Paso 1: genera el secreto y muestra el QR + los códigos de recuperación.
+async function activarDosFactor() {
+  try {
+    const data = await apiFetch("/2fa/enable", { method: "POST" });
+    // El SVG lo genera nuestro backend (BaconQrCode): se inserta tal cual.
+    document.getElementById("dfQr").innerHTML = data.svg || "";
+
+    const lista = document.getElementById("dfRecovery");
+    lista.replaceChildren();
+    (data.recovery_codes || []).forEach((codigo) => {
+      const li = document.createElement("li");
+      li.textContent = codigo;
+      lista.appendChild(li);
+    });
+
+    document.getElementById("btnDfActivar").classList.add("d-none");
+    document.getElementById("dfSetup").classList.remove("d-none");
+    document.getElementById("dfConfirmCode").focus();
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+// Paso 2: confirma con el primer código de la app; recién ahí queda activa.
+async function confirmarDosFactor(e) {
+  e.preventDefault();
+  try {
+    await apiFetch("/2fa/confirm", {
+      method: "POST",
+      body: JSON.stringify({ code: document.getElementById("dfConfirmCode").value.trim() }),
+    });
+    pintarEstadoDosFactor(true);
+    mostrarToast("Verificación en dos pasos activada.", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+// Desactiva el 2FA exigiendo un código válido (un token robado no basta).
+async function desactivarDosFactor(e) {
+  e.preventDefault();
+  try {
+    await apiFetch("/2fa", {
+      method: "DELETE",
+      body: JSON.stringify({ code: document.getElementById("dfDisableCode").value.trim() }),
+    });
+    pintarEstadoDosFactor(false);
+    mostrarToast("Verificación en dos pasos desactivada.", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
   }
 }
 

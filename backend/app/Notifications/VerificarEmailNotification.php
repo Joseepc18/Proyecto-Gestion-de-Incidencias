@@ -31,15 +31,20 @@ class VerificarEmailNotification extends Notification implements ShouldQueue
     }
 
     // URL firmada y temporal a la ruta del backend (la firma se valida server-side; el backend redirige al frontend).
+    // Firma RELATIVA (absolute: false): cubre solo path+query, así el túnel Cloudflare (host/scheme del proxy) no invalida la firma.
     private function urlVerificacion(object $notifiable): string
     {
-        return URL::temporarySignedRoute(
+        $ruta = URL::temporarySignedRoute(
             'verification.verify',
             Carbon::now()->addMinutes(config('auth.verification.expire', 60)),
             [
                 'id' => $notifiable->getKey(),
                 'hash' => sha1($notifiable->getEmailForVerification()),
-            ]
+            ],
+            absolute: false
         );
+
+        // El correo necesita un enlace absoluto; anteponemos la URL pública del backend a la ruta firmada relativa.
+        return rtrim(config('app.url'), '/').$ruta;
     }
 }

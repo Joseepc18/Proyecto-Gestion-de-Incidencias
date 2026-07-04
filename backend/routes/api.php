@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\EvidenciaController;
 use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PermisoController;
+use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
@@ -45,6 +46,9 @@ Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEma
     ->name('verification.verify')
     ->middleware('throttle:6,1');
 
+// Segundo factor del login (público): la credencial es el challenge_token efímero emitido por /login.
+Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1');
+
 // Rutas protegidas (token Sanctum). throttle:120,1 = 120 req/min por usuario (Laravel keyea por id, no por IP); holgado para el polling de la campana.
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario
@@ -52,6 +56,11 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/email/reenviar-verificacion', [AuthController::class, 'reenviarVerificacion'])->middleware('throttle:6,1');
+
+    // Gestión del segundo factor (TOTP) del propio usuario.
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:6,1');
+    Route::delete('/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1');
 
     // Autorización de canales privados de WebSocket (Reverb); valida con el token Sanctum.
     Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
@@ -98,7 +107,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/dashboard/tecnico', [DashboardController::class, 'metricasTecnico']);
 
     // Gestión operativa de incidencias (admin y super_admin): asignar técnicos y dashboard.
-    Route::middleware('permiso:incidencias.gestionar')->group(function () {
+    Route::middleware(['permiso:incidencias.gestionar', '2fa'])->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
@@ -106,7 +115,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     });
 
     // CRUD de catálogos de tipos y subtipos (solo super_admin).
-    Route::middleware('permiso:catalogos.administrar')->group(function () {
+    Route::middleware(['permiso:catalogos.administrar', '2fa'])->group(function () {
         Route::post('/tipos-incidencia', [CatalogoAdminController::class, 'crearTipo']);
         Route::put('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'actualizarTipo']);
         Route::delete('/tipos-incidencia/{tipo}', [CatalogoAdminController::class, 'eliminarTipo']);
@@ -116,7 +125,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     });
 
     // Gestión de usuarios (solo super_admin).
-    Route::middleware('permiso:usuarios.administrar')->group(function () {
+    Route::middleware(['permiso:usuarios.administrar', '2fa'])->group(function () {
         Route::get('/usuarios', [UserController::class, 'listado']);
         Route::post('/usuarios', [UserController::class, 'crear']);
         Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
@@ -126,7 +135,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     });
 
     // Asignación de permisos por rol (solo super_admin).
-    Route::middleware('permiso:permisos.administrar')->group(function () {
+    Route::middleware(['permiso:permisos.administrar', '2fa'])->group(function () {
         Route::get('/permisos', [PermisoController::class, 'index']);
         Route::put('/roles/{rol}/permisos', [PermisoController::class, 'sincronizar']);
     });

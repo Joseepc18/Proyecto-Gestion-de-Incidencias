@@ -23,6 +23,13 @@ class AuthTest extends TestCase
     // Siembra roles y catálogos (una vez) para que existan al correr los tests.
     protected $seed = true;
 
+    // Simula la vuelta de Google con un state válido: la cookie y el query param coinciden (contrato anti-CSRF).
+    private function callbackGoogle(string $state = 'estado-oauth-valido')
+    {
+        return $this->withUnencryptedCookie('oauth_state', $state)
+            ->get('/api/auth/google/callback?state='.$state);
+    }
+
     public function test_registro_crea_usuario_normal_y_devuelve_token(): void
     {
         $respuesta = $this->postJson('/api/register', [
@@ -148,8 +155,42 @@ class AuthTest extends TestCase
         Socialite::shouldReceive('driver->stateless->user')
             ->andThrow(new \Exception('fallo de google'));
 
-        $this->get('/api/auth/google/callback')
+        $this->callbackGoogle()
             ->assertRedirect('https://example.test/login/login.html?error=google');
+    }
+
+    public function test_redirect_google_incluye_state_y_fija_la_cookie(): void
+    {
+        config(['services.google' => [
+            'client_id' => 'demo-client-id',
+            'client_secret' => 'demo-secret',
+            'redirect' => 'https://example.test/api/auth/google/callback',
+        ]]);
+
+        $respuesta = $this->get('/api/auth/google/redirect');
+
+        // El redirect a Google lleva el 'state' en la URL y dejamos la cookie para validarlo a la vuelta (anti-CSRF).
+        $this->assertStringContainsString('state=', (string) $respuesta->headers->get('Location'));
+        $respuesta->assertCookie('oauth_state');
+    }
+
+    public function test_callback_google_rechaza_state_que_no_coincide(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        // La cookie y el 'state' del query no coinciden (posible CSRF): se corta antes de tocar a Google.
+        $this->withUnencryptedCookie('oauth_state', 'cookie-legitima')
+            ->get('/api/auth/google/callback?state=state-del-atacante')
+            ->assertRedirect('https://example.test/login/login.html?error=google_state');
+    }
+
+    public function test_callback_google_rechaza_cuando_falta_el_state(): void
+    {
+        config(['services.frontend_url' => 'https://example.test']);
+
+        // Sin cookie ni 'state' (petición directa al callback): se rechaza.
+        $this->get('/api/auth/google/callback')
+            ->assertRedirect('https://example.test/login/login.html?error=google_state');
     }
 
     public function test_callback_google_usuario_nuevo_marca_nuevo_en_la_url(): void
@@ -162,7 +203,7 @@ class AuthTest extends TestCase
         ]);
         Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
 
-        $respuesta = $this->get('/api/auth/google/callback');
+        $respuesta = $this->callbackGoogle();
 
         // Redirige al frontend con el token y &nuevo=1 (contrato: F2 muestra el toast de bienvenida).
         $location = $respuesta->headers->get('Location');
@@ -184,7 +225,7 @@ class AuthTest extends TestCase
         ]);
         Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
 
-        $this->get('/api/auth/google/callback')
+        $this->callbackGoogle()
             ->assertRedirect('https://example.test/login/login.html?error=google_email');
 
         // No se crea ninguna cuenta a partir de un email sin verificar.
@@ -204,7 +245,7 @@ class AuthTest extends TestCase
         ]);
         Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
 
-        $this->get('/api/auth/google/callback')
+        $this->callbackGoogle()
             ->assertRedirect('https://example.test/login/login.html?error=google_privilegiado');
 
         // No se emitió ningún token para esa cuenta.
@@ -346,7 +387,7 @@ class AuthTest extends TestCase
         $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
             'id' => $usuario->id,
             'hash' => sha1($usuario->getEmailForVerification()),
-        ]);
+        ], absolute: false);
 
         $this->get($url)->assertRedirect('https://example.test/login/login.html?verificado=1');
 
@@ -421,7 +462,7 @@ class AuthTest extends TestCase
         ]);
         Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
 
-        $this->get('/api/auth/google/callback');
+        $this->callbackGoogle();
 
         // La cuenta creada por Google nace verificada (Google ya validó el correo).
         $usuario = User::where('email', 'googleverificado@gmail.com')->first();

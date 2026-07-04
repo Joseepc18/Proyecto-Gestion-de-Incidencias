@@ -135,6 +135,46 @@
                 <button type="button" class="auth-link" id="btnIrRegistro">Crear una cuenta</button>
               </div>
             </form>
+
+            <!-- Paso de verificación en dos pasos (oculto hasta que el login lo pida) -->
+            <form id="challengeForm" class="needs-validation d-none" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Verificación en dos pasos</p>
+                <h1 class="h3 mb-1">Código de acceso</h1>
+                <p class="text-muted mb-0">
+                  Escribe el código de tu app de autenticación o un código de recuperación.
+                </p>
+              </div>
+
+              <div id="challengeError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="challengeCode">Código</label>
+                <input
+                  class="form-control"
+                  id="challengeCode"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  required
+                />
+                <div class="invalid-feedback">Ingresa el código.</div>
+              </div>
+
+              <button id="challengeSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="challengeSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-shield-lock" aria-hidden="true"></i> Verificar
+              </button>
+
+              <div class="auth-footer">
+                <button type="button" class="auth-link" id="btnVolverLogin">Volver</button>
+              </div>
+            </form>
           </div>
 
           <!-- Vista de Registro -->

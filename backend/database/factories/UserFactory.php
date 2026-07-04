@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Fortify;
 
 /**
  * @extends Factory<User>
@@ -40,6 +41,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    // Usuario con 2FA ya confirmado (secreto de ejemplo); los roles privilegiados lo requieren.
+    public function conDosFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'two_factor_secret' => Fortify::currentEncrypter()->encrypt('JBSWY3DPEHPK3PXP'),
+            'two_factor_recovery_codes' => Fortify::currentEncrypter()->encrypt(json_encode(['ABCD-1234', 'EFGH-5678'])),
+            'two_factor_confirmed_at' => now(),
         ]);
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Middleware\AsegurarEmailVerificado;
 use App\Http\Middleware\CheckPermiso;
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\RequiereDosFactor;
 use App\Models\BitacoraError;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permiso' => CheckPermiso::class,
             'verificado' => AsegurarEmailVerificado::class,
+            '2fa' => RequiereDosFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

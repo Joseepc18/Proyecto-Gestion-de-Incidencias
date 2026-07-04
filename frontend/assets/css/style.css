@@ -3462,3 +3462,24 @@ html[data-theme="dark"] .badge-rol-normal {
   color: var(--admin-border);
   margin-bottom: 0.5rem;
 }
+
+/* Verificación en dos pasos: QR y códigos de recuperación */
+.df-qr svg {
+  display: block;
+  width: 176px;
+  height: 176px;
+}
+
+.df-recovery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.df-recovery li {
+  padding: 0.25rem 0.6rem;
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-border);
+  border-radius: 0.5rem;
+  letter-spacing: 0.04em;
+}

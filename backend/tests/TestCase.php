@@ -39,11 +39,17 @@ abstract class TestCase extends BaseTestCase
     }
 
     // Crea un usuario con el rol indicado (id_rol es NOT NULL, por eso se pasa).
-    protected function crearUsuario(string $nombreRol = 'normal'): User
+    // Los roles privilegiados nacen con 2FA confirmado (lo exige el middleware '2fa'); pasar $conDosFactor=false para probar ese caso.
+    protected function crearUsuario(string $nombreRol = 'normal', bool $conDosFactor = true): User
     {
         $rol = Rol::where('nombre_rol', $nombreRol)->firstOrFail();
 
-        return User::factory()->create(['id_rol' => $rol->id_rol]);
+        $factory = User::factory();
+        if ($conDosFactor && in_array($nombreRol, ['admin', 'super_admin'], true)) {
+            $factory = $factory->conDosFactor();
+        }
+
+        return $factory->create(['id_rol' => $rol->id_rol]);
     }
 
     // Payload válido para crear una incidencia (coordenadas dentro del rango de Ecuador).
