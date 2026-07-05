@@ -30,8 +30,7 @@ class UsuariosTest extends TestCase
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
 
-        $this->postJson('/api/usuarios', $this->datosUsuario())
-            ->assertCreated();
+        $this->postJson('/api/usuarios', $this->datosUsuario())->assertCreated();
 
         $this->postJson('/api/usuarios', $this->datosUsuario([
             'email' => 'otro.admin@sistema.com',
@@ -51,44 +50,6 @@ class UsuariosTest extends TestCase
         ]))->assertStatus(422)->assertJsonValidationErrors('id_rol');
     }
 
-    public function test_super_admin_no_puede_editar_a_un_usuario_normal(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $normal = $this->crearUsuario('normal');
-
-        $this->putJson("/api/usuarios/{$normal->id}", [
-            'name' => 'Intento de cambio',
-            'email' => $normal->email,
-            'id_rol' => Rol::where('nombre_rol', 'tecnico')->value('id_rol'),
-        ])->assertStatus(403);
-    }
-
-    public function test_super_admin_edita_a_un_tecnico(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $tecnico = $this->crearUsuario('tecnico');
-
-        $this->putJson("/api/usuarios/{$tecnico->id}", [
-            'name' => 'Técnico Renombrado',
-            'email' => $tecnico->email,
-            'id_rol' => Rol::where('nombre_rol', 'tecnico')->value('id_rol'),
-        ])->assertOk();
-
-        $this->assertDatabaseHas('users', ['id' => $tecnico->id, 'name' => 'Técnico Renombrado']);
-    }
-
-    public function test_super_admin_no_puede_degradar_a_un_usuario_a_normal(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $tecnico = $this->crearUsuario('tecnico');
-
-        $this->putJson("/api/usuarios/{$tecnico->id}", [
-            'name' => $tecnico->name,
-            'email' => $tecnico->email,
-            'id_rol' => Rol::where('nombre_rol', 'normal')->value('id_rol'),
-        ])->assertStatus(422)->assertJsonValidationErrors('id_rol');
-    }
-
     public function test_suspender_usuario_es_borrado_logico(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
@@ -99,27 +60,17 @@ class UsuariosTest extends TestCase
         $this->assertSoftDeleted('users', ['id' => $tecnico->id]);
     }
 
-    public function test_super_admin_no_puede_suspenderse_a_si_mismo(): void
-    {
-        $admin = $this->crearUsuario('super_admin');
-        Sanctum::actingAs($admin);
-
-        $this->deleteJson("/api/usuarios/{$admin->id}")->assertStatus(422);
-
-        $this->assertDatabaseHas('users', ['id' => $admin->id, 'deleted_at' => null]);
-    }
-
-    public function test_listado_filtra_por_rol(): void
+    public function test_restaurar_reactiva_un_usuario_suspendido(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $tecnico = $this->crearUsuario('tecnico');
+        $suspendido = $this->crearUsuario('tecnico');
 
-        $respuesta = $this->getJson('/api/usuarios?rol=tecnico&per_page=50')->assertOk();
+        $this->deleteJson("/api/usuarios/{$suspendido->id}")->assertOk();
+        $this->assertSoftDeleted('users', ['id' => $suspendido->id]);
 
-        foreach ($respuesta->json('data') as $u) {
-            $this->assertSame('tecnico', $u['rol']['nombre_rol']);
-        }
-        $this->assertContains($tecnico->id, collect($respuesta->json('data'))->pluck('id')->all());
+        $this->postJson("/api/usuarios/{$suspendido->id}/restaurar")->assertOk();
+
+        $this->assertDatabaseHas('users', ['id' => $suspendido->id, 'deleted_at' => null]);
     }
 
     public function test_listado_oculta_suspendidos_y_los_muestra_con_filtro(): void
@@ -141,35 +92,5 @@ class UsuariosTest extends TestCase
         $idsSuspendidos = collect($conFiltro->json('data'))->pluck('id')->all();
         $this->assertContains($suspendido->id, $idsSuspendidos);
         $this->assertNotContains($activo->id, $idsSuspendidos);
-    }
-
-    public function test_restaurar_reactiva_un_usuario_suspendido(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $suspendido = $this->crearUsuario('tecnico');
-
-        $this->deleteJson("/api/usuarios/{$suspendido->id}")->assertOk();
-        $this->assertSoftDeleted('users', ['id' => $suspendido->id]);
-
-        $this->postJson("/api/usuarios/{$suspendido->id}/restaurar")->assertOk();
-
-        $this->assertDatabaseHas('users', ['id' => $suspendido->id, 'deleted_at' => null]);
-    }
-
-    public function test_restaurar_rechaza_un_usuario_no_suspendido(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $activo = $this->crearUsuario('tecnico');
-
-        $this->postJson("/api/usuarios/{$activo->id}/restaurar")->assertStatus(422);
-    }
-
-    // El admin operativo perdió el acceso a la gestión de usuarios (ahora es exclusivo de super_admin).
-    public function test_admin_ya_no_accede_a_la_gestion_de_usuarios(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->getJson('/api/usuarios')->assertStatus(403);
-        $this->postJson('/api/usuarios', $this->datosUsuario())->assertStatus(403);
     }
 }

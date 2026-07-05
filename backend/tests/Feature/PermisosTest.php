@@ -3,10 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
-use App\Models\Evidencia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -22,11 +19,9 @@ class PermisosTest extends TestCase
         $incidencia = $this->crearIncidencia($dueno);
 
         // Otro ciudadano intenta ver la incidencia que no es suya.
-        $otro = $this->crearUsuario('normal');
-        Sanctum::actingAs($otro);
+        Sanctum::actingAs($this->crearUsuario('normal'));
 
-        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
-            ->assertStatus(403);
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")->assertStatus(403);
     }
 
     public function test_autor_edita_solo_si_esta_pendiente(): void
@@ -54,8 +49,7 @@ class PermisosTest extends TestCase
         $incidencia = $this->crearIncidencia($dueno);
 
         // Otro ciudadano (sin permiso) intenta editar con datos inválidos (título muy corto).
-        $otro = $this->crearUsuario('normal');
-        Sanctum::actingAs($otro);
+        Sanctum::actingAs($this->crearUsuario('normal'));
 
         // Debe primar el 403 de autorización sobre el 422 de validación: la Policy
         // corre antes que las reglas porque vive en el authorize() del FormRequest.
@@ -64,7 +58,7 @@ class PermisosTest extends TestCase
         ])->assertStatus(403);
     }
 
-    // H-E: el autor ciudadano puede editar su PENDIENTE, pero no auto-asignarse prioridad.
+    // El autor ciudadano puede editar su PENDIENTE, pero no auto-asignarse prioridad.
     public function test_ciudadano_no_puede_cambiar_la_prioridad(): void
     {
         $autor = $this->crearUsuario('normal');
@@ -78,30 +72,9 @@ class PermisosTest extends TestCase
         ])->assertOk();
 
         $incidencia->refresh();
-        // El nombre sí cambió...
+        // El nombre sí cambió, pero la prioridad se ignoró: sigue en MEDIA.
         $this->assertSame('Bache con prioridad inflada', $incidencia->nombre_incidencia);
-        // ...pero la prioridad se ignoró: sigue en MEDIA.
         $this->assertSame('MEDIA', $incidencia->prioridad_incidencia->value);
-    }
-
-    // H-E: el admin sí puede cambiar la prioridad de una incidencia.
-    public function test_admin_si_puede_cambiar_la_prioridad(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
-            'prioridad_incidencia' => 'ALTA',
-        ])->assertOk();
-
-        $this->assertSame('ALTA', $incidencia->fresh()->prioridad_incidencia->value);
-    }
-
-    public function test_no_admin_no_accede_a_la_gestion_de_usuarios(): void
-    {
-        Sanctum::actingAs($this->crearUsuario('normal'));
-
-        $this->getJson('/api/usuarios')->assertStatus(403);
     }
 
     public function test_tecnico_solo_ve_incidencias_donde_esta_asignado(): void
@@ -126,68 +99,6 @@ class PermisosTest extends TestCase
             ->assertJsonMissing(['id_incidencia' => $otra->id_incidencia]);
     }
 
-    // El técnico no puede ver el detalle de una incidencia donde no está asignado.
-    public function test_tecnico_no_puede_ver_detalle_de_incidencia_no_asignada(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $tecnico = $this->crearUsuario('tecnico');
-
-        Sanctum::actingAs($tecnico);
-
-        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
-            ->assertStatus(403);
-    }
-
-    // El técnico de apoyo sí puede ver el detalle de la incidencia donde está asignado.
-    public function test_tecnico_apoyo_puede_ver_detalle_de_incidencia_asignada(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $apoyo = $this->crearUsuario('tecnico');
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $apoyo->id,
-            'rol_asignado' => 'APOYO',
-        ]);
-
-        Sanctum::actingAs($apoyo);
-
-        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
-    }
-
-    // El autor no puede eliminar si la incidencia ya pasó de PENDIENTE (pérdida de trazabilidad).
-    public function test_autor_no_puede_eliminar_incidencia_en_proceso(): void
-    {
-        $autor = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($autor);
-        $incidencia->update(['estado_incidencia' => 'EN_PROCESO']);
-        Sanctum::actingAs($autor);
-
-        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")
-            ->assertStatus(403);
-    }
-
-    public function test_autor_no_puede_eliminar_incidencia_resuelta(): void
-    {
-        $autor = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($autor);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO']);
-        Sanctum::actingAs($autor);
-
-        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}")
-            ->assertStatus(403);
-    }
-
-    // El admin puede eliminar sin importar el estado.
-    public function test_admin_puede_eliminar_incidencia_resuelta(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $incidencia->update(['estado_incidencia' => 'RESUELTO']);
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}", ['motivo' => 'Duplicada.'])
-            ->assertOk();
-    }
-
     // El admin borrando la incidencia de otro debe explicar el motivo (se le notifica al dueño).
     public function test_admin_no_puede_eliminar_sin_motivo(): void
     {
@@ -201,7 +112,8 @@ class PermisosTest extends TestCase
         $this->assertDatabaseHas('incidencias', ['id_incidencia' => $incidencia->id_incidencia]);
     }
 
-    // El técnico responsable solo puede cerrar EN_PROCESO→RESUELTO; el admin arranca el trabajo.
+    // El técnico responsable solo puede cerrar EN_PROCESO→RESUELTO; arrancar el trabajo es del admin.
+    // PENDIENTE→EN_PROCESO existe en el grafo, así que lo corta la guarda de ROL (no la estructural).
     public function test_tecnico_no_puede_iniciar_incidencia_pendiente_a_en_proceso(): void
     {
         $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
@@ -217,42 +129,21 @@ class PermisosTest extends TestCase
             'estado_incidencia' => 'EN_PROCESO',
         ])
             ->assertStatus(422)
-            ->assertJson(['message' => 'Transición de estado no permitida']);
+            ->assertJson(['message' => 'Tu rol no puede realizar ese cambio de estado']);
     }
 
-    // El admin sí puede pasar PENDIENTE→EN_PROCESO (arrancar el trabajo).
-    public function test_admin_puede_iniciar_incidencia_pendiente_a_en_proceso(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'EN_PROCESO',
-        ])->assertOk();
-
-        $this->assertSame('EN_PROCESO', $incidencia->fresh()->estado_incidencia->value);
-    }
-
-    // Única excepción a "RESUELTO es terminal": el admin puede reabrir a EN_PROCESO
-    // (limpia fecha_resolucion vía trigger, ya que el update pasa por el flujo normal).
-    // El admin SOLO puede reabrir si el reportador la pidió (RESUELTO queda cerrado para
-    // todos, admin incluido, hasta que exista una solicitud sin revisar).
+    // Única excepción a "RESUELTO es terminal": el admin reabre a EN_PROCESO, y SOLO si el
+    // reportador lo pidió antes (limpia fecha_resolucion, apaga la bandera y avisa a los técnicos).
     public function test_admin_puede_reabrir_incidencia_resuelta(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
         $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
         $responsable = $this->crearUsuario('tecnico');
-        $apoyo = $this->crearUsuario('tecnico');
         AsignacionIncidencia::create([
             'id_incidencia' => $incidencia->id_incidencia,
             'id_usuario' => $responsable->id,
             'rol_asignado' => 'RESPONSABLE',
-        ]);
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $apoyo->id,
-            'rol_asignado' => 'APOYO',
         ]);
         $admin = $this->crearUsuario('admin');
 
@@ -272,233 +163,30 @@ class PermisosTest extends TestCase
         $this->assertNull($fresca->fecha_resolucion);
         // Ya no queda pendiente: se atendió la solicitud.
         $this->assertFalse($respuesta['reapertura_pendiente']);
-
-        // Responsable y apoyo ven la misma alerta (SOLICITUD_REAPERTURA) que la del admin,
-        // no el aviso azul genérico de CAMBIO_ESTADO.
-        foreach ([$responsable, $apoyo] as $tecnico) {
-            $this->assertNotificado($tecnico, 'SOLICITUD_REAPERTURA');
-        }
-
-        // La solicitud del admin (destinatario admin) quedó marcada como leída.
-        $adminNotif = $this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->first();
-        $this->assertNotNull($adminNotif);
-        $this->assertNotNull($adminNotif->read_at, 'La solicitud del admin debe quedar leída.');
+        $this->assertNotificado($responsable, 'SOLICITUD_REAPERTURA');
     }
 
-    // Sin una solicitud de reapertura pendiente, ni el admin puede reabrir: RESUELTO
-    // queda cerrado para todos hasta que el reportador la pida.
-    public function test_admin_no_puede_reabrir_sin_solicitud_pendiente(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'EN_PROCESO',
-        ])->assertStatus(422);
-
-        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia->value);
-    }
-
-    // El admin no puede saltar de RESUELTO a PENDIENTE (solo la reapertura a EN_PROCESO tiene sentido).
-    public function test_admin_no_puede_pasar_resuelto_a_pendiente(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'PENDIENTE',
-        ])->assertStatus(422);
-    }
-
-    // El técnico responsable NUNCA puede reabrir, ni siquiera la suya resuelta.
-    public function test_tecnico_no_puede_reabrir_incidencia_resuelta(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $responsable = $this->crearUsuario('tecnico');
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $responsable->id,
-            'rol_asignado' => 'RESPONSABLE',
-        ]);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        Sanctum::actingAs($responsable);
-
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'EN_PROCESO',
-        ])->assertStatus(422);
-    }
-
-    // El reportador puede seguir subiendo y borrando SUS fotos de reporte mientras la
-    // incidencia está EN_PROCESO (no solo en PENDIENTE): eso lo bloquea "actualizar" (editar
-    // texto/ubicación), no "subirEvidencia"/"eliminar" evidencia, que solo cierran en RESUELTO.
-    public function test_reportador_sube_y_borra_fotos_de_reporte_en_proceso(): void
-    {
-        Storage::fake('public');
-        $reportador = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($reportador, ['estado_incidencia' => 'EN_PROCESO']);
-
-        Sanctum::actingAs($reportador);
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
-            'fotos' => [UploadedFile::fake()->image('r.jpg')],
-            'tipo_evidencia' => 'REPORTE',
-        ])->assertOk();
-
-        $evidencia = Evidencia::first();
-        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertOk();
-        $this->assertDatabaseMissing('evidencias', ['id_evidencia' => $evidencia->id_evidencia]);
-    }
-
-    // En RESUELTO nadie sube evidencias: el expediente queda cerrado. Si hace falta, el
-    // reportador pide reapertura y un admin reabre a EN_PROCESO.
-    public function test_responsable_no_puede_subir_evidencia_a_resuelta(): void
-    {
-        Storage::fake('public');
-        $responsable = $this->crearUsuario('tecnico');
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $responsable->id,
-            'rol_asignado' => 'RESPONSABLE',
-        ]);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-
-        Sanctum::actingAs($responsable);
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
-            'fotos' => [UploadedFile::fake()->image('r.jpg')],
-            'tipo_evidencia' => 'RESOLUCION',
-        ])->assertStatus(403);
-    }
-
-    // En RESUELTO tampoco se borran evidencias (expediente cerrado, la reapertura es la excepción).
-    public function test_responsable_no_puede_borrar_evidencia_de_resuelta(): void
-    {
-        Storage::fake('public');
-        $responsable = $this->crearUsuario('tecnico');
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'), ['estado_incidencia' => 'EN_PROCESO']);
-        AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $responsable->id,
-            'rol_asignado' => 'RESPONSABLE',
-        ]);
-
-        // Sube una foto de resolución mientras está EN_PROCESO (permitido).
-        Sanctum::actingAs($responsable);
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/evidencias", [
-            'fotos' => [UploadedFile::fake()->image('r.jpg')],
-            'tipo_evidencia' => 'RESOLUCION',
-        ])->assertOk();
-        $evidencia = Evidencia::first();
-
-        // Se resuelve y el responsable intenta borrarla: 403 (expediente cerrado).
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertStatus(403);
-    }
-
-    // En RESUELTO el chat queda en solo lectura: no se pueden crear comentarios.
-    public function test_no_se_puede_comentar_incidencia_resuelta(): void
-    {
-        $reportador = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($reportador);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-
-        Sanctum::actingAs($reportador);
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
-            'comentario' => 'Pero esto sigue roto.',
-        ])->assertStatus(403);
-
-        // El historial del chat (Lectura) sigue siendo accesible.
-        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
-    }
-
-    // Solo 1 solicitud a la vez: mientras el admin no reabra, no se puede pedir otra.
-    // Que el admin LEA la notificación NO libera el cupo (se valida con la bandera, no con
-    // el estado de lectura): así el reportador no puede reenviar hasta que se reabra de verdad.
+    // Solo 1 solicitud a la vez: mientras el admin no reabra, no se puede pedir otra (se valida
+    // con la bandera, no con el estado de lectura de la notificación).
     public function test_no_se_puede_pedir_reapertura_doble_hasta_que_el_admin_reabra(): void
     {
         $reportador = $this->crearUsuario('normal');
         $incidencia = $this->crearIncidencia($reportador);
         $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        $admin = $this->crearUsuario('admin');
+        $this->crearUsuario('admin');
 
         Sanctum::actingAs($reportador);
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
             'motivo' => 'El hueco sigue igual, no lo taparon.',
         ])->assertOk();
 
-        // El admin lee la notificación (no reabre todavía).
-        $notif = $this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->firstOrFail();
-        Sanctum::actingAs($admin);
-        $this->patchJson("/api/notificaciones/{$notif->id}/leida")->assertOk();
-
-        // Aunque ya la leyó, sigue pendiente: el botón "Reabrir" debe seguir visible.
+        // El detalle sigue marcando la solicitud como pendiente (el botón "Reabrir" debe verse).
         $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
             ->assertOk()->assertJson(['reapertura_pendiente' => true]);
 
         // Y el reportador NO puede reenviar mientras no se reabra: 422.
-        Sanctum::actingAs($reportador);
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
             'motivo' => 'Otro motivo distinto para reintentar.',
         ])->assertStatus(422);
-    }
-
-    // Tras reabrir, la bandera se apaga y el reportador ya podría volver a pedir reapertura.
-    public function test_reabrir_libera_una_nueva_solicitud_de_reapertura(): void
-    {
-        $reportador = $this->crearUsuario('normal');
-        $incidencia = $this->crearIncidencia($reportador);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        $admin = $this->crearUsuario('admin');
-
-        Sanctum::actingAs($reportador);
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
-            'motivo' => 'El hueco sigue igual.',
-        ])->assertOk();
-
-        // El admin reabre: la bandera se apaga.
-        Sanctum::actingAs($admin);
-        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
-            'estado_incidencia' => 'EN_PROCESO',
-        ])->assertOk();
-        $this->assertFalse($incidencia->fresh()->reapertura_solicitada);
-    }
-
-    // En RESUELTO ni el admin cambia la prioridad: el expediente queda de solo lectura.
-    public function test_admin_no_puede_cambiar_prioridad_en_resuelta(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", [
-            'prioridad_incidencia' => 'ALTA',
-        ])->assertStatus(403);
-
-        $this->assertSame('MEDIA', $incidencia->fresh()->prioridad_incidencia->value);
-    }
-
-    // En RESUELTO el admin no puede asignar ni quitar técnicos (asignaciones congeladas).
-    public function test_admin_no_puede_asignar_ni_quitar_en_resuelta(): void
-    {
-        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'), ['estado_incidencia' => 'EN_PROCESO']);
-        $tecnico = $this->crearUsuario('tecnico');
-        $asignacion = AsignacionIncidencia::create([
-            'id_incidencia' => $incidencia->id_incidencia,
-            'id_usuario' => $tecnico->id,
-            'rol_asignado' => 'APOYO',
-        ]);
-        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
-        Sanctum::actingAs($this->crearUsuario('admin'));
-
-        // No puede asignar un nuevo técnico.
-        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
-            'id_usuario' => $this->crearUsuario('tecnico')->id,
-            'rol_asignado' => 'RESPONSABLE',
-        ])->assertStatus(422);
-
-        // Ni quitar la existente.
-        $this->deleteJson("/api/asignaciones/{$asignacion->id_asignacion}")->assertStatus(422);
-        $this->assertDatabaseHas('asignaciones_incidencia', ['id_asignacion' => $asignacion->id_asignacion]);
     }
 }

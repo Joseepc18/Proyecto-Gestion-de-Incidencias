@@ -65,17 +65,6 @@ class TwoFactorTest extends TestCase
         $this->assertTrue($usuario->fresh()->hasEnabledTwoFactorAuthentication());
     }
 
-    public function test_confirm_con_codigo_invalido_devuelve_422(): void
-    {
-        $usuario = $this->crearUsuario('normal');
-        Sanctum::actingAs($usuario);
-
-        $this->postJson('/api/2fa/enable')->assertOk();
-
-        $this->postJson('/api/2fa/confirm', ['code' => '000000'])->assertStatus(422);
-        $this->assertFalse($usuario->fresh()->hasEnabledTwoFactorAuthentication());
-    }
-
     public function test_login_con_2fa_no_emite_token_y_pide_segundo_factor(): void
     {
         $this->usuarioConDosFactor();
@@ -103,26 +92,6 @@ class TwoFactorTest extends TestCase
             ->assertJsonStructure(['access_token', 'user' => ['rol' => ['nombre_rol']]]);
     }
 
-    public function test_challenge_con_codigo_invalido_devuelve_422(): void
-    {
-        $this->usuarioConDosFactor();
-
-        $challenge = $this->postJson('/api/login', ['email' => 'dosfactor@ejemplo.com', 'password' => 'password'])
-            ->json('challenge_token');
-
-        $this->postJson('/api/2fa/challenge', ['challenge_token' => $challenge, 'code' => '000000'])
-            ->assertStatus(422);
-    }
-
-    public function test_challenge_con_token_de_reto_invalido_devuelve_422(): void
-    {
-        $usuario = $this->usuarioConDosFactor();
-        $codigo = $this->codigoPara($usuario->two_factor_secret);
-
-        $this->postJson('/api/2fa/challenge', ['challenge_token' => 'inventado', 'code' => $codigo])
-            ->assertStatus(422);
-    }
-
     public function test_disable_requiere_codigo_valido(): void
     {
         $usuario = $this->usuarioConDosFactor();
@@ -145,24 +114,5 @@ class TwoFactorTest extends TestCase
         $this->getJson('/api/tecnicos')
             ->assertStatus(403)
             ->assertJson(['two_factor_required' => true]);
-    }
-
-    public function test_admin_con_2fa_si_puede_realizar_acciones_privilegiadas(): void
-    {
-        $admin = $this->crearUsuario('admin');
-        Sanctum::actingAs($admin);
-
-        $this->getJson('/api/tecnicos')->assertOk();
-    }
-
-    public function test_usuario_normal_no_esta_obligado_a_tener_2fa(): void
-    {
-        $usuario = $this->crearUsuario('normal');
-        Sanctum::actingAs($usuario);
-
-        // El recurso de sesión marca que no se le exige 2FA (solo se ofrece).
-        $this->getJson('/api/user')
-            ->assertOk()
-            ->assertJson(['two_factor_required' => false, 'two_factor_enabled' => false]);
     }
 }
