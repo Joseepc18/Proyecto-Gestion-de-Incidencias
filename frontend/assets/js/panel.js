@@ -1,9 +1,9 @@
 // panel.js — Pegamento del panel Blade: toast flash de sesión, confirmar antes de enviar y menús de acciones.
 
-/* exported escaparHtml */
 /* global bootstrap, mostrarToast, confirmar */
 
 // El panel no carga api.js, pero toast.js y confirmar.js necesitan escaparHtml como global.
+// La asignación a window lo mantiene global también cuando @vite lo empaqueta como módulo.
 function escaparHtml(texto) {
   if (texto == null) return "";
   return String(texto)
@@ -13,6 +13,7 @@ function escaparHtml(texto) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+window.escaparHtml = escaparHtml;
 
 document.addEventListener("DOMContentLoaded", function () {
   // Mensaje flash que dejó el controlador en la sesión (éxito o error de una acción).

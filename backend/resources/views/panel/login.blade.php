@@ -9,7 +9,11 @@
     <script src="/assets/js/tema-inicial.js"></script>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets/vendors/bootstrap-icons/bootstrap-icons.css" />
-    <link rel="stylesheet" href="/assets/css/style.css" />
+    @if (file_exists(public_path('build/manifest.json')))
+      @vite(['resources/css/panel.css'])
+    @else
+      <link rel="stylesheet" href="/assets/css/style.css" />
+    @endif
   </head>
 
   <body class="d-flex align-items-center justify-content-center" style="min-height: 100vh">

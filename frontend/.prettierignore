@@ -1,6 +1,7 @@
-# Dependencias y lockfile
+# Dependencias, lockfile y salida del build
 node_modules/
 package-lock.json
+dist/
 
 # Archivos de terceros (plantilla AdminHMD) — no reformatear.
 # Solo formateamos NUESTRO assets/js/api.js; el resto de assets/ se ignora.

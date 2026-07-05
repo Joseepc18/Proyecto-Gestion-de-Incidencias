@@ -6,9 +6,8 @@ use App\Http\Controllers\Web\PanelUsuarioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// En prod Nginx atiende "/" (redirige al login del SPA); aquí solo cubrimos el acceso directo a Laravel.
+Route::get('/', fn () => redirect()->route('panel.login'));
 
 // Panel administrativo en Blade (server-side, guard web con sesión + CSRF).
 // Convive con la API stateless (Sanctum/Bearer), que no se toca.

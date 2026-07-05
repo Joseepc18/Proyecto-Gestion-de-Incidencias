@@ -92,12 +92,15 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./frontend:/usr/share/nginx/html
+      # En prod se pone FRONTEND_ROOT=./frontend/dist en el .env (sirve el build); en dev queda el árbol crudo.
+      - ${FRONTEND_ROOT:-./frontend}:/usr/share/nginx/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       # Credenciales del Basic Auth de /horizon; se crea a mano en cada entorno (gitignored)
       - ./nginx/horizon.htpasswd:/etc/nginx/horizon.htpasswd:ro
       # Fotos subidas: con PHP-FPM ya no las sirve artisan, las sirve Nginx directo (solo lectura)
       - ./backend/storage/app/public:/var/www/storage:ro
+      # Assets del panel Blade empaquetados por Vite (@vite → /build/*); vacío hasta el primer build
+      - ./backend/public/build:/var/www/build:ro
     depends_on:
       - backend
     networks:

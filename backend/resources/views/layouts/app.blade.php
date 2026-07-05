@@ -6,11 +6,17 @@
     <title>@yield('titulo', 'Panel') | Gestión de Incidencias</title>
 
     <link rel="icon" href="/assets/images/favicon/favicon.ico" sizes="any" />
-    {{-- Assets servidos por Nginx desde el árbol estático del frontend (mismos que las páginas JS). --}}
+    {{-- tema-inicial y los vendors los sirve Nginx desde el árbol estático (compartidos con las páginas JS). --}}
     <script src="/assets/js/tema-inicial.js"></script>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets/vendors/bootstrap-icons/bootstrap-icons.css" />
-    <link rel="stylesheet" href="/assets/css/style.css" />
+    {{-- style.css y panel.js empaquetados con Vite (minificados + hash) cuando hay build; si no, raw para dev. --}}
+    @if (file_exists(public_path('build/manifest.json')))
+      @vite(['resources/css/panel.css', 'resources/js/panel.js'])
+    @else
+      <link rel="stylesheet" href="/assets/css/style.css" />
+      <script defer src="/assets/js/panel.js"></script>
+    @endif
   </head>
 
   <body data-page="{{ $pagina ?? '' }}">
@@ -101,7 +107,7 @@
     <script defer src="/assets/js/toast.js"></script>
     <script defer src="/assets/js/confirmar.js"></script>
     <script defer src="/assets/js/password.js"></script>
-    <script defer src="/assets/js/panel.js"></script>
+    {{-- panel.js va por @vite en el <head> (o su fallback raw en dev). --}}
     {{-- Toggles de tema y sidebar (versión mínima del panel, sin el main.js de la plantilla). --}}
     <script>
       document.querySelector("[data-theme-toggle]")?.addEventListener("click", function () {

@@ -6,6 +6,7 @@ const globals = require("globals");
 module.exports = [
   {
     ignores: [
+      "dist/**",
       "assets/js/bootstrap.bundle.min.js",
       "assets/js/browser-image-compression.js",
       "assets/vendors/**",
@@ -20,6 +21,21 @@ module.exports = [
       sourceType: "script",
       globals: {
         ...globals.browser,
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
+
+  // build.mjs corre en Node como módulo ESM (script de build, no navegador).
+  {
+    files: ["build.mjs"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
+        ...globals.node,
       },
     },
     rules: {

@@ -4,12 +4,14 @@
   "private": true,
   "description": "Frontend del Sistema de Gestión de Incidencias (HTML/CSS/JS puro)",
   "scripts": {
+    "build": "node build.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
+    "esbuild": "^0.25.0",
     "eslint": "^9.13.0",
     "globals": "^15.11.0",
     "prettier": "^3.4.2"

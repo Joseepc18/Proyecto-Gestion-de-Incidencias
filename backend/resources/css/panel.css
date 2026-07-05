@@ -1,0 +1,3 @@
+/* Entrada CSS del panel Blade: reusa el style.css compartido del frontend (variables --admin-*,
+   modo claro/oscuro). Bootstrap y bootstrap-icons se enlazan aparte como vendors estables. */
+@import '@shared/css/style.css';
