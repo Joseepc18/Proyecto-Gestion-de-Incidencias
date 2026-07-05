@@ -61,7 +61,7 @@
         <nav class="navbar admin-navbar navbar-expand" id="adminNavbar">
           <div class="container-fluid px-3 px-lg-4">
             <button class="sidebar-toggle" type="button" data-sidebar-toggle
-                    aria-controls="adminSidebar" aria-expanded="true" aria-label="Mostrar/ocultar menú">
+                    aria-controls="adminSidebar" aria-expanded="false" aria-label="Mostrar/ocultar menú">
               <span></span><span></span><span></span>
             </button>
             <div class="navbar-actions ms-auto">
@@ -122,10 +122,12 @@
         }
       });
       document.querySelector("[data-sidebar-toggle]")?.addEventListener("click", function () {
-        document.querySelector(".admin-shell")?.classList.toggle("sidebar-open");
+        const abierto = document.querySelector(".admin-shell")?.classList.toggle("sidebar-open");
+        this.setAttribute("aria-expanded", String(!!abierto));
       });
       document.querySelector("[data-sidebar-close]")?.addEventListener("click", function () {
         document.querySelector(".admin-shell")?.classList.remove("sidebar-open");
+        document.querySelector("[data-sidebar-toggle]")?.setAttribute("aria-expanded", "false");
       });
     </script>
   </body>

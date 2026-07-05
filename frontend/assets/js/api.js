@@ -195,8 +195,6 @@ function aplicarMenuRol(rol, permisos) {
   const navInicio = document.getElementById("navInicio");
   if (navInicio && esTecnico) navInicio.href = "../inicio-tecnico/inicio-tecnico.html";
   mostrar("navIncidencias", gestiona);
-  mostrar("navUsuarios", tienePermiso("usuarios.administrar"));
-  mostrar("navCatalogos", tienePermiso("catalogos.administrar"));
   mostrar("navPermisos", tienePermiso("permisos.administrar"));
   mostrar("navMisIncidencias", !gestiona);
   mostrar("navRegistrar", gestiona || esNormal);

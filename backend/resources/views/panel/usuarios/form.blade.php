@@ -44,7 +44,7 @@
 
         <div class="mb-3">
           <label class="form-label" for="password">Contraseña</label>
-          <div class="input-group">
+          <div class="input-group has-validation">
             <input type="password" id="password" name="password" minlength="8"
                    class="form-control @error('password') is-invalid @enderror"
                    @if ($editando) placeholder="Dejar vacío para no cambiar" @else required @endif />
@@ -58,7 +58,7 @@
 
         <div class="mb-3">
           <label class="form-label" for="password_confirmation">Confirmar contraseña</label>
-          <div class="input-group">
+          <div class="input-group has-validation">
             <input type="password" id="password_confirmation" name="password_confirmation" minlength="8"
                    class="form-control"
                    @if ($editando) placeholder="Dejar vacío para no cambiar" @else required @endif />
