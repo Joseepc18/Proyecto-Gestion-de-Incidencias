@@ -29,6 +29,8 @@ jobs:
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias/frontend
         run: npm ci && npm run build
 
+      # El entrypoint del contenedor corre "artisan optimize" en cada arranque (solo si APP_ENV=production),
+      # así que este restart ya deja config/rutas/eventos/vistas cacheados con el código recién bajado.
       - name: Reiniciar el backend
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart backend

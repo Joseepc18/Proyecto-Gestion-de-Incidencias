@@ -2,32 +2,22 @@
 
 use App\Http\Controllers\Api\AsignacionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BroadcastAuthController;
 use App\Http\Controllers\Api\CatalogoAdminController;
 use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\ComentarioController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EvidenciaController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\IncidenciaController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PermisoController;
 use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\UserController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-// Healthcheck público (sin token, throttle holgado 120/min) para monitoreo y pruebas de carga; el SELECT 1 toca toda la cadena Nginx → PHP-FPM → PostgreSQL.
-Route::get('/health', function () {
-    try {
-        DB::select('select 1');
-        $db = true;
-    } catch (Throwable $e) {
-        $db = false;
-    }
-
-    return response()->json(['status' => 'ok', 'db' => $db, 'host' => gethostname()]);
-})->middleware('throttle:120,1');
+// Healthcheck público (sin token, throttle holgado 120/min) para monitoreo y pruebas de carga.
+Route::get('/health', HealthController::class)->middleware('throttle:120,1');
 
 // Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
@@ -68,7 +58,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1');
 
     // Autorización de canales privados de WebSocket (Reverb); valida con el token Sanctum.
-    Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
+    Route::post('/broadcasting/auth', BroadcastAuthController::class);
 
     // Apis de catálogos para poblar los formularios
     Route::get('/catalogos/tipos-incidencia', [CatalogoController::class, 'tiposIncidencia']);
