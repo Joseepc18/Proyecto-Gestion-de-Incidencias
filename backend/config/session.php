@@ -169,7 +169,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // Secure por defecto en producción (el sitio siempre se sirve por HTTPS al usuario),
+    // aunque detrás de Cloudflare+nginx el request le llegue a Laravel como HTTP plano.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------
