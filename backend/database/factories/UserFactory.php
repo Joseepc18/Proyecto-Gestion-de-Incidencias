@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,6 +42,14 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    // Asigna el rol por nombre (id_rol es NOT NULL); los roles son datos de referencia sembrados.
+    public function conRol(string $nombreRol = 'normal'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'id_rol' => Rol::where('nombre_rol', $nombreRol)->value('id_rol'),
         ]);
     }
 

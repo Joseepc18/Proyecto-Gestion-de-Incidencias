@@ -5,10 +5,13 @@ namespace App\Models;
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
 use App\Exceptions\AlmacenamientoException;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Incidencia extends Model
 {
+    use HasFactory;
+
     protected $table = 'incidencias';
 
     protected $primaryKey = 'id_incidencia';
