@@ -18,6 +18,7 @@ class DashboardController extends Controller
     {
         $datos = Cache::remember('dashboard_metricas', 60, function () {
             $totales = DB::table('incidencias')
+                ->whereNull('deleted_at')
                 ->selectRaw('COUNT(*) AS total')
                 ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS pendientes', [EstadoIncidencia::Pendiente->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS en_proceso', [EstadoIncidencia::EnProceso->value])
@@ -25,11 +26,13 @@ class DashboardController extends Controller
                 ->first();
 
             $promedioGlobal = DB::table('incidencias')
+                ->whereNull('deleted_at')
                 ->whereNotNull('fecha_resolucion')
                 ->selectRaw('ROUND(AVG(EXTRACT(EPOCH FROM (fecha_resolucion - created_at)) / 86400)::numeric, 1) AS dias')
                 ->value('dias');
 
             $porPrioridad = DB::table('incidencias')
+                ->whereNull('deleted_at')
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS alta', [PrioridadIncidencia::Alta->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS media', [PrioridadIncidencia::Media->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS baja', [PrioridadIncidencia::Baja->value])
@@ -40,6 +43,7 @@ class DashboardController extends Controller
             $porUbicacion = DB::table('v_metricas_por_ubicacion')->get();
 
             $porProvincia = DB::table('incidencias as i')
+                ->whereNull('i.deleted_at')
                 ->join('ciudades as c', 'i.id_ciudad', '=', 'c.id_ciudad')
                 ->join('provincias as p', 'c.id_provincia', '=', 'p.id_provincia')
                 ->groupBy('p.id_provincia', 'p.nombre_provincia')
@@ -48,6 +52,7 @@ class DashboardController extends Controller
                 ->get();
 
             $porMes = DB::table('incidencias')
+                ->whereNull('deleted_at')
                 ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
                 ->groupByRaw("date_trunc('month', created_at)")
                 ->orderByRaw("date_trunc('month', created_at)")
@@ -76,6 +81,7 @@ class DashboardController extends Controller
 
         // Base reutilizable: incidencias donde este técnico tiene alguna asignación.
         $asignadas = fn () => DB::table('incidencias as i')
+            ->whereNull('i.deleted_at')
             ->join('asignaciones_incidencia as a', 'a.id_incidencia', '=', 'i.id_incidencia')
             ->where('a.id_usuario', $user->id);
 

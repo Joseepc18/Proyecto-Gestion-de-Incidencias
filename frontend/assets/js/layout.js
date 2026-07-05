@@ -32,6 +32,14 @@
       oculto: true,
     },
     {
+      page: "papelera",
+      id: "navPapelera",
+      href: "../papelera/papelera.html",
+      icon: "bi-trash3",
+      texto: "Papelera",
+      oculto: true,
+    },
+    {
       page: "mis-incidencias",
       id: "navMisIncidencias",
       href: "../mis-incidencias/mis-incidencias.html",

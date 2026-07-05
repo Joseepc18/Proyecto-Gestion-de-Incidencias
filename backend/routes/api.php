@@ -71,6 +71,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/incidencias', [IncidenciaController::class, 'crearIncidencia'])->middleware('verificado');
     // Latido del candado (sin {incidencia}): refresca el lease de todos los reclamos del admin. Va antes del binding.
     Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo']);
+    // Papelera (sin {incidencia}): va antes del binding, si no "papelera" se intenta resolver como id y da 404.
+    Route::get('/incidencias/papelera', [IncidenciaController::class, 'papelera'])->middleware(['permiso:incidencias.gestionar', '2fa']);
     Route::get('/incidencias/{incidencia}', [IncidenciaController::class, 'verIncidencia']);
     Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
@@ -108,6 +110,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
         Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
+        Route::post('/incidencias/{id}/restaurar', [IncidenciaController::class, 'restaurarIncidencia'])->where('id', '[0-9]+');
+        Route::delete('/incidencias/{id}/purgar', [IncidenciaController::class, 'purgarIncidencia'])->where('id', '[0-9]+');
     });
 
     // CRUD de catálogos de tipos y subtipos (solo super_admin).

@@ -166,7 +166,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
-    // Si la borra alguien más (el admin), se notifica el motivo al dueño con id_incidencia null (la fila está por desaparecer).
+    // Enviar a la papelera (soft delete): solo marca deleted_at, hijos y archivos se conservan hasta la purga.
     public function eliminarIncidencia(EliminarIncidenciaRequest $request, Incidencia $incidencia)
     {
         $esPropia = $incidencia->id_usuario === $request->user()->id;
@@ -175,9 +175,55 @@ class IncidenciaController extends Controller
         $motivo = $request->validated()['motivo'] ?? null;
 
         try {
+            $incidencia->delete();
+
+            if (! $esPropia) {
+                User::find($idReportador)?->notify(
+                    new IncidenciaNotification('INCIDENCIA_ELIMINADA', 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo, $incidencia->id_incidencia)
+                );
+            }
+
+            return ['message' => 'Incidencia eliminada'];
+        } catch (\Throwable $e) {
+            return $this->errorControlado($e, $request->user(), 'IncidenciaController@eliminarIncidencia', [
+                'default' => 'Error al eliminar la incidencia',
+            ]);
+        }
+    }
+
+    // Papelera: incidencias en soft delete (solo admin/super_admin, ver rutas).
+    public function papelera(Request $request)
+    {
+        $query = Incidencia::onlyTrashed()
+            ->with(['usuario', 'subtipo.tipo', 'ciudad', 'adminAtiende'])
+            ->orderBy('deleted_at', 'desc');
+
+        if ($request->filled('busqueda')) {
+            $query->where('nombre_incidencia', 'ilike', '%'.$request->busqueda.'%');
+        }
+
+        return $query->paginate($this->perPage($request))
+            ->through(fn ($incidencia) => new IncidenciaResource($incidencia));
+    }
+
+    // Restaurar desde la papelera: vuelve a aparecer donde estaba (comentarios, historial y evidencias nunca se tocaron).
+    public function restaurarIncidencia(Request $request, int $id)
+    {
+        $incidencia = Incidencia::onlyTrashed()->findOrFail($id);
+        $incidencia->restore();
+
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
+    }
+
+    // Purga definitiva: solo desde la papelera. Borra hijos + notificaciones + fila + archivos físicos.
+    public function purgarIncidencia(Request $request, int $id)
+    {
+        $incidencia = Incidencia::onlyTrashed()->with('evidencias')->findOrFail($id);
+
+        try {
             $rutasEvidencias = $incidencia->evidencias->pluck('url_evidencia');
 
-            DB::transaction(function () use ($incidencia, $esPropia, $nombreIncidencia, $idReportador, $motivo) {
+            DB::transaction(function () use ($incidencia) {
                 $incidencia->comentarios()->delete();
                 $incidencia->historialEstados()->delete();
                 $incidencia->asignaciones()->delete();
@@ -185,26 +231,19 @@ class IncidenciaController extends Controller
                 // Reemplaza el ON DELETE CASCADE que tenía la tabla propia: borra las notificaciones de esta incidencia.
                 DatabaseNotification::where('data->id_incidencia', (string) $incidencia->id_incidencia)->delete();
 
-                $incidencia->delete();
-
-                if (! $esPropia) {
-                    // id_incidencia null: la fila ya no existe, la notificación debe sobrevivir sin apuntar a ella.
-                    User::find($idReportador)?->notify(
-                        new IncidenciaNotification('INCIDENCIA_ELIMINADA', 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo, null)
-                    );
-                }
+                $incidencia->forceDelete();
             });
 
             foreach ($rutasEvidencias as $ruta) {
                 if (! Storage::disk('evidencias')->delete($ruta)) {
-                    BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@eliminarIncidencia', 'no se pudo borrar '.$ruta);
+                    BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@purgarIncidencia', 'no se pudo borrar '.$ruta);
                 }
             }
 
-            return ['message' => 'Incidencia eliminada'];
+            return ['message' => 'Incidencia eliminada definitivamente'];
         } catch (\Throwable $e) {
-            return $this->errorControlado($e, $request->user(), 'IncidenciaController@eliminarIncidencia', [
-                'default' => 'Error al eliminar la incidencia',
+            return $this->errorControlado($e, $request->user(), 'IncidenciaController@purgarIncidencia', [
+                'default' => 'Error al purgar la incidencia',
             ]);
         }
     }

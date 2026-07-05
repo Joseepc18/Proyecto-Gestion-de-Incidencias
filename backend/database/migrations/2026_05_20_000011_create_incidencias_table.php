@@ -36,7 +36,9 @@ return new class extends Migration
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_admin_atiende) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            -- Papelera: no NULL = enviada a papelera (soft delete); los hijos y archivos se conservan hasta la purga.
+            deleted_at TIMESTAMP NULL
         );
         ");
     }

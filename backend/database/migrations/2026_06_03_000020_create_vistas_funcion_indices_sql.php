@@ -43,7 +43,8 @@ return new class extends Migration
             JOIN subtipos_incidencia s ON i.id_subtipo_incidencia  = s.id_subtipo_incidencia
             JOIN tipos_incidencia    t ON s.id_tipo_incidencia     = t.id_tipo_incidencia
             JOIN ciudades            c ON i.id_ciudad              = c.id_ciudad
-            JOIN provincias          p ON c.id_provincia           = p.id_provincia;
+            JOIN provincias          p ON c.id_provincia           = p.id_provincia
+            WHERE i.deleted_at IS NULL;
         ');
 
         // Vista v_metricas_por_tipo: totales por estado y promedio de días de resolución, agrupados por tipo (dashboard).
@@ -67,7 +68,7 @@ return new class extends Migration
 
             FROM tipos_incidencia t
             LEFT JOIN subtipos_incidencia s ON t.id_tipo_incidencia   = s.id_tipo_incidencia
-            LEFT JOIN incidencias         i ON s.id_subtipo_incidencia = i.id_subtipo_incidencia
+            LEFT JOIN incidencias         i ON s.id_subtipo_incidencia = i.id_subtipo_incidencia AND i.deleted_at IS NULL
             GROUP BY t.id_tipo_incidencia, t.nombre_tipo_incidencia
             ORDER BY total DESC;
         ");
@@ -88,6 +89,7 @@ return new class extends Migration
             FROM incidencias i
             JOIN ciudades   c ON i.id_ciudad    = c.id_ciudad
             JOIN provincias p ON c.id_provincia = p.id_provincia
+            WHERE i.deleted_at IS NULL
             GROUP BY c.id_ciudad, c.nombre_ciudad, p.nombre_provincia
             ORDER BY total DESC;
         ");

@@ -30,6 +30,7 @@ class IncidenciaResource extends JsonResource
             'fecha_resolucion' => $this->fecha_resolucion,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at,
             // Habilita el botón "Reabrir" del admin cuando el reportador ya lo pidió (solo relevante en RESUELTO).
             'reapertura_pendiente' => (bool) $this->reapertura_solicitada,
             // Admin que reclamó la incidencia (columna "Atendido por" y botón "Archivar").
