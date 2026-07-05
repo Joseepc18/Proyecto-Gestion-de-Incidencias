@@ -175,7 +175,7 @@ function renderEvidenciasReporteEditable() {
 
     const img = document.createElement("img");
     img.loading = "lazy";
-    img.src = "/storage/" + ev.url_evidencia;
+    img.src = ev.url_completa;
     img.className = "evidencia-foto evidencia-foto-md rounded";
     img.alt = "Evidencia";
 

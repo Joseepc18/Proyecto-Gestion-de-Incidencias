@@ -137,7 +137,7 @@ class Incidencia extends Model
     public function guardarEvidencias(array $fotos, int $idUsuario, ?string $tipo, array &$rutasGuardadas): void
     {
         foreach ($fotos as $foto) {
-            $ruta = $foto->store('incidencias', 'public');
+            $ruta = $foto->store('incidencias', 'evidencias');
             if ($ruta === false) {
                 throw new AlmacenamientoException('No se pudo guardar la foto en el disco');
             }

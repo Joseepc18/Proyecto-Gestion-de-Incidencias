@@ -124,7 +124,7 @@ class IncidenciaController extends Controller
             return $this->errorControlado($e, $request->user(), 'IncidenciaController@crearIncidencia', [
                 'ARCHIVO' => 'No se pudieron guardar las fotos. Intenta de nuevo.',
                 'default' => 'Error al crear la incidencia',
-            ], fn () => Storage::disk('public')->delete($rutasGuardadas));
+            ], fn () => Storage::disk('evidencias')->delete($rutasGuardadas));
         }
     }
 
@@ -196,7 +196,7 @@ class IncidenciaController extends Controller
             });
 
             foreach ($rutasEvidencias as $ruta) {
-                if (! Storage::disk('public')->delete($ruta)) {
+                if (! Storage::disk('evidencias')->delete($ruta)) {
                     BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@eliminarIncidencia', 'no se pudo borrar '.$ruta);
                 }
             }

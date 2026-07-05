@@ -56,7 +56,7 @@ function montarCarrusel(contenedor, evidencias, mensajeVacio) {
 
   // Pinta la foto actual (sin animación): se usa al montar y a mitad de la animación de navegar().
   function pintar() {
-    const url = "/storage/" + evidencias[indice].url_evidencia;
+    const url = evidencias[indice].url_completa;
     img.src = url;
     img.alt = "Evidencia " + (indice + 1) + " de " + evidencias.length;
     img.dataset.lightbox = url;

@@ -260,7 +260,7 @@ async function seleccionarIncidencia(id) {
 
     const imgCompacta = document.getElementById("detalleImagen");
     if (inc.evidencias && inc.evidencias.length > 0) {
-      imgCompacta.src = "/storage/" + inc.evidencias[0].url_evidencia;
+      imgCompacta.src = inc.evidencias[0].url_completa;
       imgCompacta.classList.remove("d-none");
     } else {
       imgCompacta.removeAttribute("src");

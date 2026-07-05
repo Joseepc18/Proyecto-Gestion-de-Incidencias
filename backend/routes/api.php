@@ -49,6 +49,11 @@ Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEma
 // Segundo factor del login (público): la credencial es el challenge_token efímero emitido por /login.
 Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1');
 
+// Archivo de evidencia privado: lo carga el <img> (sin token Bearer), por eso la credencial es la firma con expiración.
+Route::get('/evidencias/{evidencia}/archivo', [EvidenciaController::class, 'archivo'])
+    ->name('evidencias.archivo')
+    ->middleware('signed');
+
 // Rutas protegidas (token Sanctum). throttle:120,1 = 120 req/min por usuario (Laravel keyea por id, no por IP); holgado para el polling de la campana.
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario

@@ -35,17 +35,17 @@ class EvidenciaController extends Controller
                 $incidencia->guardarEvidencias($request->file('fotos'), $user->id, $tipo, $rutasGuardadas);
             });
         } catch (AlmacenamientoException $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
+            Storage::disk('evidencias')->delete($rutasGuardadas);
             BitacoraError::registrar($user, 'ARCHIVO', 'EvidenciaController@subir', $e->getMessage());
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (QueryException $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
+            Storage::disk('evidencias')->delete($rutasGuardadas);
             BitacoraError::registrar($user, 'BASE_DATOS', 'EvidenciaController@subir', $e->getMessage(), $e);
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
         } catch (\Throwable $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
+            Storage::disk('evidencias')->delete($rutasGuardadas);
             BitacoraError::registrar($user, 'SERVIDOR', 'EvidenciaController@subir', $e->getMessage());
 
             return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
@@ -66,9 +66,22 @@ class EvidenciaController extends Controller
     {
         $this->authorize('eliminar', $evidencia);
 
-        Storage::disk('public')->delete($evidencia->url_evidencia);
+        Storage::disk('evidencias')->delete($evidencia->url_evidencia);
         $evidencia->delete();
 
         return ['message' => 'Foto eliminada'];
+    }
+
+    // Sirve el archivo desde el disco privado. Protegida por firma (middleware signed): el <img> no manda token,
+    // la autorización real ocurrió al generar la URL firmada dentro de la respuesta ya autorizada de la incidencia.
+    public function archivo(Evidencia $evidencia)
+    {
+        $disco = Storage::disk('evidencias');
+
+        if (! $disco->exists($evidencia->url_evidencia)) {
+            abort(404);
+        }
+
+        return $disco->response($evidencia->url_evidencia);
     }
 }

@@ -47,6 +47,14 @@ return [
             'report' => false,
         ],
 
+        // Evidencias privadas: fuera de app/public, así Nginx no las sirve. Se acceden por ruta firmada.
+        'evidencias' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/evidencias'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
