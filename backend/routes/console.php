@@ -16,6 +16,9 @@ Schedule::command('incidencias:archivar-resueltas')->hourly();
 // Sube un nivel de prioridad a las PENDIENTE sin atender hace más de 24h.
 Schedule::command('incidencias:escalar-antiguas')->hourly();
 
+// Avisa por correo (una sola vez por hilo) a quien tenga mensajes del chat sin leer hace más de 24h.
+Schedule::command('incidencias:recordar-chat-sin-leer')->hourly();
+
 // Email a admin/super_admin con el resumen del día; 7am hora del servidor.
 Schedule::command('incidencias:digest-diario')->dailyAt('07:00');
 

@@ -15,6 +15,7 @@ use App\Http\Requests\CambiarEstadoRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
 use App\Http\Requests\EliminarIncidenciaRequest;
 use App\Http\Requests\LiberarReclamoRequest;
+use App\Http\Requests\RechazarReaperturaRequest;
 use App\Http\Requests\ReclamarIncidenciaRequest;
 use App\Http\Requests\SolicitarReaperturaRequest;
 use App\Http\Resources\HistorialEstadoResource;
@@ -299,6 +300,23 @@ class IncidenciaController extends Controller
         );
 
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
+    }
+
+    // El admin decide no reabrir: apaga la bandera (sin tocar el estado) y avisa al reportador por qué se queda como estaba.
+    public function rechazarReapertura(RechazarReaperturaRequest $request, Incidencia $incidencia)
+    {
+        $incidencia->update(['reapertura_solicitada' => false]);
+
+        if ($reportador = User::find($incidencia->id_usuario)) {
+            $reportador->notify(new IncidenciaNotification(
+                'REAPERTURA_RECHAZADA',
+                'Revisamos tu solicitud de reapertura: la incidencia se mantiene resuelta: '.$incidencia->nombre_incidencia,
+                $incidencia->id_incidencia,
+                correo: true,
+            ));
+        }
+
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
     // "Reclamar" v2: el candado es un lease con latido. El primer admin que reclama queda como dueño,

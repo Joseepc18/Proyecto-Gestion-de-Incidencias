@@ -19,9 +19,14 @@ class EnviarNotificacionCambioEstado
 
         [$tipo, $msgReportador, $msgTecnicos] = $this->mensajes($evento->estadoAnterior, $evento->estadoNuevo, $nombre);
 
-        // Al reportador, salvo que sea quien hizo el cambio. correo: true → también le llega por email.
+        // Correo al reportador solo en los dos hitos que le importan: se resolvió, o se reabrió tras su
+        // solicitud. Los demás cambios (ej. admin la pasa a EN_PROCESO) quedan solo en la campanita.
+        $esHitoRelevante = $evento->estadoNuevo === EstadoIncidencia::Resuelto->value
+            || ($evento->estadoAnterior === EstadoIncidencia::Resuelto->value && $evento->estadoNuevo === EstadoIncidencia::EnProceso->value);
+
+        // Al reportador, salvo que sea quien hizo el cambio.
         if ($incidencia->id_usuario !== $actor && ($reportador = User::find($incidencia->id_usuario))) {
-            $reportador->notify(new IncidenciaNotification($tipo, $msgReportador, $incidencia->id_incidencia, correo: true));
+            $reportador->notify(new IncidenciaNotification($tipo, $msgReportador, $incidencia->id_incidencia, correo: $esHitoRelevante));
         }
 
         // A cada técnico asignado (responsable y apoyo), menos el actor.

@@ -118,6 +118,18 @@ class IncidenciaPolicy
             : Response::deny('Solo puedes solicitar la reapertura de una incidencia ya resuelta.');
     }
 
+    // Rechazar la solicitud de reapertura: solo admin, y solo si hay una solicitud pendiente.
+    public function rechazarReapertura(User $user, Incidencia $incidencia): Response
+    {
+        if (! $user->esAdmin()) {
+            return Response::deny('No autorizado');
+        }
+
+        return $incidencia->reapertura_solicitada
+            ? Response::allow()
+            : Response::deny('Esta incidencia no tiene una solicitud de reapertura pendiente.');
+    }
+
     // Asignar un técnico: solo admin (el estado RESUELTO ya lo valida el controller con su propio 422).
     public function asignarTecnico(User $user, Incidencia $incidencia): Response
     {

@@ -163,44 +163,75 @@ function marcarEstadoActivo() {
   });
 }
 
-// El admin reabre solo si hay una solicitud del reportador sin revisar
+// El admin reabre o rechaza, solo si hay una solicitud del reportador sin revisar
 function prepararReaperturaAdmin(id) {
-  const btn = document.getElementById("btnReabrirIncidencia");
-  if (!btn) return;
-  btn.classList.toggle(
-    "d-none",
-    !(incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente),
-  );
-  if (btn.dataset.cableado === "1") return;
-  btn.dataset.cableado = "1";
+  const hayPendiente = incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente;
 
-  btn.addEventListener("click", async function () {
-    const ok = await confirmar({
-      titulo: "Reabrir incidencia",
-      mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
-      textoConfirmar: "Reabrir",
-    });
-    if (!ok) return;
+  const btnReabrir = document.getElementById("btnReabrirIncidencia");
+  const btnRechazar = document.getElementById("btnRechazarReapertura");
+  if (!btnReabrir || !btnRechazar) return;
 
-    btn.disabled = true;
-    try {
-      const actualizada = await apiFetch("/incidencias/" + id + "/estado", {
-        method: "PATCH",
-        body: JSON.stringify({ estado_incidencia: "EN_PROCESO" }),
+  btnReabrir.classList.toggle("d-none", !hayPendiente);
+  btnRechazar.classList.toggle("d-none", !hayPendiente);
+
+  if (btnReabrir.dataset.cableado !== "1") {
+    btnReabrir.dataset.cableado = "1";
+    btnReabrir.addEventListener("click", async function () {
+      const ok = await confirmar({
+        titulo: "Reabrir incidencia",
+        mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
+        textoConfirmar: "Reabrir",
       });
-      incActual.estado_incidencia = actualizada.estado_incidencia;
-      incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
-      pintarBadgeEstado(incActual.estado_incidencia);
-      marcarEstadoActivo();
-      btn.classList.add("d-none");
-      cargarHistorial(id);
-      mostrarToast("Incidencia reabierta", "success");
-    } catch (error) {
-      mostrarToast(error.message, "error");
-    } finally {
-      btn.disabled = false;
-    }
-  });
+      if (!ok) return;
+
+      btnReabrir.disabled = true;
+      try {
+        const actualizada = await apiFetch("/incidencias/" + id + "/estado", {
+          method: "PATCH",
+          body: JSON.stringify({ estado_incidencia: "EN_PROCESO" }),
+        });
+        incActual.estado_incidencia = actualizada.estado_incidencia;
+        incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
+        pintarBadgeEstado(incActual.estado_incidencia);
+        marcarEstadoActivo();
+        btnReabrir.classList.add("d-none");
+        btnRechazar.classList.add("d-none");
+        cargarHistorial(id);
+        mostrarToast("Incidencia reabierta", "success");
+      } catch (error) {
+        mostrarToast(error.message, "error");
+      } finally {
+        btnReabrir.disabled = false;
+      }
+    });
+  }
+
+  if (btnRechazar.dataset.cableado !== "1") {
+    btnRechazar.dataset.cableado = "1";
+    btnRechazar.addEventListener("click", async function () {
+      const ok = await confirmar({
+        titulo: "No reabrir la incidencia",
+        mensaje: "La incidencia se mantiene resuelta y se le avisará al reportador por qué.",
+        textoConfirmar: "No reabrir",
+      });
+      if (!ok) return;
+
+      btnRechazar.disabled = true;
+      try {
+        const actualizada = await apiFetch("/incidencias/" + id + "/rechazar-reapertura", {
+          method: "POST",
+        });
+        incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
+        btnReabrir.classList.add("d-none");
+        btnRechazar.classList.add("d-none");
+        mostrarToast("Solicitud de reapertura rechazada", "success");
+      } catch (error) {
+        mostrarToast(error.message, "error");
+      } finally {
+        btnRechazar.disabled = false;
+      }
+    });
+  }
 }
 
 // Milisegundos sin latido tras los que el candado se ve "vencido" en el cliente (igual al TTL del backend).
@@ -344,13 +375,11 @@ function gestionAlActualizarEnVivo() {
   if (!esAdmin) return;
   marcarPrioridadActiva();
   pintarAtencionAdmin();
+  const hayPendiente = incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente;
   const btnReabrir = document.getElementById("btnReabrirIncidencia");
-  if (btnReabrir) {
-    btnReabrir.classList.toggle(
-      "d-none",
-      !(incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente),
-    );
-  }
+  const btnRechazar = document.getElementById("btnRechazarReapertura");
+  if (btnReabrir) btnReabrir.classList.toggle("d-none", !hayPendiente);
+  if (btnRechazar) btnRechazar.classList.toggle("d-none", !hayPendiente);
 }
 
 // Hook del núcleo: llegó un cambio de candado en vivo (otro admin reclamó/liberó).

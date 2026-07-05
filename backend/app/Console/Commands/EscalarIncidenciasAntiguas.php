@@ -40,6 +40,7 @@ class EscalarIncidenciasAntiguas extends Command
                 'ESCALADO',
                 'Incidencia sin atender hace más de 24h, prioridad subida de '.$anterior.' a '.self::SIGUIENTE_PRIORIDAD[$anterior].': '.$incidencia->nombre_incidencia,
                 $incidencia->id_incidencia,
+                correo: true,
             ));
         }
 
