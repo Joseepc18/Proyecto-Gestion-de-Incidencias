@@ -67,7 +67,7 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        return response()->json(new UserResource($user->load('rol')), 201);
+        return (new UserResource($user->load('rol')))->response()->setStatusCode(201);
     }
 
     // Actualizar un usuario (nombre, correo, rol y, opcionalmente, contraseña).

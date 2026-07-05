@@ -111,15 +111,12 @@ class IncidenciaController extends Controller
             // Aparece sola en el tablero de gestión de los admins (aparte de la campana, que es la notificación).
             broadcast(new IncidenciaCreada($incidencia));
 
-            return response()->json(
-                new IncidenciaResource($incidencia->load([
-                    'usuario',
-                    'subtipo.tipo',
-                    'ciudad',
-                    'evidencias',
-                ])),
-                201
-            );
+            return (new IncidenciaResource($incidencia->load([
+                'usuario',
+                'subtipo.tipo',
+                'ciudad',
+                'evidencias',
+            ])))->response()->setStatusCode(201);
         } catch (\Throwable $e) {
             return $this->errorControlado($e, $request->user(), 'IncidenciaController@crearIncidencia', [
                 'ARCHIVO' => 'No se pudieron guardar las fotos. Intenta de nuevo.',
