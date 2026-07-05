@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -46,6 +47,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn ($request, $throwable) => $request->is('api/*') || $request->expectsJson()
         );
+
+        // Mensajes por defecto de Laravel que vienen en inglés (no pasan por lang/es): se traducen aquí.
+        $exceptions->render(function (ThrottleRequestsException $e, $request) {
+            return response()->json(['message' => 'Demasiados intentos. Espera un momento y vuelve a intentar.'], 429);
+        });
+
+        $exceptions->render(function (AuthorizationException $e, $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(['message' => 'No autorizado.'], 403);
+            }
+        });
 
         // Registro centralizado en bitacora_errores (todos los controllers); solo errores de servidor: se ignoran validación/auth/HTTP.
         $exceptions->report(function (Throwable $e) {

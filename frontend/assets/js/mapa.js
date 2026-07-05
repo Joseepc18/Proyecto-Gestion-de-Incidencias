@@ -230,7 +230,10 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
   ]);
   let marcador = null;
 
-  function poner(lat, lng) {
+  // notificar=false para colocar el marcador sin disparar onCambio (carga inicial en edición,
+  // que no debe recalcular ni sobrescribir la ciudad ya guardada).
+  function poner(lat, lng, notificar) {
+    if (notificar === undefined) notificar = true;
     if (marcador) {
       marcador.setLngLat([lng, lat]);
     } else {
@@ -242,7 +245,7 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
         if (onCambio) onCambio(p.lat, p.lng);
       });
     }
-    if (onCambio) onCambio(lat, lng);
+    if (notificar && onCambio) onCambio(lat, lng);
   }
 
   map.on("click", function (e) {
@@ -259,7 +262,7 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
 
   function setUbicacion(lat, lng) {
     map.flyTo({ center: [lng, lat], zoom: 16 });
-    poner(lat, lng);
+    poner(lat, lng, false);
   }
 
   return { map, usarMiUbicacion, setUbicacion };

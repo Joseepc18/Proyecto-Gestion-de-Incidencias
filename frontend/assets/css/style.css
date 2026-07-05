@@ -557,8 +557,9 @@ a {
   display: inline-grid;
   place-items: center;
   overflow: hidden;
-  width: 240px;
-  height: 240px;
+  /* Fluido: 240px en escritorio y se encoge en pantallas chicas sin desbordar. */
+  width: clamp(150px, 45vw, 240px);
+  height: clamp(150px, 45vw, 240px);
   background: linear-gradient(135deg, #2563eb, #0f766e);
   color: #ffffff;
   font-size: var(--fs-display);
