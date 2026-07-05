@@ -25,8 +25,8 @@ Route::prefix('panel')->group(function () {
                 : redirect()->route('panel.catalogos');
         });
 
-        // Gestión de usuarios (solo super_admin).
-        Route::middleware('permiso:usuarios.administrar')->group(function () {
+        // Gestión de usuarios (solo super_admin); exige 2FA igual que su equivalente en la API.
+        Route::middleware(['permiso:usuarios.administrar', '2fa'])->group(function () {
             Route::get('/usuarios', [PanelUsuarioController::class, 'index'])->name('panel.usuarios');
             Route::get('/usuarios/crear', [PanelUsuarioController::class, 'crear'])->name('panel.usuarios.crear');
             Route::post('/usuarios', [PanelUsuarioController::class, 'store'])->name('panel.usuarios.store');
@@ -37,8 +37,8 @@ Route::prefix('panel')->group(function () {
                 ->whereNumber('id')->name('panel.usuarios.restaurar');
         });
 
-        // Tipos y subtipos de incidencia (solo super_admin).
-        Route::middleware('permiso:catalogos.administrar')->group(function () {
+        // Tipos y subtipos de incidencia (solo super_admin); exige 2FA igual que su equivalente en la API.
+        Route::middleware(['permiso:catalogos.administrar', '2fa'])->group(function () {
             Route::get('/catalogos', [PanelCatalogoController::class, 'index'])->name('panel.catalogos');
 
             Route::get('/catalogos/tipos/crear', [PanelCatalogoController::class, 'crearTipo'])->name('panel.catalogos.tipos.crear');

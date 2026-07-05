@@ -1,4 +1,4 @@
-@php($pagina = 'usuarios')
+@php $pagina = 'usuarios'; @endphp
 
 @extends('layouts.app')
 
