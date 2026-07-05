@@ -8,7 +8,6 @@ use App\Events\IncidenciaActualizada;
 use App\Events\IncidenciaCambioEstado;
 use App\Events\IncidenciaCreada;
 use App\Events\ReclamoCambiado;
-use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\ArchivarIncidenciaRequest;
@@ -24,7 +23,6 @@ use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\User;
 use App\Notifications\IncidenciaNotification;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
@@ -121,21 +119,11 @@ class IncidenciaController extends Controller
                 ])),
                 201
             );
-        } catch (AlmacenamientoException $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@crearIncidencia', $e->getMessage());
-
-            return response()->json(['message' => 'No se pudieron guardar las fotos. Intenta de nuevo.'], 500);
-        } catch (QueryException $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'IncidenciaController@crearIncidencia', $e->getMessage(), $e);
-
-            return response()->json(['message' => 'Error al crear la incidencia'], 500);
-        } catch (\Exception $e) {
-            Storage::disk('public')->delete($rutasGuardadas);
-            BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@crearIncidencia', $e->getMessage());
-
-            return response()->json(['message' => 'Error al crear la incidencia'], 500);
+        } catch (\Throwable $e) {
+            return $this->errorControlado($e, $request->user(), 'IncidenciaController@crearIncidencia', [
+                'ARCHIVO' => 'No se pudieron guardar las fotos. Intenta de nuevo.',
+                'default' => 'Error al crear la incidencia',
+            ], fn () => Storage::disk('public')->delete($rutasGuardadas));
         }
     }
 
@@ -213,14 +201,10 @@ class IncidenciaController extends Controller
             }
 
             return ['message' => 'Incidencia eliminada'];
-        } catch (QueryException $e) {
-            BitacoraError::registrar($request->user(), 'BASE_DATOS', 'IncidenciaController@eliminarIncidencia', $e->getMessage(), $e);
-
-            return response()->json(['message' => 'Error al eliminar la incidencia'], 500);
-        } catch (\Exception $e) {
-            BitacoraError::registrar($request->user(), 'SERVIDOR', 'IncidenciaController@eliminarIncidencia', $e->getMessage());
-
-            return response()->json(['message' => 'Error al eliminar la incidencia'], 500);
+        } catch (\Throwable $e) {
+            return $this->errorControlado($e, $request->user(), 'IncidenciaController@eliminarIncidencia', [
+                'default' => 'Error al eliminar la incidencia',
+            ]);
         }
     }
 
@@ -263,7 +247,7 @@ class IncidenciaController extends Controller
         // Regla de rol (no de la máquina): el técnico responsable solo cierra EN_PROCESO→RESUELTO.
         if (! $request->user()->esAdmin()
             && ! ($actual === EstadoIncidencia::EnProceso && $nuevo === EstadoIncidencia::Resuelto)) {
-            return response()->json(['message' => 'Transición de estado no permitida'], 422);
+            return response()->json(['message' => 'Tu rol no puede realizar ese cambio de estado'], 422);
         }
 
         if ($nuevo === EstadoIncidencia::Resuelto && $actual !== EstadoIncidencia::Resuelto) {

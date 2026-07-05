@@ -30,7 +30,7 @@ class AuthController extends Controller
     // Registrar usuario, asignarle el rol 'normal' y devolver su token.
     public function register(RegisterRequest $request)
     {
-        $rolNormal = Rol::where('nombre_rol', 'normal')->firstOrFail();
+        $rolNormal = Rol::where('nombre_rol', Rol::NORMAL)->firstOrFail();
 
         $user = User::create([
             'name' => $request->name,
@@ -296,7 +296,7 @@ class AuthController extends Controller
                 return redirect($frontend.'/login/login.html?error=google_privilegiado')->withCookie($olvidarState);
             }
 
-            $rolNormal = Rol::where('nombre_rol', 'normal')->firstOrFail();
+            $rolNormal = Rol::where('nombre_rol', Rol::NORMAL)->firstOrFail();
 
             $user = User::firstOrCreate(
                 ['email' => $googleUser->getEmail()],

@@ -20,7 +20,7 @@ class PermisoController extends Controller
                 'id_rol' => $rol->id_rol,
                 'nombre_rol' => $rol->nombre_rol,
                 // El super_admin es el superset fijo: se muestra pero no se puede editar (anti-lockout).
-                'editable' => $rol->nombre_rol !== 'super_admin',
+                'editable' => $rol->nombre_rol !== Rol::SUPER_ADMIN,
                 'permisos' => $rol->permisos->pluck('id_permiso'),
             ]),
             'permisos' => $permisos,
@@ -30,7 +30,7 @@ class PermisoController extends Controller
     // Reemplaza el set de permisos de un rol por el que envía el frontend (sync = agrega/quita el diff).
     public function sincronizar(SincronizarPermisosRequest $request, Rol $rol)
     {
-        if ($rol->nombre_rol === 'super_admin') {
+        if ($rol->nombre_rol === Rol::SUPER_ADMIN) {
             return response()->json(['message' => 'El rol super_admin no se puede modificar'], 422);
         }
 

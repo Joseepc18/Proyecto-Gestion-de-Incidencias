@@ -77,12 +77,12 @@ class User extends Authenticatable implements MustVerifyEmail
     // super_admin es superset de admin: hereda todo el poder operativo (asignar, prioridades, borrar, etc.).
     public function esAdmin(): bool
     {
-        return $this->rol && in_array($this->rol->nombre_rol, ['admin', 'super_admin'], true);
+        return $this->rol && in_array($this->rol->nombre_rol, [Rol::ADMIN, Rol::SUPER_ADMIN], true);
     }
 
     public function esSuperAdmin(): bool
     {
-        return $this->rol && $this->rol->nombre_rol === 'super_admin';
+        return $this->rol && $this->rol->nombre_rol === Rol::SUPER_ADMIN;
     }
 
     // Fuente única de verdad para autorizar por permiso (middleware, policies y recurso de sesión).
@@ -99,12 +99,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function esTecnico(): bool
     {
-        return $this->rol && $this->rol->nombre_rol === 'tecnico';
+        return $this->rol && $this->rol->nombre_rol === Rol::TECNICO;
     }
 
     public function esNormal(): bool
     {
-        return $this->rol && $this->rol->nombre_rol === 'normal';
+        return $this->rol && $this->rol->nombre_rol === Rol::NORMAL;
     }
 
     // Valida un código de 2FA: primero como TOTP del authenticator, si no como recovery code (que se consume al usarlo).

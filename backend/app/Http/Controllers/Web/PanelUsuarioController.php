@@ -111,6 +111,6 @@ class PanelUsuarioController extends Controller
     // Roles que el admin puede asignar (técnico y admin); los normales nacen por auto-registro.
     private function rolesAsignables()
     {
-        return Rol::whereIn('nombre_rol', ['tecnico', 'admin'])->orderBy('nombre_rol')->get();
+        return Rol::whereIn('nombre_rol', [Rol::TECNICO, Rol::ADMIN])->orderBy('nombre_rol')->get();
     }
 }

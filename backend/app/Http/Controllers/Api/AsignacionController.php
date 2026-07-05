@@ -11,6 +11,7 @@ use App\Http\Resources\IncidenciaResource;
 use App\Models\AsignacionIncidencia;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
+use App\Models\Rol;
 use App\Models\User;
 use App\Notifications\IncidenciaNotification;
 use Illuminate\Database\QueryException;
@@ -21,7 +22,7 @@ class AsignacionController extends Controller
     // Listar los técnicos disponibles (para el desplegable de asignación).
     public function tecnicos()
     {
-        return User::conRol('tecnico')
+        return User::conRol(Rol::TECNICO)
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
