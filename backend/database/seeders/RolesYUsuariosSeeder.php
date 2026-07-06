@@ -17,13 +17,19 @@ class RolesYUsuariosSeeder extends Seeder
         Rol::firstOrCreate(['nombre_rol' => 'tecnico']);
         Rol::firstOrCreate(['nombre_rol' => 'normal']);
 
+        // En producción las claves de las cuentas privilegiadas son obligatorias: nunca el fallback público de dev.
+        $superPassword = env('SEED_SUPERADMIN_PASSWORD');
+        $adminPassword = env('SEED_ADMIN_PASSWORD');
+        if (app()->environment('production') && (empty($superPassword) || empty($adminPassword))) {
+            throw new \RuntimeException('En producción define SEED_SUPERADMIN_PASSWORD y SEED_ADMIN_PASSWORD antes de sembrar.');
+        }
+
         // Cuenta super_admin: gestiona usuarios, catálogos y permisos (el superset).
         User::firstOrCreate(
             ['email' => 'superadmin@sistema.com'],
             [
                 'name' => 'Super Administrador',
-                // En prod la clave real vive en SEED_SUPERADMIN_PASSWORD del .env; el fallback es solo para dev.
-                'password' => Hash::make(env('SEED_SUPERADMIN_PASSWORD', 'password123')),
+                'password' => Hash::make($superPassword ?: 'password123'),
                 'id_rol' => $superAdmin->id_rol,
             ]
         );
@@ -34,8 +40,7 @@ class RolesYUsuariosSeeder extends Seeder
             ['email' => 'admin@sistema.com'],
             [
                 'name' => 'Administrador',
-                // En prod la clave real vive en SEED_ADMIN_PASSWORD del .env; el fallback es solo para dev.
-                'password' => Hash::make(env('SEED_ADMIN_PASSWORD', 'password123')),
+                'password' => Hash::make($adminPassword ?: 'password123'),
                 'id_rol' => $admin->id_rol,
             ]
         );

@@ -21,7 +21,10 @@ class EvidenciaController extends Controller
     public function subir(SubirEvidenciaRequest $request, Incidencia $incidencia)
     {
         $user = $request->user();
-        $tipo = $request->input('tipo_evidencia', TipoEvidencia::Reporte->value);
+        // El tipo lo decide el rol, no el cliente: el técnico RESPONSABLE sube RESOLUCION; el autor, REPORTE.
+        $tipo = $user->esResponsableDe($incidencia)
+            ? TipoEvidencia::Resolucion->value
+            : TipoEvidencia::Reporte->value;
         $limite = Incidencia::LIMITE_EVIDENCIAS_POR_TIPO;
 
         if ($incidencia->evidencias()->where('tipo_evidencia', $tipo)->count() + count($request->file('fotos')) > $limite) {

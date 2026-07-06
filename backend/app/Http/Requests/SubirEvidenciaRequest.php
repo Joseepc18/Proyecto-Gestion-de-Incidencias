@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\TipoEvidencia;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 class SubirEvidenciaRequest extends FormRequest
 {
@@ -19,10 +17,10 @@ class SubirEvidenciaRequest extends FormRequest
 
     public function rules(): array
     {
+        // El tipo_evidencia ya NO se valida ni se usa del cliente: lo deriva el controller según el rol.
         return [
             'fotos' => 'required|array',
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:3072',
-            'tipo_evidencia' => ['nullable', Rule::enum(TipoEvidencia::class)],
         ];
     }
 }

@@ -67,32 +67,34 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/catalogos/provincias', [CatalogoController::class, 'provincias']);
     Route::get('/catalogos/paises', [CatalogoController::class, 'paises']);
 
-    // Apis de incidencias
+    // Apis de incidencias.
+    // El '2fa' de las acciones de gestión solo bloquea si esAdmin() sin 2FA (ver RequiereDosFactor):
+    // técnicos y ciudadanos, que también usan estado/comentar/evidencias, pasan sin verse afectados.
     Route::get('/incidencias', [IncidenciaController::class, 'listadoIncidencias']);
     Route::post('/incidencias', [IncidenciaController::class, 'crearIncidencia'])->middleware('verificado');
     // Latido del candado (sin {incidencia}): refresca el lease de todos los reclamos del admin. Va antes del binding.
-    Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo']);
+    Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo'])->middleware('2fa');
     // Papelera (sin {incidencia}): va antes del binding, si no "papelera" se intenta resolver como id y da 404.
     Route::get('/incidencias/papelera', [IncidenciaController::class, 'papelera'])->middleware(['permiso:incidencias.papelera', '2fa']);
     Route::get('/incidencias/{incidencia}', [IncidenciaController::class, 'verIncidencia']);
-    Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
-    Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
+    Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia'])->middleware('2fa');
+    Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia'])->middleware('2fa');
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
-    Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado']);
+    Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado'])->middleware('2fa');
     Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura']);
-    Route::post('/incidencias/{incidencia}/rechazar-reapertura', [IncidenciaController::class, 'rechazarReapertura']);
-    Route::post('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'reclamarIncidencia']);
-    Route::delete('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'liberarReclamo']);
-    Route::patch('/incidencias/{incidencia}/archivar', [IncidenciaController::class, 'archivarIncidencia']);
+    Route::post('/incidencias/{incidencia}/rechazar-reapertura', [IncidenciaController::class, 'rechazarReapertura'])->middleware('2fa');
+    Route::post('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'reclamarIncidencia'])->middleware('2fa');
+    Route::delete('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'liberarReclamo'])->middleware('2fa');
+    Route::patch('/incidencias/{incidencia}/archivar', [IncidenciaController::class, 'archivarIncidencia'])->middleware('2fa');
 
-    // Apis de comentarios
+    // Apis de comentarios (crear/editar exigen 2FA a los admin; técnicos y ciudadanos pasan).
     Route::get('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'listadoComentarios']);
-    Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario']);
-    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'actualizarComentario']);
+    Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario'])->middleware('2fa');
+    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'actualizarComentario'])->middleware('2fa');
 
-    // Apis de evidencias (fotos)
-    Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir']);
-    Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar']);
+    // Apis de evidencias (fotos): subir/eliminar exigen 2FA a los admin; autor y técnico responsable pasan.
+    Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir'])->middleware('2fa');
+    Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar'])->middleware('2fa');
 
     // Apis de notificaciones (del usuario autenticado)
     Route::get('/notificaciones', [NotificacionController::class, 'listado']);

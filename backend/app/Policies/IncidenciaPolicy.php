@@ -5,10 +5,13 @@ namespace App\Policies;
 use App\Enums\EstadoIncidencia;
 use App\Models\Incidencia;
 use App\Models\User;
+use App\Policies\Concerns\AutorizaReclamo;
 use Illuminate\Auth\Access\Response;
 
 class IncidenciaPolicy
 {
+    use AutorizaReclamo;
+
     // Ver una incidencia: el admin ve todas; el ciudadano las suyas; el técnico solo las que tiene asignadas.
     public function ver(User $user, Incidencia $incidencia): Response
     {
@@ -165,18 +168,6 @@ class IncidenciaPolicy
         return $incidencia->id_admin_atiende === $user->id
             ? Response::allow()
             : Response::deny('Solo el administrador que reclamó esta incidencia puede archivarla.');
-    }
-
-    // Un admin solo gestiona (asignar/cambiar estado/editar) la incidencia que él mismo reclamó: el reclamo es el candado.
-    private function esDuenoDelReclamo(User $user, Incidencia $incidencia): Response
-    {
-        if ($incidencia->id_admin_atiende === null) {
-            return Response::deny('Reclama la incidencia antes de gestionarla.');
-        }
-
-        return $incidencia->id_admin_atiende === $user->id
-            ? Response::allow()
-            : Response::deny('Otro administrador está atendiendo esta incidencia.');
     }
 
     // El técnico está asignado a la incidencia (responsable o de apoyo).

@@ -146,6 +146,24 @@ async function apiFetch(endpoint, opciones = {}) {
     try {
       data = await respuesta.json();
     } catch {
+      data = null;
+    }
+
+    // El backend exige 2FA para esta acción y el admin aún no lo activó: mensaje claro + llevar al setup (perfil),
+    // en vez del "Error al cargar…" genérico. Se salta si ya estamos en perfil/login para no rebotar.
+    if (
+      respuesta.status === 403 &&
+      data &&
+      data.two_factor_required &&
+      !window.location.pathname.includes("/perfil/") &&
+      !window.location.pathname.includes("/login/")
+    ) {
+      toastFlash("Activa la verificación en dos pasos para realizar esta acción.", "warning");
+      window.location.href = "../perfil/perfil.html";
+      return new Promise(function () {});
+    }
+
+    if (data === null) {
       // Respuesta sin JSON (502/HTML del túnel o Nginx, o 204 sin cuerpo): mensaje legible.
       if (!respuesta.ok) {
         throw new Error(

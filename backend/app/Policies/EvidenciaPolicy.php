@@ -4,11 +4,16 @@ namespace App\Policies;
 
 use App\Models\Evidencia;
 use App\Models\User;
+use App\Policies\Concerns\AutorizaReclamo;
 use Illuminate\Auth\Access\Response;
 
 class EvidenciaPolicy
 {
-    // Eliminar una foto: admin, autor o técnico RESPONSABLE; en RESUELTO/CERRADO nadie borra (expediente cerrado).
+    use AutorizaReclamo;
+
+    // Eliminar una foto: autor o técnico RESPONSABLE siempre; un admin solo con el permiso de gestión
+    // y siendo dueño del reclamo (mismo candado que asignar). El super_admin view-only queda fuera.
+    // En RESUELTO/CERRADO nadie borra (expediente cerrado).
     public function eliminar(User $user, Evidencia $evidencia): Response
     {
         $incidencia = $evidencia->incidencia;
@@ -17,8 +22,14 @@ class EvidenciaPolicy
             return Response::deny('No se pueden eliminar evidencias de una incidencia resuelta.');
         }
 
-        return $user->participaEn($incidencia)
-            ? Response::allow()
-            : Response::deny('No autorizado');
+        if ($incidencia->id_usuario === $user->id || $user->esResponsableDe($incidencia)) {
+            return Response::allow();
+        }
+
+        if ($user->tienePermiso('incidencias.gestionar')) {
+            return $this->esDuenoDelReclamo($user, $incidencia);
+        }
+
+        return Response::deny('No autorizado');
     }
 }

@@ -4,13 +4,20 @@ namespace App\Policies;
 
 use App\Models\AsignacionIncidencia;
 use App\Models\User;
+use App\Policies\Concerns\AutorizaReclamo;
 use Illuminate\Auth\Access\Response;
 
 class AsignacionPolicy
 {
-    // Quitar una asignación: solo admin (el estado RESUELTO ya lo valida el controller con su propio 422).
+    use AutorizaReclamo;
+
+    // Quitar una asignación: mismo candado que asignar → el admin dueño del reclamo (el estado RESUELTO ya lo valida el controller con su 422).
     public function quitar(User $user, AsignacionIncidencia $asignacion): Response
     {
-        return $user->esAdmin() ? Response::allow() : Response::deny('No autorizado');
+        if (! $user->tienePermiso('incidencias.gestionar')) {
+            return Response::deny('No autorizado');
+        }
+
+        return $this->esDuenoDelReclamo($user, $asignacion->incidencia);
     }
 }

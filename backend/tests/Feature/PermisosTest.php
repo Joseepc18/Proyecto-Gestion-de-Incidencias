@@ -257,4 +257,51 @@ class PermisosTest extends TestCase
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", ['comentario' => 'Hola'])
             ->assertStatus(403);
     }
+
+    // M-01: quitar una asignación respeta el candado — solo el admin dueño del reclamo, no cualquier admin.
+    public function test_admin_ajeno_no_puede_quitar_asignacion_de_incidencia_reclamada_por_otro(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $tecnico = $this->crearUsuario('tecnico');
+        $dueno = $this->crearUsuario('admin');
+        $otro = $this->crearUsuario('admin');
+
+        // El dueño reclama y asigna un técnico de apoyo.
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'APOYO',
+        ])->assertCreated();
+
+        $asignacion = AsignacionIncidencia::where('id_incidencia', $incidencia->id_incidencia)->firstOrFail();
+
+        // Otro admin (no dueño del reclamo) no puede quitarla.
+        Sanctum::actingAs($otro);
+        $this->deleteJson("/api/asignaciones/{$asignacion->id_asignacion}")->assertStatus(403);
+
+        // El dueño sí puede.
+        Sanctum::actingAs($dueno);
+        $this->deleteJson("/api/asignaciones/{$asignacion->id_asignacion}")->assertOk();
+    }
+
+    // M-02: el super_admin es view-only también para las evidencias (no las borra); el autor sí puede la suya.
+    public function test_super_admin_view_only_no_puede_eliminar_evidencia(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        $evidencia = $incidencia->evidencias()->create([
+            'url_evidencia' => 'incidencias/prueba.jpg',
+            'id_usuario' => $autor->id,
+            'tipo_evidencia' => 'REPORTE',
+        ]);
+
+        // El super_admin (view-only, sin incidencias.gestionar) no puede borrar la evidencia.
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertStatus(403);
+
+        // El autor sí puede borrar la suya (incidencia PENDIENTE).
+        Sanctum::actingAs($autor);
+        $this->deleteJson("/api/evidencias/{$evidencia->id_evidencia}")->assertOk();
+    }
 }
