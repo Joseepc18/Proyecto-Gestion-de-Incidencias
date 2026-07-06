@@ -1,6 +1,6 @@
 // permisos.js — Matriz roles × permisos (solo super_admin): checkboxes agrupados y guardado por diff.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, escaparHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, escaparHtml, requerirSesion, cablearLogout, etiquetaRol */
 
 // Estado inicial (rolId -> Set de id_permiso) para calcular el diff al guardar.
 let inicial = {};
@@ -56,8 +56,7 @@ async function cargarMatriz() {
 function pintarCabecera(roles) {
   const celdasRol = roles
     .map(function (rol) {
-      const marca = rol.editable ? "" : ' <i class="bi bi-lock-fill" aria-hidden="true"></i>';
-      return '<th class="text-center">' + escaparHtml(titulo(rol.nombre_rol)) + marca + "</th>";
+      return '<th class="text-center">' + escaparHtml(etiquetaRol(rol.nombre_rol)) + "</th>";
     })
     .join("");
   document.getElementById("theadPermisos").innerHTML = "<tr><th>Permiso</th>" + celdasRol + "</tr>";
@@ -98,10 +97,9 @@ function pintarFilas(permisos, roles) {
   });
 }
 
-// Una celda con el checkbox del par (rol, permiso); deshabilitado si el rol no es editable.
+// Una celda con el checkbox del par (rol, permiso).
 function celdaCheck(rol, permiso) {
   const marcado = inicial[rol.id_rol].has(permiso.id_permiso) ? " checked" : "";
-  const deshabilitado = rol.editable ? "" : " disabled";
   return (
     '<td class="text-center"><input class="form-check-input" type="checkbox" data-rol="' +
     rol.id_rol +
@@ -109,10 +107,9 @@ function celdaCheck(rol, permiso) {
     permiso.id_permiso +
     '"' +
     marcado +
-    deshabilitado +
     ' aria-label="' +
     escaparHtml(
-      titulo(rol.nombre_rol) + ": " + (permiso.descripcion_permiso || permiso.clave_permiso),
+      etiquetaRol(rol.nombre_rol) + ": " + (permiso.descripcion_permiso || permiso.clave_permiso),
     ) +
     '" /></td>'
   );

@@ -1,6 +1,6 @@
 // usuarios.js — Gestión de usuarios (solo admin): listar, crear, editar y suspender en modal.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, escaparHtml, renderizarPaginacion, abrirModal, crearMenuAcciones, iniciales, filaVaciaHtml, requerirSesion, cablearLogout, etiquetaRol */
 
 let usuarioActualId = null;
 // Roles que el admin puede asignar (los normales nacen por auto-registro, no se crean aquí).
@@ -95,7 +95,7 @@ async function cargarUsuarios() {
       const nombreRol = u.rol ? u.rol.nombre_rol : "";
       const badge = document.createElement("span");
       badge.className = "badge-rol badge-rol-" + (nombreRol || "normal");
-      badge.textContent = nombreRol || "—";
+      badge.textContent = nombreRol ? etiquetaRol(nombreRol) : "—";
       tdRol.appendChild(badge);
       tr.appendChild(tdRol);
 
@@ -212,7 +212,7 @@ function abrirModalUsuario(u) {
         '"' +
         (editando && u.id_rol === r.id_rol ? " selected" : "") +
         ">" +
-        escaparHtml(r.nombre_rol) +
+        escaparHtml(etiquetaRol(r.nombre_rol)) +
         "</option>",
     )
     .join("");

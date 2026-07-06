@@ -1,6 +1,6 @@
 // detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
-/* exported incActual, usuarioActual, esAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
+/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
 /* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo */
@@ -8,6 +8,8 @@
 let incActual = null;
 let usuarioActual = null;
 let esAdmin = false;
+// Rol admin o super_admin (independiente del permiso incidencias.gestionar): decide visibilidad del chat.
+let esRolAdmin = false;
 let idActual = null;
 // técnico responsable actual (chat + herramientas del responsable)
 let responsableActual = null;
@@ -18,7 +20,7 @@ let picker = null;
 
 // Lista a la que vuelve cada rol (también se usa si no llega ?id=).
 function rutaLista(rol) {
-  return rol === "admin"
+  return rol === "admin" || rol === "super_admin"
     ? "../gestion-incidencias/gestion-incidencias.html"
     : "../mis-incidencias/mis-incidencias.html";
 }
@@ -28,11 +30,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!usuarioActual) return;
   let rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
   esAdmin = tienePermiso("incidencias.gestionar");
+  esRolAdmin = rol === "admin" || rol === "super_admin";
   aplicarMenuRol(rol, usuarioActual.permisos);
 
   const btnVolver = document.getElementById("btnVolver");
   btnVolver.href = rutaLista(rol);
-  const textoVolver = rol === "admin" ? "Volver a incidencias" : "Volver a la lista";
+  const textoVolver = esRolAdmin ? "Volver a incidencias" : "Volver a la lista";
   btnVolver.innerHTML = '<i class="bi bi-arrow-left" aria-hidden="true"></i> ' + textoVolver;
 
   cablearLogout();
@@ -331,10 +334,10 @@ async function cargarHistorial(id) {
   }
 }
 
-// Solo ven el chat el admin, el reportador y el técnico responsable (el apoyo queda fuera).
+// Ven el chat el admin/super_admin (aunque este último no escriba), el reportador y el técnico responsable (el apoyo queda fuera).
 function puedeUsarChat() {
   if (!usuarioActual) return false;
-  if (esAdmin) return true;
+  if (esRolAdmin) return true;
   if (incActual && incActual.usuario && incActual.usuario.id === usuarioActual.id) return true;
   return esResponsableActual();
 }
@@ -368,9 +371,12 @@ function configurarChatFlotante(id) {
     pintarParticipantes();
     if (!chatCreado) {
       crearChat("chatContenedor", id, usuarioActual, {
+        // Terminal (RESUELTO/CERRADO) para todos, o admin/super_admin view-only (sin incidencias.gestionar).
         soloLectura:
-          incActual &&
-          (incActual.estado_incidencia === "RESUELTO" || incActual.estado_incidencia === "CERRADO"),
+          (incActual &&
+            (incActual.estado_incidencia === "RESUELTO" ||
+              incActual.estado_incidencia === "CERRADO")) ||
+          (esRolAdmin && !esAdmin),
       });
       chatCreado = true;
     }

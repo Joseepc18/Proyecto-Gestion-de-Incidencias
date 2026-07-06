@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Permisos por rol - Sistema de Gestión de Incidencias" />
-    <title>Permisos | Gestión de Incidencias</title>
+    <meta name="description" content="Bitácora de errores - Sistema de Gestión de Incidencias" />
+    <title>Bitácora | Gestión de Incidencias</title>
 
     <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
     <link
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="../assets/css/style.css" />
   </head>
 
-  <body data-page="permisos">
+  <body data-page="bitacora">
     <div class="admin-shell">
       <div class="sidebar-backdrop" data-sidebar-close></div>
 
@@ -33,32 +33,57 @@
           <div class="container-fluid px-3 px-lg-4 py-4">
             <div class="page-heading">
               <div class="page-heading-copy">
-                <span class="page-icon"><i class="bi bi-shield-lock" aria-hidden="true"></i></span>
+                <span class="page-icon"><i class="bi bi-journal-text" aria-hidden="true"></i></span>
                 <div>
-                  <p class="eyebrow mb-1">Administración</p>
-                  <h1 class="h3 mb-1">Permisos por rol</h1>
-                  <p class="text-muted mb-0">
-                    Marca qué puede hacer cada rol. Siempre debe quedar al menos un rol con el
-                    permiso "Asignar permisos a los roles".
-                  </p>
+                  <p class="eyebrow mb-1">Auditoría</p>
+                  <h1 class="h3 mb-1">Bitácora de errores</h1>
+                  <p class="text-muted mb-0">Registro de errores capturados por el sistema.</p>
                 </div>
-              </div>
-              <div class="heading-actions">
-                <button class="btn btn-primary btn-sm" type="button" id="btnGuardar" disabled>
-                  <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
-                </button>
               </div>
             </div>
 
             <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="h5 mb-1 section-title">
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                    <span>Errores registrados</span>
+                  </h2>
+                </div>
+              </div>
+
+              <div class="px-3 pb-3">
+                <select
+                  class="form-select form-select-sm w-auto"
+                  id="filtroTipo"
+                  aria-label="Filtrar por tipo de error"
+                >
+                  <option value="">Todos los tipos</option>
+                  <option value="AUTENTICACION">Autenticación</option>
+                  <option value="VALIDACION">Validación</option>
+                  <option value="BASE_DATOS">Base de datos</option>
+                  <option value="SERVIDOR">Servidor</option>
+                  <option value="ARCHIVO">Archivo</option>
+                </select>
+              </div>
+
               <div class="table-responsive">
-                <table class="table tabla-cards align-middle mb-0" id="tablaPermisos">
-                  <thead id="theadPermisos"></thead>
-                  <tbody id="tbodyPermisos">
-                    <!-- permisos.js llena esto dinámicamente -->
+                <table class="table tabla-cards align-middle mb-0" id="tablaBitacora">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Usuario</th>
+                      <th>Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyBitacora">
+                    <!-- bitacora.js llena esto dinámicamente -->
                   </tbody>
                 </table>
               </div>
+
+              <div id="contenedorPaginacion" class="px-3 pb-3"></div>
             </section>
           </div>
         </main>
@@ -77,6 +102,7 @@
     <script defer src="../assets/vendors/reverb/echo.iife.js"></script>
     <script defer src="../assets/js/realtime.js"></script>
     <script defer src="../assets/js/notificaciones.js"></script>
-    <script defer src="permisos.js"></script>
+    <script defer src="../assets/js/paginacion.js"></script>
+    <script defer src="bitacora.js"></script>
   </body>
 </html>

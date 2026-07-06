@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!usuario) return;
 
   const rol = usuario.rol ? usuario.rol.nombre_rol : "";
-  if (!tienePermiso("incidencias.gestionar")) {
+  if (!tienePermiso("dashboard.ver")) {
     window.location.replace(inicioSegunRol(rol));
     return;
   }

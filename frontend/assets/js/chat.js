@@ -1,13 +1,7 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch, obtenerEcho, iniciales */
+/* global apiFetch, obtenerEcho, iniciales, etiquetaRol */
 /* exported crearChat */
-
-// Etiqueta legible del rol del autor de un mensaje.
-function etiquetaRol(rol) {
-  const mapa = { admin: "Administrador", tecnico: "Técnico", normal: "Reportador" };
-  return mapa[rol] || "Usuario";
-}
 
 // opts.soloLectura deshabilita el input y muestra un aviso (incidencia RESUELTO)
 function crearChat(idContenedor, idIncidencia, usuario, opts) {

@@ -182,24 +182,29 @@ function aplicarMenuRol(rol, permisos) {
   if (Array.isArray(permisos)) localStorage.setItem("permisos_usuario", JSON.stringify(permisos));
   const esNormal = rol === "normal";
   const esTecnico = rol === "tecnico";
+  const esRolAdmin = rol === "admin" || rol === "super_admin";
   const gestiona = tienePermiso("incidencias.gestionar");
+  const veDashboard = tienePermiso("dashboard.ver");
+  const vePapelera = tienePermiso("incidencias.papelera");
+  const veBitacora = tienePermiso("bitacora.ver");
 
   function mostrar(id, visible) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("d-none", !visible);
   }
 
-  mostrar("navInicio", gestiona || esTecnico);
+  mostrar("navInicio", gestiona || veDashboard || esTecnico);
 
   // El "Inicio" del técnico es su propio panel (el href por defecto apunta al del admin).
   const navInicio = document.getElementById("navInicio");
   if (navInicio && esTecnico) navInicio.href = "../inicio-tecnico/inicio-tecnico.html";
-  mostrar("navIncidencias", gestiona);
-  mostrar("navPapelera", gestiona);
+  mostrar("navIncidencias", gestiona || veDashboard);
+  mostrar("navPapelera", vePapelera);
+  mostrar("navBitacora", veBitacora);
   mostrar("navPermisos", tienePermiso("permisos.administrar"));
   mostrar("navUsuarios", tienePermiso("usuarios.administrar"));
   mostrar("navCatalogos", tienePermiso("catalogos.administrar"));
-  mostrar("navMisIncidencias", !gestiona);
+  mostrar("navMisIncidencias", !gestiona && !esRolAdmin);
   mostrar("navRegistrar", gestiona || esNormal);
 
   const navMis = document.getElementById("navMisIncidencias");

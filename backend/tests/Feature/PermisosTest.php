@@ -232,4 +232,29 @@ class PermisosTest extends TestCase
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
             ->assertOk();
     }
+
+    // super_admin es view-only (sin incidencias.gestionar): ve el detalle y el chat, pero no gestiona ni escribe.
+    public function test_super_admin_ve_pero_no_gestiona_ni_escribe_en_el_chat(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $tecnico = $this->crearUsuario('tecnico');
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+
+        // Ve el detalle y el chat (aunque esté vacío).
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
+
+        // No gestiona: ni cambia estado, ni asigna, ni reclama, ni edita, ni escribe en el chat.
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
+            ->assertStatus(403);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ])->assertStatus(403);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertStatus(403);
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", ['nombre_incidencia' => 'Super admin no edita'])
+            ->assertStatus(403);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", ['comentario' => 'Hola'])
+            ->assertStatus(403);
+    }
 }

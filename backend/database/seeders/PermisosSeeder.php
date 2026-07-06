@@ -12,7 +12,11 @@ class PermisosSeeder extends Seeder
     {
         // Catálogo de permisos base (clave => descripción). firstOrCreate = idempotente.
         $definiciones = [
-            'incidencias.gestionar' => 'Gestionar incidencias: asignar técnicos, dashboard y prioridades',
+            'incidencias.gestionar' => 'Gestionar incidencias: cambiar estado, asignar técnicos y prioridades',
+            'incidencias.papelera' => 'Ver, restaurar y purgar la papelera de incidencias',
+            'incidencias.eliminar' => 'Eliminar (enviar a la papelera) una incidencia',
+            'dashboard.ver' => 'Ver el dashboard de métricas',
+            'bitacora.ver' => 'Ver la bitácora de errores del sistema',
             'usuarios.administrar' => 'Administrar usuarios y sus roles',
             'catalogos.administrar' => 'Administrar tipos y subtipos de incidencia',
             'permisos.administrar' => 'Asignar permisos a los roles',
@@ -26,10 +30,11 @@ class PermisosSeeder extends Seeder
             );
         }
 
-        // Permisos base por rol. super_admin es el superset; admin conserva lo operativo.
+        // Permisos base por rol. super_admin es view-only en incidencias (audita, no gestiona);
+        // admin conserva todo lo operativo.
         $asignaciones = [
-            'super_admin' => ['incidencias.gestionar', 'usuarios.administrar', 'catalogos.administrar', 'permisos.administrar'],
-            'admin' => ['incidencias.gestionar'],
+            'super_admin' => ['dashboard.ver', 'bitacora.ver', 'usuarios.administrar', 'catalogos.administrar', 'permisos.administrar'],
+            'admin' => ['incidencias.gestionar', 'incidencias.papelera', 'incidencias.eliminar', 'dashboard.ver'],
             'tecnico' => [],
             'normal' => [],
         ];

@@ -19,8 +19,8 @@ class PermisoController extends Controller
             'roles' => $roles->map(fn ($rol) => [
                 'id_rol' => $rol->id_rol,
                 'nombre_rol' => $rol->nombre_rol,
-                // El super_admin es el superset fijo: se muestra pero no se puede editar (anti-lockout).
-                'editable' => $rol->nombre_rol !== Rol::SUPER_ADMIN,
+                // Todos los roles son editables; la única red de seguridad es el anti-lockout de sincronizar().
+                'editable' => true,
                 'permisos' => $rol->permisos->pluck('id_permiso'),
             ]),
             'permisos' => $permisos,
@@ -30,12 +30,29 @@ class PermisoController extends Controller
     // Reemplaza el set de permisos de un rol por el que envía el frontend (sync = agrega/quita el diff).
     public function sincronizar(SincronizarPermisosRequest $request, Rol $rol)
     {
-        if ($rol->nombre_rol === Rol::SUPER_ADMIN) {
-            return response()->json(['message' => 'El rol super_admin no se puede modificar'], 422);
+        $nuevosIds = $request->validated()['permisos'] ?? [];
+
+        if ($this->dejaSinAdministradores($rol, $nuevosIds)) {
+            return response()->json(['message' => 'Debe quedar al menos un rol con el permiso permisos.administrar'], 422);
         }
 
-        $rol->permisos()->sync($request->validated()['permisos'] ?? []);
+        $rol->permisos()->sync($nuevosIds);
 
         return response()->json(['message' => 'Permisos actualizados']);
+    }
+
+    // Anti-lockout: si este cambio deja a $rol sin permisos.administrar, tiene que quedar OTRO rol que sí lo tenga.
+    private function dejaSinAdministradores(Rol $rol, array $nuevosIds): bool
+    {
+        $idAdministrar = Permiso::where('clave_permiso', 'permisos.administrar')->value('id_permiso');
+        if (! $idAdministrar || in_array($idAdministrar, $nuevosIds, true)) {
+            return false;
+        }
+
+        $otroRolLoTiene = Rol::where('id_rol', '!=', $rol->id_rol)
+            ->whereHas('permisos', fn ($q) => $q->where('clave_permiso', 'permisos.administrar'))
+            ->exists();
+
+        return ! $otroRolLoTiene;
     }
 }

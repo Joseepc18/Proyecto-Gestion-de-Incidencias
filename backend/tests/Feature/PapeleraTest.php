@@ -41,7 +41,8 @@ class PapeleraTest extends TestCase
         $this->getJson('/api/incidencias/'.$incidencia->id_incidencia)->assertStatus(404);
     }
 
-    public function test_solo_admin_o_super_admin_ven_la_papelera(): void
+    // super_admin es view-only y ya no tiene incidencias.papelera por defecto (ver PermisosNuevosTest).
+    public function test_solo_quien_tiene_incidencias_papelera_ve_la_papelera(): void
     {
         $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
         $incidencia->delete();

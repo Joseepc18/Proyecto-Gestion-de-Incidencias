@@ -30,14 +30,14 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar los detalles: admin dueño del reclamo, o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
+    // Editar los detalles: quien tiene el permiso de gestión y es dueño del reclamo, o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; no se puede editar.');
         }
 
-        if ($user->esAdmin()) {
+        if ($user->tienePermiso('incidencias.gestionar')) {
             return $this->esDuenoDelReclamo($user, $incidencia);
         }
 
@@ -50,10 +50,10 @@ class IncidenciaPolicy
         return Response::deny('No autorizado');
     }
 
-    // Eliminar: admin (siempre) o autor (solo mientras esté PENDIENTE, para no perder trazabilidad).
+    // Eliminar: quien tiene el permiso de eliminar (siempre) o autor (solo mientras esté PENDIENTE, para no perder trazabilidad).
     public function eliminar(User $user, Incidencia $incidencia): Response
     {
-        if ($user->esAdmin()) {
+        if ($user->tienePermiso('incidencias.eliminar')) {
             return Response::allow();
         }
 
@@ -73,7 +73,7 @@ class IncidenciaPolicy
             return Response::allow();
         }
 
-        return $user->esAdmin()
+        return $user->tienePermiso('incidencias.gestionar')
             ? $this->esDuenoDelReclamo($user, $incidencia)
             : Response::deny('No autorizado');
     }
@@ -99,10 +99,15 @@ class IncidenciaPolicy
     }
 
     // Escribir en el chat: mismos roles que verChat, pero NO en RESUELTO/CERRADO (solo lectura).
+    // Un admin/super_admin sin el permiso de gestión (view-only) ve el chat pero no escribe en él.
     public function comentar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
+        }
+
+        if ($user->esAdmin() && ! $user->tienePermiso('incidencias.gestionar')) {
+            return Response::deny('No autorizado');
         }
 
         return $user->participaEn($incidencia)
@@ -122,10 +127,10 @@ class IncidenciaPolicy
             : Response::deny('Solo puedes solicitar la reapertura de una incidencia ya resuelta.');
     }
 
-    // Rechazar la solicitud de reapertura: solo admin, y solo si hay una solicitud pendiente.
+    // Rechazar la solicitud de reapertura: quien tiene el permiso de gestión, y solo si hay una solicitud pendiente.
     public function rechazarReapertura(User $user, Incidencia $incidencia): Response
     {
-        if (! $user->esAdmin()) {
+        if (! $user->tienePermiso('incidencias.gestionar')) {
             return Response::deny('No autorizado');
         }
 
@@ -134,18 +139,18 @@ class IncidenciaPolicy
             : Response::deny('Esta incidencia no tiene una solicitud de reapertura pendiente.');
     }
 
-    // Asignar un técnico: solo el admin DUEÑO del reclamo (el estado RESUELTO ya lo valida el controller con su propio 422).
+    // Asignar un técnico: solo quien tiene el permiso de gestión y es DUEÑO del reclamo (el estado RESUELTO ya lo valida el controller con su propio 422).
     public function asignarTecnico(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin()
+        return $user->tienePermiso('incidencias.gestionar')
             ? $this->esDuenoDelReclamo($user, $incidencia)
             : Response::deny('No autorizado');
     }
 
-    // Reclamar: cualquier admin puede intentarlo; el controller valida de forma atómica que nadie se le adelante.
+    // Reclamar: cualquiera con el permiso de gestión puede intentarlo; el controller valida de forma atómica que nadie se le adelante.
     public function reclamar(User $user, Incidencia $incidencia): Response
     {
-        if (! $user->esAdmin()) {
+        if (! $user->tienePermiso('incidencias.gestionar')) {
             return Response::deny('No autorizado');
         }
 

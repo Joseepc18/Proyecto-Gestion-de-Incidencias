@@ -8,7 +8,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
 
-  if (!tienePermiso("incidencias.gestionar")) {
+  // dashboard.ver entra en modo view-only (sin incidencias.gestionar): ve el listado, sin acciones de gestión.
+  if (!tienePermiso("incidencias.gestionar") && !tienePermiso("dashboard.ver")) {
     window.location.href = "../mis-incidencias/mis-incidencias.html";
     return;
   }

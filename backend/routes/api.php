@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AsignacionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BitacoraController;
 use App\Http\Controllers\Api\BroadcastAuthController;
 use App\Http\Controllers\Api\CatalogoAdminController;
 use App\Http\Controllers\Api\CatalogoController;
@@ -72,7 +73,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Latido del candado (sin {incidencia}): refresca el lease de todos los reclamos del admin. Va antes del binding.
     Route::post('/incidencias/reclamo/heartbeat', [IncidenciaController::class, 'heartbeatReclamo']);
     // Papelera (sin {incidencia}): va antes del binding, si no "papelera" se intenta resolver como id y da 404.
-    Route::get('/incidencias/papelera', [IncidenciaController::class, 'papelera'])->middleware(['permiso:incidencias.gestionar', '2fa']);
+    Route::get('/incidencias/papelera', [IncidenciaController::class, 'papelera'])->middleware(['permiso:incidencias.papelera', '2fa']);
     Route::get('/incidencias/{incidencia}', [IncidenciaController::class, 'verIncidencia']);
     Route::put('/incidencias/{incidencia}', [IncidenciaController::class, 'actualizarIncidencia']);
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia']);
@@ -104,14 +105,27 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Métricas del panel del técnico (el rol se valida en el controller)
     Route::get('/dashboard/tecnico', [DashboardController::class, 'metricasTecnico']);
 
-    // Gestión operativa de incidencias (admin y super_admin): asignar técnicos y dashboard.
+    // Gestión operativa de incidencias (admin): asignar técnicos.
     Route::middleware(['permiso:incidencias.gestionar', '2fa'])->group(function () {
         Route::post('/incidencias/{incidencia}/asignaciones', [AsignacionController::class, 'asignar']);
         Route::delete('/asignaciones/{asignacion}', [AsignacionController::class, 'quitar']);
         Route::get('/tecnicos', [AsignacionController::class, 'tecnicos']);
-        Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
+    });
+
+    // Papelera de incidencias: restaurar y purgar (separado de incidencias.gestionar).
+    Route::middleware(['permiso:incidencias.papelera', '2fa'])->group(function () {
         Route::post('/incidencias/{id}/restaurar', [IncidenciaController::class, 'restaurarIncidencia'])->where('id', '[0-9]+');
         Route::delete('/incidencias/{id}/purgar', [IncidenciaController::class, 'purgarIncidencia'])->where('id', '[0-9]+');
+    });
+
+    // Dashboard de métricas: view-only, no implica poder gestionar incidencias.
+    Route::middleware(['permiso:dashboard.ver', '2fa'])->group(function () {
+        Route::get('/dashboard/metricas', [DashboardController::class, 'metricas']);
+    });
+
+    // Bitácora de errores del sistema (auditoría).
+    Route::middleware(['permiso:bitacora.ver', '2fa'])->group(function () {
+        Route::get('/bitacora', [BitacoraController::class, 'listado']);
     });
 
     // CRUD de catálogos de tipos y subtipos (solo super_admin).

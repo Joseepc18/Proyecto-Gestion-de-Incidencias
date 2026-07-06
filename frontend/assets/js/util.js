@@ -1,7 +1,18 @@
 // util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto, celdaTabla */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto, celdaTabla, etiquetaRol */
 /* global escaparHtml */
+
+// Etiqueta legible de un nombre_rol; única fuente para no mostrar el slug crudo en la UI.
+function etiquetaRol(nombreRol) {
+  const mapa = {
+    super_admin: "Administrador del Sistema",
+    admin: "Administrador",
+    tecnico: "Técnico",
+    normal: "Reportador",
+  };
+  return mapa[nombreRol] || "Usuario";
+}
 
 // Normaliza un texto (sin tildes, minúsculas, espacios colapsados) para cruzar nombres o GeoJSON.
 function normalizarTexto(texto) {

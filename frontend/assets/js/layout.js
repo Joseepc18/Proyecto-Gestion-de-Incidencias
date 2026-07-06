@@ -80,6 +80,14 @@
       oculto: true,
     },
     {
+      page: "bitacora",
+      id: "navBitacora",
+      href: "../bitacora/bitacora.html",
+      icon: "bi-journal-text",
+      texto: "Bitácora",
+      oculto: true,
+    },
+    {
       page: "notificaciones",
       href: "../notificaciones/notificaciones.html",
       icon: "bi-mailbox",

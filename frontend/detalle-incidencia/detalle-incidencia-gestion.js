@@ -238,11 +238,6 @@ function prepararReaperturaAdmin(id) {
 // Milisegundos sin latido tras los que el candado se ve "vencido" en el cliente (igual al TTL del backend).
 const RECLAMO_TTL_MS = 120000;
 
-// ¿Quien mira es super_admin? (puede forzar liberar un reclamo activo de otro admin).
-function soySuperAdmin() {
-  return !!(usuarioActual && usuarioActual.rol && usuarioActual.rol.nombre_rol === "super_admin");
-}
-
 // El admin solo gestiona (estado/prioridad/asignaciones) la incidencia que él mismo reclamó (candado del backend).
 function soyDuenoDelReclamo() {
   return !!(usuarioActual && incActual.id_admin_atiende === usuarioActual.id);
@@ -381,7 +376,8 @@ function pintarAtencionAdmin() {
   const iconoForzar = document.createElement("i");
   iconoForzar.className = "bi bi-unlock me-1";
   btnForzar.append(iconoForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
-  btnForzar.classList.toggle("d-none", !(soyYo || (!vencido && soySuperAdmin())));
+  // Solo el dueño libera su propio reclamo; nadie más puede forzar uno activo (super_admin es view-only).
+  btnForzar.classList.toggle("d-none", !soyYo);
   // Archivar solo el dueño y solo si está RESUELTO.
   btnArchivar.classList.toggle("d-none", !(soyYo && incActual.estado_incidencia === "RESUELTO"));
 }

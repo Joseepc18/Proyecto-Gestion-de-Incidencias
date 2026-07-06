@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
 
-  if (!tienePermiso("incidencias.gestionar")) {
+  if (!tienePermiso("incidencias.papelera")) {
     window.location.href = "../mis-incidencias/mis-incidencias.html";
     return;
   }
