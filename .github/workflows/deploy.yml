@@ -19,11 +19,6 @@ jobs:
         with:
           node-version: "22"
 
-      # Assets del panel Blade (Vite → backend/public/build). El contenedor backend los ve por bind-mount.
-      - name: Build de assets del panel (Vite)
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias/backend
-        run: npm ci && npm run build
-
       # SPA estático minificado + hasheado (esbuild → frontend/dist). Nginx lo sirve vía FRONTEND_ROOT.
       - name: Build del SPA (esbuild)
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias/frontend
