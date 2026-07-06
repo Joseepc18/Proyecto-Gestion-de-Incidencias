@@ -154,6 +154,8 @@ class PermisosTest extends TestCase
         ])->assertOk();
 
         Sanctum::actingAs($admin);
+        // El admin reclama la incidencia antes de gestionarla (reabrir).
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
         $respuesta = $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'EN_PROCESO',
         ])->assertOk()->json();
@@ -188,5 +190,46 @@ class PermisosTest extends TestCase
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
             'motivo' => 'Otro motivo distinto para reintentar.',
         ])->assertStatus(422);
+    }
+
+    // El reclamo es el candado: sin reclamar, el admin no puede gestionar (cambiar estado, asignar ni editar).
+    public function test_admin_debe_reclamar_antes_de_gestionar(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $tecnico = $this->crearUsuario('tecnico');
+        Sanctum::actingAs($this->crearUsuario('admin'));
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
+            ->assertStatus(403);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
+            'id_usuario' => $tecnico->id,
+            'rol_asignado' => 'RESPONSABLE',
+        ])->assertStatus(403);
+
+        $this->putJson("/api/incidencias/{$incidencia->id_incidencia}", ['nombre_incidencia' => 'Admin edita sin reclamar'])
+            ->assertStatus(403);
+    }
+
+    // Una vez reclamada, solo el admin dueño gestiona; otro admin puede ver pero no tocar.
+    public function test_admin_ajeno_no_puede_gestionar_incidencia_reclamada_por_otro(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $dueno = $this->crearUsuario('admin');
+        $otro = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // El otro admin ve el detalle, pero no puede cambiar el estado ni asignar.
+        Sanctum::actingAs($otro);
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")->assertOk();
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
+            ->assertStatus(403);
+
+        // El dueño sí puede gestionarla.
+        Sanctum::actingAs($dueno);
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'EN_PROCESO'])
+            ->assertOk();
     }
 }

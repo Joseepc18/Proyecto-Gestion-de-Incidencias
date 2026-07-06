@@ -273,12 +273,11 @@ async function seleccionarIncidencia(id) {
     document.getElementById("detalleVacio").classList.add("d-none");
     document.getElementById("detalleContenido").classList.remove("d-none");
 
-    // En movil se pasa a la vista de detalle (mapa + tarjeta). El mapa estaba oculto,
-    // asi que tras mostrarlo Mapbox debe recalcular su tamano (resize) o sale en gris.
+    // En movil se pasa a la vista de detalle; el mapa estaba oculto, asi que Leaflet recalcula su tamano (invalidateSize) o sale en gris.
     document.querySelector(".mis-mapa-main").classList.add("mis-ver-detalle");
     requestAnimationFrame(function () {
       if (mapa) {
-        mapa.map.resize();
+        mapa.map.invalidateSize();
         mapa.enfocar(id);
       }
     });

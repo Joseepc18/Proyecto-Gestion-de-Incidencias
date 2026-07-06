@@ -29,8 +29,7 @@ function obtenerEcho() {
 // Evita arrancar el latido dos veces si dos scripts de la página lo piden.
 let heartbeatIniciado = false;
 
-// Mantiene vivo el candado del admin: mientras la pestaña esté visible, avisa al servidor cada 40s.
-// Si cierra la app deja de latir y, pasado el TTL, otro admin puede tomar sus reclamos.
+// Mantiene vivo el candado del admin: con la pestaña visible avisa al servidor cada 40s; si cierra la app deja de latir y, pasado el TTL, otro admin toma sus reclamos.
 function iniciarHeartbeatReclamo() {
   if (heartbeatIniciado) return;
   heartbeatIniciado = true;

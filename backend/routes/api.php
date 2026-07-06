@@ -53,7 +53,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::post('/email/reenviar-verificacion', [AuthController::class, 'reenviarVerificacion'])->middleware('throttle:6,1');
 
     // Gestión del segundo factor (TOTP) del propio usuario.
-    Route::post('/2fa/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->middleware('throttle:6,1');
     Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:6,1');
     Route::delete('/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1');
 

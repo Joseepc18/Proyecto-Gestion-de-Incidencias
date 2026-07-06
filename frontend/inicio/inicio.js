@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema, aplicarTemaChart, crearDonaEstado */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, ejesChart */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -148,15 +148,7 @@ function pintarGraficas(datos) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { position: "bottom" } },
-        scales: {
-          x: { stacked: true, grid: { display: false }, ticks: { color: colorTexto } },
-          y: {
-            stacked: true,
-            beginAtZero: true,
-            ticks: { precision: 0, color: colorTexto },
-            grid: { color: colorGrid },
-          },
-        },
+        scales: ejesChart(colorTexto, colorGrid, { apilado: true, precision: 0 }),
       },
     }),
   );
@@ -207,10 +199,7 @@ function pintarGraficas(datos) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: colorTexto } },
-          y: { beginAtZero: true, ticks: { color: colorTexto }, grid: { color: colorGrid } },
-        },
+        scales: ejesChart(colorTexto, colorGrid),
       },
     }),
   );
@@ -241,14 +230,7 @@ function pintarGraficas(datos) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: colorTexto } },
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0, color: colorTexto },
-            grid: { color: colorGrid },
-          },
-        },
+        scales: ejesChart(colorTexto, colorGrid, { precision: 0 }),
       },
     }),
   );

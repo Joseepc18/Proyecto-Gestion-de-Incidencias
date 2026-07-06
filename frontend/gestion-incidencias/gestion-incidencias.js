@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout, obtenerEcho, iniciarHeartbeatReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout, obtenerEcho, iniciarHeartbeatReclamo */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -149,17 +149,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // Construye una celda con texto escapado para evitar XSS en innerHTML.
-  // label alimenta el data-label que se muestra como encabezado en la vista de tarjeta (movil).
-  // secundario oculta la celda en la tarjeta movil (el dato sigue en la pagina de detalle).
-  function td(texto, label, secundario) {
-    const celda = document.createElement("td");
-    if (label) celda.dataset.label = label;
-    if (secundario) celda.classList.add("td-secundario");
-    celda.textContent = texto;
-    return celda;
-  }
-
   function renderizarTabla(incidencias) {
     const tbody = document.getElementById("tbodyIncidencias");
     tbody.innerHTML = "";
@@ -188,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const fecha = new Date(inc.created_at).toLocaleDateString("es-EC");
       const esAutor = inc.id_usuario === usuarioActual.id;
 
-      tr.appendChild(td(inc.nombre_incidencia, "Título"));
+      tr.appendChild(celdaTabla(inc.nombre_incidencia, "Título"));
 
       const tdEstado = document.createElement("td");
       tdEstado.dataset.label = "Estado";
@@ -202,16 +191,16 @@ document.addEventListener("DOMContentLoaded", async function () {
       tdPri.innerHTML = badgePrioridadHtml(inc.prioridad_incidencia);
       tr.appendChild(tdPri);
 
-      tr.appendChild(td(nombreTipo, "Tipo", true));
-      tr.appendChild(td(nombreCiudad, "Ciudad", true));
-      const tdAtendido = td(
+      tr.appendChild(celdaTabla(nombreTipo, "Tipo", true));
+      tr.appendChild(celdaTabla(nombreCiudad, "Ciudad", true));
+      const tdAtendido = celdaTabla(
         inc.admin_atiende ? inc.admin_atiende.name : "Sin reclamar",
         "Atendido por",
         true,
       );
       tdAtendido.dataset.col = "atendido";
       tr.appendChild(tdAtendido);
-      tr.appendChild(td(fecha, "Fecha", true));
+      tr.appendChild(celdaTabla(fecha, "Fecha", true));
 
       const acciones = [
         {

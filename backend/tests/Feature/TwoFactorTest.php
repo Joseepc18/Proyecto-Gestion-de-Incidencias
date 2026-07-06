@@ -92,6 +92,29 @@ class TwoFactorTest extends TestCase
             ->assertJsonStructure(['access_token', 'user' => ['rol' => ['nombre_rol']]]);
     }
 
+    public function test_challenge_con_codigo_invalido_no_emite_token(): void
+    {
+        $this->usuarioConDosFactor();
+
+        $challenge = $this->postJson('/api/login', ['email' => 'dosfactor@ejemplo.com', 'password' => 'password'])
+            ->json('challenge_token');
+
+        // Con un código incorrecto no se emite token: es la defensa contra el bypass del segundo factor.
+        $this->postJson('/api/2fa/challenge', ['challenge_token' => $challenge, 'code' => '000000'])
+            ->assertStatus(422)
+            ->assertJsonMissingPath('access_token');
+    }
+
+    public function test_challenge_con_token_invalido_es_rechazado(): void
+    {
+        $this->usuarioConDosFactor();
+
+        // Un challenge_token que nunca se emitió (o ya expiró) no autoriza el segundo factor.
+        $this->postJson('/api/2fa/challenge', ['challenge_token' => 'token-inexistente', 'code' => '000000'])
+            ->assertStatus(422)
+            ->assertJsonMissingPath('access_token');
+    }
+
     public function test_disable_requiere_codigo_valido(): void
     {
         $usuario = $this->usuarioConDosFactor();

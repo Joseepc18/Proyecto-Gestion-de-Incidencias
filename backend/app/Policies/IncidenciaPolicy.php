@@ -30,7 +30,7 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar los detalles: solo admin o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
+    // Editar los detalles: admin dueño del reclamo, o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->esTerminal()) {
@@ -38,7 +38,7 @@ class IncidenciaPolicy
         }
 
         if ($user->esAdmin()) {
-            return Response::allow();
+            return $this->esDuenoDelReclamo($user, $incidencia);
         }
 
         if ($incidencia->id_usuario === $user->id) {
@@ -66,11 +66,15 @@ class IncidenciaPolicy
         return Response::deny('No autorizado');
     }
 
-    // Cambiar de estado: admin o el técnico RESPONSABLE (el de APOYO no cambia estados; la transición la valida el controller).
+    // Cambiar de estado: el admin DUEÑO del reclamo, o el técnico RESPONSABLE (el de APOYO no cambia estados; la transición la valida el controller).
     public function cambiarEstado(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() || $user->esResponsableDe($incidencia)
-            ? Response::allow()
+        if ($user->esResponsableDe($incidencia)) {
+            return Response::allow();
+        }
+
+        return $user->esAdmin()
+            ? $this->esDuenoDelReclamo($user, $incidencia)
             : Response::deny('No autorizado');
     }
 
@@ -130,10 +134,12 @@ class IncidenciaPolicy
             : Response::deny('Esta incidencia no tiene una solicitud de reapertura pendiente.');
     }
 
-    // Asignar un técnico: solo admin (el estado RESUELTO ya lo valida el controller con su propio 422).
+    // Asignar un técnico: solo el admin DUEÑO del reclamo (el estado RESUELTO ya lo valida el controller con su propio 422).
     public function asignarTecnico(User $user, Incidencia $incidencia): Response
     {
-        return $user->esAdmin() ? Response::allow() : Response::deny('No autorizado');
+        return $user->esAdmin()
+            ? $this->esDuenoDelReclamo($user, $incidencia)
+            : Response::deny('No autorizado');
     }
 
     // Reclamar: cualquier admin puede intentarlo; el controller valida de forma atómica que nadie se le adelante.
@@ -154,6 +160,18 @@ class IncidenciaPolicy
         return $incidencia->id_admin_atiende === $user->id
             ? Response::allow()
             : Response::deny('Solo el administrador que reclamó esta incidencia puede archivarla.');
+    }
+
+    // Un admin solo gestiona (asignar/cambiar estado/editar) la incidencia que él mismo reclamó: el reclamo es el candado.
+    private function esDuenoDelReclamo(User $user, Incidencia $incidencia): Response
+    {
+        if ($incidencia->id_admin_atiende === null) {
+            return Response::deny('Reclama la incidencia antes de gestionarla.');
+        }
+
+        return $incidencia->id_admin_atiende === $user->id
+            ? Response::allow()
+            : Response::deny('Otro administrador está atendiendo esta incidencia.');
     }
 
     // El técnico está asignado a la incidencia (responsable o de apoyo).

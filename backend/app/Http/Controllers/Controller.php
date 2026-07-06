@@ -21,9 +21,7 @@ abstract class Controller
         return min(max((int) $request->input('per_page', $porDefecto), 1), 100);
     }
 
-    // Cierre uniforme de los catch: corre la limpieza opcional (borrar archivos, etc.), mapea la
-    // excepción a su tipo_error, la bitacoriza y responde 500 con el mensaje que toque por tipo.
-    // $mensajes = ['ARCHIVO' => '...', 'default' => '...']; se usa la clave del tipo o 'default'.
+    // Cierre uniforme de los catch: corre la limpieza opcional, mapea la excepción a su tipo_error, la bitacoriza y responde 500 según el tipo ($mensajes: clave del tipo o 'default').
     protected function errorControlado(\Throwable $e, ?User $actor, string $contexto, array $mensajes, ?callable $limpieza = null): JsonResponse
     {
         if ($limpieza) {

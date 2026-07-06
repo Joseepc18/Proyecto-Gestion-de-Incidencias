@@ -1,7 +1,7 @@
 // dashboard.js — Helpers compartidos por los paneles de inicio (admin y técnico).
 
 /* global Chart */
-/* exported colorVar, observarCambioDeTema, aplicarTemaChart, crearDonaEstado */
+/* exported colorVar, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, ejesChart */
 
 // Lee un color de las variables --admin-* (cambian solas en modo claro/oscuro).
 function colorVar(nombre) {
@@ -44,6 +44,19 @@ function crearDonaEstado(canvas, totales) {
       plugins: { legend: { position: "bottom" } },
     },
   });
+}
+
+// Ejes X/Y estándar de las gráficas de barras/línea del dashboard (rejilla y colores según el tema).
+function ejesChart(colorTexto, colorGrid, opciones) {
+  opciones = opciones || {};
+  const x = { grid: { display: false }, ticks: { color: colorTexto } };
+  const y = { beginAtZero: true, ticks: { color: colorTexto }, grid: { color: colorGrid } };
+  if (opciones.precision != null) y.ticks.precision = opciones.precision;
+  if (opciones.apilado) {
+    x.stacked = true;
+    y.stacked = true;
+  }
+  return { x: x, y: y };
 }
 
 // Repinta (gráficas/mapa) cada vez que cambia el atributo data-theme del <html>.

@@ -291,19 +291,28 @@ class IncidenciaController extends Controller
             DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
             $incidencia->refresh();
         } else {
-            DB::transaction(function () use ($incidencia, $nuevo, $request, $esReaperturaDeAdmin) {
+            $aplicado = DB::transaction(function () use ($incidencia, $nuevo, $actual, $request, $esReaperturaDeAdmin) {
                 DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
-                $datos = ['estado_incidencia' => $nuevo];
+                $datos = ['estado_incidencia' => $nuevo->value];
                 // Al reabrir se apaga la bandera: recién ahí el reportador podría volver a pedirla.
                 if ($esReaperturaDeAdmin) {
                     $datos['reapertura_solicitada'] = false;
                 }
-                $incidencia->update($datos);
+
+                // UPDATE condicional al estado que leímos: si otra request idéntica ya lo cambió, esta afecta 0 filas y no duplica historial ni evento.
+                return Incidencia::where('id_incidencia', $incidencia->id_incidencia)
+                    ->where('estado_incidencia', $actual->value)
+                    ->update($datos);
             });
+
+            if ($aplicado === 0) {
+                return response()->json(['message' => 'El estado ya fue actualizado por otra acción.'], 409);
+            }
+
+            $incidencia->refresh();
         }
 
-        // Ya se atendió la solicitud: se marcan leídas las de los admins ANTES de emitir el evento,
-        // para que el aviso "reabierta" que crea el listener a continuación llegue sin leer.
+        // Se marcan leídas las solicitudes de los admins ANTES de emitir el evento, para que el aviso "reabierta" del listener llegue sin leer.
         if ($esReaperturaDeAdmin) {
             DatabaseNotification::whereNull('read_at')
                 ->where('data->tipo', 'SOLICITUD_REAPERTURA')
@@ -311,8 +320,7 @@ class IncidenciaController extends Controller
                 ->update(['read_at' => now()]);
         }
 
-        // Dispara los listeners: notificar (BD + broadcast) e invalidar la caché del dashboard
-        // (cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent).
+        // Dispara los listeners (notificar + invalidar caché); cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent.
         event(new IncidenciaCambioEstado($incidencia, $actual->value, $nuevo->value, $request->user()->id));
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
@@ -355,9 +363,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
-    // "Reclamar" v2: el candado es un lease con latido. El primer admin que reclama queda como dueño,
-    // pero si su latido caduca (cerró la app), otro admin puede tomarlo. El UPDATE es atómico:
-    // ante dos reclamos simultáneos, solo uno gana la fila.
+    // "Reclamar" v2: lease con latido; el primer admin queda como dueño y si su latido caduca otro lo toma. El UPDATE es atómico: ante dos reclamos simultáneos solo uno gana la fila.
     public function reclamarIncidencia(ReclamarIncidenciaRequest $request, Incidencia $incidencia)
     {
         $userId = $request->user()->id;
@@ -394,8 +400,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia);
     }
 
-    // Liberar el candado: el dueño puede soltar el suyo cuando quiera; super_admin siempre;
-    // otro admin solo si el lease venció (el dueño abandonó la app).
+    // Liberar el candado: el dueño cuando quiera y super_admin siempre; otro admin solo si el lease venció (el dueño abandonó la app).
     public function liberarReclamo(LiberarReclamoRequest $request, Incidencia $incidencia)
     {
         if ($incidencia->id_admin_atiende === null) {
@@ -419,8 +424,7 @@ class IncidenciaController extends Controller
         return new IncidenciaResource($incidencia);
     }
 
-    // Latido del candado: mientras el admin tiene la app abierta refresca el lease de todos sus reclamos.
-    // Silencioso (sin broadcast); solo evita que sus reclamos venzan.
+    // Latido del candado: mientras el admin tiene la app abierta refresca el lease de sus reclamos (silencioso, solo evita que venzan).
     public function heartbeatReclamo(Request $request)
     {
         Incidencia::where('id_admin_atiende', $request->user()->id)

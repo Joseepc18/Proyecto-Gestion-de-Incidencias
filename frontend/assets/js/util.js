@@ -1,6 +1,6 @@
 // util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto, celdaTabla */
 /* global escaparHtml */
 
 // Normaliza un texto (sin tildes, minúsculas, espacios colapsados) para cruzar nombres o GeoJSON.
@@ -69,4 +69,13 @@ function filaVaciaHtml(colspan, icono, titulo, texto) {
   return (
     '<tr><td colspan="' + colspan + '">' + estadoVacioHtml(icono, titulo, texto) + "</td></tr>"
   );
+}
+
+// Celda de tabla con texto escapado; label alimenta el data-label de la tarjeta (móvil) y secundario la oculta ahí.
+function celdaTabla(texto, label, secundario) {
+  const celda = document.createElement("td");
+  if (label) celda.dataset.label = label;
+  if (secundario) celda.classList.add("td-secundario");
+  celda.textContent = texto;
+  return celda;
 }

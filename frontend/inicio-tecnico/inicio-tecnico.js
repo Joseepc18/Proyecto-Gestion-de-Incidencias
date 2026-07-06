@@ -1,6 +1,6 @@
 // inicio-tecnico.js — Panel de inicio del técnico: sus KPIs, mapa de asignadas, lista y gráficas.
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, mostrarToast, Chart, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, crearMapaIncidencias, rutaDetalleIncidencia, codigoIncidencia, tiempoRelativo, estadoConfig, prioridadConfig, estadoVacioHtml, colorEstado, colorVar, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, ejesChart, obtenerEcho */
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
 let graficos = [];
@@ -28,8 +28,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   conectarTiempoReal(usuario.id);
 });
 
-// La cola de activas se mueve sola: al asignarle una nueva o quitarle una, se repinta el panel entero
-// (KPIs + lista + mapa) refrescando /dashboard/tecnico, que es la vía simple y correcta.
+// Al asignar o quitar una incidencia se repinta el panel entero (KPIs + lista + mapa) refrescando /dashboard/tecnico, la vía simple y correcta.
 function conectarTiempoReal(idUsuario) {
   const echo = obtenerEcho();
   if (!echo) return;
@@ -210,14 +209,7 @@ function pintarGraficas(datos) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: colorTexto } },
-          y: {
-            beginAtZero: true,
-            ticks: { precision: 0, color: colorTexto },
-            grid: { color: colorGrid },
-          },
-        },
+        scales: ejesChart(colorTexto, colorGrid, { precision: 0 }),
       },
     }),
   );

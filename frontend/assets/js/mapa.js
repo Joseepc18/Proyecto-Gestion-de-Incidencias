@@ -1,23 +1,22 @@
-// mapa.js — Helper reutilizable de Mapbox GL JS: mapa 3D con edificios + pines de incidencias.
+// mapa.js — Helper reutilizable de Leaflet: mapa 2D satelital con pines de incidencias y selector de ubicación.
 
-/* global mapboxgl, MAPBOX_TOKEN, escaparHtml, normalizarTexto */
+/* global L, escaparHtml, normalizarTexto */
 /* exported ciudadEnPunto */
 
-mapboxgl.accessToken = MAPBOX_TOKEN;
-
-// Standard Satellite: foto aérea + edificios 3D extruidos (lo más "Google Earth" que da Mapbox).
-const MAPBOX_ESTILO_3D = "mapbox://styles/mapbox/standard-satellite";
-// Maqueta 3D plana sin foto aérea (edificios blancos), por si se quiere ver solo el callejero.
-const MAPBOX_ESTILO_MAQUETA = "mapbox://styles/mapbox/standard";
+// Foto aérea real (Esri World Imagery): satélite gratis, sin token ni cuenta.
+const TILES_SATELITE =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+// Mapa callejero (OpenStreetMap), por si se quiere ver calles y nombres en vez de la foto.
+const TILES_CALLEJERO = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 // Evita que el mapa nazca gris por medirse antes de tener su tamaño final
 function observarTamanoMapa(map) {
   if (typeof ResizeObserver === "undefined") return;
   const ro = new ResizeObserver(function () {
-    map.resize();
+    map.invalidateSize();
   });
   ro.observe(map.getContainer());
-  map.on("remove", function () {
+  map.on("unload", function () {
     ro.disconnect();
   });
 }
@@ -92,65 +91,64 @@ function ciudadEnPunto(cantonesGeo, ciudades, lat, lng) {
   return ciudadMasCercana(ciudades, lat, lng);
 }
 
-// Mapbox no tiene control nativo de cambio de estilo, así que lo añadimos a mano
-function agregarControlEstilo(map) {
-  const grupo = document.createElement("div");
-  grupo.className = "mapboxgl-ctrl mapboxgl-ctrl-group mapa-estilo-toggle";
+// Botón para alternar entre satélite y callejero (Leaflet no lo trae nativo con este estilo).
+function agregarControlEstilo(map, capaSatelite, capaCalle) {
+  const control = L.control({ position: "topright" });
+  control.onAdd = function () {
+    const grupo = L.DomUtil.create("div", "leaflet-bar mapa-estilo-toggle");
 
-  const btn3D = document.createElement("button");
-  btn3D.type = "button";
-  btn3D.title = "Vista satélite 3D (foto aérea + edificios)";
-  btn3D.setAttribute("aria-label", "Vista satélite 3D");
-  btn3D.classList.add("active");
-  btn3D.innerHTML = '<i class="bi bi-globe-americas" aria-hidden="true"></i>';
+    const btnSat = L.DomUtil.create("button", "active", grupo);
+    btnSat.type = "button";
+    btnSat.title = "Vista satélite";
+    btnSat.setAttribute("aria-label", "Vista satélite");
+    btnSat.innerHTML = '<i class="bi bi-globe-americas" aria-hidden="true"></i>';
 
-  const btnMaqueta = document.createElement("button");
-  btnMaqueta.type = "button";
-  btnMaqueta.title = "Vista de mapa con edificios";
-  btnMaqueta.setAttribute("aria-label", "Vista mapa");
-  btnMaqueta.innerHTML = '<i class="bi bi-buildings" aria-hidden="true"></i>';
+    const btnCalle = L.DomUtil.create("button", "", grupo);
+    btnCalle.type = "button";
+    btnCalle.title = "Vista callejero";
+    btnCalle.setAttribute("aria-label", "Vista callejero");
+    btnCalle.innerHTML = '<i class="bi bi-map" aria-hidden="true"></i>';
 
-  let estiloActual = MAPBOX_ESTILO_3D;
-  function cambiarA(estilo, btnActivo, btnOtro) {
-    if (estiloActual === estilo) return;
-    // diff:false fuerza recarga completa: el diff por defecto no alternaba entre estilos Standard (satélite/maqueta).
-    map.setStyle(estilo, { diff: false });
-    estiloActual = estilo;
-    btnActivo.classList.add("active");
-    btnOtro.classList.remove("active");
-  }
-  btn3D.addEventListener("click", function () {
-    cambiarA(MAPBOX_ESTILO_3D, btn3D, btnMaqueta);
-  });
-  btnMaqueta.addEventListener("click", function () {
-    cambiarA(MAPBOX_ESTILO_MAQUETA, btnMaqueta, btn3D);
-  });
+    L.DomEvent.disableClickPropagation(grupo);
 
-  grupo.append(btn3D, btnMaqueta);
-  const slot = map.getContainer().querySelector(".mapboxgl-ctrl-top-right");
-  if (slot) slot.appendChild(grupo);
+    btnSat.addEventListener("click", function () {
+      if (map.hasLayer(capaSatelite)) return;
+      map.addLayer(capaSatelite);
+      map.removeLayer(capaCalle);
+      btnSat.classList.add("active");
+      btnCalle.classList.remove("active");
+    });
+    btnCalle.addEventListener("click", function () {
+      if (map.hasLayer(capaCalle)) return;
+      map.addLayer(capaCalle);
+      map.removeLayer(capaSatelite);
+      btnCalle.classList.add("active");
+      btnSat.classList.remove("active");
+    });
+
+    return grupo;
+  };
+  control.addTo(map);
 }
 
 function crearMapaBase(idContenedor, opciones) {
   opciones = opciones || {};
-  // Mapbox usa [lng, lat], al revés que Leaflet.
-  const centro = opciones.centro || [-80.9012, -2.2267];
+  // Leaflet usa [lat, lng] (al revés que Mapbox).
+  const centro = opciones.centro || [-2.2267, -80.9012];
   const zoom = opciones.zoom || 14;
 
-  const map = new mapboxgl.Map({
-    container: idContenedor,
-    style: MAPBOX_ESTILO_3D,
-    center: centro,
-    zoom: zoom,
-    // Tope a 18: en Ecuador la foto aérea no tiene más resolución nativa
-    maxZoom: 18,
-    pitch: 45,
-    bearing: -17,
-    antialias: true,
+  const map = L.map(idContenedor, { center: centro, zoom: zoom });
+
+  const satelite = L.tileLayer(TILES_SATELITE, {
+    attribution: "Imágenes © Esri",
+    maxZoom: 19,
+  }).addTo(map);
+  const callejero = L.tileLayer(TILES_CALLEJERO, {
+    attribution: "© OpenStreetMap",
+    maxZoom: 19,
   });
 
-  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
-  agregarControlEstilo(map);
+  agregarControlEstilo(map, satelite, callejero);
   observarTamanoMapa(map);
 
   return map;
@@ -164,7 +162,7 @@ function crearMapaIncidencias(idContenedor, opciones) {
 
   function pintarPines(items, onSelect) {
     Object.values(marcadores).forEach(function (m) {
-      m.remove();
+      map.removeLayer(m);
     });
     marcadores = {};
     const puntos = [];
@@ -172,48 +170,41 @@ function crearMapaIncidencias(idContenedor, opciones) {
     items.forEach(function (it) {
       if (it.lat == null || it.lng == null) return;
 
-      const el = document.createElement("div");
-      el.className = "mapa-pin-incidencia";
-      el.style.background = it.color || "#2563eb";
-      if (onSelect) el.style.cursor = "pointer";
+      const color = it.color || "#2563eb";
+      const icono = L.divIcon({
+        className: "mapa-pin-wrapper",
+        html: '<span class="mapa-pin-incidencia" style="background:' + color + '"></span>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10],
+      });
 
-      const marcador = new mapboxgl.Marker({ element: el }).setLngLat([it.lng, it.lat]).addTo(map);
+      const marcador = L.marker([it.lat, it.lng], { icon: icono }).addTo(map);
 
       // Defensa en profundidad: el popup se renderiza con HTML, así que escapamos el título.
-      if (it.titulo) {
-        marcador.setPopup(
-          new mapboxgl.Popup({ offset: 14, closeButton: false }).setHTML(escaparHtml(it.titulo)),
-        );
-      }
+      if (it.titulo) marcador.bindPopup(escaparHtml(it.titulo));
       if (onSelect) {
-        el.addEventListener("click", function (e) {
-          // El click en el pin de Mapbox abre el popup por defecto; lo dejamos pasar.
-          e.stopPropagation();
+        marcador.on("click", function () {
           onSelect(it.id);
         });
       }
 
       marcadores[it.id] = marcador;
-      puntos.push([it.lng, it.lat]);
+      puntos.push([it.lat, it.lng]);
     });
 
     if (puntos.length === 1) {
-      map.flyTo({ center: puntos[0], zoom: 16 });
+      map.setView(puntos[0], 16);
     } else if (puntos.length > 1) {
-      const bounds = new mapboxgl.LngLatBounds();
-      puntos.forEach(function (p) {
-        bounds.extend(p);
-      });
-      map.fitBounds(bounds, { padding: 60, maxZoom: 16, duration: 800 });
+      map.fitBounds(L.latLngBounds(puntos), { padding: [60, 60], maxZoom: 16 });
     }
   }
 
   function enfocar(id) {
     const marcador = marcadores[id];
     if (!marcador) return;
-    map.flyTo({ center: marcador.getLngLat(), zoom: 16 });
-    const popup = marcador.getPopup();
-    if (popup && !popup.isOpen()) marcador.togglePopup();
+    map.setView(marcador.getLatLng(), 16);
+    marcador.openPopup();
   }
 
   return { map, pintarPines, enfocar };
@@ -223,11 +214,13 @@ function crearMapaIncidencias(idContenedor, opciones) {
 // eslint-disable-next-line no-unused-vars
 function crearMapaPicker(idContenedor, onCambio, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
-  // Bounds en formato Mapbox: [[oeste, sur], [este, norte]].
-  map.setMaxBounds([
-    [-82.0, -5.5],
-    [-74.5, 1.8],
-  ]);
+  // Bounds en formato Leaflet: [[sur, oeste], [norte, este]].
+  map.setMaxBounds(
+    L.latLngBounds([
+      [-5.5, -82.0],
+      [1.8, -74.5],
+    ]),
+  );
   let marcador = null;
 
   // notificar=false para colocar el marcador sin disparar onCambio (carga inicial en edición,
@@ -235,13 +228,11 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
   function poner(lat, lng, notificar) {
     if (notificar === undefined) notificar = true;
     if (marcador) {
-      marcador.setLngLat([lng, lat]);
+      marcador.setLatLng([lat, lng]);
     } else {
-      marcador = new mapboxgl.Marker({ draggable: true, color: "#2563eb" })
-        .setLngLat([lng, lat])
-        .addTo(map);
+      marcador = L.marker([lat, lng], { draggable: true }).addTo(map);
       marcador.on("dragend", function () {
-        const p = marcador.getLngLat();
+        const p = marcador.getLatLng();
         if (onCambio) onCambio(p.lat, p.lng);
       });
     }
@@ -249,19 +240,19 @@ function crearMapaPicker(idContenedor, onCambio, opciones) {
   }
 
   map.on("click", function (e) {
-    poner(e.lngLat.lat, e.lngLat.lng);
+    poner(e.latlng.lat, e.latlng.lng);
   });
 
   function usarMiUbicacion() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(function (pos) {
-      map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 16 });
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16);
       poner(pos.coords.latitude, pos.coords.longitude);
     });
   }
 
   function setUbicacion(lat, lng) {
-    map.flyTo({ center: [lng, lat], zoom: 16 });
+    map.setView([lat, lng], 16);
     poner(lat, lng, false);
   }
 

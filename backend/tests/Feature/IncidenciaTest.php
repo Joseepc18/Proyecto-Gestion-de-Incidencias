@@ -171,6 +171,7 @@ class IncidenciaTest extends TestCase
         // Guarda ESTRUCTURAL: EN_PROCESO→PENDIENTE no existe en el grafo; ni el admin puede hacerlo.
         $enProceso = $this->crearIncidencia($this->crearUsuario('normal'), ['estado_incidencia' => 'EN_PROCESO']);
         Sanctum::actingAs($this->crearUsuario('admin'));
+        $this->postJson("/api/incidencias/{$enProceso->id_incidencia}/reclamar")->assertOk();
 
         $this->patchJson("/api/incidencias/{$enProceso->id_incidencia}/estado", ['estado_incidencia' => 'PENDIENTE'])
             ->assertStatus(422)
@@ -187,6 +188,9 @@ class IncidenciaTest extends TestCase
         $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
         $tecnico = $this->crearUsuario('tecnico');
         Sanctum::actingAs($this->crearUsuario('admin'));
+
+        // El admin debe reclamar la incidencia antes de gestionarla (asignar).
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
 
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/asignaciones", [
             'id_usuario' => $tecnico->id,

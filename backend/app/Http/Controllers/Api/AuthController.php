@@ -254,15 +254,12 @@ class AuthController extends Controller
         return response()->json(['message' => 'Te reenviamos el correo de verificación.']);
     }
 
-    // Paso 1 del login con Google: redirige a Google. stateless() = API por token, sin sesión.
-    // stateless() apaga el 'state' de Socialite (que vive en sesión); lo reponemos a mano vía cookie para conservar la protección CSRF del flujo OAuth.
+    // Paso 1 del login con Google (stateless = API por token, sin sesión); el 'state' de Socialite lo reponemos por cookie para conservar la protección CSRF del flujo OAuth.
     public function redirectToGoogle(Request $request)
     {
         $state = Str::random(40);
 
-        // Cookie efímera (5 min), httpOnly y SameSite=Lax; secure en producción o si la conexión ya es HTTPS
-        // (permite el dev local por http). No se usa solo isSecure() porque detrás de Cloudflare + nginx el
-        // request le llega a Laravel como HTTP plano aunque el usuario esté en HTTPS.
+        // Cookie efímera (5 min), httpOnly y SameSite=Lax; secure en prod o si ya es HTTPS (tras Cloudflare+nginx el request le llega a Laravel como HTTP plano aunque el usuario esté en HTTPS).
         $esSegura = $request->isSecure() || app()->environment('production');
         $cookie = Cookie::make('oauth_state', $state, 5, null, null, $esSegura, true, false, 'lax');
 

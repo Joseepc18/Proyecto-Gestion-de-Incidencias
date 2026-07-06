@@ -7,8 +7,7 @@ use Illuminate\Http\Request;
 
 class NotificacionController extends Controller
 {
-    // Listar las notificaciones del usuario autenticado + cuántas sin leer.
-    // El "tipo" y el "mensaje" viven dentro de data (json); se aplanan al formato que consume el front.
+    // Lista las notificaciones del usuario + cuántas sin leer; el tipo y el mensaje viven en data (json) y se aplanan al formato del front.
     public function listado(Request $request)
     {
         $usuario = $request->user();

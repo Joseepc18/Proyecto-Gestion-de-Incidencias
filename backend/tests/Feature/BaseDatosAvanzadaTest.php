@@ -26,6 +26,7 @@ class BaseDatosAvanzadaTest extends TestCase
         $incidencia = $this->crearIncidencia($dueno);
         $admin = $this->crearUsuario('admin');
         Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
 
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'EN_PROCESO',
@@ -52,6 +53,7 @@ class BaseDatosAvanzadaTest extends TestCase
         $incidencia = $this->crearIncidencia($reportador);
         $admin = $this->crearUsuario('admin');
         Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
 
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", [
             'estado_incidencia' => 'RESUELTO',

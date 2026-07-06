@@ -93,8 +93,8 @@ function marcarPrioridadActiva() {
     Object.values(prioridadConfig).forEach((c) => b.classList.remove(...c.clase.split(" ")));
     b.classList.toggle("activa", activa);
     if (activa) b.classList.add(...cfg.clase.split(" "));
-    // En RESUELTO la prioridad es de solo lectura (backend responde 403 igual).
-    b.disabled = bloqueada;
+    // Solo lectura en RESUELTO, o si el admin aún no reclamó la incidencia (backend responde 403 igual).
+    b.disabled = bloqueada || !soyDuenoDelReclamo();
   });
 }
 
@@ -156,7 +156,8 @@ function marcarEstadoActivo() {
     if (activo || actual === "RESUELTO" || actual === "CERRADO") {
       b.disabled = true;
     } else if (esAdmin) {
-      b.disabled = false;
+      // El admin solo cambia el estado si reclamó la incidencia (mismo candado que el backend).
+      b.disabled = !soyDuenoDelReclamo();
     } else {
       b.disabled = !(actual === "EN_PROCESO" && estado === "RESUELTO");
     }
@@ -240,6 +241,19 @@ const RECLAMO_TTL_MS = 120000;
 // ¿Quien mira es super_admin? (puede forzar liberar un reclamo activo de otro admin).
 function soySuperAdmin() {
   return !!(usuarioActual && usuarioActual.rol && usuarioActual.rol.nombre_rol === "super_admin");
+}
+
+// El admin solo gestiona (estado/prioridad/asignaciones) la incidencia que él mismo reclamó (candado del backend).
+function soyDuenoDelReclamo() {
+  return !!(usuarioActual && incActual.id_admin_atiende === usuarioActual.id);
+}
+
+// Reaplica el candado del reclamo a los controles de gestión del admin (estado, prioridad, asignaciones).
+function refrescarGestionSegunReclamo() {
+  if (!esAdmin) return;
+  marcarEstadoActivo();
+  marcarPrioridadActiva();
+  renderAsignaciones(ultimasAsignaciones, incActual.id_incidencia);
 }
 
 // Recalcula "vencido" en el cliente desde el último latido; el servidor revalida al liberar (fuente de verdad).
@@ -333,6 +347,8 @@ function aplicarReclamo(actualizada) {
   incActual.reclamo_visto_en = actualizada.reclamo_visto_en;
   incActual.reclamo_vencido = actualizada.reclamo_vencido;
   pintarAtencionAdmin();
+  // Reclamar/liberar habilita o bloquea los controles de gestión en el acto.
+  refrescarGestionSegunReclamo();
 }
 
 // Pinta "Atendida por" y decide los botones: Reclamar (libre o vencido) / Liberar-Forzar / Archivar.
@@ -344,7 +360,7 @@ function pintarAtencionAdmin() {
   const admin = incActual.admin_atiende;
 
   if (!admin) {
-    info.textContent = "Sin reclamar.";
+    info.textContent = "Sin reclamar. Reclámala para poder gestionarla.";
     btnReclamar.classList.remove("d-none");
     btnForzar.classList.add("d-none");
     btnArchivar.classList.add("d-none");
@@ -354,7 +370,9 @@ function pintarAtencionAdmin() {
   const soyYo = usuarioActual && admin.id === usuarioActual.id;
   const vencido = reclamoVencidoCliente();
   info.textContent =
-    "Atendida por: " + admin.name + (soyYo ? " (tú)" : vencido ? " (inactivo)" : "");
+    "Atendida por: " +
+    admin.name +
+    (soyYo ? " (tú)" : vencido ? " (inactivo)" : ". Solo ese administrador puede gestionarla.");
 
   // Otro admin puede tomar el candado directamente cuando el lease del dueño venció.
   btnReclamar.classList.toggle("d-none", !(vencido && !soyYo));
@@ -384,7 +402,9 @@ function gestionAlActualizarEnVivo() {
 
 // Hook del núcleo: llegó un cambio de candado en vivo (otro admin reclamó/liberó).
 function gestionAlCambiarReclamo() {
-  if (esAdmin) pintarAtencionAdmin();
+  if (!esAdmin) return;
+  pintarAtencionAdmin();
+  refrescarGestionSegunReclamo();
 }
 
 let gestionFotosLista = false;
@@ -469,8 +489,8 @@ function renderAsignaciones(asignaciones, id) {
     ayudantesLista.innerHTML = '<p class="text-muted small mb-0">Sin ayudantes asignados.</p>';
   }
 
-  // En RESUELTO las asignaciones quedan congeladas: se ocultan los formularios de agregar
-  const bloqueada = gestionBloqueada();
+  // Las asignaciones se editan solo si el admin reclamó y no está congelada (RESUELTO/CERRADO).
+  const bloqueada = gestionBloqueada() || !soyDuenoDelReclamo();
   const formResp = document.getElementById("responsableForm");
   if (formResp) formResp.classList.toggle("d-none", bloqueada || !!responsable);
   const formAyu = document.getElementById("ayudanteForm");
@@ -492,8 +512,8 @@ function filaTecnico(asig, idIncidencia, color) {
   nombre.textContent = asig.usuario ? asig.usuario.name : "—";
   fila.appendChild(nombre);
 
-  // En RESUELTO no se puede quitar (asignaciones congeladas): sin botón de quitar.
-  if (gestionBloqueada()) return fila;
+  // Sin botón de quitar si está congelada (RESUELTO/CERRADO) o si el admin no reclamó la incidencia.
+  if (gestionBloqueada() || !soyDuenoDelReclamo()) return fila;
 
   const btn = document.createElement("button");
   btn.type = "button";

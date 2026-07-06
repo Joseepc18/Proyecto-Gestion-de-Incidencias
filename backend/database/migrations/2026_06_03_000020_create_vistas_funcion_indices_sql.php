@@ -116,7 +116,10 @@ return new class extends Migration
         ');
 
         // Índices de rendimiento: aceleran las consultas más frecuentes evitando recorrer toda la tabla.
-        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_estado ON incidencias(estado_incidencia);');
+        // Compuesto (estado, created_at): el listado filtra por estado y ordena por fecha; también sirve para filtrar solo por estado (prefijo izquierdo).
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_estado_created ON incidencias(estado_incidencia, created_at DESC);');
+        // Rango de fechas del dashboard (where created_at >= ... y agrupado por mes), sin filtro de estado.
+        DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_created ON incidencias(created_at);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_incidencias_usuario ON incidencias(id_usuario);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_comentarios_incidencia ON comentarios(id_incidencia);');
         DB::unprepared('CREATE INDEX IF NOT EXISTS idx_historial_incidencia ON historial_estados(id_incidencia);');
@@ -140,7 +143,8 @@ return new class extends Migration
         DB::unprepared('DROP VIEW IF EXISTS v_metricas_por_tipo;');
         DB::unprepared('DROP VIEW IF EXISTS v_metricas_por_ubicacion;');
         DB::unprepared('DROP FUNCTION IF EXISTS calcular_tiempo_resolucion(BIGINT);');
-        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_estado;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_estado_created;');
+        DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_created;');
         DB::unprepared('DROP INDEX IF EXISTS idx_incidencias_usuario;');
         DB::unprepared('DROP INDEX IF EXISTS idx_comentarios_incidencia;');
         DB::unprepared('DROP INDEX IF EXISTS idx_historial_incidencia;');

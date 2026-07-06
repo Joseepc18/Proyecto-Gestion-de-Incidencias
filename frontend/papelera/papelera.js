@@ -1,6 +1,6 @@
 // papelera.js — Listado de incidencias eliminadas, restaurar y purgar (solo admin/super_admin).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -84,14 +84,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  function td(texto, label, secundario) {
-    const celda = document.createElement("td");
-    if (label) celda.dataset.label = label;
-    if (secundario) celda.classList.add("td-secundario");
-    celda.textContent = texto;
-    return celda;
-  }
-
   function renderizarTabla(incidencias) {
     const tbody = document.getElementById("tbodyPapelera");
     tbody.innerHTML = "";
@@ -114,10 +106,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       const nombreCiudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "—";
       const fecha = new Date(inc.deleted_at).toLocaleString("es-EC");
 
-      tr.appendChild(td(inc.nombre_incidencia, "Título"));
-      tr.appendChild(td(nombreTipo, "Tipo", true));
-      tr.appendChild(td(nombreCiudad, "Ciudad", true));
-      tr.appendChild(td(fecha, "Eliminada"));
+      tr.appendChild(celdaTabla(inc.nombre_incidencia, "Título"));
+      tr.appendChild(celdaTabla(nombreTipo, "Tipo", true));
+      tr.appendChild(celdaTabla(nombreCiudad, "Ciudad", true));
+      tr.appendChild(celdaTabla(fecha, "Eliminada"));
 
       const acciones = [
         {

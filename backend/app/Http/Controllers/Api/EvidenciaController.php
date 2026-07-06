@@ -72,8 +72,7 @@ class EvidenciaController extends Controller
         return ['message' => 'Foto eliminada'];
     }
 
-    // Sirve el archivo desde el disco privado. Protegida por firma (middleware signed): el <img> no manda token,
-    // la autorización real ocurrió al generar la URL firmada dentro de la respuesta ya autorizada de la incidencia.
+    // Sirve el archivo del disco privado; protegida por firma (middleware signed) porque el <img> no manda token: la autorización real ocurrió al generar la URL firmada.
     public function archivo(Evidencia $evidencia)
     {
         $disco = Storage::disk('evidencias');
