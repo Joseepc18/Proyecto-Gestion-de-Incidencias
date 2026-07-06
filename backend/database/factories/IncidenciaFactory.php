@@ -25,7 +25,8 @@ class IncidenciaFactory extends Factory
             // Rango aproximado de Ecuador continental.
             'latitud_incidencia' => fake()->randomFloat(6, -4.0, 0.9),
             'longitud_incidencia' => fake()->randomFloat(6, -81.0, -75.2),
-            'prioridad_incidencia' => fake()->randomElement(PrioridadIncidencia::cases())->value,
+            // Solo prioridades reales; SIN_ASIGNAR es el estado inicial de triaje, no algo que se genere al azar.
+            'prioridad_incidencia' => fake()->randomElement([PrioridadIncidencia::Alta, PrioridadIncidencia::Media, PrioridadIncidencia::Baja])->value,
             'estado_incidencia' => EstadoIncidencia::Pendiente->value,
             'id_ciudad' => Ciudad::inRandomOrder()->value('id_ciudad'),
             'id_subtipo_incidencia' => SubtipoIncidencia::inRandomOrder()->value('id_subtipo_incidencia'),

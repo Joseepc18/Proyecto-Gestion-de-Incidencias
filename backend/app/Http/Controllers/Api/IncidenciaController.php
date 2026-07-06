@@ -76,7 +76,7 @@ class IncidenciaController extends Controller
     {
         $datos = $request->validated();
         $datos['id_usuario'] = $request->user()->id;
-        $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? PrioridadIncidencia::Media->value;
+        $datos['prioridad_incidencia'] = $datos['prioridad_incidencia'] ?? PrioridadIncidencia::SinAsignar->value;
         unset($datos['fotos']);
 
         $rutasGuardadas = [];
@@ -159,6 +159,9 @@ class IncidenciaController extends Controller
         if ($incidencia->prioridad_incidencia !== $prioridadAnterior) {
             broadcast(new IncidenciaActualizada($incidencia));
         }
+
+        // Asignar la prioridad puede ser la última pieza del hito del correo de detalle.
+        $this->enviarCorreoDetalleSiListo($incidencia);
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
@@ -323,6 +326,9 @@ class IncidenciaController extends Controller
         // Dispara los listeners (notificar + invalidar caché); cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent.
         event(new IncidenciaCambioEstado($incidencia, $actual->value, $nuevo->value, $request->user()->id));
 
+        // Pasar a EN_PROCESO puede ser la última pieza del hito del correo de detalle.
+        $this->enviarCorreoDetalleSiListo($incidencia);
+
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
@@ -396,6 +402,9 @@ class IncidenciaController extends Controller
 
         $incidencia = $incidencia->fresh()->load(Incidencia::RELACIONES_DETALLE);
         broadcast(new ReclamoCambiado($incidencia));
+
+        // Reclamar puede ser la última pieza del hito del correo de detalle.
+        $this->enviarCorreoDetalleSiListo($incidencia);
 
         return new IncidenciaResource($incidencia);
     }

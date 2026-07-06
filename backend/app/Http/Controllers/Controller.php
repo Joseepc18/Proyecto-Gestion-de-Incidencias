@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\AlmacenamientoException;
 use App\Models\BitacoraError;
+use App\Models\Incidencia;
 use App\Models\User;
+use App\Notifications\IncidenciaDetalleNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -47,5 +49,36 @@ abstract class Controller
         } catch (\Throwable $e) {
             BitacoraError::registrar($actor, 'SERVIDOR', $contexto, $e->getMessage());
         }
+    }
+
+    // Hito idempotente: se llama tras cada acción de gestión (reclamar, asignar, prioridad, estado). Si la incidencia
+    // ya reúne las 4 condiciones, manda al ciudadano UN correo de detalle. El UPDATE atómico false→true garantiza
+    // que solo la request que gana la carrera lo dispare, una sola vez y sin importar el orden de las acciones.
+    protected function enviarCorreoDetalleSiListo(Incidencia $incidencia): void
+    {
+        $incidencia->refresh();
+
+        if (! $incidencia->estaListaParaCorreoDetalle()) {
+            return;
+        }
+
+        $marcado = Incidencia::where('id_incidencia', $incidencia->id_incidencia)
+            ->where('correo_detalle_enviado', false)
+            ->update(['correo_detalle_enviado' => true]);
+
+        if ($marcado === 0) {
+            return;
+        }
+
+        $reportador = User::find($incidencia->id_usuario);
+        if ($reportador === null) {
+            return;
+        }
+
+        $this->notificarSinRomper(
+            fn () => $reportador->notify(new IncidenciaDetalleNotification($incidencia->id_incidencia)),
+            $reportador,
+            'Controller@enviarCorreoDetalleSiListo'
+        );
     }
 }

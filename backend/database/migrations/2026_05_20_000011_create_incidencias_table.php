@@ -17,7 +17,7 @@ return new class extends Migration
             direccion_incidencia VARCHAR(500),
             latitud_incidencia NUMERIC(10,8) NOT NULL,
             longitud_incidencia NUMERIC(11,8) NOT NULL,
-            prioridad_incidencia VARCHAR(50) NOT NULL DEFAULT 'MEDIA' CHECK(prioridad_incidencia IN ('ALTA','MEDIA','BAJA')),
+            prioridad_incidencia VARCHAR(50) NOT NULL DEFAULT 'SIN_ASIGNAR' CHECK(prioridad_incidencia IN ('ALTA','MEDIA','BAJA','SIN_ASIGNAR')),
             estado_incidencia VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE' CHECK(estado_incidencia IN ('PENDIENTE','EN_PROCESO','RESUELTO','CERRADO')),
             id_ciudad BIGINT NOT NULL,
             id_subtipo_incidencia BIGINT NOT NULL,
@@ -31,6 +31,8 @@ return new class extends Migration
             -- Ultimo latido (heartbeat) del admin que atiende: mientras tiene la app abierta lo refresca cada pocos segundos.
             -- Si deja de latir mas del TTL, el reclamo se considera vencido y otro admin puede tomarlo.
             reclamo_visto_en TIMESTAMP NULL,
+            -- Bandera del hito idempotente: se enciende cuando ya se envio el correo de detalle al ciudadano (una sola vez).
+            correo_detalle_enviado BOOLEAN NOT NULL DEFAULT FALSE,
             FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_subtipo_incidencia) REFERENCES subtipos_incidencia(id_subtipo_incidencia) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,

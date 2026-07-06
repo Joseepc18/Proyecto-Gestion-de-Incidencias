@@ -39,6 +39,7 @@ const prioridadConfig = {
   ALTA: { clase: "text-bg-danger", icono: "bi-fire", texto: "Alta" },
   MEDIA: { clase: "text-bg-warning", icono: "bi-shield-exclamation", texto: "Media" },
   BAJA: { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
+  SIN_ASIGNAR: { clase: "text-bg-secondary", icono: "bi-dash-circle", texto: "Sin asignar" },
 };
 
 function badgeEstadoHtml(estado) {

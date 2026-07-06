@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
+use App\Enums\RolAsignacion;
 use App\Exceptions\AlmacenamientoException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +42,7 @@ class Incidencia extends Model
         'reapertura_solicitada',
         'id_admin_atiende',
         'reclamo_visto_en',
+        'correo_detalle_enviado',
     ];
 
     protected $casts = [
@@ -51,6 +53,7 @@ class Incidencia extends Model
         'fecha_resolucion' => 'datetime',
         'reapertura_solicitada' => 'boolean',
         'reclamo_visto_en' => 'datetime',
+        'correo_detalle_enviado' => 'boolean',
     ];
 
     public function scopePendientes($query)
@@ -132,6 +135,17 @@ class Incidencia extends Model
     public function esTerminal(): bool
     {
         return $this->estaResuelta() || $this->estaCerrada();
+    }
+
+    // Hito del correo de detalle al ciudadano: reúne admin + EN_PROCESO + prioridad asignada + técnico responsable,
+    // y aún no se ha enviado. La bandera se re-evalúa tras cada acción de gestión; quien complete la última pieza lo dispara.
+    public function estaListaParaCorreoDetalle(): bool
+    {
+        return ! $this->correo_detalle_enviado
+            && $this->id_admin_atiende !== null
+            && $this->estado_incidencia === EstadoIncidencia::EnProceso
+            && $this->prioridad_incidencia !== PrioridadIncidencia::SinAsignar
+            && $this->asignaciones()->where('rol_asignado', RolAsignacion::Responsable->value)->exists();
     }
 
     // Acumula las rutas en $rutasGuardadas (por referencia) para que el controller las limpie si la transacción revienta.

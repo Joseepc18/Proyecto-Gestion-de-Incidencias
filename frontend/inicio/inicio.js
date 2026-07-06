@@ -157,15 +157,16 @@ function pintarGraficas(datos) {
     new Chart(document.getElementById("graficoPrioridad"), {
       type: "doughnut",
       data: {
-        labels: ["Alta", "Media", "Baja"],
+        labels: ["Alta", "Media", "Baja", "Sin asignar"],
         datasets: [
           {
             data: [
               Number(prioridad.alta || 0),
               Number(prioridad.media || 0),
               Number(prioridad.baja || 0),
+              Number(prioridad.sin_asignar || 0),
             ],
-            backgroundColor: [colorPendiente, colorProceso, colorResuelto],
+            backgroundColor: [colorPendiente, colorProceso, colorResuelto, colorTexto],
             borderWidth: 2,
             borderColor: colorSurface,
           },

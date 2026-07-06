@@ -25,4 +25,15 @@ enum EstadoIncidencia: string
     {
         return in_array($destino, $this->transicionesValidas(), true);
     }
+
+    // Etiqueta legible en español (correos y vistas del backend).
+    public function etiqueta(): string
+    {
+        return match ($this) {
+            self::Pendiente => 'Pendiente',
+            self::EnProceso => 'En proceso',
+            self::Resuelto => 'Resuelto',
+            self::Cerrado => 'Archivado',
+        };
+    }
 }

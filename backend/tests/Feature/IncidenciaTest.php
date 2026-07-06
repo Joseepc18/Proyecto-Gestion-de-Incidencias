@@ -39,7 +39,7 @@ class IncidenciaTest extends TestCase
     {
         Sanctum::actingAs($this->crearUsuario('normal'));
 
-        // La prioridad ya no es obligatoria (entra como MEDIA por defecto).
+        // La prioridad ya no es obligatoria (entra como SIN_ASIGNAR por defecto).
         $this->postJson('/api/incidencias', [])
             ->assertStatus(422)
             ->assertJsonValidationErrors([

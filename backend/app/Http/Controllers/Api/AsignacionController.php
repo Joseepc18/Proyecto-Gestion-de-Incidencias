@@ -75,6 +75,9 @@ class AsignacionController extends Controller
             // Refresca el detalle abierto y la cola del técnico recién asignado.
             broadcast(new AsignacionCambiada($incidencia->id_incidencia, 'asignada', $datos['rol_asignado'], (int) $datos['id_usuario']));
 
+            // Asignar el responsable puede ser la última pieza del hito del correo de detalle.
+            $this->enviarCorreoDetalleSiListo($incidencia);
+
             return (new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE)))
                 ->response()
                 ->setStatusCode(201);

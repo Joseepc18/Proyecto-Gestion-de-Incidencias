@@ -36,6 +36,7 @@ class DashboardController extends Controller
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS alta', [PrioridadIncidencia::Alta->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS media', [PrioridadIncidencia::Media->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS baja', [PrioridadIncidencia::Baja->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE prioridad_incidencia = ?) AS sin_asignar', [PrioridadIncidencia::SinAsignar->value])
                 ->first();
 
             $porTipo = DB::table('v_metricas_por_tipo')->get();
