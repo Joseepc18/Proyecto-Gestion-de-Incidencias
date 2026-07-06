@@ -211,11 +211,8 @@ a {
 .status-dot {
   width: 9px;
   height: 9px;
-  border-radius: 50%;
-}
-
-.status-dot {
   flex: 0 0 auto;
+  border-radius: 50%;
   background: #22c55e;
 }
 
@@ -956,13 +953,9 @@ html.verificando-sesion .auth-theme-toggle {
   width: min(100%, 440px);
 }
 
-
-.auth-footer {
-  color: var(--admin-muted);
-}
-
 .auth-footer {
   margin-top: 1.2rem;
+  color: var(--admin-muted);
   text-align: center;
   font-size: var(--fs-md);
 }
