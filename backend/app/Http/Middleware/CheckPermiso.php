@@ -18,7 +18,7 @@ class CheckPermiso
         $user = $request->user();
 
         if (! $user || ! $user->tienePermiso($permiso)) {
-            // La API responde JSON (Accept forzado); el panel Blade recibe un 403 HTML.
+            // La API responde JSON (Accept forzado).
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Acceso denegado'], 403);
             }

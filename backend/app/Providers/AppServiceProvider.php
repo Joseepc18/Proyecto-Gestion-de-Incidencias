@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Observers\IncidenciaObserver;
 use App\Policies\AsignacionPolicy;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
@@ -37,9 +36,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         JsonResource::withoutWrapping();
-
-        // La paginación nativa de Blade ($paginator->links()) usa Bootstrap 5, no Tailwind.
-        Paginator::useBootstrapFive();
 
         Incidencia::observe(IncidenciaObserver::class);
 

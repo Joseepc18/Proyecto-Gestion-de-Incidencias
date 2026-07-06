@@ -33,3 +33,9 @@ jobs:
       - name: Reiniciar el frontend (nginx)
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart frontend
+
+      # Horizon/Reverb/scheduler cargan el código PHP en memoria al arrancar: sin este reinicio
+      # siguen corriendo con la versión anterior hasta que alguien los reinicie a mano.
+      - name: Reiniciar horizon, reverb y scheduler
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: docker compose restart horizon reverb scheduler

@@ -19,7 +19,7 @@ class RequiereDosFactor
         $user = $request->user();
 
         if ($user && $user->esAdmin() && ! $user->hasEnabledTwoFactorAuthentication()) {
-            // La API responde JSON (con la bandera two_factor_required); el panel Blade recibe un 403 HTML.
+            // La API responde JSON con la bandera two_factor_required.
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Tu rol requiere activar la verificación en dos pasos para realizar esta acción.',
@@ -27,7 +27,7 @@ class RequiereDosFactor
                 ], 403);
             }
 
-            abort(403, 'Tu rol requiere activar la verificación en dos pasos para acceder al panel.');
+            abort(403, 'Tu rol requiere activar la verificación en dos pasos para realizar esta acción.');
         }
 
         return $next($request);

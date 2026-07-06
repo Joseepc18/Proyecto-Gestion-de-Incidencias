@@ -69,8 +69,9 @@ class EvidenciaController extends Controller
     {
         $this->authorize('eliminar', $evidencia);
 
-        Storage::disk('evidencias')->delete($evidencia->url_evidencia);
+        $url = $evidencia->url_evidencia;
         $evidencia->delete();
+        Storage::disk('evidencias')->delete($url);
 
         return ['message' => 'Foto eliminada'];
     }
