@@ -197,6 +197,8 @@ function aplicarMenuRol(rol, permisos) {
   mostrar("navIncidencias", gestiona);
   mostrar("navPapelera", gestiona);
   mostrar("navPermisos", tienePermiso("permisos.administrar"));
+  mostrar("navUsuarios", tienePermiso("usuarios.administrar"));
+  mostrar("navCatalogos", tienePermiso("catalogos.administrar"));
   mostrar("navMisIncidencias", !gestiona);
   mostrar("navRegistrar", gestiona || esNormal);
 

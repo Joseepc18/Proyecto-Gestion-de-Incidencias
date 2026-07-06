@@ -64,6 +64,22 @@
       oculto: true,
     },
     {
+      page: "usuarios",
+      id: "navUsuarios",
+      href: "../usuarios/usuarios.html",
+      icon: "bi-people",
+      texto: "Usuarios",
+      oculto: true,
+    },
+    {
+      page: "catalogos",
+      id: "navCatalogos",
+      href: "../catalogos/catalogos.html",
+      icon: "bi-diagram-3",
+      texto: "Tipos de incidencia",
+      oculto: true,
+    },
+    {
       page: "notificaciones",
       href: "../notificaciones/notificaciones.html",
       icon: "bi-mailbox",

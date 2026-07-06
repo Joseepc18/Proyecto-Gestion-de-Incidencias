@@ -104,8 +104,6 @@ services:
       - ./nginx/horizon.htpasswd:/etc/nginx/horizon.htpasswd:ro
       # Fotos subidas: con PHP-FPM ya no las sirve artisan, las sirve Nginx directo (solo lectura)
       - ./backend/storage/app/public:/var/www/storage:ro
-      # Assets del panel Blade empaquetados por Vite (@vite → /build/*); vacío hasta el primer build
-      - ./backend/public/build:/var/www/build:ro
     depends_on:
       - backend
     healthcheck:
