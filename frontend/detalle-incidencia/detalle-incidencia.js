@@ -106,7 +106,6 @@ async function cargarDetalle(id) {
 
     const tipo = inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
     const subtipo = inc.subtipo ? inc.subtipo.nombre_subtipo_incidencia : "—";
-    document.getElementById("detalleTipoBadge").textContent = tipo;
     document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
     document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
 
