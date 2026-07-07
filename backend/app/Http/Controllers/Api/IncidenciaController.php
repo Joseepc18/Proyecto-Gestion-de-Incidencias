@@ -327,6 +327,8 @@ class IncidenciaController extends Controller
 
         // Dispara los listeners (notificar + invalidar caché); cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent.
         event(new IncidenciaCambioEstado($incidencia, $actual->value, $nuevo->value, $request->user()->id));
+        // Avisa en vivo al tablero y a quien tenga el detalle abierto (el evento de dominio no transmite por sí solo).
+        broadcast(new IncidenciaActualizada($incidencia));
 
         // Pasar a EN_PROCESO puede ser la última pieza del hito del correo de detalle.
         $this->enviarCorreoDetalleSiListo($incidencia);
@@ -344,6 +346,7 @@ class IncidenciaController extends Controller
         $motivo = $request->validated()['motivo'];
 
         $incidencia->update(['reapertura_solicitada' => true]);
+        broadcast(new IncidenciaActualizada($incidencia));
 
         $admins = User::conPermiso('incidencias.gestionar')->get();
         Notification::send(
@@ -358,6 +361,7 @@ class IncidenciaController extends Controller
     public function rechazarReapertura(RechazarReaperturaRequest $request, Incidencia $incidencia)
     {
         $incidencia->update(['reapertura_solicitada' => false]);
+        broadcast(new IncidenciaActualizada($incidencia));
 
         if ($reportador = User::find($incidencia->id_usuario)) {
             $reportador->notify(new IncidenciaNotification(
@@ -458,6 +462,7 @@ class IncidenciaController extends Controller
 
         // Notifica el archivado (RESUELTO -> CERRADO) e invalida la caché vía listeners.
         event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, $request->user()->id));
+        broadcast(new IncidenciaActualizada($incidencia));
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
