@@ -745,6 +745,12 @@ a {
   border: 1px solid var(--admin-border);
 }
 
+@media (max-width: 767.98px) {
+  .map-wrap {
+    height: 320px;
+  }
+}
+
 #mapaProvincias {
   height: 100%;
   width: 100%;
@@ -2394,6 +2400,15 @@ html[data-theme="dark"] {
   border-radius: 12px;
   border: 1px solid var(--admin-border);
   overflow: hidden;
+}
+
+@media (max-width: 767.98px) {
+  .mapa-picker {
+    height: 220px;
+  }
+  .mapa-detalle {
+    height: 180px;
+  }
 }
 
 /* Pin circular para incidencias (divIcon de Leaflet) */
