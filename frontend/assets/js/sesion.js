@@ -118,6 +118,7 @@ function mostrarAvisoVerificacion(usuario) {
       mostrarToast(r.message || "Te reenviamos el correo de verificación.", "success");
     } catch (e) {
       mostrarToast(e.message || "No se pudo reenviar el correo.", "error");
+    } finally {
       boton.disabled = false;
     }
   });

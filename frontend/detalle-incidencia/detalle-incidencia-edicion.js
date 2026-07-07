@@ -18,6 +18,9 @@ let lngEdit = null;
 let galeriaReporte = null;
 // Instancia del picker de ubicación en edición (para liberarla al volver a lectura).
 let pickerEdicion = null;
+// Valores de los campos al entrar en edición, para saber si hay algo que guardar.
+let snapshotEdicion = null;
+let mapaEditadoManualmente = false;
 
 // Datos (texto/ubicación) solo editables en PENDIENTE; fotos hasta que se resuelve
 function edicionAlCargarDetalle() {
@@ -49,6 +52,7 @@ function edicionAlCargarDetalle() {
   btnEliminar.addEventListener("click", eliminarIncidencia);
   document.getElementById("btnCancelarEdicion").addEventListener("click", salirEdicion);
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
+  document.getElementById("datosEdicion").addEventListener("input", actualizarBotonGuardar);
 }
 
 // Activa en PENDIENTE y EN_PROCESO, independiente del modo edición de texto/ubicación
@@ -112,6 +116,8 @@ async function entrarEdicion() {
     latEdit = lat;
     lngEdit = lng;
     catalogos.autocompletarUbicacion(lat, lng);
+    mapaEditadoManualmente = true;
+    actualizarBotonGuardar();
   });
   const controles = document.getElementById("mapaEditControles");
   controles.classList.remove("d-none");
@@ -119,6 +125,38 @@ async function entrarEdicion() {
   document.getElementById("btnMiUbicacionEdit").onclick = function () {
     pickerEdicion.usarMiUbicacion();
   };
+
+  // Foto de los valores originales: mientras el formulario coincida con ella, Guardar queda deshabilitado.
+  mapaEditadoManualmente = false;
+  snapshotEdicion = valoresFormularioEdicion();
+  actualizarBotonGuardar();
+}
+
+// Valores actuales de los campos de texto/ubicación del formulario de edición.
+function valoresFormularioEdicion() {
+  return {
+    titulo: document.getElementById("editTitulo").value,
+    descripcion: document.getElementById("editDescripcion").value,
+    tipo: document.getElementById("editTipo").value,
+    subtipo: document.getElementById("editSubtipo").value,
+    provincia: document.getElementById("editProvincia").value,
+    ciudad: document.getElementById("editCiudad").value,
+    direccion: document.getElementById("editDireccion").value,
+  };
+}
+
+// El mapa se compara aparte (mapaEditadoManualmente) porque autocompletar provincia/ciudad
+// desde el pin ya cambia esos selects, así que comparar el mapa por coordenadas sería redundante.
+function hayCambiosEdicion() {
+  if (!snapshotEdicion) return false;
+  if (mapaEditadoManualmente) return true;
+  const actual = valoresFormularioEdicion();
+  return Object.keys(snapshotEdicion).some((clave) => snapshotEdicion[clave] !== actual[clave]);
+}
+
+// Guardar solo se habilita si algo realmente cambió respecto al snapshot inicial.
+function actualizarBotonGuardar() {
+  document.getElementById("btnGuardarEdicion").disabled = !hayCambiosEdicion();
 }
 
 // Libera el picker de ubicación y deja el contenedor listo para el mapa de lectura.
@@ -144,6 +182,8 @@ function salirEdicion() {
   controles.classList.remove("d-flex");
   destruirPickerEdicion();
   pintarMapaLectura();
+  snapshotEdicion = null;
+  mapaEditadoManualmente = false;
 }
 
 // Carga los catálogos en los selects de edición (solo la 1.ª vez); el helper cablea las cascadas.

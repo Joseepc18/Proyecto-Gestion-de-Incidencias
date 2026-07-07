@@ -184,6 +184,8 @@ function pintarEstadoDosFactor(activa) {
 
 // Paso 1: genera el secreto y muestra el QR + los códigos de recuperación.
 async function activarDosFactor() {
+  const btn = document.getElementById("btnDfActivar");
+  btn.disabled = true;
   try {
     const data = await apiFetch("/2fa/enable", { method: "POST" });
     // El SVG lo genera nuestro backend (BaconQrCode): se inserta tal cual.
@@ -197,17 +199,21 @@ async function activarDosFactor() {
       lista.appendChild(li);
     });
 
-    document.getElementById("btnDfActivar").classList.add("d-none");
+    btn.classList.add("d-none");
     document.getElementById("dfSetup").classList.remove("d-none");
     document.getElementById("dfConfirmCode").focus();
   } catch (error) {
     mostrarToast(error.message, "error");
+  } finally {
+    btn.disabled = false;
   }
 }
 
 // Paso 2: confirma con el primer código de la app; recién ahí queda activa.
 async function confirmarDosFactor(e) {
   e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
   try {
     await apiFetch("/2fa/confirm", {
       method: "POST",
@@ -217,12 +223,16 @@ async function confirmarDosFactor(e) {
     mostrarToast("Verificación en dos pasos activada.", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
+  } finally {
+    btn.disabled = false;
   }
 }
 
 // Desactiva el 2FA exigiendo un código válido (un token robado no basta).
 async function desactivarDosFactor(e) {
   e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
   try {
     await apiFetch("/2fa", {
       method: "DELETE",
@@ -232,6 +242,8 @@ async function desactivarDosFactor(e) {
     mostrarToast("Verificación en dos pasos desactivada.", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
+  } finally {
+    btn.disabled = false;
   }
 }
 
