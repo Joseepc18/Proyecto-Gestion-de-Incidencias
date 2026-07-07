@@ -2886,6 +2886,10 @@ html[data-theme="dark"] {
   background: #64748b;
 }
 
+.tabla-avatar-super_admin {
+  background: #b45309;
+}
+
 /* Historial de estados: fila horizontal compacta (punto + label + fecha a la derecha) */
 .historial-lista {
   display: flex;
@@ -3408,6 +3412,12 @@ html[data-theme="dark"] .badge-estado-cerrado {
   border-color: rgba(100, 116, 139, 0.24);
 }
 
+.badge-rol-super_admin {
+  color: #92400e;
+  background-color: rgba(180, 83, 9, 0.14);
+  border-color: rgba(180, 83, 9, 0.24);
+}
+
 html[data-theme="dark"] .badge-rol-admin {
   color: #c4b5fd;
 }
@@ -3418,6 +3428,10 @@ html[data-theme="dark"] .badge-rol-tecnico {
 
 html[data-theme="dark"] .badge-rol-normal {
   color: #cbd5e1;
+}
+
+html[data-theme="dark"] .badge-rol-super_admin {
+  color: #fbbf24;
 }
 
 /* Páginas de error (404 / 500): centradas, con branding */
