@@ -2,7 +2,7 @@
 
 /* exported requerirSesion, cablearLogout, inicializarPaginaAdmin */
 
-/* global apiFetch, obtenerToken, eliminarToken, mostrarToast */
+/* global apiFetch, obtenerToken, eliminarToken, mostrarToast, tienePermiso */
 
 // Si no hay token o falla (401/500), limpia y manda al login
 async function requerirSesion() {
@@ -33,8 +33,11 @@ async function requerirSesion() {
 }
 
 // Inserta (una sola vez) el aviso "verifica tu correo" bajo el navbar, con botón para reenviar.
+// Solo aplica a quien puede reportar incidencias (ciudadano y admin); técnico/super_admin no registran.
 function mostrarAvisoVerificacion(usuario) {
   if (usuario.email_verificado !== false) return;
+  const rol = usuario.rol ? usuario.rol.nombre_rol : "";
+  if (rol !== "normal" && !tienePermiso("incidencias.gestionar")) return;
   const navbar = document.getElementById("adminNavbar");
   if (!navbar || document.getElementById("avisoVerificacion")) return;
 
