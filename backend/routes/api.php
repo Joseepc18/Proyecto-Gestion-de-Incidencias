@@ -20,25 +20,27 @@ use Illuminate\Support\Facades\Route;
 // Healthcheck público (sin token, throttle holgado 120/min) para monitoreo y pruebas de carga.
 Route::get('/health', HealthController::class)->middleware('throttle:120,1');
 
-// Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+// Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta.
+// El 3er parámetro (prefijo) es obligatorio en cada una: sin sesión, Laravel keyea el throttle
+// solo por IP (ignora la ruta/dominio), así que rutas con el mismo N,M compartirían cupo entre sí.
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1,register');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1,login');
 
 // Login con Google (OAuth) — navegación del navegador, devuelven redirecciones
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 
 // Restablecer contraseña (público): el token del correo es la credencial.
-Route::post('/password/olvide', [AuthController::class, 'olvidePassword'])->middleware('throttle:5,1');
-Route::post('/password/restablecer', [AuthController::class, 'restablecerPassword'])->middleware('throttle:5,1');
+Route::post('/password/olvide', [AuthController::class, 'olvidePassword'])->middleware('throttle:5,1,password-olvide');
+Route::post('/password/restablecer', [AuthController::class, 'restablecerPassword'])->middleware('throttle:5,1,password-restablecer');
 
 // Verificación de email vía enlace firmado (navegación del navegador, devuelve redirección al frontend).
 Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEmail'])
     ->name('verification.verify')
-    ->middleware('throttle:6,1');
+    ->middleware('throttle:6,1,email-verificar');
 
 // Segundo factor del login (público): la credencial es el challenge_token efímero emitido por /login.
-Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1');
+Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1,2fa-challenge');
 
 // Archivo de evidencia privado: lo carga el <img> (sin token Bearer), por eso la credencial es la firma con expiración.
 Route::get('/evidencias/{evidencia}/archivo', [EvidenciaController::class, 'archivo'])
@@ -51,12 +53,15 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::put('/perfil', [AuthController::class, 'actualizarPerfil']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/email/reenviar-verificacion', [AuthController::class, 'reenviarVerificacion'])->middleware('throttle:6,1');
+    // El 3er parámetro (prefijo) es obligatorio aquí: por defecto Laravel keyea el throttle SOLO
+    // por id de usuario (ignora la ruta) en peticiones autenticadas, así que sin prefijo propio
+    // estas 4 rutas compartirían un único cupo de 6/min entre sí.
+    Route::post('/email/reenviar-verificacion', [AuthController::class, 'reenviarVerificacion'])->middleware('throttle:6,1,email-verificacion');
 
     // Gestión del segundo factor (TOTP) del propio usuario.
-    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->middleware('throttle:6,1');
-    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:6,1');
-    Route::delete('/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1');
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->middleware('throttle:6,1,2fa-enable');
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:6,1,2fa-confirm');
+    Route::delete('/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1,2fa-disable');
 
     // Autorización de canales privados de WebSocket (Reverb); valida con el token Sanctum.
     Route::post('/broadcasting/auth', BroadcastAuthController::class);
