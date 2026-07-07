@@ -7,6 +7,7 @@ use App\Enums\PrioridadIncidencia;
 use App\Events\IncidenciaActualizada;
 use App\Events\IncidenciaCambioEstado;
 use App\Events\IncidenciaCreada;
+use App\Events\IncidenciaEliminada;
 use App\Events\ReclamoCambiado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
@@ -176,6 +177,7 @@ class IncidenciaController extends Controller
 
         try {
             $incidencia->delete();
+            broadcast(new IncidenciaEliminada($incidencia->id_incidencia));
 
             if (! $esPropia) {
                 User::find($idReportador)?->notify(

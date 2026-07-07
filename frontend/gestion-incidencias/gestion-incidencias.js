@@ -308,6 +308,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     tablero.listen(".ReclamoCambiado", function (e) {
       parcharFila(e.id_incidencia, { atendidoPor: e.admin_atiende ? e.admin_atiende.name : "" });
     });
+    tablero.listen(".IncidenciaEliminada", function (e) {
+      const tr = document.querySelector('#tbodyIncidencias tr[data-id="' + e.id_incidencia + '"]');
+      if (tr) tr.remove();
+    });
   }
 
   conectarTablero();
