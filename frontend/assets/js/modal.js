@@ -130,8 +130,14 @@ function abrirModal(opciones = {}) {
 
     overlay.querySelector(".modal-cerrar").addEventListener("click", () => cerrar(false));
     overlay.querySelector("[data-cancelar]").addEventListener("click", () => cerrar(false));
+    // Cierra al hacer clic en el fondo, pero no si el gesto empezó adentro (p. ej. seleccionar
+    // texto y soltar el mouse fuera): el click solo cuenta si el mousedown también fue en el fondo.
+    let mousedownEnFondo = false;
+    overlay.addEventListener("mousedown", function (e) {
+      mousedownEnFondo = e.target === overlay;
+    });
     overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) cerrar(false);
+      if (e.target === overlay && mousedownEnFondo) cerrar(false);
     });
 
     form.addEventListener("submit", async function (e) {
