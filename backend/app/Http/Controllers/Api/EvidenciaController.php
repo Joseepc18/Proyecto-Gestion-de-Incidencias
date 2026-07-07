@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\TipoEvidencia;
+use App\Events\EvidenciasActualizadas;
 use App\Events\EvidenciaSubida;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
@@ -60,6 +61,7 @@ class EvidenciaController extends Controller
             $user,
             'EvidenciaController@subir (notificación)'
         );
+        broadcast(new EvidenciasActualizadas($incidencia));
 
         return $incidencia->load('evidencias');
     }
@@ -69,9 +71,11 @@ class EvidenciaController extends Controller
     {
         $this->authorize('eliminar', $evidencia);
 
+        $incidencia = $evidencia->incidencia;
         $url = $evidencia->url_evidencia;
         $evidencia->delete();
         Storage::disk('evidencias')->delete($url);
+        broadcast(new EvidenciasActualizadas($incidencia));
 
         return ['message' => 'Foto eliminada'];
     }

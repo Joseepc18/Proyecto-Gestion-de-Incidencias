@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -77,6 +77,12 @@ function conectarTiempoReal(id) {
 
   canal.listen(".AsignacionCambiada", function () {
     cargarAsignaciones(id);
+  });
+
+  canal.listen(".EvidenciasActualizadas", function (e) {
+    if (!incActual) return;
+    incActual.evidencias = e.evidencias;
+    pintarFotos();
   });
 
   canal.listen(".ReclamoCambiado", function (e) {
@@ -370,12 +376,13 @@ function configurarChatFlotante(id) {
     pintarParticipantes();
     if (!chatCreado) {
       crearChat("chatContenedor", id, usuarioActual, {
-        // Terminal (RESUELTO/CERRADO) para todos, o admin/super_admin view-only (sin incidencias.gestionar).
+        // Terminal (RESUELTO/CERRADO) para todos; admin/super_admin sin permiso de gestión (view-only);
+        // o admin con permiso pero que no reclamó (mismo candado que estado/prioridad/asignaciones).
         soloLectura:
           (incActual &&
             (incActual.estado_incidencia === "RESUELTO" ||
               incActual.estado_incidencia === "CERRADO")) ||
-          (esRolAdmin && !esAdmin),
+          (esRolAdmin && (!esAdmin || !soyDuenoDelReclamo())),
       });
       chatCreado = true;
     }

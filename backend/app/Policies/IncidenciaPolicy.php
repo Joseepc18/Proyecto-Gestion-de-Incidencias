@@ -103,14 +103,18 @@ class IncidenciaPolicy
 
     // Escribir en el chat: mismos roles que verChat, pero NO en RESUELTO/CERRADO (solo lectura).
     // Un admin/super_admin sin el permiso de gestión (view-only) ve el chat pero no escribe en él.
+    // Un admin CON el permiso solo escribe si es el dueño del reclamo (mismo candado que cambiarEstado):
+    // sin esto, cualquier admin podía escribir en el chat de una incidencia que no reclamó.
     public function comentar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
         }
 
-        if ($user->esAdmin() && ! $user->tienePermiso('incidencias.gestionar')) {
-            return Response::deny('No autorizado');
+        if ($user->esAdmin()) {
+            return $user->tienePermiso('incidencias.gestionar')
+                ? $this->esDuenoDelReclamo($user, $incidencia)
+                : Response::deny('No autorizado');
         }
 
         return $user->participaEn($incidencia)

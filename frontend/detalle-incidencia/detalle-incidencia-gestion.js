@@ -1,6 +1,6 @@
 // detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable)
 
-/* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo */
+/* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
 /* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */

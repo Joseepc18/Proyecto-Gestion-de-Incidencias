@@ -285,6 +285,28 @@ class PermisosTest extends TestCase
         $this->deleteJson("/api/asignaciones/{$asignacion->id_asignacion}")->assertOk();
     }
 
+    // El chat respeta el candado: un admin sin reclamar no escribe, aunque tenga incidencias.gestionar.
+    public function test_admin_ajeno_no_puede_comentar_en_incidencia_reclamada_por_otro(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $dueno = $this->crearUsuario('admin');
+        $otro = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // Otro admin (no dueño del reclamo) ve el chat, pero no escribe.
+        Sanctum::actingAs($otro);
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", ['comentario' => 'Hola'])
+            ->assertStatus(403);
+
+        // El dueño sí puede.
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", ['comentario' => 'Hola'])
+            ->assertCreated();
+    }
+
     // M-02: el super_admin es view-only también para las evidencias (no las borra); el autor sí puede la suya.
     public function test_super_admin_view_only_no_puede_eliminar_evidencia(): void
     {
