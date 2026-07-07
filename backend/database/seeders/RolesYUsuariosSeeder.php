@@ -18,8 +18,9 @@ class RolesYUsuariosSeeder extends Seeder
         Rol::firstOrCreate(['nombre_rol' => 'normal']);
 
         // En producción las claves de las cuentas privilegiadas son obligatorias: nunca el fallback público de dev.
-        $superPassword = env('SEED_SUPERADMIN_PASSWORD');
-        $adminPassword = env('SEED_ADMIN_PASSWORD');
+        // Vía config() y no env() directo: con el config cacheado en prod, env() fuera de config/ devuelve null.
+        $superPassword = config('seed.superadmin_password');
+        $adminPassword = config('seed.admin_password');
         if (app()->environment('production') && (empty($superPassword) || empty($adminPassword))) {
             throw new \RuntimeException('En producción define SEED_SUPERADMIN_PASSWORD y SEED_ADMIN_PASSWORD antes de sembrar.');
         }
