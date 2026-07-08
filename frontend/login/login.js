@@ -37,6 +37,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         window.location.replace("../perfil/perfil.html");
         return;
       }
+      // Ciudadano sin verificar: al muro de verificación, no a su inicio.
+      if (rol === "normal" && usuario.email_verificado === false) {
+        window.location.replace("../verificar-correo/verificar-correo.html");
+        return;
+      }
       window.location.replace(inicioSegunRol(rol));
       return;
     } catch {
@@ -169,6 +174,11 @@ function entrarConSesion(data) {
   if (usuario.two_factor_required) {
     toastFlash("Activa la verificación en dos pasos para gestionar el sistema.", "warning");
     window.location.href = "../perfil/perfil.html";
+    return;
+  }
+  // Ciudadano sin verificar: cae en el muro de verificación (Opción A), no en su inicio.
+  if (rol === "normal" && usuario.email_verificado === false) {
+    window.location.href = "../verificar-correo/verificar-correo.html";
     return;
   }
   toastFlash("Bienvenido", "success");

@@ -2,7 +2,7 @@
 
 /* exported requerirSesion, cablearLogout, inicializarPaginaAdmin */
 
-/* global apiFetch, obtenerToken, eliminarToken, mostrarToast, tienePermiso, inicioSegunRol */
+/* global apiFetch, obtenerToken, eliminarToken, tienePermiso, inicioSegunRol */
 
 // Guard de rol por página: quién puede ver cada carpeta. Se expresa con permisos (misma fuente
 // que aplicarMenuRol, para no duplicar reglas); solo normal/tecnico se distinguen por rol porque
@@ -71,13 +71,16 @@ async function requerirSesion() {
     // Guard de rol autoritativo con /user (la caché pudo quedar vieja): si esta página no
     // corresponde al rol, redirige y corta para que el JS de la página no llegue a correr.
     if (aplicarGuardRol(rol)) return new Promise(function () {});
+    // Ciudadano sin verificar: muro que bloquea toda la app hasta verificar el correo.
+    if (rol === "normal" && usuario.email_verificado === false) {
+      window.location.replace("../verificar-correo/verificar-correo.html");
+      return new Promise(function () {});
+    }
     // Pinta el nombre en el navbar compartido (todas las páginas admin lo tienen).
     const el = document.getElementById("nombreUsuario");
     if (el) el.textContent = usuario.name;
     // Cachea el id y avisa: la campana (script aparte) lo usa para su canal privado de notificaciones.
     localStorage.setItem("usuario_id", usuario.id);
-    // Si el correo aún no está verificado, muestra el aviso con botón de reenvío.
-    mostrarAvisoVerificacion(usuario);
     window.dispatchEvent(new CustomEvent("sesion-lista", { detail: usuario }));
     return usuario;
   } catch {
@@ -85,46 +88,6 @@ async function requerirSesion() {
     window.location.href = "../login/login.html";
     return null;
   }
-}
-
-// Inserta (una sola vez) el aviso "verifica tu correo" bajo el navbar, con botón para reenviar.
-// Solo aplica a quien puede reportar incidencias (ciudadano y admin); técnico/super_admin no registran.
-function mostrarAvisoVerificacion(usuario) {
-  if (usuario.email_verificado !== false) return;
-  const rol = usuario.rol ? usuario.rol.nombre_rol : "";
-  if (rol !== "normal" && !tienePermiso("incidencias.gestionar")) return;
-  const navbar = document.getElementById("adminNavbar");
-  if (!navbar || document.getElementById("avisoVerificacion")) return;
-
-  const aviso = document.createElement("div");
-  aviso.id = "avisoVerificacion";
-  aviso.className =
-    "alert alert-warning d-flex align-items-center justify-content-between gap-2 rounded-0 mb-0 px-3 px-lg-4 py-2";
-  aviso.setAttribute("role", "alert");
-
-  const texto = document.createElement("span");
-  texto.innerHTML =
-    '<i class="bi bi-envelope-exclamation me-2" aria-hidden="true"></i>' +
-    "Verifica tu correo electrónico para poder reportar incidencias.";
-
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.className = "btn btn-sm btn-warning flex-shrink-0";
-  boton.textContent = "Reenviar correo";
-  boton.addEventListener("click", async function () {
-    boton.disabled = true;
-    try {
-      const r = await apiFetch("/email/reenviar-verificacion", { method: "POST" });
-      mostrarToast(r.message || "Te reenviamos el correo de verificación.", "success");
-    } catch (e) {
-      mostrarToast(e.message || "No se pudo reenviar el correo.", "error");
-    } finally {
-      boton.disabled = false;
-    }
-  });
-
-  aviso.append(texto, boton);
-  navbar.insertAdjacentElement("afterend", aviso);
 }
 
 // Único listener de logout compartido por todas las páginas admin.

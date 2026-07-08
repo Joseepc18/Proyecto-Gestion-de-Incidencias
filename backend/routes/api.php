@@ -86,20 +86,20 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::delete('/incidencias/{incidencia}', [IncidenciaController::class, 'eliminarIncidencia'])->middleware('2fa');
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
     Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado'])->middleware('2fa');
-    Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura']);
+    Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura'])->middleware('verificado');
     Route::post('/incidencias/{incidencia}/rechazar-reapertura', [IncidenciaController::class, 'rechazarReapertura'])->middleware('2fa');
     Route::post('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'reclamarIncidencia'])->middleware('2fa');
     Route::delete('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'liberarReclamo'])->middleware('2fa');
     Route::patch('/incidencias/{incidencia}/archivar', [IncidenciaController::class, 'archivarIncidencia'])->middleware('2fa');
 
-    // Apis de comentarios (crear/editar exigen 2FA a los admin; técnicos y ciudadanos pasan).
+    // Apis de comentarios (crear/editar: 2FA a los admin y correo verificado al ciudadano; técnicos pasan).
     Route::get('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'listadoComentarios']);
-    Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario'])->middleware('2fa');
-    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'actualizarComentario'])->middleware('2fa');
+    Route::post('/incidencias/{incidencia}/comentarios', [ComentarioController::class, 'crearComentario'])->middleware(['verificado', '2fa']);
+    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'actualizarComentario'])->middleware(['verificado', '2fa']);
 
-    // Apis de evidencias (fotos): subir/eliminar exigen 2FA a los admin; autor y técnico responsable pasan.
-    Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir'])->middleware('2fa');
-    Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar'])->middleware('2fa');
+    // Apis de evidencias (fotos): subir/eliminar exigen 2FA a los admin y correo verificado al ciudadano; el técnico responsable pasa.
+    Route::post('/incidencias/{incidencia}/evidencias', [EvidenciaController::class, 'subir'])->middleware(['verificado', '2fa']);
+    Route::delete('/evidencias/{evidencia}', [EvidenciaController::class, 'eliminar'])->middleware(['verificado', '2fa']);
 
     // Apis de notificaciones (del usuario autenticado)
     Route::get('/notificaciones', [NotificacionController::class, 'listado']);

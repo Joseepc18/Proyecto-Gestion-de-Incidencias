@@ -20,7 +20,7 @@ class AsegurarEmailVerificado
 
         if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Verifica tu correo electrónico para poder reportar incidencias.',
+                'message' => 'Verifica tu correo electrónico para continuar.',
             ], 403);
         }
 

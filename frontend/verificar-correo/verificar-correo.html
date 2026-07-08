@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Verifica tu correo - Sistema de Gestión de Incidencias" />
+    <title>Verifica tu correo | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <script>
+      // Muro: siempre validamos el estado real antes de mostrar nada (oculta la tarjeta mientras se comprueba).
+      try {
+        if (localStorage.getItem("access_token")) {
+          document.documentElement.classList.add("verificando-sesion");
+        }
+      } catch (e) {
+        /* localStorage no disponible */
+      }
+    </script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body class="auth-body">
+    <!-- Spinner a pantalla completa mientras se comprueba el estado de verificación -->
+    <div class="sesion-loader" aria-hidden="true">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando…</span>
+      </div>
+    </div>
+
+    <button
+      class="icon-button theme-toggle auth-theme-toggle"
+      type="button"
+      data-theme-toggle
+      aria-label="Cambiar tema"
+      title="Cambiar tema"
+    >
+      <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+    </button>
+
+    <main class="auth-page">
+      <div class="card shadow-sm auth-solo-card">
+        <div class="card-body p-4 p-sm-5 text-center">
+          <div class="mb-3">
+            <i class="bi bi-envelope-paper display-4 text-primary" aria-hidden="true"></i>
+          </div>
+          <p class="eyebrow mb-1">Casi listo</p>
+          <h1 class="h3 mb-2">Verifica tu correo</h1>
+          <p class="text-muted mb-3">
+            Te enviamos un enlace de verificación a
+            <strong id="muroEmail">tu correo</strong>. Ábrelo para activar tu cuenta y empezar a
+            reportar incidencias.
+          </p>
+
+          <div class="alert alert-warning text-start d-flex gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
+            <span>
+              ¿No lo ves en tu bandeja? Revisa tu carpeta de
+              <strong>spam o correo no deseado</strong>
+              y márcalo como “No es spam”.
+            </span>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button id="muroVerificar" class="btn btn-primary" type="button">
+              <i class="bi bi-check2-circle" aria-hidden="true"></i> Ya verifiqué, entrar
+            </button>
+            <button id="muroReenviar" class="btn btn-outline-secondary" type="button">
+              <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i> Reenviar correo
+            </button>
+          </div>
+
+          <div class="auth-footer">
+            ¿Correo equivocado?
+            <button type="button" class="auth-link" id="muroLogout">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="verificar-correo.js"></script>
+  </body>
+</html>

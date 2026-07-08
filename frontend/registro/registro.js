@@ -1,6 +1,6 @@
 // registro.js — Lógica del registro. Usa apiFetch de api.js.
 
-/* global apiFetch, toastFlash */
+/* global apiFetch, toastFlash, guardarToken */
 
 document.addEventListener("DOMContentLoaded", function () {
   // El redirect con token ya lo valida login.js (carga antes); aquí sólo va el formulario.
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
     spinner.classList.remove("d-none");
 
     try {
-      await apiFetch("/register", {
+      const data = await apiFetch("/register", {
         method: "POST",
         body: JSON.stringify({
           name,
@@ -42,8 +42,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }),
         sinSpinner: true,
       });
-      toastFlash("Cuenta creada. Inicia sesión.", "success");
-      window.location.href = "../login/login.html";
+      // Opción A: el registro ya devuelve token; guardamos la sesión y caemos directo en el muro de verificación.
+      guardarToken(data.access_token);
+      const usuario = data.user || {};
+      if (usuario.rol) localStorage.setItem("rol_usuario", usuario.rol.nombre_rol);
+      if (Array.isArray(usuario.permisos)) {
+        localStorage.setItem("permisos_usuario", JSON.stringify(usuario.permisos));
+      }
+      toastFlash("Cuenta creada. Te enviamos un correo de verificación.", "success");
+      window.location.href = "../verificar-correo/verificar-correo.html";
     } catch (error) {
       errorBox.textContent = error.message;
       errorBox.classList.remove("d-none");
