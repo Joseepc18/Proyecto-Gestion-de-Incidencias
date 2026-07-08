@@ -362,6 +362,13 @@
                           accept="image/*"
                           multiple
                         />
+                        <input
+                          class="d-none"
+                          id="editFotosCamara"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                        />
                         <div id="editFotosError" class="text-danger small mt-1 d-none"></div>
                         <div id="editFotosPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
                         <button
@@ -506,6 +513,20 @@
                           accept="image/*"
                           multiple
                         />
+                        <input
+                          class="d-none"
+                          id="inputResolucionCamara"
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                        />
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-sm w-100 mt-2 d-md-none"
+                          id="btnCamaraResolucion"
+                        >
+                          <i class="bi bi-camera" aria-hidden="true"></i> Tomar foto
+                        </button>
                         <div id="resolucionError" class="text-danger small mt-1 d-none"></div>
                         <div id="resolucionPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
                         <button

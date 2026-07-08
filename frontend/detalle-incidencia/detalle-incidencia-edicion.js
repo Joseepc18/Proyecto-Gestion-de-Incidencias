@@ -60,6 +60,7 @@ function prepararFotosReporte() {
   // Modo compacto: el azulejo "+" va inline en la grilla para no desbordar el panel
   galeriaReporte = crearGaleriaFotos({
     input: document.getElementById("editFotos"),
+    inputCamara: document.getElementById("editFotosCamara"),
     preview: document.getElementById("editFotosPreview"),
     error: document.getElementById("editFotosError"),
     cupo: cupoFotos,
@@ -243,6 +244,17 @@ function renderEvidenciasReporteEditable() {
       document.getElementById("editFotos").click();
     });
     cont.appendChild(agregar);
+
+    // Azulejo de cámara (solo móvil): en Android el "+" abre la galería, este fuerza la cámara.
+    const camara = document.createElement("button");
+    camara.type = "button";
+    camara.className = "foto-agregar foto-agregar-md d-md-none";
+    camara.title = "Tomar foto";
+    camara.innerHTML = '<i class="bi bi-camera" aria-hidden="true"></i>';
+    camara.addEventListener("click", function () {
+      document.getElementById("editFotosCamara").click();
+    });
+    cont.appendChild(camara);
   } else if (reporte.length === 0) {
     cont.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
   }

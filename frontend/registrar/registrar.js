@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Galería de fotos (compressión + preview + revocación vía galeriaFotos.js).
   const galeriaFotos = crearGaleriaFotos({
     input: document.getElementById("crearFotos"),
+    inputCamara: document.getElementById("crearFotosCamara"),
+    btnCamara: document.getElementById("btnCamaraCrear"),
     dropzone: document.getElementById("dropzoneFotos"),
     preview: document.getElementById("crearFotosPreview"),
     error: document.getElementById("crearFotosError"),

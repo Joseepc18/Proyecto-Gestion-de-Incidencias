@@ -87,6 +87,20 @@ function crearGaleriaFotos(opts) {
     this.value = "";
   });
 
+  // Input aparte con capture="environment": en Android el selector normal solo abre la galería.
+  if (opts.inputCamara) {
+    opts.inputCamara.addEventListener("change", function () {
+      procesar(this.files);
+      this.value = "";
+    });
+  }
+
+  if (opts.btnCamara && opts.inputCamara) {
+    opts.btnCamara.addEventListener("click", function () {
+      opts.inputCamara.click();
+    });
+  }
+
   if (opts.dropzone) {
     ["dragenter", "dragover"].forEach(function (ev) {
       opts.dropzone.addEventListener(ev, function (e) {
