@@ -2,7 +2,7 @@
 
 /* exported requerirSesion, cablearLogout, inicializarPaginaAdmin */
 
-/* global apiFetch, obtenerToken, eliminarToken, tienePermiso, inicioSegunRol */
+/* global apiFetch, obtenerToken, eliminarToken, tienePermiso, inicioSegunRol, toastFlash */
 
 // Guard de rol por página: quién puede ver cada carpeta. Se expresa con permisos (misma fuente
 // que aplicarMenuRol, para no duplicar reglas); solo normal/tecnico se distinguen por rol porque
@@ -74,6 +74,12 @@ async function requerirSesion() {
     // Ciudadano sin verificar: muro que bloquea toda la app hasta verificar el correo.
     if (rol === "normal" && usuario.email_verificado === false) {
       window.location.replace("../verificar-correo/verificar-correo.html");
+      return new Promise(function () {});
+    }
+    // Admin/super_admin sin 2FA: muro que bloquea toda la app (salvo Perfil) hasta activarlo.
+    if (usuario.two_factor_required && paginaActualGuard() !== "perfil") {
+      toastFlash("Activa la verificación en dos pasos para poder usar la app.", "warning");
+      window.location.replace("../perfil/perfil.html");
       return new Promise(function () {});
     }
     // Pinta el nombre en el navbar compartido (todas las páginas admin lo tienen).
