@@ -1,8 +1,69 @@
 // galeriaFotos.js — Dropzone + preview de miniaturas + compresión + revocación de objectURL.
 
-/* exported crearGaleriaFotos */
+/* exported crearGaleriaFotos, abrirSelectorFuenteFoto */
 
 /* global imageCompression, OPCIONES_COMPRESION */
+
+// Mini-menú "Tomar foto / Elegir de galería" (un solo botón que abre las dos opciones,
+// igual en Android e iPhone). Sin inputCamara abre la galería directo. Reusa el estilo de confirmar.js.
+function abrirSelectorFuenteFoto(inputCamara, inputGaleria) {
+  if (!inputCamara) {
+    inputGaleria.click();
+    return;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "confirm-overlay";
+  overlay.innerHTML =
+    '<div class="confirm-box">' +
+    '<h3 class="confirm-titulo">Agregar foto</h3>' +
+    '<div class="d-grid gap-2 mt-2">' +
+    '<button class="btn btn-outline-primary" data-fuente="camara">' +
+    '<i class="bi bi-camera me-1" aria-hidden="true"></i> Tomar foto</button>' +
+    '<button class="btn btn-outline-primary" data-fuente="galeria">' +
+    '<i class="bi bi-images me-1" aria-hidden="true"></i> Elegir de galería</button>' +
+    '<button class="btn btn-link btn-sm text-muted" data-fuente="cancelar">Cancelar</button>' +
+    "</div></div>";
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function () {
+    overlay.classList.add("confirm-visible");
+  });
+
+  let cerrado = false;
+  function cerrar() {
+    if (cerrado) return;
+    cerrado = true;
+    overlay.classList.remove("confirm-visible");
+    setTimeout(function () {
+      overlay.remove();
+    }, 200);
+    document.removeEventListener("keydown", alPulsarTecla);
+  }
+
+  function alPulsarTecla(e) {
+    if (e.key === "Escape") cerrar();
+  }
+  document.addEventListener("keydown", alPulsarTecla);
+
+  overlay.querySelectorAll("[data-fuente]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const fuente = btn.dataset.fuente;
+      // El .click() del input debe salir dentro del gesto del usuario, antes de cerrar.
+      if (fuente === "camara") inputCamara.click();
+      else if (fuente === "galeria") inputGaleria.click();
+      cerrar();
+    });
+  });
+
+  let mousedownEnFondo = false;
+  overlay.addEventListener("mousedown", function (e) {
+    mousedownEnFondo = e.target === overlay;
+  });
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay && mousedownEnFondo) cerrar();
+  });
+}
 
 // Sin opts.dropzone (modo compacto) la página aporta su propio botón de "agregar"
 function crearGaleriaFotos(opts) {
@@ -73,13 +134,16 @@ function crearGaleriaFotos(opts) {
       agregar.type = "button";
       agregar.className = "foto-agregar";
       agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
-      agregar.addEventListener("click", function () {
-        opts.input.click();
-      });
+      agregar.addEventListener("click", abrirFuente);
       opts.preview.appendChild(agregar);
     }
 
     if (opts.btnSubir) opts.btnSubir.classList.toggle("d-none", archivos.length === 0);
+  }
+
+  // Un solo disparador: abre el mini-menú Cámara/Galería (o la galería directa si no hay inputCamara).
+  function abrirFuente() {
+    abrirSelectorFuenteFoto(opts.inputCamara, opts.input);
   }
 
   opts.input.addEventListener("change", function () {
@@ -95,13 +159,9 @@ function crearGaleriaFotos(opts) {
     });
   }
 
-  if (opts.btnCamara && opts.inputCamara) {
-    opts.btnCamara.addEventListener("click", function () {
-      opts.inputCamara.click();
-    });
-  }
-
   if (opts.dropzone) {
+    // El clic en la zona abre el menú (antes el <label for> abría la galería directo).
+    opts.dropzone.addEventListener("click", abrirFuente);
     ["dragenter", "dragover"].forEach(function (ev) {
       opts.dropzone.addEventListener(ev, function (e) {
         e.preventDefault();

@@ -501,11 +501,16 @@
                         <p class="text-muted small mb-2">
                           Sube hasta 3 fotos del trabajo realizado.
                         </p>
-                        <label class="dropzone-fotos" id="dropzoneResolucion" for="inputResolucion">
-                          <i class="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
-                          <span class="dropzone-titulo">Haz clic o arrastra tus fotos aquí</span>
-                          <span class="dropzone-sub">JPG o PNG · hasta 3 imágenes</span>
-                        </label>
+                        <div
+                          class="dropzone-fotos"
+                          id="dropzoneResolucion"
+                          role="button"
+                          tabindex="0"
+                        >
+                          <i class="bi bi-camera dropzone-icon" aria-hidden="true"></i>
+                          <span class="dropzone-titulo">Toca para tomar o subir una foto</span>
+                          <span class="dropzone-sub">JPG o PNG · máximo 3 fotos</span>
+                        </div>
                         <input
                           class="d-none"
                           id="inputResolucion"
@@ -520,15 +525,12 @@
                           accept="image/*"
                           capture="environment"
                         />
-                        <button
-                          type="button"
-                          class="btn btn-outline-secondary btn-sm w-100 mt-2 d-md-none"
-                          id="btnCamaraResolucion"
-                        >
-                          <i class="bi bi-camera" aria-hidden="true"></i> Tomar foto
-                        </button>
                         <div id="resolucionError" class="text-danger small mt-1 d-none"></div>
                         <div id="resolucionPreview" class="d-flex gap-2 mt-2 flex-wrap"></div>
+                        <p class="text-muted small mt-2 mb-0">
+                          Máximo 3 fotos. Para subir otra, elimina una con la
+                          <i class="bi bi-x-circle" aria-hidden="true"></i>.
+                        </p>
                         <button
                           type="button"
                           class="btn btn-primary btn-sm mt-2 d-none"

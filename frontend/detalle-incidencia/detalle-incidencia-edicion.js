@@ -2,7 +2,7 @@
 
 /* exported edicionAlCargarDetalle */
 
-/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
 
 // Catálogos + cascadas (helper compartido con registrar-incidencia); se cargan una sola vez.
 const catalogos = crearCatalogosIncidencia({
@@ -233,31 +233,31 @@ function renderEvidenciasReporteEditable() {
     cont.appendChild(wrap);
   });
 
-  // Azulejo "+" del tamaño de una miniatura para abrir el selector de archivos.
+  // Azulejo único: abre el mini-menú Cámara/Galería (mismo botón en Android e iPhone).
   if (cupoFotos() > 0) {
     const agregar = document.createElement("button");
     agregar.type = "button";
     agregar.className = "foto-agregar foto-agregar-md";
-    agregar.title = "Agregar fotos";
-    agregar.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i>';
+    agregar.title = "Agregar foto";
+    agregar.innerHTML = '<i class="bi bi-camera" aria-hidden="true"></i>';
     agregar.addEventListener("click", function () {
-      document.getElementById("editFotos").click();
+      abrirSelectorFuenteFoto(
+        document.getElementById("editFotosCamara"),
+        document.getElementById("editFotos"),
+      );
     });
     cont.appendChild(agregar);
-
-    // Azulejo de cámara (solo móvil): en Android el "+" abre la galería, este fuerza la cámara.
-    const camara = document.createElement("button");
-    camara.type = "button";
-    camara.className = "foto-agregar foto-agregar-md d-md-none";
-    camara.title = "Tomar foto";
-    camara.innerHTML = '<i class="bi bi-camera" aria-hidden="true"></i>';
-    camara.addEventListener("click", function () {
-      document.getElementById("editFotosCamara").click();
-    });
-    cont.appendChild(camara);
   } else if (reporte.length === 0) {
     cont.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
+    return;
   }
+
+  // Recordatorio del límite (ocupa toda la fila del grid con w-100).
+  const aviso = document.createElement("p");
+  aviso.className = "text-muted small mb-0 w-100";
+  aviso.innerHTML =
+    'Máximo 3 fotos. Para subir otra, elimina una con la <i class="bi bi-x-circle" aria-hidden="true"></i>.';
+  cont.appendChild(aviso);
 }
 
 // Elimina una foto del backend y actualiza la galería al instante.

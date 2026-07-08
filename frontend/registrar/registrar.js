@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const galeriaFotos = crearGaleriaFotos({
     input: document.getElementById("crearFotos"),
     inputCamara: document.getElementById("crearFotosCamara"),
-    btnCamara: document.getElementById("btnCamaraCrear"),
     dropzone: document.getElementById("dropzoneFotos"),
     preview: document.getElementById("crearFotosPreview"),
     error: document.getElementById("crearFotosError"),

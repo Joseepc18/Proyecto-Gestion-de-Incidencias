@@ -415,7 +415,6 @@ function prepararSubidaResolucion(id) {
   galeriaResolucion = crearGaleriaFotos({
     input: document.getElementById("inputResolucion"),
     inputCamara: document.getElementById("inputResolucionCamara"),
-    btnCamara: document.getElementById("btnCamaraResolucion"),
     dropzone: document.getElementById("dropzoneResolucion"),
     preview: document.getElementById("resolucionPreview"),
     error: document.getElementById("resolucionError"),
