@@ -54,29 +54,43 @@
                   <span>Listado de usuarios</span>
                 </h2>
 
-                <div class="dropdown">
-                  <button
-                    class="btn btn-light btn-sm dropdown-toggle"
-                    type="button"
-                    id="btnFiltroRol"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                  >
-                    <i class="bi bi-funnel me-1" aria-hidden="true"></i
-                    ><span id="filtroRolTexto">Todos</span>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnFiltroRol">
-                    <li><a class="dropdown-item" href="#" data-rol="">Todos</a></li>
-                    <li><a class="dropdown-item" href="#" data-rol="admin">Administradores</a></li>
-                    <li><a class="dropdown-item" href="#" data-rol="tecnico">Técnicos</a></li>
-                    <li><a class="dropdown-item" href="#" data-rol="normal">Normales</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li>
-                      <a class="dropdown-item text-warning" href="#" data-rol="suspendido">
-                        <i class="bi bi-slash-circle me-1" aria-hidden="true"></i>Suspendidos
-                      </a>
-                    </li>
-                  </ul>
+                <div class="d-flex gap-2 align-items-center">
+                  <div class="campo-busqueda">
+                    <i class="bi bi-search busqueda-icono" aria-hidden="true"></i>
+                    <input
+                      class="form-control form-control-sm"
+                      type="search"
+                      id="filtroBusqueda"
+                      placeholder="Buscar por nombre..."
+                      aria-label="Buscar usuarios"
+                    />
+                  </div>
+                  <div class="dropdown">
+                    <button
+                      class="btn btn-light btn-sm dropdown-toggle"
+                      type="button"
+                      id="btnFiltroRol"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="bi bi-funnel me-1" aria-hidden="true"></i
+                      ><span id="filtroRolTexto">Todos</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnFiltroRol">
+                      <li><a class="dropdown-item" href="#" data-rol="">Todos</a></li>
+                      <li>
+                        <a class="dropdown-item" href="#" data-rol="admin">Administradores</a>
+                      </li>
+                      <li><a class="dropdown-item" href="#" data-rol="tecnico">Técnicos</a></li>
+                      <li><a class="dropdown-item" href="#" data-rol="normal">Normales</a></li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li>
+                        <a class="dropdown-item text-warning" href="#" data-rol="suspendido">
+                          <i class="bi bi-slash-circle me-1" aria-hidden="true"></i>Suspendidos
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
               <div class="table-responsive">

@@ -73,6 +73,23 @@ class UsuariosTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $suspendido->id, 'deleted_at' => null]);
     }
 
+    public function test_listado_filtra_por_busqueda_de_nombre_o_correo(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $rolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
+        $ana = User::factory()->create(['id_rol' => $rolTecnico, 'name' => 'Ana Torres', 'email' => 'ana.torres@sistema.com']);
+        $luis = User::factory()->create(['id_rol' => $rolTecnico, 'name' => 'Luis Perez', 'email' => 'luis.perez@sistema.com']);
+
+        $porNombre = $this->getJson('/api/usuarios?busqueda=torres&per_page=50')->assertOk();
+        $ids = collect($porNombre->json('data'))->pluck('id')->all();
+        $this->assertContains($ana->id, $ids);
+        $this->assertNotContains($luis->id, $ids);
+
+        // También busca por correo.
+        $porCorreo = $this->getJson('/api/usuarios?busqueda=luis.perez&per_page=50')->assertOk();
+        $this->assertContains($luis->id, collect($porCorreo->json('data'))->pluck('id')->all());
+    }
+
     public function test_listado_oculta_suspendidos_y_los_muestra_con_filtro(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));

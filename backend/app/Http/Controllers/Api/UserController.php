@@ -25,6 +25,14 @@ class UserController extends Controller
             }
         }
 
+        if ($request->filled('busqueda')) {
+            $termino = '%'.$request->busqueda.'%';
+            $query->where(function ($q) use ($termino) {
+                $q->where('name', 'ilike', $termino)
+                    ->orWhere('email', 'ilike', $termino);
+            });
+        }
+
         // through() envuelve cada usuario en UserResource sin alterar el shape de paginación que consume el frontend.
         return $query->paginate($this->perPage($request))
             ->through(fn ($usuario) => new UserResource($usuario));

@@ -24,6 +24,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     .getElementById("btnNuevoUsuario")
     .addEventListener("click", () => abrirModalUsuario(null));
 
+  let timerBusqueda = null;
+  document.getElementById("filtroBusqueda").addEventListener("input", function () {
+    clearTimeout(timerBusqueda);
+    timerBusqueda = setTimeout(function () {
+      paginaActual = 1;
+      cargarUsuarios();
+    }, 400);
+  });
+
   await cargarRoles();
   inicializarFiltroRol();
   cargarUsuarios();
@@ -52,6 +61,8 @@ async function cargarUsuarios() {
     params.set("page", paginaActual);
     params.set("per_page", porPagina);
     if (filtroRol) params.set("rol", filtroRol);
+    const busqueda = document.getElementById("filtroBusqueda").value.trim();
+    if (busqueda) params.set("busqueda", busqueda);
 
     const respuesta = await apiFetch("/usuarios?" + params.toString());
     const usuarios = respuesta.data;
