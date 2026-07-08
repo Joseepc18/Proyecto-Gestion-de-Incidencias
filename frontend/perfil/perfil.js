@@ -10,6 +10,8 @@ let fotoSeleccionada = null;
 let quitarFoto = false;
 // objectURL del preview para liberarlo al reemplazarlo.
 let previewUrl = null;
+// Correo actual confirmado; sirve para saber si el usuario está intentando cambiarlo.
+let emailOriginal = "";
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
@@ -18,6 +20,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("perfilNombre").value = usuario.name;
   document.getElementById("perfilEmail").value = usuario.email;
+  emailOriginal = usuario.email;
+  mostrarAvisoPendiente(usuario.email_pendiente || null);
 
   fotoActual = usuario.foto_perfil || null;
   cachearFotoNavbar(fotoActual);
@@ -94,10 +98,11 @@ async function guardarPerfil(e) {
   const btn = document.getElementById("btnGuardarPerfil");
   const spinner = document.getElementById("perfilSpinner");
 
+  const emailNuevo = document.getElementById("perfilEmail").value.trim();
   const datos = new FormData();
   datos.append("_method", "PUT");
   datos.append("name", document.getElementById("perfilNombre").value.trim());
-  datos.append("email", document.getElementById("perfilEmail").value.trim());
+  datos.append("email", emailNuevo);
 
   const password = document.getElementById("perfilPassword").value;
   const passwordConfirm = document.getElementById("perfilPasswordConfirm").value;
@@ -109,6 +114,23 @@ async function guardarPerfil(e) {
     datos.append("password", password);
     datos.append("password_confirmation", passwordConfirm);
   }
+
+  // Cambiar correo o contraseña es sensible: exige la contraseña actual (y el código 2FA si lo tiene).
+  const cambiaEmail = emailNuevo !== emailOriginal;
+  const sensible = cambiaEmail || Boolean(password);
+  const currentPassword = document.getElementById("perfilCurrentPassword").value;
+  if (sensible && !currentPassword) {
+    mostrarToast("Ingresa tu contraseña actual para confirmar el cambio.", "error");
+    return;
+  }
+  if (currentPassword) {
+    datos.append("current_password", currentPassword);
+  }
+  const dosFactorCode = document.getElementById("perfilDosFactorCode").value.trim();
+  if (dosFactorCode) {
+    datos.append("two_factor_code", dosFactorCode);
+  }
+
   if (fotoSeleccionada) {
     datos.append("foto", fotoSeleccionada);
   } else if (quitarFoto) {
@@ -126,12 +148,26 @@ async function guardarPerfil(e) {
     quitarFoto = false;
     document.getElementById("perfilPassword").value = "";
     document.getElementById("perfilPasswordConfirm").value = "";
+    document.getElementById("perfilCurrentPassword").value = "";
+    document.getElementById("perfilDosFactorCode").value = "";
     mostrarAvatar(fotoActual ? "/storage/" + encodeURIComponent(fotoActual) : null);
+
+    // El correo no cambia al instante: reflejamos el confirmado y mostramos el pendiente si lo hay.
+    emailOriginal = usuario.email;
+    document.getElementById("perfilEmail").value = usuario.email;
+    mostrarAvisoPendiente(usuario.email_pendiente || null);
 
     document.getElementById("nombreUsuario").textContent = usuario.name;
     cachearFotoNavbar(fotoActual);
 
-    mostrarToast("Perfil actualizado", "success");
+    if (cambiaEmail) {
+      mostrarToast(
+        "Te enviamos un enlace a tu nuevo correo. El cambio se aplicará al confirmarlo.",
+        "success",
+      );
+    } else {
+      mostrarToast("Perfil actualizado", "success");
+    }
   } catch (error) {
     mostrarToast(error.message, "error");
   } finally {
@@ -171,6 +207,8 @@ function pintarEstadoDosFactor(activa) {
 
   document.getElementById("btnDfActivar").classList.toggle("d-none", activa);
   document.getElementById("btnDfDesactivar").classList.toggle("d-none", !activa);
+  // El campo de código 2FA del formulario de cuenta solo aplica si el 2FA está activo.
+  document.getElementById("perfilDosFactorGrupo").classList.toggle("d-none", !activa);
   // El aviso de obligatoriedad solo aplica a roles privilegiados sin 2FA activo.
   document
     .getElementById("dfRequeridoAviso")
@@ -244,6 +282,17 @@ async function desactivarDosFactor(e) {
     mostrarToast(error.message, "error");
   } finally {
     btn.disabled = false;
+  }
+}
+
+// Muestra u oculta el aviso de cambio de correo pendiente de confirmar.
+function mostrarAvisoPendiente(email) {
+  const aviso = document.getElementById("perfilPendienteAviso");
+  if (email) {
+    document.getElementById("perfilPendienteEmail").textContent = email;
+    aviso.hidden = false;
+  } else {
+    aviso.hidden = true;
   }
 }
 

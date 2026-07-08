@@ -6,14 +6,20 @@
 let challengeToken = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  // Mensajes que vienen del enlace de verificación de correo (?verificado=1 o ?error=verificacion).
+  // Mensajes que vienen de los enlaces de correo (verificación y cambio de correo).
   const paramsUrl = new URLSearchParams(window.location.search);
+  const avisosCorreo = {
+    "verificado=1": ["Tu correo fue verificado. Ya puedes reportar incidencias.", "success"],
+    "error=verificacion": ["El enlace de verificación no es válido o ya expiró.", "error"],
+    "correo_cambiado=1": ["Tu correo fue cambiado. Inicia sesión con el nuevo.", "success"],
+    "error=cambio_correo": ["El enlace para cambiar el correo no es válido o ya expiró.", "error"],
+    "error=cambio_correo_ocupado": ["Ese correo ya está en uso por otra cuenta.", "error"],
+  };
   const avisoVerif =
-    paramsUrl.get("verificado") === "1"
-      ? ["Tu correo fue verificado. Ya puedes reportar incidencias.", "success"]
-      : paramsUrl.get("error") === "verificacion"
-        ? ["El enlace de verificación no es válido o ya expiró.", "error"]
-        : null;
+    avisosCorreo[`verificado=${paramsUrl.get("verificado")}`] ||
+    avisosCorreo[`correo_cambiado=${paramsUrl.get("correo_cambiado")}`] ||
+    avisosCorreo[`error=${paramsUrl.get("error")}`] ||
+    null;
   if (avisoVerif) {
     window.history.replaceState({}, "", window.location.pathname);
     // Con sesión activa se redirige enseguida: el flash sobrevive a la navegación.

@@ -39,6 +39,11 @@ Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEma
     ->name('verification.verify')
     ->middleware('throttle:6,1,email-verificar');
 
+// Confirmación del cambio de correo: enlace firmado enviado al correo NUEVO; recién ahí se aplica el cambio.
+Route::get('/email/confirmar-cambio/{id}/{hash}', [AuthController::class, 'verificarCambioEmail'])
+    ->name('email.confirmar-cambio')
+    ->middleware('throttle:6,1,email-confirmar-cambio');
+
 // Segundo factor del login (público): la credencial es el challenge_token efímero emitido por /login.
 Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1,2fa-challenge');
 

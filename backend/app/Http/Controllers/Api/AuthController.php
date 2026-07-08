@@ -14,12 +14,15 @@ use App\Http\Resources\UserResource;
 use App\Models\BitacoraError;
 use App\Models\Rol;
 use App\Models\User;
+use App\Notifications\AvisoCambioEmailNotification;
+use App\Notifications\ConfirmarCambioEmailNotification;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -140,7 +143,13 @@ class AuthController extends Controller
         $user = $request->user();
 
         $user->name = $datos['name'];
-        $user->email = $datos['email'];
+
+        // El correo NO cambia al instante: se guarda como pendiente y solo se aplica al confirmar el enlace enviado al correo nuevo.
+        $emailNuevo = $datos['email'];
+        $cambiaEmail = $emailNuevo !== $user->email;
+        if ($cambiaEmail) {
+            $user->email_pendiente = $emailNuevo;
+        }
 
         if (! empty($datos['password'])) {
             $user->password = $datos['password'];
@@ -166,7 +175,47 @@ class AuthController extends Controller
 
         $user->save();
 
+        if ($cambiaEmail) {
+            // Enlace de confirmación al correo NUEVO: solo al pulsarlo se promueve a email definitivo.
+            Notification::route('mail', $emailNuevo)->notify(new ConfirmarCambioEmailNotification($user));
+            // Aviso de seguridad al correo VIEJO (el actual): alerta si el cambio no lo pidió el dueño.
+            $user->notify(new AvisoCambioEmailNotification($emailNuevo));
+        }
+
         return new UserResource($user->load('rol.permisos'));
+    }
+
+    // Enlace firmado del correo NUEVO: valida la firma y el hash del correo pendiente y recién ahí lo aplica.
+    public function verificarCambioEmail(Request $request, int $id, string $hash)
+    {
+        $frontend = rtrim(config('services.frontend_url'), '/');
+
+        // Firma relativa (como verificarEmail): el túnel Cloudflare no invalida path+query.
+        if (! $request->hasValidSignature(absolute: false)) {
+            return redirect($frontend.'/login/login.html?error=cambio_correo');
+        }
+
+        $user = User::find($id);
+        if (! $user || ! $user->email_pendiente || ! hash_equals(sha1($user->email_pendiente), $hash)) {
+            return redirect($frontend.'/login/login.html?error=cambio_correo');
+        }
+
+        // Reverificación de unicidad: alguien pudo registrar ese correo entre la solicitud y la confirmación.
+        $ocupado = User::where('email', $user->email_pendiente)->where('id', '!=', $user->id)->exists();
+        if ($ocupado) {
+            $user->email_pendiente = null;
+            $user->save();
+
+            return redirect($frontend.'/login/login.html?error=cambio_correo_ocupado');
+        }
+
+        $user->email = $user->email_pendiente;
+        $user->email_pendiente = null;
+        // El correo nuevo nace verificado: pulsar el enlace demuestra el control de ese buzón.
+        $user->email_verified_at = now();
+        $user->save();
+
+        return redirect($frontend.'/login/login.html?correo_cambiado=1');
     }
 
     // Borra del disco la foto de perfil actual (si la hay) para no dejar archivos huérfanos.

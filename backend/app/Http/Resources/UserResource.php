@@ -26,6 +26,8 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $esAdmin || $esPropietario ? $this->email : null,
+            // Solo al dueño: correo nuevo aún sin confirmar (para avisar del cambio pendiente en el perfil).
+            'email_pendiente' => $esPropietario ? $this->email_pendiente : null,
             'foto_perfil' => $this->foto_perfil,
             'email_verificado' => $this->email_verified_at !== null,
             'id_rol' => $this->id_rol,

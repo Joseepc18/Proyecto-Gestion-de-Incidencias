@@ -4,9 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Comentario;
 use App\Models\SubtipoIncidencia;
+use App\Notifications\AvisoCambioEmailNotification;
+use App\Notifications\ConfirmarCambioEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -54,6 +58,89 @@ class BackendExtraTest extends TestCase
         $usuario->refresh();
         $this->assertNotNull($usuario->foto_perfil);
         Storage::disk('public')->assertExists($usuario->foto_perfil);
+    }
+
+    public function test_cambiar_correo_exige_la_contrasena_actual(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        Sanctum::actingAs($usuario);
+
+        // Sin la contraseña actual, el cambio de correo se rechaza.
+        $this->putJson('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => 'nuevo@example.com',
+        ])->assertStatus(422)->assertJsonValidationErrors('current_password');
+
+        $usuario->refresh();
+        $this->assertNull($usuario->email_pendiente);
+    }
+
+    public function test_cambiar_correo_no_es_inmediato_y_notifica(): void
+    {
+        Notification::fake();
+        $usuario = $this->crearUsuario('normal');
+        $correoViejo = $usuario->email;
+        Sanctum::actingAs($usuario);
+
+        $this->putJson('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => 'nuevo@example.com',
+            'current_password' => 'password',
+        ])->assertOk();
+
+        $usuario->refresh();
+        // El correo NO cambia al instante: queda como pendiente.
+        $this->assertSame($correoViejo, $usuario->email);
+        $this->assertSame('nuevo@example.com', $usuario->email_pendiente);
+
+        // Enlace de confirmación al correo nuevo (on-demand) + aviso al correo viejo.
+        Notification::assertSentOnDemand(ConfirmarCambioEmailNotification::class);
+        Notification::assertSentTo($usuario, AvisoCambioEmailNotification::class);
+    }
+
+    public function test_confirmar_cambio_de_correo_aplica_el_correo_nuevo(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $usuario->email_pendiente = 'nuevo@example.com';
+        $usuario->save();
+
+        $url = URL::temporarySignedRoute(
+            'email.confirmar-cambio',
+            now()->addHour(),
+            ['id' => $usuario->id, 'hash' => sha1($usuario->email_pendiente)],
+            absolute: false
+        );
+
+        $this->get($url)->assertRedirect();
+
+        $usuario->refresh();
+        $this->assertSame('nuevo@example.com', $usuario->email);
+        $this->assertNull($usuario->email_pendiente);
+        $this->assertNotNull($usuario->email_verified_at);
+    }
+
+    public function test_cambiar_correo_con_2fa_exige_ademas_un_codigo(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        // Con 2FA activo la contraseña actual no basta: falta el código.
+        $this->putJson('/api/perfil', [
+            'name' => $admin->name,
+            'email' => 'admin-nuevo@example.com',
+            'current_password' => 'password',
+        ])->assertStatus(422)->assertJsonValidationErrors('two_factor_code');
+
+        // Con un recovery code válido, el cambio se acepta.
+        $this->putJson('/api/perfil', [
+            'name' => $admin->name,
+            'email' => 'admin-nuevo@example.com',
+            'current_password' => 'password',
+            'two_factor_code' => 'ABCD-1234',
+        ])->assertOk();
+
+        $admin->refresh();
+        $this->assertSame('admin-nuevo@example.com', $admin->email_pendiente);
     }
 
     public function test_super_admin_crea_tipo_y_no_puede_borrarlo_con_subtipos(): void

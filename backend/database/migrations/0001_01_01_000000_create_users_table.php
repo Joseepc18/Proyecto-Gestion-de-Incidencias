@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            // Correo nuevo aún sin confirmar: se guarda aquí y solo se promueve a 'email' al confirmar el enlace.
+            $table->string('email_pendiente')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
