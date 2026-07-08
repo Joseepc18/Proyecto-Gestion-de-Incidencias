@@ -27,7 +27,7 @@ class RolesYUsuariosSeeder extends Seeder
 
         // Cuenta super_admin: gestiona usuarios, catálogos y permisos (el superset).
         User::firstOrCreate(
-            ['email' => 'superadmin@sistema.com'],
+            ['email' => 'jose2905.jepc@gmail.com'],
             [
                 'name' => 'Super Administrador',
                 'password' => Hash::make($superPassword ?: 'password123'),
