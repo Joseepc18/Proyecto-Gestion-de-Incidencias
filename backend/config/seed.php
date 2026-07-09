@@ -6,4 +6,6 @@
 return [
     'superadmin_password' => env('SEED_SUPERADMIN_PASSWORD'),
     'admin_password' => env('SEED_ADMIN_PASSWORD'),
+    // Cuentas de ejemplo del DemoSeeder (ciudadanos/técnicos); no es obligatoria, cae al fallback.
+    'demo_password' => env('SEED_DEMO_PASSWORD'),
 ];
