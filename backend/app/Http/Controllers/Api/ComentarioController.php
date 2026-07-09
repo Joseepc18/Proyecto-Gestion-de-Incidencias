@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ComentarioActualizado;
 use App\Events\ComentarioCreado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CrearComentarioRequest;
@@ -44,6 +45,8 @@ class ComentarioController extends Controller
     public function actualizarComentario(EditarComentarioRequest $request, Comentario $comentario)
     {
         $comentario->update($request->validated());
+
+        event(new ComentarioActualizado($comentario));
 
         return new ComentarioResource($comentario->load('usuario.rol'));
     }

@@ -9,6 +9,10 @@ use App\Models\Rol;
 
 class PermisoController extends Controller
 {
+    // Permisos que ni un super_admin puede darle a normal/tecnico: son roles operativos por asignación
+    // (RolAsignacion) o ciudadanos, nunca gestores del sistema.
+    private const PERMISOS_PRIVILEGIADOS = ['incidencias.gestionar', 'usuarios.administrar', 'permisos.administrar'];
+
     // Matriz para la pantalla de permisos: cada rol con las claves que ya tiene + el catálogo completo.
     public function index()
     {
@@ -36,9 +40,25 @@ class PermisoController extends Controller
             return response()->json(['message' => 'Debe quedar al menos un rol con el permiso permisos.administrar'], 422);
         }
 
+        if ($this->otorgaPermisoPrivilegiadoARolBajo($rol, $nuevosIds)) {
+            return response()->json(['message' => 'Ese permiso no se puede asignar a normal/tecnico'], 422);
+        }
+
         $rol->permisos()->sync($nuevosIds);
 
         return response()->json(['message' => 'Permisos actualizados']);
+    }
+
+    // Guard: normal/tecnico nunca deben recibir un permiso de la lista privilegiada, aunque lo pida un super_admin.
+    private function otorgaPermisoPrivilegiadoARolBajo(Rol $rol, array $nuevosIds): bool
+    {
+        if (! in_array($rol->nombre_rol, [Rol::NORMAL, Rol::TECNICO], true)) {
+            return false;
+        }
+
+        $idsPrivilegiados = Permiso::whereIn('clave_permiso', self::PERMISOS_PRIVILEGIADOS)->pluck('id_permiso');
+
+        return $idsPrivilegiados->intersect($nuevosIds)->isNotEmpty();
     }
 
     // Anti-lockout: si este cambio deja a $rol sin permisos.administrar, tiene que quedar OTRO rol que sí lo tenga.

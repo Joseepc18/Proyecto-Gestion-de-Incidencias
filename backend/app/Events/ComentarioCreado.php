@@ -41,7 +41,7 @@ class ComentarioCreado implements ShouldBroadcastNow
             'usuario' => [
                 'id' => $c->usuario->id,
                 'name' => $c->usuario->name,
-                'foto_perfil' => $c->usuario->foto_perfil,
+                'foto_perfil' => $c->usuario->foto_perfil_url,
                 'rol' => ['nombre_rol' => $c->usuario->rol?->nombre_rol],
             ],
         ];

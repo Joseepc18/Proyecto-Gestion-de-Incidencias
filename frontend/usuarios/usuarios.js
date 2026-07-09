@@ -174,8 +174,9 @@ function crearAvatar(u) {
   const nombreRol = u.rol ? u.rol.nombre_rol : "";
   avatar.className = "tabla-avatar tabla-avatar-" + (nombreRol || "normal");
   if (u.foto_perfil) {
+    // u.foto_perfil ya es la URL firmada completa que manda el backend, no una ruta cruda.
     const img = document.createElement("img");
-    img.src = "/storage/" + encodeURIComponent(u.foto_perfil);
+    img.src = u.foto_perfil;
     img.alt = "";
     avatar.appendChild(img);
   } else {

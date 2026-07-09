@@ -1,6 +1,6 @@
 // perfil.js — Edición del perfil propio: nombre, correo, contraseña y foto.
 
-// Ruta de la foto guardada en el servidor (relativa); null si no tiene.
+// URL firmada de la foto guardada en el servidor (temporal); null si no tiene.
 /* global apiFetch, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar, OPCIONES_COMPRESION, requerirSesion, cablearLogout */
 
 let fotoActual = null;
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   fotoActual = usuario.foto_perfil || null;
   cachearFotoNavbar(fotoActual);
-  mostrarAvatar(fotoActual ? "/storage/" + encodeURIComponent(fotoActual) : null);
+  mostrarAvatar(fotoActual);
 
   cablearLogout();
 
@@ -150,7 +150,7 @@ async function guardarPerfil(e) {
     document.getElementById("perfilPasswordConfirm").value = "";
     document.getElementById("perfilCurrentPassword").value = "";
     document.getElementById("perfilDosFactorCode").value = "";
-    mostrarAvatar(fotoActual ? "/storage/" + encodeURIComponent(fotoActual) : null);
+    mostrarAvatar(fotoActual);
 
     // El correo no cambia al instante: reflejamos el confirmado y mostramos el pendiente si lo hay.
     emailOriginal = usuario.email;

@@ -17,7 +17,8 @@ class ComentarioResource extends JsonResource
             'comentario' => $this->comentario,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
+            // Autor del comentario puede estar suspendido (soft delete): la relación carga null, no falta.
+            'usuario' => $this->whenLoaded('usuario', fn () => $this->usuario ? new UserResource($this->usuario) : null),
         ];
     }
 }

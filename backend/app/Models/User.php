@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -19,6 +20,9 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, MustVerifyEmailTrait, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+
+    // Minutos de validez de la URL firmada de la foto de perfil (más laxo que evidencias: es solo un avatar).
+    private const MINUTOS_URL_FOTO_PERFIL = 30;
 
     protected $table = 'users';
 
@@ -44,6 +48,20 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // URL firmada del avatar: el disco 'perfiles' es privado, así que la firma reemplaza al token Bearer (el <img> no lo manda).
+    public function getFotoPerfilUrlAttribute(): ?string
+    {
+        if (! $this->foto_perfil) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute(
+            'usuarios.foto',
+            now()->addMinutes(self::MINUTOS_URL_FOTO_PERFIL),
+            ['usuario' => $this->id]
+        );
     }
 
     // Usamos plantillas Markdown propias (como el resto de correos), no las notificaciones nativas.

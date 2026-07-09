@@ -440,8 +440,9 @@ function pintarInterlocutorCabecera() {
   const avatar = document.createElement("span");
   avatar.className = "chat-interlocutor-avatar";
   if (foto) {
+    // "foto" ya es la URL firmada completa que manda el backend, no una ruta cruda.
     const img = document.createElement("img");
-    img.src = "/storage/" + encodeURIComponent(foto);
+    img.src = foto;
     img.alt = "";
     avatar.appendChild(img);
   } else {

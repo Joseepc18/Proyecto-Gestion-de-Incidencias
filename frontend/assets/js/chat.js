@@ -90,8 +90,9 @@ function crearChat(idContenedor, idIncidencia, usuario, opts) {
         avatar.className = "chat-avatar";
         const foto = c.usuario && c.usuario.foto_perfil;
         if (foto) {
+          // "foto" ya es la URL firmada completa que manda el backend, no una ruta cruda.
           const img = document.createElement("img");
-          img.src = "/storage/" + encodeURIComponent(foto);
+          img.src = foto;
           img.alt = "";
           avatar.appendChild(img);
         } else {

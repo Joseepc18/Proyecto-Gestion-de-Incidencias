@@ -52,6 +52,11 @@ Route::get('/evidencias/{evidencia}/archivo', [EvidenciaController::class, 'arch
     ->name('evidencias.archivo')
     ->middleware('signed');
 
+// Foto de perfil privada: mismo patrón que evidencias (la firma reemplaza al token Bearer que el <img> no manda).
+Route::get('/usuarios/{usuario}/foto', [UserController::class, 'foto'])
+    ->name('usuarios.foto')
+    ->middleware('signed');
+
 // Rutas protegidas (token Sanctum). throttle:120,1 = 120 req/min por usuario (Laravel keyea por id, no por IP); holgado para el polling de la campana.
 Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     // Apis de usuario

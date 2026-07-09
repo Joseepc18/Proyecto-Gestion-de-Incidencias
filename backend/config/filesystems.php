@@ -55,6 +55,14 @@ return [
             'report' => false,
         ],
 
+        // Fotos de perfil: mismo patrón que evidencias (privado + ruta firmada), no público sin auth.
+        'perfiles' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/perfiles'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

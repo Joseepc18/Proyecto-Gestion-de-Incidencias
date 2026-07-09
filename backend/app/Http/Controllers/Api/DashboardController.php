@@ -52,12 +52,15 @@ class DashboardController extends Controller
                 ->selectRaw('p.nombre_provincia, COUNT(i.id_incidencia) AS total')
                 ->get();
 
+            // created_at es TIMESTAMP sin zona pero guarda instantes UTC (config/app.php timezone=UTC): el doble
+            // AT TIME ZONE primero lo ancla a UTC y luego lo convierte a hora local de Ecuador antes de agrupar,
+            // así una incidencia creada a las 23:30 en Guayaquil no cae en el mes/semana siguiente (ya en UTC).
             $porMes = DB::table('incidencias')
                 ->whereNull('deleted_at')
                 ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
-                ->groupByRaw("date_trunc('month', created_at)")
-                ->orderByRaw("date_trunc('month', created_at)")
-                ->selectRaw("to_char(date_trunc('month', created_at), 'YYYY-MM') AS mes, COUNT(*) AS total")
+                ->groupByRaw("date_trunc('month', created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil')")
+                ->orderByRaw("date_trunc('month', created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil')")
+                ->selectRaw("to_char(date_trunc('month', created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil'), 'YYYY-MM') AS mes, COUNT(*) AS total")
                 ->get();
 
             return [
@@ -97,12 +100,13 @@ class DashboardController extends Controller
 
         // Resueltas por semana (últimas 8), rellenando con 0 las semanas sin cierres.
         $inicioSemanas = now()->startOfWeek()->subWeeks(7);
+        // Mismo ajuste de zona horaria que en metricas(): fecha_resolucion guarda instantes UTC.
         $cierres = $asignadas()
             ->where('a.rol_asignado', RolAsignacion::Responsable->value)
             ->whereNotNull('i.fecha_resolucion')
             ->where('i.fecha_resolucion', '>=', $inicioSemanas)
-            ->groupByRaw("date_trunc('week', i.fecha_resolucion)")
-            ->selectRaw("to_char(date_trunc('week', i.fecha_resolucion), 'YYYY-MM-DD') AS semana, COUNT(*) AS total")
+            ->groupByRaw("date_trunc('week', i.fecha_resolucion AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil')")
+            ->selectRaw("to_char(date_trunc('week', i.fecha_resolucion AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil'), 'YYYY-MM-DD') AS semana, COUNT(*) AS total")
             ->pluck('total', 'semana');
 
         $porSemana = [];

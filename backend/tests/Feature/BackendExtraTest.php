@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Events\ComentarioActualizado;
 use App\Models\Comentario;
 use App\Models\SubtipoIncidencia;
 use App\Notifications\AvisoCambioEmailNotification;
 use App\Notifications\ConfirmarCambioEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -43,13 +45,65 @@ class BackendExtraTest extends TestCase
         ])->assertStatus(403);
     }
 
+    public function test_no_se_puede_editar_un_comentario_de_incidencia_resuelta(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+        $comentario = Comentario::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $autor->id,
+            'comentario' => 'Comentario original.',
+        ]);
+
+        Sanctum::actingAs($autor);
+        $this->putJson("/api/comentarios/{$comentario->id_comentario}", [
+            'comentario' => 'Ya no debería poder editar esto.',
+        ])->assertStatus(403);
+    }
+
+    public function test_editar_comentario_reemite_evento_realtime(): void
+    {
+        Event::fake([ComentarioActualizado::class]);
+
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+        $comentario = Comentario::create([
+            'id_incidencia' => $incidencia->id_incidencia,
+            'id_usuario' => $autor->id,
+            'comentario' => 'Comentario original.',
+        ]);
+
+        Sanctum::actingAs($autor);
+        $this->putJson("/api/comentarios/{$comentario->id_comentario}", [
+            'comentario' => 'Comentario corregido.',
+        ])->assertOk();
+
+        Event::assertDispatched(
+            ComentarioActualizado::class,
+            fn ($evento) => $evento->comentario->id_comentario === $comentario->id_comentario
+        );
+    }
+
+    public function test_ver_incidencia_no_revienta_si_el_reportador_esta_suspendido(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $reportador->delete();
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $respuesta = $this->getJson("/api/incidencias/{$incidencia->id_incidencia}")
+            ->assertOk();
+
+        $this->assertNull($respuesta->json('usuario'));
+    }
+
     public function test_usuario_sube_su_foto_de_perfil(): void
     {
-        Storage::fake('public');
+        Storage::fake('perfiles');
         $usuario = $this->crearUsuario('normal');
         Sanctum::actingAs($usuario);
 
-        $this->put('/api/perfil', [
+        $respuesta = $this->put('/api/perfil', [
             'name' => $usuario->name,
             'email' => $usuario->email,
             'foto' => UploadedFile::fake()->image('avatar.jpg'),
@@ -57,7 +111,29 @@ class BackendExtraTest extends TestCase
 
         $usuario->refresh();
         $this->assertNotNull($usuario->foto_perfil);
-        Storage::disk('public')->assertExists($usuario->foto_perfil);
+        Storage::disk('perfiles')->assertExists($usuario->foto_perfil);
+        // El frontend nunca ve la ruta cruda del disco, solo una URL firmada.
+        $this->assertStringContainsString('/usuarios/'.$usuario->id.'/foto', $respuesta->json('foto_perfil'));
+    }
+
+    public function test_foto_de_perfil_solo_se_sirve_con_firma_valida(): void
+    {
+        Storage::fake('perfiles');
+        $usuario = $this->crearUsuario('normal');
+        Sanctum::actingAs($usuario);
+        $this->put('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'foto' => UploadedFile::fake()->image('avatar.jpg'),
+        ])->assertOk();
+        $usuario->refresh();
+
+        // Sin firma: rechazado por el middleware 'signed' antes de llegar al controller.
+        $this->get("/api/usuarios/{$usuario->id}/foto")->assertStatus(403);
+
+        // Con la URL firmada que ya generó el propio recurso: sirve el archivo.
+        $url = $usuario->foto_perfil_url;
+        $this->get($url)->assertOk();
     }
 
     public function test_cambiar_correo_exige_la_contrasena_actual(): void
@@ -117,6 +193,30 @@ class BackendExtraTest extends TestCase
         $this->assertSame('nuevo@example.com', $usuario->email);
         $this->assertNull($usuario->email_pendiente);
         $this->assertNotNull($usuario->email_verified_at);
+    }
+
+    public function test_confirmar_cambio_de_correo_revierte_si_el_correo_ya_se_ocupo(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        $usuario->email_pendiente = 'nuevo@example.com';
+        $usuario->save();
+
+        // Entre la solicitud y el clic en el enlace, alguien más registró ese correo.
+        $this->crearUsuario('normal')->update(['email' => 'nuevo@example.com']);
+
+        $url = URL::temporarySignedRoute(
+            'email.confirmar-cambio',
+            now()->addHour(),
+            ['id' => $usuario->id, 'hash' => sha1($usuario->email_pendiente)],
+            absolute: false
+        );
+
+        $this->get($url)->assertRedirect();
+
+        $usuario->refresh();
+        // Se revierte: el correo pendiente se limpia y el correo confirmado del usuario no cambia.
+        $this->assertNull($usuario->email_pendiente);
+        $this->assertNotSame('nuevo@example.com', $usuario->email);
     }
 
     public function test_cambiar_correo_con_2fa_exige_ademas_un_codigo(): void

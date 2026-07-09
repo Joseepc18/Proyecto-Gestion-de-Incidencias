@@ -56,9 +56,9 @@ function abrirModal(opciones = {}) {
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
     overlay.innerHTML =
-      '<div class="modal-caja" role="dialog" aria-modal="true">' +
+      '<div class="modal-caja" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">' +
       '<div class="modal-cabecera">' +
-      '<h3 class="modal-titulo">' +
+      '<h3 class="modal-titulo" id="modalTitulo">' +
       escaparHtml(titulo) +
       "</h3>" +
       '<button class="modal-cerrar" type="button" aria-label="Cerrar">' +

@@ -171,9 +171,9 @@
     const cont = document.getElementById("navbarAvatar");
     if (!cont) return;
     if (foto) {
-      // Construido por DOM (no innerHTML): la ruta de la foto nunca se interpola como HTML.
+      // Construido por DOM (no innerHTML). "foto" ya es la URL firmada completa (backend), no una ruta cruda.
       const img = document.createElement("img");
-      img.src = "/storage/" + encodeURIComponent(foto);
+      img.src = foto;
       img.alt = "Foto de perfil";
       img.className = "navbar-avatar-img";
       img.loading = "lazy";

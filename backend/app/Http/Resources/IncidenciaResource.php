@@ -39,7 +39,9 @@ class IncidenciaResource extends JsonResource
             'reclamo_visto_en' => $this->reclamo_visto_en,
             'reclamo_vencido' => $this->reclamoVencido(),
             // Relaciones: solo se incluyen si el controller las cargó.
-            'usuario' => $this->whenLoaded('usuario', fn () => new UserResource($this->usuario)),
+            // El reportador puede estar suspendido (soft delete): la relación carga null, no falta. Sin este
+            // guard, UserResource revienta (llama métodos de Eloquent sobre un resource null) -> 500.
+            'usuario' => $this->whenLoaded('usuario', fn () => $this->usuario ? new UserResource($this->usuario) : null),
             'subtipo' => $this->whenLoaded('subtipo'),
             'ciudad' => $this->whenLoaded('ciudad'),
             'evidencias' => $this->whenLoaded('evidencias'),

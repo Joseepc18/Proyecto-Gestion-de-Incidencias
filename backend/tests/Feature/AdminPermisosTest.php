@@ -32,13 +32,29 @@ class AdminPermisosTest extends TestCase
     public function test_super_admin_sincroniza_permisos_de_un_rol(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
+        // 'admin' (no 'tecnico'/'normal'): esos dos tienen vetados los permisos privilegiados (ver test del guard).
+        $rolAdmin = Rol::where('nombre_rol', 'admin')->value('id_rol');
+        // catalogos.administrar no está en los permisos base de admin por seeder: hay diferencia real que verificar.
+        $idCatalogos = Permiso::where('clave_permiso', 'catalogos.administrar')->value('id_permiso');
+
+        $this->putJson("/api/roles/{$rolAdmin}/permisos", ['permisos' => [$idCatalogos]])
+            ->assertOk();
+
+        $this->assertDatabaseHas('rol_permiso', ['id_rol' => $rolAdmin, 'id_permiso' => $idCatalogos]);
+    }
+
+    // Guard de B2: ni un super_admin puede darle un permiso privilegiado a normal/tecnico desde la UI de permisos.
+    public function test_no_se_puede_dar_permiso_privilegiado_a_rol_de_bajo_privilegio(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
         $rolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
         $idGestionar = Permiso::where('clave_permiso', 'incidencias.gestionar')->value('id_permiso');
 
         $this->putJson("/api/roles/{$rolTecnico}/permisos", ['permisos' => [$idGestionar]])
-            ->assertOk();
+            ->assertStatus(422)
+            ->assertJsonFragment(['message' => 'Ese permiso no se puede asignar a normal/tecnico']);
 
-        $this->assertDatabaseHas('rol_permiso', ['id_rol' => $rolTecnico, 'id_permiso' => $idGestionar]);
+        $this->assertDatabaseMissing('rol_permiso', ['id_rol' => $rolTecnico, 'id_permiso' => $idGestionar]);
     }
 
     // Anti-lockout: super_admin es el único rol con permisos.administrar (por seeder), así que no puede quitárselo a sí mismo.
@@ -77,23 +93,23 @@ class AdminPermisosTest extends TestCase
     }
 
     // End-to-end: dar 'usuarios.administrar' a un rol le abre la gestión de usuarios
-    // (manda el permiso, no el nombre de rol).
+    // (manda el permiso, no el nombre de rol). 'admin' porque tecnico/normal tienen ese permiso vetado (guard de B2).
     public function test_conceder_permiso_habilita_el_acceso_a_la_ruta(): void
     {
-        $rolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
-        $tecnico = $this->crearUsuario('tecnico');
+        $rolAdmin = Rol::where('nombre_rol', 'admin')->value('id_rol');
+        $admin = $this->crearUsuario('admin');
 
-        // Antes: el técnico no accede.
-        Sanctum::actingAs($tecnico);
+        // Antes: el admin (sin usuarios.administrar por seeder) no accede.
+        Sanctum::actingAs($admin);
         $this->getJson('/api/usuarios')->assertStatus(403);
 
-        // El super_admin le concede el permiso al rol técnico.
+        // El super_admin le concede el permiso al rol admin.
         $idUsuarios = Permiso::where('clave_permiso', 'usuarios.administrar')->value('id_permiso');
         Sanctum::actingAs($this->crearUsuario('super_admin'));
-        $this->putJson("/api/roles/{$rolTecnico}/permisos", ['permisos' => [$idUsuarios]])->assertOk();
+        $this->putJson("/api/roles/{$rolAdmin}/permisos", ['permisos' => [$idUsuarios]])->assertOk();
 
-        // Después: el mismo técnico ya accede.
-        Sanctum::actingAs($tecnico->fresh());
+        // Después: el mismo admin ya accede.
+        Sanctum::actingAs($admin->fresh());
         $this->getJson('/api/usuarios')->assertOk();
     }
 }

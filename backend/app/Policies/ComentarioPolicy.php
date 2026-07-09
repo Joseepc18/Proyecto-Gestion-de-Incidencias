@@ -8,11 +8,15 @@ use Illuminate\Auth\Access\Response;
 
 class ComentarioPolicy
 {
-    // Editar un comentario: solo su autor.
+    // Editar un comentario: solo su autor, y no si la incidencia ya quedó RESUELTA/CERRADA (mismo corte que comentar()).
     public function actualizar(User $user, Comentario $comentario): Response
     {
-        return $comentario->id_usuario === $user->id
-            ? Response::allow()
-            : Response::deny('No autorizado');
+        if ($comentario->id_usuario !== $user->id) {
+            return Response::deny('No autorizado');
+        }
+
+        return $comentario->incidencia->esTerminal()
+            ? Response::deny('La incidencia está resuelta; el chat es solo de lectura.')
+            : Response::allow();
     }
 }

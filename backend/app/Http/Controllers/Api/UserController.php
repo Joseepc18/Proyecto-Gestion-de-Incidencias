@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -107,5 +108,17 @@ class UserController extends Controller
         $usuario->delete();
 
         return ['message' => 'Usuario suspendido'];
+    }
+
+    // Sirve la foto de perfil del disco privado; protegida por firma (igual patrón que EvidenciaController@archivo).
+    public function foto(User $usuario)
+    {
+        $disco = Storage::disk('perfiles');
+
+        if (! $usuario->foto_perfil || ! $disco->exists($usuario->foto_perfil)) {
+            abort(404);
+        }
+
+        return $disco->response($usuario->foto_perfil);
     }
 }

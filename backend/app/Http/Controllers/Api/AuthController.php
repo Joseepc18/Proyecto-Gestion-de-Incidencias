@@ -157,7 +157,7 @@ class AuthController extends Controller
 
         try {
             if ($request->hasFile('foto')) {
-                $ruta = $request->file('foto')->store('perfiles', 'public');
+                $ruta = $request->file('foto')->store('fotos', 'perfiles');
                 if ($ruta === false) {
                     throw new AlmacenamientoException('No se pudo guardar la foto de perfil en el disco');
                 }
@@ -222,7 +222,7 @@ class AuthController extends Controller
     private function borrarFotoAnterior(User $user): void
     {
         if ($user->foto_perfil) {
-            Storage::disk('public')->delete($user->foto_perfil);
+            Storage::disk('perfiles')->delete($user->foto_perfil);
         }
     }
 
