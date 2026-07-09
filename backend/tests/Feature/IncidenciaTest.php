@@ -6,11 +6,13 @@ use App\Models\AsignacionIncidencia;
 use App\Models\Ciudad;
 use App\Models\Incidencia;
 use App\Models\SubtipoIncidencia;
+use App\Models\User;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
 use Tests\TestCase;
@@ -181,6 +183,74 @@ class IncidenciaTest extends TestCase
             'id_incidencia' => $enProceso->id_incidencia,
             'estado_incidencia' => 'EN_PROCESO',
         ]);
+    }
+
+    // A1: el job de escalado sube un nivel a las incidencias viejas sin atender; SIN_ASIGNAR
+    // (prioridad por defecto del reporte ciudadano) salta a MEDIA en vez de reventar con update a null.
+    public function test_escalar_antiguas_sube_prioridad_y_no_revienta_con_sin_asignar(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        // Un admin (tiene incidencias.gestionar) para que la notificación de escalado tenga destinatario.
+        $admin = $this->crearUsuario('admin');
+
+        // Viejas (>24h), PENDIENTE y sin reclamar: una por cada prioridad de partida.
+        $sinAsignar = $this->incidenciaAntigua($reportador, 'SIN_ASIGNAR');
+        $baja = $this->incidenciaAntigua($reportador, 'BAJA');
+        $media = $this->incidenciaAntigua($reportador, 'MEDIA');
+        $alta = $this->incidenciaAntigua($reportador, 'ALTA');
+        // Reciente (<24h): no debe tocarse.
+        $reciente = $this->crearIncidencia($reportador, ['prioridad_incidencia' => 'BAJA']);
+
+        Artisan::call('incidencias:escalar-antiguas');
+
+        // SIN_ASIGNAR salta directo a MEDIA (antes: update a null → viola el CHECK/NOT NULL).
+        $this->assertSame('MEDIA', $sinAsignar->fresh()->prioridad_incidencia->value);
+        $this->assertSame('MEDIA', $baja->fresh()->prioridad_incidencia->value);
+        $this->assertSame('ALTA', $media->fresh()->prioridad_incidencia->value);
+        // ALTA ya es el tope y queda fuera de la consulta.
+        $this->assertSame('ALTA', $alta->fresh()->prioridad_incidencia->value);
+        // La reciente no cambia.
+        $this->assertSame('BAJA', $reciente->fresh()->prioridad_incidencia->value);
+
+        // El admin recibe el aviso de escalado.
+        $this->assertNotificado($admin, 'ESCALADO');
+    }
+
+    // M2: resolver dos veces la misma incidencia no duplica la notificación ni el historial.
+    // La segunda pasada la corta el guard del controller; el FOR UPDATE del SP cubre el caso concurrente (no reproducible en un test secuencial).
+    public function test_doble_resolucion_no_duplica_notificacion_ni_historial(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador, ['estado_incidencia' => 'EN_PROCESO']);
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // Primer resolver: pasa y notifica al reportador.
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'RESUELTO'])
+            ->assertOk();
+
+        // Segundo resolver sobre la ya resuelta: el guard lo corta sin volver a disparar el evento.
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/estado", ['estado_incidencia' => 'RESUELTO'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta']);
+
+        // Una sola notificación de cambio de estado y una sola transición a RESUELTO en el historial.
+        $this->assertCount(1, $this->notificacionesDe($reportador, 'CAMBIO_ESTADO'));
+        $this->assertSame(1, DB::table('historial_estados')
+            ->where('id_incidencia', $incidencia->id_incidencia)
+            ->where('estado_nuevo', 'RESUELTO')
+            ->count());
+    }
+
+    // Incidencia vieja (>24h), PENDIENTE y sin reclamar, con la prioridad de partida dada.
+    private function incidenciaAntigua(User $reportador, string $prioridad): Incidencia
+    {
+        $incidencia = $this->crearIncidencia($reportador, ['prioridad_incidencia' => $prioridad]);
+        Incidencia::where('id_incidencia', $incidencia->id_incidencia)
+            ->update(['created_at' => now()->subHours(25)]);
+
+        return $incidencia;
     }
 
     public function test_se_puede_asignar_un_tecnico(): void

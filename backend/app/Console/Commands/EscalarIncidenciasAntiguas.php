@@ -15,8 +15,9 @@ class EscalarIncidenciasAntiguas extends Command
 
     protected $description = 'Sube un nivel de prioridad a las incidencias PENDIENTE sin atender hace más de 24h';
 
-    // BAJA→MEDIA, MEDIA→ALTA; ALTA ya es el tope y queda fuera de la consulta.
+    // SIN_ASIGNAR (prioridad por defecto de todo reporte ciudadano) salta directo a MEDIA; luego BAJA→MEDIA, MEDIA→ALTA. ALTA ya es el tope y queda fuera de la consulta.
     private const SIGUIENTE_PRIORIDAD = [
+        'SIN_ASIGNAR' => 'MEDIA',
         'BAJA' => 'MEDIA',
         'MEDIA' => 'ALTA',
     ];

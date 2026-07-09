@@ -25,6 +25,7 @@ use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\User;
 use App\Notifications\IncidenciaNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
@@ -293,7 +294,16 @@ class IncidenciaController extends Controller
         }
 
         if ($nuevo === EstadoIncidencia::Resuelto && $actual !== EstadoIncidencia::Resuelto) {
-            DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
+            try {
+                DB::statement('CALL resolver_incidencia(?, ?)', [$incidencia->id_incidencia, $request->user()->id]);
+            } catch (QueryException $e) {
+                // Otro "resolver" concurrente ganó la carrera: el FOR UPDATE del SP lo serializó y este vio la incidencia ya resuelta. Solo esa causa deja la fila en RESUELTO; cualquier otro error se relanza.
+                $incidencia->refresh();
+                if ($incidencia->estado_incidencia === EstadoIncidencia::Resuelto) {
+                    return response()->json(['message' => 'El estado ya fue actualizado por otra acción.'], 409);
+                }
+                throw $e;
+            }
             $incidencia->refresh();
         } else {
             $aplicado = DB::transaction(function () use ($incidencia, $nuevo, $actual, $request, $esReaperturaDeAdmin) {

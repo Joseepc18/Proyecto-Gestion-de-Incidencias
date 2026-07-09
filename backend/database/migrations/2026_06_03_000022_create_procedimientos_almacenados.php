@@ -88,9 +88,10 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
             END IF;
 
-            -- Validación 2: ¿ya está resuelta?
+            -- Validación 2: ¿ya está resuelta? FOR UPDATE bloquea la fila: dos resolvers concurrentes se serializan y el perdedor recae aquí viendo 'RESUELTO', sin duplicar historial ni evento.
             SELECT estado_incidencia INTO v_estado_actual
-            FROM incidencias WHERE id_incidencia = p_id_incidencia;
+            FROM incidencias WHERE id_incidencia = p_id_incidencia
+            FOR UPDATE;
 
             IF v_estado_actual = 'RESUELTO' THEN
                 RAISE EXCEPTION 'La incidencia % ya está resuelta.', p_id_incidencia;
