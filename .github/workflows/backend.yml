@@ -49,7 +49,10 @@ jobs:
 
       - name: Copiar .env de pruebas
         working-directory: backend
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          # En CI no existe el contenedor Reverb: los tests corren con el broadcaster nulo (no emiten broadcast real).
+          sed -i 's/^BROADCAST_CONNECTION=.*/BROADCAST_CONNECTION=null/' .env
 
       - name: Generar clave de Laravel
         working-directory: backend
