@@ -37,12 +37,12 @@ Proyecto integrador de la carrera de Tecnologías de la Información (UPSE).
 
 ## Funcionalidades por rol
 
-La aplicación define **4 roles**:
+La aplicación define **4 roles de cuenta** (fijos por usuario, tabla `roles`) y, aparte, **2 tipos de asignación** del técnico por incidencia (no son un 5º rol: son la relación de ESE técnico con ESA incidencia puntual).
 
 - **Ciudadano (`normal`)** — se registra por sí mismo, reporta incidencias marcando la ubicación en el mapa y adjuntando fotos (máx. 3), y hace seguimiento y chatea en las incidencias que creó.
-- **Técnico (`tecnico`)** — atiende las incidencias que se le asignan: sube la evidencia de resolución (máx. 3 fotos) y avanza el estado de *en proceso* a *resuelto*.
-- **Administrador (`admin`)** — gestiona todas las incidencias (reclamar, asignar técnico, cambiar prioridad/estado, editar), administra usuarios y catálogos, y consulta el tablero de indicadores. Debe **reclamar** una incidencia antes de gestionarla (candado de atención).
-- **Super administrador (`super_admin`)** — superset del admin: además gestiona a los administradores, roles y permisos.
+- **Técnico (`tecnico`)** — atiende las incidencias que se le asignan. Según el tipo de asignación en esa incidencia: el **responsable** sube la evidencia de resolución (máx. 3 fotos) y es el único que avanza el estado de *en proceso* a *resuelto*; el de **apoyo** solo colabora (ver, chatear), sin subir evidencia ni cerrar.
+- **Administrador (`admin`)** — gestiona **todas las incidencias** (reclamar, asignar técnico, cambiar prioridad/estado, editar, enviar a la papelera) y consulta el tablero de indicadores. Debe **reclamar** una incidencia antes de gestionarla (candado de atención). No administra usuarios, catálogos ni permisos.
+- **Super administrador (`super_admin`)** — gobierno del sistema: administra usuarios, roles, permisos y catálogos, con **visibilidad total** sobre incidencias (dashboard, historial, detalle). Es *view-only* en incidencias: no reclama, asigna, cambia estado, edita ni escribe en el chat.
 
 > Los administradores y super administradores usan **doble factor (2FA) obligatorio**.
 
@@ -69,7 +69,7 @@ La aplicación define **4 roles**:
 ```
 .
 ├── backend/            # API REST en Laravel (app/, database/, routes/, tests/)
-├── frontend/           # SPA: una carpeta por página + assets/ compartidos
+├── frontend/           # multi-página (una recarga por navegación, sin router de cliente): carpeta por página + assets/ compartidos
 │   ├── login/          #   nombre.html (estructura) + nombre.js (lógica)
 │   ├── inicio/         #   ...
 │   ├── gestion-incidencias/
@@ -146,7 +146,7 @@ Para aplicar el formato en lugar de solo comprobarlo: `npm run format` (frontend
 ## Despliegue
 
 - La producción corre con el **mismo `docker-compose.yml`** en un servidor Linux, expuesto a internet mediante un **túnel de Cloudflare** (`cloudflared`) con HTTPS y WebSockets (WSS).
-- El *auto-deploy* se dispara con un `push` a la rama `develop` (GitHub Actions sobre un *runner* self-hosted): hace `git pull` y reinicia los contenedores de backend y frontend. Las **migraciones** y las **reconstrucciones de imagen** se aplican a mano tras el reinicio.
+- El *auto-deploy* se dispara con un `push` a la rama `develop` (GitHub Actions sobre un *runner* self-hosted, `.github/workflows/deploy.yml`): `git pull` → build del frontend (`npm ci && npm run build`, esbuild → `frontend/dist`) → reinicia `backend`, `frontend` (nginx), `horizon`, `reverb` y `scheduler`. En producción `FRONTEND_ROOT=./frontend/dist`, así que Nginx sirve el **build minificado**, no el árbol crudo. Las **migraciones** y las **reconstrucciones de imagen** (`--build`, tras cambios de infra o dependencias nuevas) se aplican a mano tras el deploy.
 - En producción el `.env` se gestiona directamente en el servidor (no viaja por git) y no contiene secretos en el repositorio.
 
 ## Equipo

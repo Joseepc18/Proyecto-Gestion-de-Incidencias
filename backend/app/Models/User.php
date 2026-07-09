@@ -74,7 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query->whereHas('rol.permisos', fn ($q) => $q->where('clave_permiso', $clave));
     }
 
-    // super_admin es superset de admin: hereda todo el poder operativo (asignar, prioridades, borrar, etc.).
+    // Solo VISIBILIDAD (ver incidencias/dashboard), no permisos operativos: super_admin es view-only en incidencias.
     public function esAdmin(): bool
     {
         return $this->rol && in_array($this->rol->nombre_rol, [Rol::ADMIN, Rol::SUPER_ADMIN], true);
