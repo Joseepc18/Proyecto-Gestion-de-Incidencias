@@ -29,7 +29,7 @@ class CatalogoController extends Controller
         return Provincia::with('pais')->orderBy('nombre_provincia')->get();
     }
 
-    // Lista de países
+    // Sin consumidor en el frontend (app mono-país); se conserva como API REST completa para la defensa.
     public function paises()
     {
         return Pais::orderBy('nombre_pais')->get();
