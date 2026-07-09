@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ingresando…</title>
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body>
+    <div class="d-flex flex-column align-items-center justify-content-center vh-100 gap-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando…</span>
+      </div>
+      <p class="text-muted">Iniciando sesión con Google…</p>
+    </div>
+
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="oauth.js"></script>
+  </body>
+</html>

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mi perfil - Sistema de Gestión de Incidencias" />
+    <title>Mi perfil | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="perfil">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"
+                  ><i class="bi bi-person-circle" aria-hidden="true"></i
+                ></span>
+                <div>
+                  <p class="eyebrow mb-1">Cuenta</p>
+                  <h1 class="h3 mb-1">Mi perfil</h1>
+                  <p class="text-muted mb-0">Actualiza tus datos personales y tu contraseña.</p>
+                </div>
+              </div>
+            </div>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-person-gear" aria-hidden="true"></i>
+                  <span>Datos de la cuenta</span>
+                </h2>
+              </div>
+              <div class="p-3 p-lg-4">
+                <form id="formPerfil" class="row g-4">
+                  <div class="col-12 col-lg-4 text-center">
+                    <label class="form-label d-block">Foto de perfil</label>
+                    <span class="perfil-avatar avatar-xl mx-auto mb-3" id="perfilAvatar">
+                      <i class="bi bi-person" aria-hidden="true"></i>
+                    </span>
+                    <input type="file" id="perfilFoto" accept="image/*" hidden />
+                    <div class="d-flex justify-content-center gap-2">
+                      <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        id="btnCambiarFoto"
+                      >
+                        <i class="bi bi-image" aria-hidden="true"></i> Cambiar
+                      </button>
+                      <button
+                        class="btn btn-outline-danger btn-sm d-none"
+                        type="button"
+                        id="btnQuitarFoto"
+                      >
+                        <i class="bi bi-trash" aria-hidden="true"></i> Quitar
+                      </button>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">JPG o PNG, máx. 2 MB.</p>
+                  </div>
+
+                  <div class="col-12 col-lg-8">
+                    <div class="mb-3">
+                      <label for="perfilNombre" class="form-label">Nombre</label>
+                      <input class="form-control" type="text" id="perfilNombre" required />
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilEmail" class="form-label">Correo</label>
+                      <input class="form-control" type="email" id="perfilEmail" required />
+                    </div>
+                    <div class="mb-3" id="perfilPendienteAviso" hidden>
+                      <div class="alert alert-info mb-0" role="alert">
+                        <i class="bi bi-envelope-check me-1" aria-hidden="true"></i>
+                        Cambio de correo pendiente a
+                        <strong id="perfilPendienteEmail"></strong>. Revisa ese correo y confirma el
+                        enlace para aplicarlo.
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilPassword" class="form-label">Nueva contraseña</label>
+                      <div class="input-group">
+                        <input
+                          class="form-control"
+                          type="password"
+                          id="perfilPassword"
+                          minlength="8"
+                          placeholder="Dejar vacío para no cambiar"
+                          autocomplete="new-password"
+                        />
+                        <button
+                          class="btn toggle-password"
+                          type="button"
+                          data-target="perfilPassword"
+                          aria-label="Mostrar contraseña"
+                          aria-pressed="false"
+                        >
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                      <div class="form-text">
+                        Mínimo 8 caracteres. Déjala vacía para conservarla.
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilPasswordConfirm" class="form-label">
+                        Confirmar nueva contraseña
+                      </label>
+                      <div class="input-group">
+                        <input
+                          class="form-control"
+                          type="password"
+                          id="perfilPasswordConfirm"
+                          minlength="8"
+                          placeholder="Repite la nueva contraseña"
+                          autocomplete="new-password"
+                        />
+                        <button
+                          class="btn toggle-password"
+                          type="button"
+                          data-target="perfilPasswordConfirm"
+                          aria-label="Mostrar contraseña"
+                          aria-pressed="false"
+                        >
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfilCurrentPassword" class="form-label"
+                        >Contraseña actual</label
+                      >
+                      <div class="input-group">
+                        <input
+                          class="form-control"
+                          type="password"
+                          id="perfilCurrentPassword"
+                          autocomplete="current-password"
+                        />
+                        <button
+                          class="btn toggle-password"
+                          type="button"
+                          data-target="perfilCurrentPassword"
+                          aria-label="Mostrar contraseña"
+                          aria-pressed="false"
+                        >
+                          <i class="bi bi-eye" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                      <div class="form-text">
+                        Requerida solo para cambiar el correo o la contraseña.
+                      </div>
+                    </div>
+                    <div class="mb-3 d-none" id="perfilDosFactorGrupo">
+                      <label for="perfilDosFactorCode" class="form-label">
+                        Código de verificación (2FA)
+                      </label>
+                      <input
+                        class="form-control"
+                        type="text"
+                        id="perfilDosFactorCode"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                      />
+                      <div class="form-text">
+                        Con 2FA activo, confirma los cambios de correo o contraseña con un código de
+                        tu app.
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary" type="submit" id="btnGuardarPerfil">
+                        <span
+                          class="spinner-border spinner-border-sm me-1 d-none"
+                          id="perfilSpinner"
+                          role="status"
+                        ></span>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </section>
+
+            <section class="panel mt-4" id="dosFactorPanel">
+              <div class="panel-header">
+                <h2 class="h5 mb-0 section-title">
+                  <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                  <span>Verificación en dos pasos</span>
+                </h2>
+              </div>
+              <div class="p-3 p-lg-4">
+                <div id="dfRequeridoAviso" class="alert alert-warning d-none" role="alert">
+                  <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                  Tu rol requiere activar la verificación en dos pasos para gestionar el sistema.
+                </div>
+
+                <p class="text-muted">
+                  Añade un segundo factor con una app de autenticación (Google Authenticator,
+                  Authy…) para proteger tu cuenta aunque roben tu contraseña.
+                </p>
+
+                <!-- Estado + acción principal -->
+                <div id="dfResumen" class="d-flex flex-wrap align-items-center gap-3">
+                  <span id="dfEstado" class="badge">…</span>
+                  <button class="btn btn-primary btn-sm d-none" type="button" id="btnDfActivar">
+                    <i class="bi bi-shield-plus" aria-hidden="true"></i> Activar
+                  </button>
+                  <button
+                    class="btn btn-outline-danger btn-sm d-none"
+                    type="button"
+                    id="btnDfDesactivar"
+                  >
+                    <i class="bi bi-shield-x" aria-hidden="true"></i> Desactivar
+                  </button>
+                </div>
+
+                <!-- Setup: QR + códigos de recuperación + confirmación (oculto hasta Activar) -->
+                <div id="dfSetup" class="d-none mt-4">
+                  <p class="text-muted">
+                    Escanea el código con tu app y confirma con el código de 6 dígitos que muestre.
+                  </p>
+                  <div class="row g-4">
+                    <div class="col-12 col-md-auto text-center">
+                      <div id="dfQr" class="df-qr d-inline-block p-2 bg-white rounded"></div>
+                    </div>
+                    <div class="col">
+                      <label class="form-label">Códigos de recuperación</label>
+                      <p class="text-muted small mb-2">
+                        Guárdalos en un lugar seguro: te permiten entrar si pierdes el teléfono.
+                        Cada uno sirve una sola vez.
+                      </p>
+                      <ul
+                        id="dfRecovery"
+                        class="df-recovery list-unstyled font-monospace mb-0"
+                      ></ul>
+                    </div>
+                  </div>
+                  <form id="dfConfirmForm" class="row g-2 align-items-end mt-2" novalidate>
+                    <div class="col-auto">
+                      <label class="form-label" for="dfConfirmCode">Código de la app</label>
+                      <input
+                        class="form-control"
+                        id="dfConfirmCode"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        required
+                      />
+                    </div>
+                    <div class="col-auto">
+                      <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar
+                      </button>
+                    </div>
+                    <div class="col-auto">
+                      <button class="btn btn-outline-secondary" type="button" id="btnDfCancelar">
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Desactivar: pide un código válido (oculto hasta Desactivar) -->
+                <form id="dfDisableForm" class="d-none row g-2 align-items-end mt-3" novalidate>
+                  <div class="col-auto">
+                    <label class="form-label" for="dfDisableCode">Código para desactivar</label>
+                    <input
+                      class="form-control"
+                      id="dfDisableCode"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      required
+                    />
+                  </div>
+                  <div class="col-auto">
+                    <button class="btn btn-danger" type="submit">
+                      <i class="bi bi-shield-x" aria-hidden="true"></i> Confirmar desactivación
+                    </button>
+                  </div>
+                  <div class="col-auto">
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      id="btnDfDisableCancelar"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/util.js"></script>
+    <script defer src="../assets/js/sesion.js"></script>
+    <script defer src="../assets/js/compresion.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/password.js"></script>
+    <script defer src="../assets/js/layout.js"></script>
+    <script defer src="../assets/vendors/reverb/pusher.min.js"></script>
+    <script defer src="../assets/vendors/reverb/echo.iife.js"></script>
+    <script defer src="../assets/js/realtime.js"></script>
+    <script defer src="../assets/js/notificaciones.js"></script>
+    <script defer src="../assets/js/browser-image-compression.js"></script>
+    <script defer src="perfil.js"></script>
+  </body>
+</html>

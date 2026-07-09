@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Inicio del técnico - Sistema de Gestión de Incidencias" />
+    <title>Inicio | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="inicio">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
+
+        <main class="dashboard-content">
+          <div class="container-fluid px-3 px-lg-4 py-4">
+            <div class="page-heading">
+              <div class="page-heading-copy">
+                <span class="page-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+                <div>
+                  <p class="eyebrow mb-1">Inicio</p>
+                  <h1 class="h3 mb-1">Bienvenido, <span id="saludoNombre">usuario</span></h1>
+                  <p class="text-muted mb-0">Tu trabajo asignado de un vistazo.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel del técnico: KPIs + mapa + lista + gráficas (se rellena en inicio-tecnico.js). -->
+            <div id="tecnicoDashboard" class="d-none">
+              <section class="row g-3 mt-1">
+                <div class="col-6 col-sm-6 col-xl">
+                  <article class="metric-card metric-danger">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <p class="metric-label mb-0">Asignadas activas</p>
+                      <span
+                        class="metric-icon d-inline-flex align-items-center justify-content-center"
+                      >
+                        <i class="bi bi-card-checklist" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                    <p class="metric-value" id="kpiActivas">0</p>
+                  </article>
+                </div>
+                <div class="col-6 col-sm-6 col-xl">
+                  <article class="metric-card metric-warning">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <p class="metric-label mb-0">En proceso</p>
+                      <span
+                        class="metric-icon d-inline-flex align-items-center justify-content-center"
+                      >
+                        <i class="bi bi-gear-wide-connected" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                    <p class="metric-value" id="kpiEnProceso">0</p>
+                  </article>
+                </div>
+                <div class="col-6 col-sm-6 col-xl">
+                  <article class="metric-card metric-success">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <p class="metric-label mb-0">Resueltas este mes</p>
+                      <span
+                        class="metric-icon d-inline-flex align-items-center justify-content-center"
+                      >
+                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                    <p class="metric-value" id="kpiResueltasMes">0</p>
+                  </article>
+                </div>
+                <div class="col-6 col-sm-6 col-xl">
+                  <article class="metric-card metric-primary">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <p class="metric-label mb-0">Como apoyo</p>
+                      <span
+                        class="metric-icon d-inline-flex align-items-center justify-content-center"
+                      >
+                        <i class="bi bi-people" aria-hidden="true"></i>
+                      </span>
+                    </div>
+                    <p class="metric-value" id="kpiApoyo">0</p>
+                  </article>
+                </div>
+              </section>
+
+              <section class="row g-3 mt-1">
+                <div class="col-lg-7">
+                  <article class="panel h-100">
+                    <div class="panel-header">
+                      <h2 class="h6 mb-1">Mis incidencias activas</h2>
+                      <p class="text-muted mb-0">Dónde están tus asignaciones sin resolver.</p>
+                    </div>
+                    <div class="map-wrap">
+                      <div id="mapaAsignadas"></div>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-lg-5">
+                  <article class="panel h-100">
+                    <div class="panel-header">
+                      <h2 class="h6 mb-1">Atiende primero</h2>
+                      <p class="text-muted mb-0">Prioridad alta y más antiguas arriba.</p>
+                    </div>
+                    <div class="lista-atender" id="listaAtender"></div>
+                  </article>
+                </div>
+              </section>
+
+              <section class="row g-3 mt-1">
+                <div class="col-lg-5">
+                  <article class="panel h-100">
+                    <div class="panel-header">
+                      <h2 class="h6 mb-1">Mis incidencias por estado</h2>
+                      <p class="text-muted mb-0">Todo lo que has tenido como responsable.</p>
+                    </div>
+                    <div class="chart-wrap">
+                      <canvas
+                        id="graficoEstado"
+                        role="img"
+                        aria-label="Gráfico circular de tus incidencias por estado"
+                      ></canvas>
+                    </div>
+                  </article>
+                </div>
+                <div class="col-lg-7">
+                  <article class="panel h-100">
+                    <div class="panel-header">
+                      <h2 class="h6 mb-1">Resueltas por semana</h2>
+                      <p class="text-muted mb-0">Tus cierres en las últimas 8 semanas.</p>
+                    </div>
+                    <div class="chart-wrap">
+                      <canvas
+                        id="graficoSemana"
+                        role="img"
+                        aria-label="Gráfico de barras de tus incidencias resueltas por semana"
+                      ></canvas>
+                    </div>
+                  </article>
+                </div>
+              </section>
+            </div>
+
+            <!-- Estado vacío: el técnico aún no tiene ninguna asignación. -->
+            <section id="inicioVacio" class="row g-3 mt-1 d-none">
+              <div class="col-12">
+                <article class="metric-card">
+                  <p class="metric-label mb-2">Sin asignaciones todavía</p>
+                  <p class="mb-0 text-muted">
+                    Aún no tienes incidencias asignadas. Cuando el administrador te asigne una, tu
+                    panel aparecerá aquí.
+                  </p>
+                </article>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/estados.js"></script>
+    <script defer src="../assets/js/util.js"></script>
+    <script defer src="../assets/js/dashboard.js"></script>
+    <script defer src="../assets/js/sesion.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/layout.js"></script>
+    <script defer src="../assets/vendors/reverb/pusher.min.js"></script>
+    <script defer src="../assets/vendors/reverb/echo.iife.js"></script>
+    <script defer src="../assets/js/realtime.js"></script>
+    <script defer src="../assets/js/notificaciones.js"></script>
+    <script defer src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script defer src="../assets/js/mapa.js"></script>
+    <script defer src="../assets/vendors/chartjs/chart.umd.min.js"></script>
+    <script defer src="inicio-tecnico.js"></script>
+  </body>
+</html>

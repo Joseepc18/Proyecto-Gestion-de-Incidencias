@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Acceso - Sistema de Gestión de Incidencias" />
+    <title>Acceso | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <script>
+      // Si ya hay token, oculta el contenido mientras se valida la sesión (evita el flash).
+      try {
+        if (localStorage.getItem("access_token")) {
+          document.documentElement.classList.add("verificando-sesion");
+        }
+      } catch (e) {
+        /* localStorage no disponible */
+      }
+    </script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body class="auth-body">
+    <!-- Spinner a pantalla completa mientras se valida la sesión (solo si ya había token) -->
+    <div class="sesion-loader" aria-hidden="true">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando…</span>
+      </div>
+    </div>
+
+    <button
+      class="icon-button theme-toggle auth-theme-toggle"
+      type="button"
+      data-theme-toggle
+      aria-label="Cambiar tema"
+      title="Cambiar tema"
+    >
+      <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+    </button>
+
+    <main class="auth-page auth-page--full">
+      <section class="auth-slider" id="authSlider">
+        <!-- Hero del mapa (se desliza al registrar) -->
+        <div class="auth-hero">
+          <div class="auth-hero-overlay"></div>
+          <div class="auth-hero-content">
+            <div class="auth-hero-brand">
+              <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+              <span data-app-nombre></span>
+            </div>
+            <h2>Gestiona incidencias en tiempo real</h2>
+            <p>Plataforma para el monitoreo georreferenciado de tu ciudad.</p>
+          </div>
+        </div>
+
+        <!-- Panel de formularios (login + registro superpuestos) -->
+        <div class="auth-panel">
+          <!-- Vista de Login -->
+          <div class="auth-view auth-view-login">
+            <form id="loginForm" class="needs-validation" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Acceso seguro</p>
+                <h1 class="h3 mb-1">Iniciar sesión</h1>
+                <p class="text-muted mb-0">Ingresa con tu cuenta para gestionar incidencias.</p>
+              </div>
+
+              <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="loginEmail">Correo electrónico</label>
+                <input class="form-control" id="loginEmail" type="email" required />
+                <div class="invalid-feedback">Ingresa un correo válido.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="loginPassword">Contraseña</label>
+                <div class="input-group has-validation">
+                  <input
+                    class="form-control"
+                    id="loginPassword"
+                    type="password"
+                    minlength="8"
+                    required
+                  />
+                  <button
+                    class="btn toggle-password"
+                    type="button"
+                    data-target="loginPassword"
+                    aria-label="Mostrar contraseña"
+                    aria-pressed="false"
+                  >
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                  </button>
+                  <div class="invalid-feedback">
+                    La contraseña debe tener al menos 8 caracteres.
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-end mb-3">
+                <a href="recuperar.html" class="auth-link">¿Olvidaste tu contraseña?</a>
+              </div>
+
+              <button id="loginSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="loginSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Entrar
+              </button>
+
+              <div class="auth-or text-center text-muted my-2">o</div>
+
+              <a
+                href="/api/auth/google/redirect"
+                class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+              >
+                <i class="bi bi-google" aria-hidden="true"></i> Ingresar con Google
+              </a>
+
+              <div class="auth-footer">
+                ¿No tienes cuenta?
+                <button type="button" class="auth-link" id="btnIrRegistro">Crear una cuenta</button>
+              </div>
+            </form>
+
+            <!-- Paso de verificación en dos pasos (oculto hasta que el login lo pida) -->
+            <form id="challengeForm" class="needs-validation d-none" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Verificación en dos pasos</p>
+                <h1 class="h3 mb-1">Código de acceso</h1>
+                <p class="text-muted mb-0">
+                  Escribe el código de tu app de autenticación o un código de recuperación.
+                </p>
+              </div>
+
+              <div id="challengeError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="challengeCode">Código</label>
+                <input
+                  class="form-control"
+                  id="challengeCode"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  required
+                />
+                <div class="invalid-feedback">Ingresa el código.</div>
+              </div>
+
+              <button id="challengeSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="challengeSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-shield-lock" aria-hidden="true"></i> Verificar
+              </button>
+
+              <div class="auth-footer">
+                <button type="button" class="auth-link" id="btnVolverLogin">Volver</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Vista de Registro -->
+          <div class="auth-view auth-view-register">
+            <form id="registroForm" class="needs-validation" novalidate>
+              <div class="mb-4">
+                <p class="eyebrow mb-1">Acceso seguro</p>
+                <h1 class="h3 mb-1">Crear cuenta</h1>
+                <p class="text-muted mb-0">Regístrate para empezar a gestionar incidencias.</p>
+              </div>
+
+              <div id="registroError" class="alert alert-danger d-none" role="alert"></div>
+
+              <div class="mb-3">
+                <label class="form-label" for="registerName">Nombre completo</label>
+                <input class="form-control" id="registerName" type="text" required />
+                <div class="invalid-feedback">El nombre es obligatorio.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="registerEmail">Correo electrónico</label>
+                <input class="form-control" id="registerEmail" type="email" required />
+                <div class="invalid-feedback">Ingresa un correo válido.</div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="registerPassword">Contraseña</label>
+                  <div class="input-group has-validation">
+                    <input
+                      class="form-control"
+                      id="registerPassword"
+                      type="password"
+                      minlength="8"
+                      required
+                    />
+                    <button
+                      class="btn toggle-password"
+                      type="button"
+                      data-target="registerPassword"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                    >
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <div class="invalid-feedback">Mínimo 8 caracteres.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="registerPasswordConfirmation">Confirmar</label>
+                  <div class="input-group has-validation">
+                    <input
+                      class="form-control"
+                      id="registerPasswordConfirmation"
+                      type="password"
+                      minlength="8"
+                      required
+                    />
+                    <button
+                      class="btn toggle-password"
+                      type="button"
+                      data-target="registerPasswordConfirmation"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                    >
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <div class="invalid-feedback">Repite la contraseña.</div>
+                  </div>
+                </div>
+              </div>
+
+              <button id="registroSubmit" class="btn btn-primary w-100" type="submit">
+                <span
+                  id="registroSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                <i class="bi bi-person-plus" aria-hidden="true"></i> Crear cuenta
+              </button>
+
+              <div class="auth-footer">
+                ¿Ya tienes cuenta?
+                <button type="button" class="auth-link" id="btnIrLogin">Inicia sesión</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/password.js"></script>
+    <!-- Lógica de login y de registro (cada una se engancha a su formulario) -->
+    <script defer src="login.js"></script>
+    <script defer src="../registro/registro.js"></script>
+  </body>
+</html>

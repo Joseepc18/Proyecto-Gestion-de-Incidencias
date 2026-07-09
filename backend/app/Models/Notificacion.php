@@ -2,34 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Notifications\DatabaseNotification;
 
-class Notificacion extends Model
+// Mismo modelo/tabla que usa el trait Notifiable (notifications); solo agrega Prunable
+// para que "php artisan model:prune" borre las notificaciones leídas hace más de 30 días.
+class Notificacion extends DatabaseNotification
 {
-    protected $table = 'notificaciones';
-    protected $primaryKey = 'id_notificacion';
+    use Prunable;
 
-    protected $fillable = [
-        'id_incidencia',
-        'id_usuario',
-        'mensaje_notificacion',
-        'estado_lectura',
-        'fecha_lectura',
-        'tipo_notificacion',
-    ];
-
-    protected $casts = [
-        'estado_lectura' => 'boolean',
-        'fecha_lectura'  => 'datetime',
-    ];
-
-    public function incidencia()
+    protected function prunable()
     {
-        return $this->belongsTo(Incidencia::class, 'id_incidencia', 'id_incidencia');
-    }
-
-    public function usuario()
-    {
-        return $this->belongsTo(User::class, 'id_usuario', 'id');
+        return static::whereNotNull('read_at')->where('read_at', '<=', now()->subDays(30));
     }
 }

@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,6 +15,7 @@ return new class extends Migration
             id_incidencia BIGINT NOT NULL,
             url_evidencia VARCHAR(500) NOT NULL,
             id_usuario BIGINT NOT NULL,
+            tipo_evidencia VARCHAR(50) NOT NULL DEFAULT 'REPORTE' CHECK (tipo_evidencia IN ('REPORTE','RESOLUCION')),
             FOREIGN KEY (id_incidencia) REFERENCES incidencias(id_incidencia) ON DELETE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP TABLE IF EXISTS evidencias CASCADE;");
+        DB::statement('DROP TABLE IF EXISTS evidencias CASCADE;');
     }
 };

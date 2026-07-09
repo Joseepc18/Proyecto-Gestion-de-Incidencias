@@ -1,0 +1,35 @@
+name: CI - Frontend (ESLint + Prettier)
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm install
+
+      - name: Ejecutar ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Verificar formato (Prettier)
+        working-directory: frontend
+        run: npm run format:check

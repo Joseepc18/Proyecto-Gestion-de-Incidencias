@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mis incidencias - Sistema de Gestión de Incidencias" />
+    <title>Mis incidencias | Gestión de Incidencias</title>
+
+    <link rel="icon" href="../assets/images/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="../assets/images/favicon/favicon-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="../assets/images/favicon/apple-icon.png" />
+    <script src="../assets/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/vendors/bootstrap-icons/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../assets/vendors/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+
+  <body data-page="mis-incidencias">
+    <div class="admin-shell">
+      <div class="sidebar-backdrop" data-sidebar-close></div>
+
+      <aside class="admin-sidebar" id="adminSidebar" aria-label="Navegación principal"></aside>
+
+      <div class="admin-main">
+        <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
+
+        <!-- Mapa de fondo + paneles flotantes (estilo centro de control) -->
+        <main class="dashboard-content mis-mapa-main">
+          <!-- Barra Volver (solo movil, al ver el detalle de una incidencia) -->
+          <button type="button" class="mis-volver" id="btnVolverMapa">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis incidencias
+          </button>
+
+          <div id="mapaMisIncidencias" class="mis-mapa"></div>
+
+          <!-- Panel flotante izquierdo: feed de incidencias -->
+          <section class="mis-panel mis-feed" id="feedPanel">
+            <div class="mis-feed-header">
+              <h2 class="h6 mb-2">Mis Incidencias</h2>
+              <div class="d-flex gap-1">
+                <div class="input-group input-group-sm flex-fill">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="filtroBusqueda"
+                    placeholder="Buscar incidencia..."
+                  />
+                </div>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-light btn-sm px-2"
+                    type="button"
+                    id="btnFiltroEstado"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    title="Filtrar por estado"
+                  >
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnFiltroEstado">
+                    <li><a class="dropdown-item active" href="#" data-estado="">Todos</a></li>
+                    <li><a class="dropdown-item" href="#" data-estado="PENDIENTE">Pendiente</a></li>
+                    <li>
+                      <a class="dropdown-item" href="#" data-estado="EN_PROCESO">En proceso</a>
+                    </li>
+                    <li><a class="dropdown-item" href="#" data-estado="RESUELTO">Resuelto</a></li>
+                    <li><a class="dropdown-item" href="#" data-estado="CERRADO">Archivado</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de tarjetas (la llena el JS) -->
+            <div id="listaIncidencias" class="mis-feed-lista d-flex flex-column gap-2 mt-2"></div>
+
+            <div id="paginacionMis" class="mis-pag-flechas mt-2"></div>
+          </section>
+
+          <!-- Tarjeta flotante derecha: resumen liviano + "Ver detalles" -->
+          <section class="mis-panel mis-detalle" id="detalleCard">
+            <!-- Estado vacío -->
+            <div id="detalleVacio" class="text-center text-muted p-3">
+              <i class="bi bi-geo-alt fs-3 d-block mb-2"></i>
+              <p class="small mb-0">Selecciona una incidencia para ver su detalle y ubicación.</p>
+            </div>
+
+            <!-- Contenido (oculto hasta seleccionar) -->
+            <div id="detalleContenido" class="d-none">
+              <img
+                id="detalleImagen"
+                class="mis-detalle-img d-none"
+                alt="Evidencia"
+                loading="lazy"
+              />
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <p class="eyebrow mb-1" id="detalleCodigo">INC-...</p>
+                  <h1 class="h6 mb-1" id="detalleTitulo"></h1>
+                </div>
+                <span class="badge" id="detalleEstado"></span>
+              </div>
+
+              <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
+                <span class="badge" id="detallePrioridad"></span>
+                <span class="text-muted small" id="detalleFecha"></span>
+              </div>
+
+              <p class="small text-muted mb-0 mt-2" id="detalleUbicacion"></p>
+
+              <div class="d-flex gap-2 mt-3">
+                <a class="btn btn-primary btn-sm flex-fill" id="btnVerDetalles" href="#">
+                  <i class="bi bi-eye me-1"></i> Ver detalles
+                </a>
+              </div>
+
+              <!-- Aviso cuando ya no se puede editar -->
+              <div id="avisoEdicion" class="alert alert-info py-1 px-2 small mt-2 mb-0 d-none">
+                <i class="bi bi-info-circle me-1"></i>
+                Ya está en proceso, no puedes editarla. Use Ver detalles para dar seguimiento.
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script defer src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script defer src="../assets/vendors/main.js"></script>
+    <script defer src="../assets/js/config.js"></script>
+    <script defer src="../assets/js/api.js"></script>
+    <script defer src="../assets/js/estados.js"></script>
+    <script defer src="../assets/js/util.js"></script>
+    <script defer src="../assets/js/sesion.js"></script>
+    <script defer src="../assets/js/toast.js"></script>
+    <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/lightbox.js"></script>
+    <script defer src="../assets/js/layout.js"></script>
+    <script defer src="../assets/vendors/reverb/pusher.min.js"></script>
+    <script defer src="../assets/vendors/reverb/echo.iife.js"></script>
+    <script defer src="../assets/js/realtime.js"></script>
+    <script defer src="../assets/js/notificaciones.js"></script>
+    <script defer src="../assets/vendors/leaflet/leaflet.js"></script>
+    <script defer src="../assets/js/mapa.js"></script>
+    <script defer src="mis-incidencias.js"></script>
+  </body>
+</html>

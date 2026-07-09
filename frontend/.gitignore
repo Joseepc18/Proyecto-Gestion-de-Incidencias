@@ -1,0 +1,5 @@
+# Dependencias de Node (solo se usan para el build y los checks de CI)
+node_modules/
+
+# Salida del build de producción (la genera CI; se sirve en prod vía FRONTEND_ROOT)
+dist/

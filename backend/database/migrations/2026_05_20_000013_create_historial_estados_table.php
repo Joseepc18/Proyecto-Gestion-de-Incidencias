@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,8 +14,8 @@ return new class extends Migration
             id_historial BIGSERIAL PRIMARY KEY,
             id_incidencia BIGINT NOT NULL,
             id_usuario BIGINT NULL,
-            estado_anterior VARCHAR(50) NULL CHECK(estado_anterior IN ('PENDIENTE','EN_PROCESO','RESUELTO')),
-            estado_nuevo VARCHAR(50) NOT NULL CHECK(estado_nuevo IN ('PENDIENTE','EN_PROCESO','RESUELTO')),
+            estado_anterior VARCHAR(50) NULL CHECK(estado_anterior IN ('PENDIENTE','EN_PROCESO','RESUELTO','CERRADO')),
+            estado_nuevo VARCHAR(50) NOT NULL CHECK(estado_nuevo IN ('PENDIENTE','EN_PROCESO','RESUELTO','CERRADO')),
             FOREIGN KEY (id_incidencia) REFERENCES incidencias(id_incidencia) ON DELETE RESTRICT ON UPDATE CASCADE,
             FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE SET NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP TABLE IF EXISTS historial_estados CASCADE;");
+        DB::statement('DROP TABLE IF EXISTS historial_estados CASCADE;');
     }
 };

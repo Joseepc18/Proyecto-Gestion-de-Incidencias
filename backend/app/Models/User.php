@@ -2,15 +2,27 @@
 
 namespace App\Models;
 
+use App\Enums\RolAsignacion;
+use App\Notifications\RestablecerPasswordNotification;
+use App\Notifications\VerificarEmailNotification;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\URL;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
+use Laravel\Fortify\Fortify;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+    use HasApiTokens, HasFactory, MustVerifyEmailTrait, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+
+    // Minutos de validez de la URL firmada de la foto de perfil (más laxo que evidencias: es solo un avatar).
+    private const MINUTOS_URL_FOTO_PERFIL = 30;
 
     protected $table = 'users';
 
@@ -19,11 +31,15 @@ class User extends Authenticatable
         'email',
         'password',
         'id_rol',
+        'foto_perfil',
+        'email_verified_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -34,9 +50,115 @@ class User extends Authenticatable
         ];
     }
 
+    // URL firmada del avatar: el disco 'perfiles' es privado, así que la firma reemplaza al token Bearer (el <img> no lo manda).
+    public function getFotoPerfilUrlAttribute(): ?string
+    {
+        if (! $this->foto_perfil) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute(
+            'usuarios.foto',
+            now()->addMinutes(self::MINUTOS_URL_FOTO_PERFIL),
+            ['usuario' => $this->id]
+        );
+    }
+
+    // Usamos plantillas Markdown propias (como el resto de correos), no las notificaciones nativas.
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new RestablecerPasswordNotification($token));
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerificarEmailNotification);
+    }
+
     public function rol()
     {
         return $this->belongsTo(Rol::class, 'id_rol', 'id_rol');
+    }
+
+    // Centraliza el whereHas('rol', ...) repetido en varios controllers.
+    public function scopeConRol($query, string $rol)
+    {
+        return $query->whereHas('rol', fn ($q) => $q->where('nombre_rol', $rol));
+    }
+
+    // Usuarios cuyo rol tiene el permiso indicado; se usa para notificar a quienes pueden gestionar.
+    public function scopeConPermiso($query, string $clave)
+    {
+        return $query->whereHas('rol.permisos', fn ($q) => $q->where('clave_permiso', $clave));
+    }
+
+    // Solo VISIBILIDAD (ver incidencias/dashboard), no permisos operativos: super_admin es view-only en incidencias.
+    public function esAdmin(): bool
+    {
+        return $this->rol && in_array($this->rol->nombre_rol, [Rol::ADMIN, Rol::SUPER_ADMIN], true);
+    }
+
+    public function esSuperAdmin(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === Rol::SUPER_ADMIN;
+    }
+
+    // Fuente única de verdad para autorizar por permiso (middleware, policies y recurso de sesión).
+    public function tienePermiso(string $clave): bool
+    {
+        return $this->rol && $this->rol->permisos->contains('clave_permiso', $clave);
+    }
+
+    // Lista de claves de permiso del rol; la consume UserResource para el frontend.
+    public function permisosClaves(): array
+    {
+        return $this->rol ? $this->rol->permisos->pluck('clave_permiso')->all() : [];
+    }
+
+    public function esTecnico(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === Rol::TECNICO;
+    }
+
+    public function esNormal(): bool
+    {
+        return $this->rol && $this->rol->nombre_rol === Rol::NORMAL;
+    }
+
+    // Valida un código de 2FA: primero como TOTP del authenticator, si no como recovery code (que se consume al usarlo).
+    public function verificarCodigoDosFactor(string $code): bool
+    {
+        if (! $this->two_factor_secret) {
+            return false;
+        }
+
+        $secreto = Fortify::currentEncrypter()->decrypt($this->two_factor_secret);
+        if (app(TwoFactorAuthenticationProvider::class)->verify($secreto, $code)) {
+            return true;
+        }
+
+        if ($this->two_factor_recovery_codes && in_array($code, $this->recoveryCodes(), true)) {
+            $this->replaceRecoveryCode($code);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // Es el técnico RESPONSABLE de la incidencia (el de APOYO no cuenta). Fuente única para las policies.
+    public function esResponsableDe(Incidencia $incidencia): bool
+    {
+        return $incidencia->asignaciones()
+            ->where('id_usuario', $this->id)
+            ->where('rol_asignado', RolAsignacion::Responsable->value)
+            ->exists();
+    }
+
+    // Participa en la incidencia (ver detalle/chat): admin, el reportador o el técnico responsable. Fuente única para las policies.
+    public function participaEn(Incidencia $incidencia): bool
+    {
+        return $this->esAdmin() || $incidencia->id_usuario === $this->id || $this->esResponsableDe($incidencia);
     }
 
     public function incidencias()
@@ -57,11 +179,6 @@ class User extends Authenticatable
     public function evidencias()
     {
         return $this->hasMany(Evidencia::class, 'id_usuario', 'id');
-    }
-
-    public function notificaciones()
-    {
-        return $this->hasMany(Notificacion::class, 'id_usuario', 'id');
     }
 
     public function historialEstados()

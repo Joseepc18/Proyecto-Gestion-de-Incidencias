@@ -29,11 +29,11 @@ Homestead.json
 .phpactor.json
 auth.json
 
-# Documentación / Guías privadas
+# Documentación / Guías privadas (Ignorar toda la carpeta docs)
+docs/
+CLAUDE.md
+database/*.sqlite
+AGENTS.md
 
-lineamientos.md
-comandos.txt
-dificultades_soluciones.md
-
-GUIA_SERVIDOR_INCIDENCIAS.md
-PLAN_REPLICACION.md
+# Secreto del Basic Auth de Horizon (se crea a mano en cada entorno)
+nginx/horizon.htpasswd

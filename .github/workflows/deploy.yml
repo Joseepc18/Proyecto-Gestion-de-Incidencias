@@ -1,4 +1,4 @@
-name: Deploy - Laravel Backend
+name: Deploy - Aplicación (Backend + Frontend)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  deploy-backend:
+  deploy:
     runs-on: self-hosted
 
     steps:
@@ -14,6 +14,28 @@ jobs:
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: git pull origin develop
 
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # SPA estático minificado + hasheado (esbuild → frontend/dist). Nginx lo sirve vía FRONTEND_ROOT.
+      - name: Build del SPA (esbuild)
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias/frontend
+        run: npm ci && npm run build
+
+      # El entrypoint del contenedor corre "artisan optimize" en cada arranque (solo si APP_ENV=production),
+      # así que este restart ya deja config/rutas/eventos/vistas cacheados con el código recién bajado.
       - name: Reiniciar el backend
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart backend
+
+      - name: Reiniciar el frontend (nginx)
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: docker compose restart frontend
+
+      # Horizon/Reverb/scheduler cargan el código PHP en memoria al arrancar: sin este reinicio
+      # siguen corriendo con la versión anterior hasta que alguien los reinicie a mano.
+      - name: Reiniciar horizon, reverb y scheduler
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: docker compose restart horizon reverb scheduler

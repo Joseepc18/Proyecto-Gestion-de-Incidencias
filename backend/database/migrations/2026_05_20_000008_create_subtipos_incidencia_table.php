@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,7 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("
+        DB::statement('
         CREATE TABLE subtipos_incidencia(
             id_subtipo_incidencia BIGSERIAL PRIMARY KEY,
             nombre_subtipo_incidencia VARCHAR(255) NOT NULL,
@@ -22,7 +20,7 @@ return new class extends Migration
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        ");
+        ');
     }
 
     /**
@@ -30,8 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("
+        DB::statement('
         DROP TABLE IF EXISTS subtipos_incidencia CASCADE;
-        ");
+        ');
     }
 };

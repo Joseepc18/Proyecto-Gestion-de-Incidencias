@@ -7,11 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 class Ciudad extends Model
 {
     protected $table = 'ciudades';
+
     protected $primaryKey = 'id_ciudad';
 
     protected $fillable = [
         'nombre_ciudad',
         'id_provincia',
+        'latitud',
+        'longitud',
+    ];
+
+    // El frontend resuelve el cantón más cercano con estas coords: las quiere como números, no strings.
+    protected $casts = [
+        'latitud' => 'float',
+        'longitud' => 'float',
     ];
 
     public function provincia()

@@ -1,0 +1,1244 @@
+{
+  "pais": "Ecuador",
+  "generado": "2026-06-30",
+  "fuentes": {
+    "coordenadas": "https://gist.github.com/c4rlosviteri/74261f2f03f59b9ac4042bc22dbe922f",
+    "jerarquia": "https://github.com/vfabianfarias/Datos-Geograficos-Ecuador"
+  },
+  "total_provincias": 24,
+  "total_cantones": 221,
+  "total_sin_coordenadas": 1,
+  "sin_coordenadas": [
+    {
+      "provincia": "Manabí",
+      "ciudad": "24 de Mayo"
+    }
+  ],
+  "provincias": [
+    {
+      "provincia": "Azuay",
+      "cantones": [
+        {
+          "ciudad": "Cuenca",
+          "latitud": -2.8973745,
+          "longitud": -79.0044518
+        },
+        {
+          "ciudad": "Girón",
+          "latitud": -3.1728573,
+          "longitud": -79.1241595798571
+        },
+        {
+          "ciudad": "Gualaceo",
+          "latitud": -2.9179486,
+          "longitud": -78.8461880140753
+        },
+        {
+          "ciudad": "Nabón",
+          "latitud": -3.33282635,
+          "longitud": -79.0996575205106
+        },
+        {
+          "ciudad": "Paute",
+          "latitud": -2.7461213,
+          "longitud": -78.7364807424428
+        },
+        {
+          "ciudad": "Pucara",
+          "latitud": -3.1748913,
+          "longitud": -79.514712723913
+        },
+        {
+          "ciudad": "San Fernando",
+          "latitud": -3.1398718,
+          "longitud": -79.2794840907109
+        },
+        {
+          "ciudad": "Santa Isabel",
+          "latitud": -3.1839392,
+          "longitud": -79.3594117719649
+        },
+        {
+          "ciudad": "Sigsig",
+          "latitud": -3.13308835,
+          "longitud": -78.8733115387591
+        },
+        {
+          "ciudad": "Oña",
+          "latitud": -3.49630835,
+          "longitud": -79.1092822740485
+        },
+        {
+          "ciudad": "Chordeleg",
+          "latitud": -2.98446755,
+          "longitud": -78.7307217577724
+        },
+        {
+          "ciudad": "El Pan",
+          "latitud": -2.83830715,
+          "longitud": -78.6539290478538
+        },
+        {
+          "ciudad": "Sevilla de Oro",
+          "latitud": -2.7051608,
+          "longitud": -78.6014387016541
+        },
+        {
+          "ciudad": "Guachapala",
+          "latitud": -2.76681085,
+          "longitud": -78.7113488321396
+        },
+        {
+          "ciudad": "Camilo Ponce Enríquez",
+          "latitud": -2.96406955,
+          "longitud": -79.5630363473857
+        }
+      ]
+    },
+    {
+      "provincia": "Bolívar",
+      "cantones": [
+        {
+          "ciudad": "Guaranda",
+          "latitud": -1.5922898,
+          "longitud": -79.0015614
+        },
+        {
+          "ciudad": "Chillanes",
+          "latitud": -1.9432708,
+          "longitud": -79.0660695
+        },
+        {
+          "ciudad": "Chimbo",
+          "latitud": -1.6771505,
+          "longitud": -79.130623867671
+        },
+        {
+          "ciudad": "Echeandía",
+          "latitud": -1.44758925,
+          "longitud": -79.2738200852144
+        },
+        {
+          "ciudad": "San Miguel",
+          "latitud": -1.81214325,
+          "longitud": -79.1277096099702
+        },
+        {
+          "ciudad": "Caluma",
+          "latitud": -1.6328007,
+          "longitud": -79.2601724
+        },
+        {
+          "ciudad": "Las Naves",
+          "latitud": -2.2131748,
+          "longitud": -79.9408317
+        }
+      ]
+    },
+    {
+      "provincia": "Cañar",
+      "cantones": [
+        {
+          "ciudad": "Azogues",
+          "latitud": -2.63172915,
+          "longitud": -78.7008934064092
+        },
+        {
+          "ciudad": "Biblián",
+          "latitud": -2.7101694,
+          "longitud": -78.8908362
+        },
+        {
+          "ciudad": "Cañar",
+          "latitud": -2.574484,
+          "longitud": -78.9804678
+        },
+        {
+          "ciudad": "La Troncal",
+          "latitud": -2.433689,
+          "longitud": -79.3751632252655
+        },
+        {
+          "ciudad": "El Tambo",
+          "latitud": -2.48280785,
+          "longitud": -78.9124904150334
+        },
+        {
+          "ciudad": "Déleg",
+          "latitud": -2.7652918,
+          "longitud": -78.9300169745813
+        },
+        {
+          "ciudad": "Suscal",
+          "latitud": -2.4378607,
+          "longitud": -79.0511208
+        }
+      ]
+    },
+    {
+      "provincia": "Carchi",
+      "cantones": [
+        {
+          "ciudad": "Tulcán",
+          "latitud": 0.8119288,
+          "longitud": -77.7171076
+        },
+        {
+          "ciudad": "Bolívar",
+          "latitud": 0.472635,
+          "longitud": -77.9358505135391
+        },
+        {
+          "ciudad": "Espejo",
+          "latitud": 0.713927,
+          "longitud": -77.96622643662
+        },
+        {
+          "ciudad": "Mira",
+          "latitud": 0.71702875,
+          "longitud": -78.1917880300142
+        },
+        {
+          "ciudad": "Montúfar",
+          "latitud": 0.56843345,
+          "longitud": -77.8087822387136
+        },
+        {
+          "ciudad": "San Pedro de Huaca",
+          "latitud": 0.62336305,
+          "longitud": -77.7206361688019
+        }
+      ]
+    },
+    {
+      "provincia": "Cotopaxi",
+      "cantones": [
+        {
+          "ciudad": "Latacunga",
+          "latitud": -0.9336215,
+          "longitud": -78.6150488
+        },
+        {
+          "ciudad": "La Maná",
+          "latitud": -0.78419085,
+          "longitud": -79.1010573360607
+        },
+        {
+          "ciudad": "Pangua",
+          "latitud": -1.10073805,
+          "longitud": -79.1641109407438
+        },
+        {
+          "ciudad": "Pujili",
+          "latitud": -1.00770465,
+          "longitud": -78.8559204588373
+        },
+        {
+          "ciudad": "Salcedo",
+          "latitud": -1.0570033,
+          "longitud": -78.5411138897882
+        },
+        {
+          "ciudad": "Saquisilí",
+          "latitud": -0.8359835,
+          "longitud": -78.7312623545021
+        },
+        {
+          "ciudad": "Sigchos",
+          "latitud": -0.61302145,
+          "longitud": -78.8818616273973
+        }
+      ]
+    },
+    {
+      "provincia": "Chimborazo",
+      "cantones": [
+        {
+          "ciudad": "Riobamba",
+          "latitud": -1.6731483,
+          "longitud": -78.6486465
+        },
+        {
+          "ciudad": "Alausi",
+          "latitud": -2.3250494,
+          "longitud": -78.7035660061718
+        },
+        {
+          "ciudad": "Colta",
+          "latitud": -1.79709295,
+          "longitud": -78.8494368104333
+        },
+        {
+          "ciudad": "Chambo",
+          "latitud": -1.7320661,
+          "longitud": -78.5951097
+        },
+        {
+          "ciudad": "Chunchi",
+          "latitud": -2.3285653,
+          "longitud": -78.8932832085705
+        },
+        {
+          "ciudad": "Guamote",
+          "latitud": -2.04933205,
+          "longitud": -78.6426692558071
+        },
+        {
+          "ciudad": "Guano",
+          "latitud": -1.539923,
+          "longitud": -78.657838509137
+        },
+        {
+          "ciudad": "Pallatanga",
+          "latitud": -2.0167297,
+          "longitud": -78.9302292966983
+        },
+        {
+          "ciudad": "Penipe",
+          "latitud": -1.5659281,
+          "longitud": -78.5315515
+        },
+        {
+          "ciudad": "Cumandá",
+          "latitud": -1.4595105,
+          "longitud": -78.1366323
+        }
+      ]
+    },
+    {
+      "provincia": "El Oro",
+      "cantones": [
+        {
+          "ciudad": "Machala",
+          "latitud": -3.2587494,
+          "longitud": -79.9595133
+        },
+        {
+          "ciudad": "Arenillas",
+          "latitud": -3.57396445,
+          "longitud": -80.0986007104956
+        },
+        {
+          "ciudad": "Atahualpa",
+          "latitud": -3.5572055,
+          "longitud": -79.7098882225052
+        },
+        {
+          "ciudad": "Balsas",
+          "latitud": -3.7742179,
+          "longitud": -79.8310960432725
+        },
+        {
+          "ciudad": "Chilla",
+          "latitud": -3.4584322,
+          "longitud": -79.5809951
+        },
+        {
+          "ciudad": "El Guabo",
+          "latitud": -3.2413487,
+          "longitud": -79.8296713
+        },
+        {
+          "ciudad": "Huaquillas",
+          "latitud": -3.45925155,
+          "longitud": -80.1820737271825
+        },
+        {
+          "ciudad": "Marcabelí",
+          "latitud": -3.7844549,
+          "longitud": -79.9113661
+        },
+        {
+          "ciudad": "Pasaje",
+          "latitud": -0.253255,
+          "longitud": -79.167726
+        },
+        {
+          "ciudad": "Piñas",
+          "latitud": -3.71088185,
+          "longitud": -79.7837851533668
+        },
+        {
+          "ciudad": "Portovelo",
+          "latitud": -3.7154781,
+          "longitud": -79.6167189
+        },
+        {
+          "ciudad": "Santa Rosa",
+          "latitud": -3.41455385,
+          "longitud": -80.1549039658861
+        },
+        {
+          "ciudad": "Zaruma",
+          "latitud": -3.50855405,
+          "longitud": -79.5108420957504
+        },
+        {
+          "ciudad": "Las Lajas",
+          "latitud": -3.7848952,
+          "longitud": -80.0636021
+        }
+      ]
+    },
+    {
+      "provincia": "Esmeraldas",
+      "cantones": [
+        {
+          "ciudad": "Esmeraldas",
+          "latitud": 0.7343619,
+          "longitud": -79.3858867
+        },
+        {
+          "ciudad": "Eloy Alfaro",
+          "latitud": 0.874044,
+          "longitud": -78.9950332281882
+        },
+        {
+          "ciudad": "Muisne",
+          "latitud": 0.53872465,
+          "longitud": -79.8819717523788
+        },
+        {
+          "ciudad": "Quinindé",
+          "latitud": 0.328723,
+          "longitud": -79.4726416
+        },
+        {
+          "ciudad": "San Lorenzo",
+          "latitud": 0.98506345,
+          "longitud": -78.6869332946931
+        },
+        {
+          "ciudad": "Atacames",
+          "latitud": 0.79710855,
+          "longitud": -79.8790840742983
+        },
+        {
+          "ciudad": "Rioverde",
+          "latitud": 1.0247745,
+          "longitud": -79.4326189854836
+        },
+        {
+          "ciudad": "La Concordia",
+          "latitud": 1.0216116,
+          "longitud": -79.0231981
+        }
+      ]
+    },
+    {
+      "provincia": "Guayas",
+      "cantones": [
+        {
+          "ciudad": "Guayaquil",
+          "latitud": -2.1899066,
+          "longitud": -79.887726
+        },
+        {
+          "ciudad": "Alfredo Baquerizo Moreno (Juján)",
+          "latitud": -1.9494337,
+          "longitud": -79.5495282851817
+        },
+        {
+          "ciudad": "Balao",
+          "latitud": -2.88525165,
+          "longitud": -79.7180498428229
+        },
+        {
+          "ciudad": "Balzar",
+          "latitud": -1.3063032,
+          "longitud": -79.9349766799729
+        },
+        {
+          "ciudad": "Colimes",
+          "latitud": -1.5456483,
+          "longitud": -80.010547
+        },
+        {
+          "ciudad": "Daule",
+          "latitud": -1.92000685,
+          "longitud": -79.9129306979237
+        },
+        {
+          "ciudad": "Durán",
+          "latitud": -2.215207,
+          "longitud": -79.7903725123108
+        },
+        {
+          "ciudad": "El Empalme",
+          "latitud": -0.9910107,
+          "longitud": -79.6642365343776
+        },
+        {
+          "ciudad": "El Triunfo",
+          "latitud": -2.2907784,
+          "longitud": -79.3660575197123
+        },
+        {
+          "ciudad": "Milagro",
+          "latitud": -2.11717955,
+          "longitud": -79.5566606071334
+        },
+        {
+          "ciudad": "Naranjal",
+          "latitud": -2.5731305,
+          "longitud": -79.5325633959898
+        },
+        {
+          "ciudad": "Naranjito",
+          "latitud": -2.1685398,
+          "longitud": -79.4630975
+        },
+        {
+          "ciudad": "Palestina",
+          "latitud": -1.629117,
+          "longitud": -79.9807392
+        },
+        {
+          "ciudad": "Pedro Carbo",
+          "latitud": -1.86726715,
+          "longitud": -80.3009813925023
+        },
+        {
+          "ciudad": "Samborondón",
+          "latitud": -2.0153601,
+          "longitud": -79.7340649369068
+        },
+        {
+          "ciudad": "Santa Lucía",
+          "latitud": -1.7162715,
+          "longitud": -79.9849423
+        },
+        {
+          "ciudad": "Salitre (Urbina Jado)",
+          "latitud": -1.8293674,
+          "longitud": -79.8174167
+        },
+        {
+          "ciudad": "San Jacinto de Yaguachi",
+          "latitud": -0.2173326,
+          "longitud": -78.4960519
+        },
+        {
+          "ciudad": "Playas",
+          "latitud": -2.6356397,
+          "longitud": -80.3913928
+        },
+        {
+          "ciudad": "Simón Bolívar",
+          "latitud": -2.0424101,
+          "longitud": -79.4218633880435
+        },
+        {
+          "ciudad": "Coronel Marcelino Maridueña",
+          "latitud": -2.23336285,
+          "longitud": -79.3861649354298
+        },
+        {
+          "ciudad": "Lomas de Sargentillo",
+          "latitud": -1.8808196,
+          "longitud": -80.0814602
+        },
+        {
+          "ciudad": "Nobol",
+          "latitud": -1.98178425,
+          "longitud": -80.0670669917175
+        },
+        {
+          "ciudad": "General Antonio Elizalde",
+          "latitud": -2.1429197,
+          "longitud": -79.2261264625635
+        },
+        {
+          "ciudad": "Isidro Ayora",
+          "latitud": -1.8796754,
+          "longitud": -80.1463096
+        }
+      ]
+    },
+    {
+      "provincia": "Imbabura",
+      "cantones": [
+        {
+          "ciudad": "Ibarra",
+          "latitud": 0.3478421,
+          "longitud": -78.1173588
+        },
+        {
+          "ciudad": "Antonio Ante",
+          "latitud": 0.3316022,
+          "longitud": -78.219615
+        },
+        {
+          "ciudad": "Cotacachi",
+          "latitud": 0.3955234,
+          "longitud": -78.4507013183269
+        },
+        {
+          "ciudad": "Otavalo",
+          "latitud": 0.22276365,
+          "longitud": -78.2454274435196
+        },
+        {
+          "ciudad": "Pimampiro",
+          "latitud": 0.3924612,
+          "longitud": -77.9402957
+        },
+        {
+          "ciudad": "San Miguel de Urcuquí",
+          "latitud": 0.5777228,
+          "longitud": -78.3349090109371
+        }
+      ]
+    },
+    {
+      "provincia": "Loja",
+      "cantones": [
+        {
+          "ciudad": "Loja",
+          "latitud": -4.0528506,
+          "longitud": -79.8053425
+        },
+        {
+          "ciudad": "Calvas",
+          "latitud": -4.4799894,
+          "longitud": -79.51516
+        },
+        {
+          "ciudad": "Catamayo",
+          "latitud": -3.9911481,
+          "longitud": -79.4038821570871
+        },
+        {
+          "ciudad": "Celica",
+          "latitud": -4.16481365,
+          "longitud": -79.9851761755119
+        },
+        {
+          "ciudad": "Chaguarpamba",
+          "latitud": -3.876542,
+          "longitud": -79.6446609
+        },
+        {
+          "ciudad": "Espíndola",
+          "latitud": -4.3268185,
+          "longitud": -79.5525718
+        },
+        {
+          "ciudad": "Gonzanamá",
+          "latitud": -4.2302729,
+          "longitud": -79.4365638
+        },
+        {
+          "ciudad": "Macará",
+          "latitud": -4.3490568,
+          "longitud": -79.9161416249543
+        },
+        {
+          "ciudad": "Paltas",
+          "latitud": -4.0026163,
+          "longitud": -79.7006645141133
+        },
+        {
+          "ciudad": "Puyango",
+          "latitud": -3.96534605,
+          "longitud": -80.073541407174
+        },
+        {
+          "ciudad": "Saraguro",
+          "latitud": -3.6224722,
+          "longitud": -79.2384881
+        },
+        {
+          "ciudad": "Sozoranga",
+          "latitud": -4.3268672,
+          "longitud": -79.7902815
+        },
+        {
+          "ciudad": "Zapotillo",
+          "latitud": -4.2334403,
+          "longitud": -80.2893109657604
+        },
+        {
+          "ciudad": "Pindal",
+          "latitud": -4.1150962,
+          "longitud": -80.1079721
+        },
+        {
+          "ciudad": "Quilanga",
+          "latitud": -4.297155,
+          "longitud": -79.401265
+        },
+        {
+          "ciudad": "Olmedo",
+          "latitud": -3.9345786,
+          "longitud": -79.6468514
+        }
+      ]
+    },
+    {
+      "provincia": "Los Ríos",
+      "cantones": [
+        {
+          "ciudad": "Babahoyo",
+          "latitud": -1.8009022,
+          "longitud": -79.5338214
+        },
+        {
+          "ciudad": "Baba",
+          "latitud": -1.67300075,
+          "longitud": -79.659842362994
+        },
+        {
+          "ciudad": "Montalvo",
+          "latitud": -1.8016163,
+          "longitud": -79.3463655790142
+        },
+        {
+          "ciudad": "Puebloviejo",
+          "latitud": -1.551415,
+          "longitud": -79.5329942
+        },
+        {
+          "ciudad": "Quevedo",
+          "latitud": -1.0243508,
+          "longitud": -79.4663323
+        },
+        {
+          "ciudad": "Urdaneta",
+          "latitud": -1.56802025,
+          "longitud": -79.3769671833962
+        },
+        {
+          "ciudad": "Ventanas",
+          "latitud": -1.3335519,
+          "longitud": -79.3369008695944
+        },
+        {
+          "ciudad": "Vínces",
+          "latitud": -1.5584095,
+          "longitud": -79.7509236
+        },
+        {
+          "ciudad": "Palenque",
+          "latitud": -1.4374614,
+          "longitud": -79.7554206
+        },
+        {
+          "ciudad": "Buena Fé",
+          "latitud": -0.74829255,
+          "longitud": -79.5297122396171
+        },
+        {
+          "ciudad": "Valencia",
+          "latitud": -0.7696521,
+          "longitud": -79.3211355034001
+        },
+        {
+          "ciudad": "Mocache",
+          "latitud": -1.19756625,
+          "longitud": -79.5496158959561
+        },
+        {
+          "ciudad": "Quinsaloma",
+          "latitud": -1.2065709,
+          "longitud": -79.3143312
+        }
+      ]
+    },
+    {
+      "provincia": "Manabí",
+      "cantones": [
+        {
+          "ciudad": "Portoviejo",
+          "latitud": -1.0528066,
+          "longitud": -80.4534269
+        },
+        {
+          "ciudad": "Bolívar",
+          "latitud": -0.9292034,
+          "longitud": -80.0194710496605
+        },
+        {
+          "ciudad": "Chone",
+          "latitud": -0.38663675,
+          "longitud": -80.0522680333819
+        },
+        {
+          "ciudad": "El Carmen",
+          "latitud": -2.1806779,
+          "longitud": -79.8789297
+        },
+        {
+          "ciudad": "Flavio Alfaro",
+          "latitud": -0.32428605,
+          "longitud": -79.8445363628985
+        },
+        {
+          "ciudad": "Jipijapa",
+          "latitud": -1.5158193,
+          "longitud": -80.6124982491711
+        },
+        {
+          "ciudad": "Junín",
+          "latitud": -0.9261304,
+          "longitud": -80.2055648
+        },
+        {
+          "ciudad": "Manta",
+          "latitud": -1.0321775,
+          "longitud": -80.8222166660983
+        },
+        {
+          "ciudad": "Montecristi",
+          "latitud": -1.0503675,
+          "longitud": -80.6608104
+        },
+        {
+          "ciudad": "Paján",
+          "latitud": -1.70407915,
+          "longitud": -80.4212974804798
+        },
+        {
+          "ciudad": "Pichincha",
+          "latitud": -0.0584893,
+          "longitud": -78.3284371
+        },
+        {
+          "ciudad": "Rocafuerte",
+          "latitud": -0.8990136,
+          "longitud": -80.4036370947811
+        },
+        {
+          "ciudad": "Santa Ana",
+          "latitud": -1.1950113,
+          "longitud": -80.2648184045925
+        },
+        {
+          "ciudad": "Sucre",
+          "latitud": -0.7264261,
+          "longitud": -80.4161951263733
+        },
+        {
+          "ciudad": "Tosagua",
+          "latitud": -0.77290475,
+          "longitud": -80.2556583356452
+        },
+        {
+          "ciudad": "24 de Mayo",
+          "latitud": null,
+          "longitud": null
+        },
+        {
+          "ciudad": "Pedernales",
+          "latitud": 0.0689604,
+          "longitud": -79.8522466475605
+        },
+        {
+          "ciudad": "Olmedo",
+          "latitud": -1.3950973,
+          "longitud": -80.2116429
+        },
+        {
+          "ciudad": "Puerto López",
+          "latitud": -1.5440814,
+          "longitud": -80.7445239577186
+        },
+        {
+          "ciudad": "Jama",
+          "latitud": -0.2149489,
+          "longitud": -80.2295833686682
+        },
+        {
+          "ciudad": "Jaramijó",
+          "latitud": -0.9739097,
+          "longitud": -80.6020847675854
+        },
+        {
+          "ciudad": "San Vicente",
+          "latitud": -0.4373946,
+          "longitud": -80.376140850306
+        }
+      ]
+    },
+    {
+      "provincia": "Morona Santiago",
+      "cantones": [
+        {
+          "ciudad": "Morona",
+          "latitud": -2.4303097,
+          "longitud": -77.880192010847
+        },
+        {
+          "ciudad": "Gualaquiza",
+          "latitud": -3.32765065,
+          "longitud": -78.7064901988385
+        },
+        {
+          "ciudad": "Limón Indanza",
+          "latitud": -2.9663139,
+          "longitud": -78.4308133
+        },
+        {
+          "ciudad": "Palora",
+          "latitud": -1.6981449,
+          "longitud": -77.9675269
+        },
+        {
+          "ciudad": "Santiago",
+          "latitud": -3.7939049,
+          "longitud": -79.2817721
+        },
+        {
+          "ciudad": "Sucúa",
+          "latitud": -2.4560169,
+          "longitud": -78.1726625
+        },
+        {
+          "ciudad": "Huamboya",
+          "latitud": -1.9464404,
+          "longitud": -77.9904213
+        },
+        {
+          "ciudad": "San Juan Bosco",
+          "latitud": -3.1183356,
+          "longitud": -78.5300164
+        },
+        {
+          "ciudad": "Taisha",
+          "latitud": -2.3812385,
+          "longitud": -77.5087463
+        },
+        {
+          "ciudad": "Logroño",
+          "latitud": -2.6259898,
+          "longitud": -78.19963
+        },
+        {
+          "ciudad": "Pablo Sexto",
+          "latitud": -1.84087685,
+          "longitud": -78.2913468548678
+        },
+        {
+          "ciudad": "Tiwintza",
+          "latitud": 0.9157101,
+          "longitud": -79.6900499
+        }
+      ]
+    },
+    {
+      "provincia": "Napo",
+      "cantones": [
+        {
+          "ciudad": "Tena",
+          "latitud": -0.94387175,
+          "longitud": -78.1083981523959
+        },
+        {
+          "ciudad": "Archidona",
+          "latitud": -0.71607125,
+          "longitud": -77.9550419698538
+        },
+        {
+          "ciudad": "El Chaco",
+          "latitud": -0.3386642,
+          "longitud": -77.809851
+        },
+        {
+          "ciudad": "Quijos",
+          "latitud": -0.2222967,
+          "longitud": -78.5234313
+        },
+        {
+          "ciudad": "Carlos Julio Arosemena Tola",
+          "latitud": -1.1673159,
+          "longitud": -77.9396895
+        }
+      ]
+    },
+    {
+      "provincia": "Pastaza",
+      "cantones": [
+        {
+          "ciudad": "Pastaza",
+          "latitud": -1.916667,
+          "longitud": -77
+        },
+        {
+          "ciudad": "Mera",
+          "latitud": -1.44628965,
+          "longitud": -78.1161912057428
+        },
+        {
+          "ciudad": "Santa Clara",
+          "latitud": -1.265062,
+          "longitud": -77.8874893
+        },
+        {
+          "ciudad": "Arajuno",
+          "latitud": -1.3537363,
+          "longitud": -76.8441100604156
+        }
+      ]
+    },
+    {
+      "provincia": "Pichincha",
+      "cantones": [
+        {
+          "ciudad": "Quito",
+          "latitud": -0.215492,
+          "longitud": -78.5013647530921
+        },
+        {
+          "ciudad": "Cayambe",
+          "latitud": -0.0038813,
+          "longitud": -78.0481800834448
+        },
+        {
+          "ciudad": "Mejia",
+          "latitud": -0.4984774,
+          "longitud": -78.6516914663548
+        },
+        {
+          "ciudad": "Pedro Moncayo",
+          "latitud": -0.2149977,
+          "longitud": -78.4968845
+        },
+        {
+          "ciudad": "Rumiñahui",
+          "latitud": -0.39888,
+          "longitud": -78.4368106598363
+        },
+        {
+          "ciudad": "San Miguel de Los Bancos",
+          "latitud": -0.01877705,
+          "longitud": -78.921723470876
+        },
+        {
+          "ciudad": "Pedro Vicente Maldonado",
+          "latitud": 0.0864955,
+          "longitud": -79.052577
+        },
+        {
+          "ciudad": "Puerto Quito",
+          "latitud": 0.1608869,
+          "longitud": -79.226730350178
+        }
+      ]
+    },
+    {
+      "provincia": "Tungurahua",
+      "cantones": [
+        {
+          "ciudad": "Ambato",
+          "latitud": -1.2422461,
+          "longitud": -78.6292567
+        },
+        {
+          "ciudad": "Baños de Agua Santa",
+          "latitud": -1.33191575,
+          "longitud": -78.2625285385066
+        },
+        {
+          "ciudad": "Cevallos",
+          "latitud": -1.34957625,
+          "longitud": -78.6155503772334
+        },
+        {
+          "ciudad": "Mocha",
+          "latitud": -1.4191002,
+          "longitud": -78.6615418
+        },
+        {
+          "ciudad": "Patate",
+          "latitud": -1.28316955,
+          "longitud": -78.4297644244115
+        },
+        {
+          "ciudad": "Quero",
+          "latitud": -1.4300614,
+          "longitud": -78.6083724473263
+        },
+        {
+          "ciudad": "San Pedro de Pelileo",
+          "latitud": -1.3293759,
+          "longitud": -78.545843
+        },
+        {
+          "ciudad": "Santiago de Píllaro",
+          "latitud": -1.1725302,
+          "longitud": -78.5423177
+        },
+        {
+          "ciudad": "Tisaleo",
+          "latitud": -1.3489002,
+          "longitud": -78.6693045
+        }
+      ]
+    },
+    {
+      "provincia": "Zamora Chinchipe",
+      "cantones": [
+        {
+          "ciudad": "Zamora",
+          "latitud": -4.0042008,
+          "longitud": -78.9577754191094
+        },
+        {
+          "ciudad": "Chinchipe",
+          "latitud": -4.8536233,
+          "longitud": -79.1377245683016
+        },
+        {
+          "ciudad": "Nangaritza",
+          "latitud": -4.0604355,
+          "longitud": -78.963136
+        },
+        {
+          "ciudad": "Yacuambi",
+          "latitud": -2.1349894,
+          "longitud": -79.8960421
+        },
+        {
+          "ciudad": "Yantzaza (Yanzatza)",
+          "latitud": -3.71468115,
+          "longitud": -78.7376344463973
+        },
+        {
+          "ciudad": "El Pangui",
+          "latitud": -3.625,
+          "longitud": -78.5869441
+        },
+        {
+          "ciudad": "Centinela del Cóndor",
+          "latitud": -0.74796,
+          "longitud": -79.19933
+        },
+        {
+          "ciudad": "Palanda",
+          "latitud": -4.6498277,
+          "longitud": -79.1318589
+        },
+        {
+          "ciudad": "Paquisha",
+          "latitud": -3.9336811,
+          "longitud": -78.6757723
+        }
+      ]
+    },
+    {
+      "provincia": "Galápagos",
+      "cantones": [
+        {
+          "ciudad": "San Cristóbal",
+          "latitud": -0.9151226,
+          "longitud": -89.5662955
+        },
+        {
+          "ciudad": "Isabela",
+          "latitud": -2.8959964,
+          "longitud": -79.0193947
+        },
+        {
+          "ciudad": "Santa Cruz",
+          "latitud": -0.62881505,
+          "longitud": -90.3638752022324
+        }
+      ]
+    },
+    {
+      "provincia": "Sucumbíos",
+      "cantones": [
+        {
+          "ciudad": "Lago Agrio",
+          "latitud": 0.12658025,
+          "longitud": -76.7576221148817
+        },
+        {
+          "ciudad": "Gonzalo Pizarro",
+          "latitud": 0.1116857,
+          "longitud": -77.6398817070101
+        },
+        {
+          "ciudad": "Putumayo",
+          "latitud": 0.13399195,
+          "longitud": -76.1307912006416
+        },
+        {
+          "ciudad": "Shushufindi",
+          "latitud": -0.2886094,
+          "longitud": -76.5906631604309
+        },
+        {
+          "ciudad": "Sucumbíos",
+          "latitud": -0.039138,
+          "longitud": -76.5119678
+        },
+        {
+          "ciudad": "Cascales",
+          "latitud": -2.2345295,
+          "longitud": -79.9101118
+        },
+        {
+          "ciudad": "Cuyabeno",
+          "latitud": -0.2655114,
+          "longitud": -75.8920692
+        }
+      ]
+    },
+    {
+      "provincia": "Orellana",
+      "cantones": [
+        {
+          "ciudad": "Orellana",
+          "latitud": -0.78618,
+          "longitud": -76.4803184
+        },
+        {
+          "ciudad": "Aguarico",
+          "latitud": -0.9846232,
+          "longitud": -75.989153346087
+        },
+        {
+          "ciudad": "La Joya de Los Sachas",
+          "latitud": -0.2611097,
+          "longitud": -76.9080096240926
+        },
+        {
+          "ciudad": "Loreto",
+          "latitud": -0.6471884,
+          "longitud": -77.3252737672724
+        }
+      ]
+    },
+    {
+      "provincia": "Santo Domingo de los Tsáchilas",
+      "cantones": [
+        {
+          "ciudad": "Santo Domingo",
+          "latitud": -0.25105,
+          "longitud": -79.063278
+        }
+      ]
+    },
+    {
+      "provincia": "Santa Elena",
+      "cantones": [
+        {
+          "ciudad": "Santa Elena",
+          "latitud": -2.1954593,
+          "longitud": -80.5669167
+        },
+        {
+          "ciudad": "La Libertad",
+          "latitud": -0.2209692,
+          "longitud": -78.5253239
+        },
+        {
+          "ciudad": "Salinas",
+          "latitud": -2.2073132,
+          "longitud": -80.9684566
+        }
+      ]
+    }
+  ]
+}

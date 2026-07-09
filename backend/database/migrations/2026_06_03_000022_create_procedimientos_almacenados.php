@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,10 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // PROCEDIMIENTO 1: asignar_tecnico
-        // Valida y asigna un técnico a una incidencia. Verifica que la incidencia
-        // exista, que el usuario tenga rol válido, que no esté ya asignado y que
-        // el rol sea RESPONSABLE o APOYO antes de insertar la asignación.
+        // Procedimiento asignar_tecnico: valida (incidencia existe, rol técnico, sin duplicado, RESPONSABLE/APOYO) y asigna el técnico.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE asignar_tecnico(
             p_id_incidencia BIGINT,
@@ -36,13 +31,18 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
             END IF;
 
-            -- Validación 2: ¿el usuario tiene rol técnico o admin?
+            -- Validación 2: ¿el usuario existe (no borrado) y tiene rol técnico?
             SELECT r.nombre_rol INTO v_rol_usuario
             FROM users u
             JOIN roles r ON u.id_rol = r.id_rol
-            WHERE u.id = p_id_usuario;
+            WHERE u.id = p_id_usuario AND u.deleted_at IS NULL;
 
-            IF v_rol_usuario NOT IN ('tecnico', 'admin') THEN
+            -- Si no encontró fila, v_rol_usuario es NULL (NULL <> 'x' no dispara, hay que chequearlo aparte).
+            IF v_rol_usuario IS NULL THEN
+                RAISE EXCEPTION 'El usuario % no existe o fue eliminado.', p_id_usuario;
+            END IF;
+
+            IF v_rol_usuario <> 'tecnico' THEN
                 RAISE EXCEPTION 'El usuario % no tiene permisos para ser asignado.', p_id_usuario;
             END IF;
 
@@ -68,9 +68,7 @@ return new class extends Migration
         \$\$;
         ");
 
-        // PROCEDIMIENTO 2: resolver_incidencia
-        // Cambia el estado a RESUELTO y notifica al reportador y a todos los técnicos
-        // asignados. Los triggers de historial y fecha_resolucion actúan automáticamente.
+        // Procedimiento resolver_incidencia: pasa a RESUELTO (los triggers hacen historial y fecha); las notificaciones las emite el listener EnviarNotificacionCambioEstado, ya no se insertan aquí.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE resolver_incidencia(
             p_id_incidencia BIGINT,
@@ -81,9 +79,6 @@ return new class extends Migration
         DECLARE
             v_existe        INT;
             v_estado_actual VARCHAR;
-            v_nombre        VARCHAR;
-            v_reportador_id BIGINT;
-            v_tecnico_id    BIGINT;
         BEGIN
             -- Validación 1: ¿existe la incidencia?
             SELECT COUNT(*) INTO v_existe
@@ -93,35 +88,23 @@ return new class extends Migration
                 RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
             END IF;
 
-            -- Validación 2: ¿ya está resuelta?
-            SELECT estado_incidencia, nombre_incidencia, id_usuario
-            INTO v_estado_actual, v_nombre, v_reportador_id
-            FROM incidencias WHERE id_incidencia = p_id_incidencia;
+            -- Validación 2: ¿ya está resuelta? FOR UPDATE bloquea la fila: dos resolvers concurrentes se serializan y el perdedor recae aquí viendo 'RESUELTO', sin duplicar historial ni evento.
+            SELECT estado_incidencia INTO v_estado_actual
+            FROM incidencias WHERE id_incidencia = p_id_incidencia
+            FOR UPDATE;
 
             IF v_estado_actual = 'RESUELTO' THEN
                 RAISE EXCEPTION 'La incidencia % ya está resuelta.', p_id_incidencia;
             END IF;
 
-            -- Cambia el estado a RESUELTO
-            -- El trigger tr_fecha_resolucion llena fecha_resolucion automáticamente
-            -- El trigger tr_cambio_estado_incidencias guarda el historial automáticamente
+            -- Publica el actor para el trigger de historial (local a la transacción).
+            PERFORM set_config('app.actor_id', p_id_usuario::text, true);
+
+            -- Cambia el estado a RESUELTO; los triggers de fecha e historial hacen el resto automáticamente.
             UPDATE incidencias
-            SET estado_incidencia = 'RESUELTO'
+            SET estado_incidencia = 'RESUELTO',
+                updated_at = NOW()
             WHERE id_incidencia = p_id_incidencia;
-
-            -- Notifica al ciudadano reportador
-            INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-            VALUES (v_reportador_id, p_id_incidencia, 'CAMBIO_ESTADO',
-                    'Tu incidencia ha sido resuelta: ' || v_nombre);
-
-            -- Notifica a cada técnico asignado
-            FOR v_tecnico_id IN
-                SELECT id_usuario FROM asignaciones_incidencia WHERE id_incidencia = p_id_incidencia
-            LOOP
-                INSERT INTO notificaciones (id_usuario, id_incidencia, tipo_notificacion, mensaje_notificacion)
-                VALUES (v_tecnico_id, p_id_incidencia, 'CAMBIO_ESTADO',
-                        'La incidencia ha sido marcada como resuelta: ' || v_nombre);
-            END LOOP;
 
         END;
         \$\$;
@@ -133,7 +116,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("DROP PROCEDURE IF EXISTS asignar_tecnico(BIGINT, BIGINT, VARCHAR);");
-        DB::unprepared("DROP PROCEDURE IF EXISTS resolver_incidencia(BIGINT, BIGINT);");
+        DB::unprepared('DROP PROCEDURE IF EXISTS asignar_tecnico(BIGINT, BIGINT, VARCHAR);');
+        DB::unprepared('DROP PROCEDURE IF EXISTS resolver_incidencia(BIGINT, BIGINT);');
     }
 };

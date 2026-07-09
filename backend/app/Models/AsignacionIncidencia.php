@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AsignacionIncidencia extends Model
 {
+    use HasFactory;
+
     protected $table = 'asignaciones_incidencia';
+
     protected $primaryKey = 'id_asignacion';
 
     protected $fillable = [

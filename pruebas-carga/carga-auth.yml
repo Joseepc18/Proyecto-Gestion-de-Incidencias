@@ -1,0 +1,62 @@
+# Prueba de carga AUTENTICADA: ejercita el camino real de lectura con token.
+# A diferencia de carga.yml (que golpea /api/health, un SELECT 1), aquí se lista
+# /api/incidencias, que carga 4 relaciones (usuario, subtipo.tipo, ciudad,
+# adminAtiende), ordena, pagina y filtra por rol. Recorre Nginx (LB) → PHP-FPM →
+# Sanctum (auth por token) → PostgreSQL con joins.
+#
+# El login ocurre UNA sola vez (processor carga-auth.js) y el token se reutiliza en
+# toda la corrida: así se mide el listado, no el bcrypt del login (que dominaría).
+#
+# IMPORTANTE (tope de diseño): las rutas autenticadas están limitadas a 120 req/min
+# POR USUARIO (throttle:120,1, keyed por id). Con un solo usuario el techo real es
+# ~2 req/s: por encima, Laravel responde 429 (protección, no fallo). Por eso las
+# fases se mantienen alrededor de 2/s. Para carga alta de verdad harían falta muchos
+# usuarios distintos (cada uno con su propio cupo de 120/min).
+#
+# Necesita un usuario CIUDADANO (rol normal, SIN 2FA) ya existente. Sus credenciales
+# se pasan por variables de entorno para no commitear secretos:
+#   ARTILLERY_EMAIL, ARTILLERY_PASSWORD  (obligatorias)
+#
+# Local (stack docker, 2 réplicas):
+#   ARTILLERY_EMAIL=carga@test.local ARTILLERY_PASSWORD=password123 \
+#     npx artillery@latest run --output pruebas-carga/resultado-auth-local.json pruebas-carga/carga-auth.yml
+#
+# Producción (corrida SUAVE, usar un ciudadano real):
+#   ARTILLERY_EMAIL=... ARTILLERY_PASSWORD=... \
+#     npx artillery@latest run -e prod --output pruebas-carga/resultado-auth-prod.json pruebas-carga/carga-auth.yml
+
+config:
+  target: "http://127.0.0.1"
+  processor: "./carga-auth.js"
+  # ~2 req/s = el techo por usuario (throttle:120,1). Se queda justo debajo para
+  # una evidencia limpia (todo 200) del camino autenticado bajo carga sostenida.
+  phases:
+    - duration: 15
+      arrivalRate: 1
+      name: "Calentamiento (1/s)"
+    - duration: 45
+      arrivalRate: 2
+      name: "Sostenido (2/s ≈ tope por usuario)"
+  # Producción: mismo perfil suave (un solo usuario, dentro de su cupo de 120/min).
+  environments:
+    prod:
+      target: "https://incidenciasupse.site"
+      phases:
+        - duration: 15
+          arrivalRate: 1
+          name: "Prod calentamiento (1/s)"
+        - duration: 45
+          arrivalRate: 2
+          name: "Prod sostenido (2/s)"
+
+scenarios:
+  - name: "Listar incidencias (autenticado)"
+    beforeScenario: "setAuthToken"
+    flow:
+      - get:
+          url: "/api/incidencias"
+          headers:
+            Authorization: "Bearer {{ token }}"
+            Accept: "application/json"
+          expect:
+            - statusCode: 200

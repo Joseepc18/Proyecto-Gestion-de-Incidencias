@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    // Login con Google (OAuth2 vía Socialite). Las llaves van en el .env.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    // URL del frontend (SPA). Se lee vía config() para que sobreviva a
+    // config:cache (env() devolvería null tras cachear y rompería el callback).
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost'),
+
 ];
