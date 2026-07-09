@@ -21,6 +21,9 @@ class CanalesReverbTest extends TestCase
     // arrancada deja los canales registrados en el broadcaster viejo (NullBroadcaster::auth() = siempre 200 vacío,
     // nunca revienta). PHPUnit reaplica el <env> de phpunit.xml antes de cada test, así que el putenv() va en
     // setUp() (antes de parent::setUp(), que es quien arranca la app), no en setUpBeforeClass().
+    // Valor previo de cada variable que sobreescribimos, para restaurarlo en tearDown.
+    private array $envPrevio = [];
+
     protected function setUp(): void
     {
         // putenv() solo toca el entorno a nivel de C; el repositorio de Dotenv de Laravel lee $_ENV primero,
@@ -31,12 +34,30 @@ class CanalesReverbTest extends TestCase
             'REVERB_APP_SECRET' => 'test-secret',
             'REVERB_APP_ID' => 'test-app',
         ] as $variable => $valor) {
+            $this->envPrevio[$variable] = $_ENV[$variable] ?? null;
             putenv("{$variable}={$valor}");
             $_ENV[$variable] = $valor;
             $_SERVER[$variable] = $valor;
         }
 
         parent::setUp();
+    }
+
+    // Restaura el entorno: sin esto BROADCAST_CONNECTION=reverb quedaría pegado y contaminaría los tests que corren después (harían POST real a Reverb, que en CI no existe).
+    protected function tearDown(): void
+    {
+        foreach ($this->envPrevio as $variable => $valor) {
+            if ($valor === null) {
+                putenv($variable);
+                unset($_ENV[$variable], $_SERVER[$variable]);
+            } else {
+                putenv("{$variable}={$valor}");
+                $_ENV[$variable] = $valor;
+                $_SERVER[$variable] = $valor;
+            }
+        }
+
+        parent::tearDown();
     }
 
     private function autenticarCanal(string $canal): TestResponse
