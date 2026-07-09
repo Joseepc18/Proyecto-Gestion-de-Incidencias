@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const promesaModal = abrirModal({
       titulo: "Eliminar incidencia",
       cuerpoHtml:
-        '<p class="text-secondary small">Se notificará al reportador el motivo de la eliminación.</p>' +
+        '<p class="text-secondary small">Se notificará al ciudadano el motivo de la eliminación.</p>' +
         motivoConOtroHtml(MOTIVOS_ELIMINACION),
       textoConfirmar: "Eliminar",
       peligro: true,

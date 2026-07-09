@@ -147,7 +147,7 @@ const etiquetasFiltro = {
   "": "Todos",
   admin: "Administradores",
   tecnico: "Técnicos",
-  normal: "Normales",
+  normal: "Ciudadanos",
   suspendido: "Suspendidos",
 };
 

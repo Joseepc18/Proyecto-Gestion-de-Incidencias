@@ -180,7 +180,7 @@ function prepararReaperturaAdmin(id) {
     btnReabrir.addEventListener("click", async function () {
       const ok = await confirmar({
         titulo: "Reabrir incidencia",
-        mensaje: "Volverá a EN_PROCESO y se notificará al reportador y al técnico.",
+        mensaje: "Volverá a EN_PROCESO y se notificará al ciudadano y al técnico.",
         textoConfirmar: "Reabrir",
       });
       if (!ok) return;
@@ -212,7 +212,7 @@ function prepararReaperturaAdmin(id) {
     btnRechazar.addEventListener("click", async function () {
       const ok = await confirmar({
         titulo: "No reabrir la incidencia",
-        mensaje: "La incidencia se mantiene resuelta y se le avisará al reportador por qué.",
+        mensaje: "La incidencia se mantiene resuelta y se le avisará al ciudadano por qué.",
         textoConfirmar: "No reabrir",
       });
       if (!ok) return;

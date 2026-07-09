@@ -9,7 +9,7 @@ function etiquetaRol(nombreRol) {
     super_admin: "Administrador del Sistema",
     admin: "Administrador",
     tecnico: "Técnico",
-    normal: "Reportador",
+    normal: "Ciudadano",
   };
   return mapa[nombreRol] || "Usuario";
 }
