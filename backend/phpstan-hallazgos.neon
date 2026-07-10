@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+# Config SIN baseline: muestra todos los hallazgos de la primera corrida.
+# El análisis "oficial" (con baseline) usa phpstan.neon.
+parameters:
+    paths:
+        - app
+    level: 5
+    excludePaths:
+        - app/Providers/TelescopeServiceProvider.php

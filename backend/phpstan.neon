@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app
+
+    # Nivel de rigor 0-9. Se arranca en un baseline razonable para código Laravel.
+    level: 5
+
+    # Rutas excluidas del análisis (infraestructura de desarrollo).
+    excludePaths:
+        - app/Providers/TelescopeServiceProvider.php
