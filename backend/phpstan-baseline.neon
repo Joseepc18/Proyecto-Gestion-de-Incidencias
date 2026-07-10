@@ -1,0 +1,793 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/EscalarIncidenciasAntiguas.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/EscalarIncidenciasAntiguas.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/RecordarChatSinLeer.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$comentario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ComentarioActualizado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Events/ComentarioActualizado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$comentario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ComentarioCreado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ComentarioCreado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Events/ComentarioCreado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$usuario\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Events/ComentarioCreado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/IncidenciaActualizada.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/IncidenciaActualizada.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reapertura_solicitada\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/IncidenciaActualizada.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/IncidenciaCreada.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$adminAtiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ReclamoCambiado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ReclamoCambiado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reclamo_visto_en\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/ReclamoCambiado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AsignacionIncidencia\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AsignacionIncidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AsignacionIncidencia\:\:\$incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AsignacionIncidencia\:\:\$rol_asignado\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/AsignacionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$foto_perfil\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:stateless\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Api/AuthController.php
+
+		-
+			message: '#^Relation ''usuario'' is not found in App\\Models\\BitacoraError model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/BitacoraController.php
+
+		-
+			message: '#^Relation ''pais'' is not found in App\\Models\\Provincia model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/CatalogoController.php
+
+		-
+			message: '#^Relation ''provincia'' is not found in App\\Models\\Ciudad model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/CatalogoController.php
+
+		-
+			message: '#^Relation ''subtipos'' is not found in App\\Models\\TipoIncidencia model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/CatalogoController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Evidencia\:\:\$incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/EvidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Evidencia\:\:\$url_evidencia\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/EvidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$evidencias\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reapertura_solicitada\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Relation ''asignaciones'' is not found in App\\Models\\Incidencia model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Relation ''evidencias'' is not found in App\\Models\\Incidencia model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Relation ''subtipo'' is not found in App\\Models\\Incidencia model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/IncidenciaController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Rol\:\:\$nombre_rol\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/PermisoController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Rol\:\:\$permisos\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/PermisoController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Rol\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/PermisoController.php
+
+		-
+			message: '#^Relation ''permisos'' is not found in App\\Models\\Rol model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/PermisoController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$foto_perfil\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$id_rol\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Relation ''rol'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Controller.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$id_asignacion\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$rol_asignado\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\AsignacionResource\:\:\$usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/AsignacionResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$comentario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$id_comentario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ComentarioResource\:\:\$usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ComentarioResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$estado_anterior\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$estado_nuevo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$id_historial\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\HistorialEstadoResource\:\:\$usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/HistorialEstadoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$adminAtiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$deleted_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$descripcion_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$direccion_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$fecha_resolucion\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$id_ciudad\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$id_subtipo_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$latitud_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$longitud_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$reapertura_solicitada\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$reclamo_visto_en\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\IncidenciaResource\:\:\$usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\IncidenciaResource\:\:reclamoVencido\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/IncidenciaResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email_pendiente\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email_verified_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$foto_perfil_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id_rol\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$rol\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:esAdmin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:hasEnabledTwoFactorAuthentication\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:relationLoaded\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Listeners/EnviarNotificacionCambioEstado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/EnviarNotificacionCambioEstado.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Listeners/EnviarNotificacionEvidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/EnviarNotificacionEvidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$id_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/NotificarNuevoComentario.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/NotificarNuevoComentario.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Incidencia\>\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/NotificarNuevoComentario.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Incidencia\>\:\:\$nombre_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/NotificarNuevoComentario.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$correo_detalle_enviado\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Incidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Models/Incidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Incidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Incidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reclamo_visto_en\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Incidencia.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$foto_perfil\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$rol\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$asignaciones\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/IncidenciaDetalleNotification.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/IncidenciaDetalleNotification.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$prioridad_incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/IncidenciaDetalleNotification.php
+
+		-
+			message: '#^Relation ''asignaciones'' is not found in App\\Models\\Incidencia model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Notifications/IncidenciaDetalleNotification.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AsignacionIncidencia\:\:\$incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/AsignacionPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/AsignacionPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/ComentarioPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Comentario\:\:\$incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/ComentarioPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Evidencia\:\:\$incidencia\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/EvidenciaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/EvidenciaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$estado_incidencia\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/IncidenciaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/IncidenciaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Policies/IncidenciaPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reapertura_solicitada\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/IncidenciaPolicy.php
