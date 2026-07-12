@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -73,7 +73,7 @@ function prepararPrioridad(id) {
         body: JSON.stringify({ prioridad_incidencia: nueva }),
       });
       incActual.prioridad_incidencia = nueva;
-      pintarBadgePrioridad(nueva);
+      pintarBadgePrioridad(nueva, true);
       marcarPrioridadActiva();
       mostrarToast("Prioridad actualizada", "success");
     } catch (error) {
@@ -132,7 +132,7 @@ function prepararEstado(id) {
         body: JSON.stringify({ estado_incidencia: nuevo }),
       });
       incActual.estado_incidencia = actualizada.estado_incidencia;
-      pintarBadgeEstado(incActual.estado_incidencia);
+      pintarBadgeEstado(incActual.estado_incidencia, true);
       marcarEstadoActivo();
       cargarHistorial(id);
       mostrarToast("Estado actualizado", "success");
@@ -193,7 +193,7 @@ function prepararReaperturaAdmin(id) {
         });
         incActual.estado_incidencia = actualizada.estado_incidencia;
         incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
-        pintarBadgeEstado(incActual.estado_incidencia);
+        pintarBadgeEstado(incActual.estado_incidencia, true);
         marcarEstadoActivo();
         btnReabrir.classList.add("d-none");
         btnRechazar.classList.add("d-none");
@@ -322,7 +322,7 @@ function prepararAtencionAdmin(id) {
     try {
       const actualizada = await apiFetch("/incidencias/" + id + "/archivar", { method: "PATCH" });
       incActual.estado_incidencia = actualizada.estado_incidencia;
-      pintarBadgeEstado(incActual.estado_incidencia);
+      pintarBadgeEstado(incActual.estado_incidencia, true);
       marcarEstadoActivo();
       pintarAtencionAdmin();
       cargarHistorial(id);
@@ -342,6 +342,7 @@ function aplicarReclamo(actualizada) {
   incActual.reclamo_visto_en = actualizada.reclamo_visto_en;
   incActual.reclamo_vencido = actualizada.reclamo_vencido;
   pintarAtencionAdmin();
+  pintarMetaAdminAtiende();
   // Reclamar/liberar habilita o bloquea los controles de gestión en el acto.
   refrescarGestionSegunReclamo();
 }
@@ -407,15 +408,40 @@ let gestionFotosLista = false;
 function habilitarFotosResolucion(id) {
   if (gestionFotosLista) return;
   gestionFotosLista = true;
-  document.querySelectorAll(".gestion-fotos").forEach((el) => el.classList.remove("d-none"));
+  document.getElementById("evidenciasResolucionEdicion").classList.remove("d-none");
   prepararSubidaResolucion(id);
+
+  // El carrusel de resolución gana el botón "×" (borra al instante) y "+ Agregar foto"
+  // (abre el mismo selector de cámara/galería que alimenta la cola de subida de abajo).
+  fijarOpcionesFotosResolucion({
+    onEliminar: eliminarFotoResolucion,
+    onAgregar: function () {
+      abrirSelectorFuenteFoto(
+        document.getElementById("inputResolucionCamara"),
+        document.getElementById("inputResolucion"),
+      );
+    },
+    puedeAgregar: function () {
+      return cupoResolucion() > 0;
+    },
+  });
+}
+
+// Elimina una foto de resolución ya subida (backend ya lo permite al técnico responsable).
+async function eliminarFotoResolucion(idEv) {
+  try {
+    await apiFetch("/evidencias/" + idEv, { method: "DELETE" });
+    incActual.evidencias = (incActual.evidencias || []).filter((ev) => ev.id_evidencia !== idEv);
+    pintarFotos();
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
 }
 
 function prepararSubidaResolucion(id) {
   galeriaResolucion = crearGaleriaFotos({
     input: document.getElementById("inputResolucion"),
     inputCamara: document.getElementById("inputResolucionCamara"),
-    dropzone: document.getElementById("dropzoneResolucion"),
     preview: document.getElementById("resolucionPreview"),
     error: document.getElementById("resolucionError"),
     cupo: cupoResolucion,

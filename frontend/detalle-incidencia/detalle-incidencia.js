@@ -1,9 +1,9 @@
 // detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
-/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
+/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -69,8 +69,8 @@ function conectarTiempoReal(id) {
     incActual.estado_incidencia = e.estado_incidencia;
     incActual.prioridad_incidencia = e.prioridad_incidencia;
     incActual.reapertura_pendiente = e.reapertura_pendiente;
-    pintarBadgeEstado(e.estado_incidencia);
-    pintarBadgePrioridad(e.prioridad_incidencia);
+    pintarBadgeEstado(e.estado_incidencia, true);
+    pintarBadgePrioridad(e.prioridad_incidencia, true);
     cargarHistorial(id);
     if (typeof gestionAlActualizarEnVivo === "function") gestionAlActualizarEnVivo();
   });
@@ -92,6 +92,7 @@ function conectarTiempoReal(id) {
     incActual.reclamo_visto_en = e.reclamo_visto_en;
     // Un reclamo recién hecho/liberado no está vencido; el detalle lo reevalúa con su timer.
     incActual.reclamo_vencido = false;
+    pintarMetaAdminAtiende();
     if (typeof gestionAlCambiarReclamo === "function") gestionAlCambiarReclamo();
   });
 }
@@ -112,8 +113,8 @@ async function cargarDetalle(id) {
 
     const tipo = inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
     const subtipo = inc.subtipo ? inc.subtipo.nombre_subtipo_incidencia : "—";
-    document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
-    document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
+    document.getElementById("detalleTipoTexto").textContent = tipo;
+    document.getElementById("detalleSubtipoTexto").textContent = subtipo;
 
     const fecha = new Date(inc.created_at).toLocaleString("es-EC");
     const reporta = inc.usuario ? inc.usuario.name : "—";
@@ -121,6 +122,7 @@ async function cargarDetalle(id) {
     document.getElementById("metaReportadoPor").textContent = reporta;
     document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(inc.ciudad);
     document.getElementById("metaFechaCreacion").textContent = fecha;
+    pintarMetaAdminAtiende();
 
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
     if (inc.descripcion_incidencia) {
@@ -132,6 +134,13 @@ async function cargarDetalle(id) {
 
     document.getElementById("detalleDireccion").textContent =
       inc.direccion_incidencia || "No especificada";
+
+    const esTerminal = inc.estado_incidencia === "RESUELTO" || inc.estado_incidencia === "CERRADO";
+    document.getElementById("detalleTiempoTranscurrido").textContent =
+      esTerminal && inc.fecha_resolucion
+        ? "Resuelta en " + duracionEntre(inc.created_at, inc.fecha_resolucion)
+        : "Abierta " + tiempoRelativo(inc.created_at);
+    document.getElementById("detalleUltimaActividad").textContent = tiempoRelativo(inc.updated_at);
 
     pintarFotos();
 
@@ -157,6 +166,24 @@ function provinciaCiudadTexto(ciudad) {
   if (!ciudad) return "—";
   const provincia = ciudad.provincia ? ciudad.provincia.nombre_provincia + " / " : "";
   return provincia + ciudad.nombre_ciudad;
+}
+
+// Duración entre dos fechas ISO (a diferencia de tiempoRelativo, que es "desde ahora").
+function duracionEntre(iso1, iso2) {
+  const seg = Math.floor((new Date(iso2).getTime() - new Date(iso1).getTime()) / 1000);
+  if (seg < 60) return "menos de un minuto";
+  if (seg < 3600) return Math.floor(seg / 60) + " min";
+  if (seg < 86400) return Math.floor(seg / 3600) + " h";
+  return Math.floor(seg / 86400) + " d";
+}
+
+// Tarjeta "Admin. que atendió" de la barra de meta-información. Ojo: solo refleja al admin mientras
+// tiene el reclamo activo (id_admin_atiende); al liberarlo vuelve a "Sin asignar" (el backend no
+// guarda un registro aparte de quién la atendió una vez liberada).
+function pintarMetaAdminAtiende() {
+  const el = document.getElementById("metaAdminAtiende");
+  if (!el || !incActual) return;
+  el.textContent = incActual.admin_atiende ? incActual.admin_atiende.name : "Sin asignar";
 }
 
 // Crea el mapa de solo-lectura con el pin de la incidencia (o un aviso si no hay ubicación).
@@ -200,13 +227,25 @@ function activarMapaPicker(lat, lng, onCambio) {
   return picker;
 }
 
-function pintarBadgeEstado(estado) {
-  document.getElementById("detalleEstado").innerHTML = badgeEstadoHtml(estado);
+// El ciudadano ve "Resuelto" en vez de "Archivado": para él ya está resuelto, archivar es un
+// detalle interno del admin que no le aporta nada y solo genera dudas ("¿no era que se resolvió?").
+// La regla vive en estados.js (la comparte mis-incidencias.js); acá solo se resuelve el rol.
+function rolNombre() {
+  return usuarioActual && usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
+}
+
+// animar=true en cambios en vivo o tras una acción propia (no en la carga inicial).
+function pintarBadgeEstado(estado, animar) {
+  const el = document.getElementById("detalleEstado");
+  el.innerHTML = badgeEstadoHtml(estadoParaVista(estado, rolNombre()));
+  if (animar) destellarBadge(el);
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
-function pintarBadgePrioridad(prioridad) {
-  document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(prioridad);
+function pintarBadgePrioridad(prioridad, animar) {
+  const el = document.getElementById("detallePrioridad");
+  el.innerHTML = badgePrioridadHtml(prioridad);
+  if (animar) destellarBadge(el);
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {
@@ -216,17 +255,44 @@ function pintarBadgePrioridad(prioridad) {
   }
 }
 
-// El módulo de edición sobrescribe #fotosReporte con su grid editable si es el dueño
+// Reinicia la animación de destello (por si ya estaba corriendo, forzando un reflow).
+function destellarBadge(el) {
+  el.classList.remove("badge-destello");
+  void el.offsetWidth;
+  el.classList.add("badge-destello");
+}
+
+// Opciones de edición del carrusel (botón "×" y "+ Agregar foto"), registradas por los módulos de
+// rol: edicion.js para el reporte (ciudadano dueño), gestion.js para la resolución (técnico responsable).
+let opcionesFotosReporte = null;
+let opcionesFotosResolucion = null;
+
+function fijarOpcionesFotosReporte(opts) {
+  opcionesFotosReporte = opts;
+  if (incActual) pintarFotos();
+}
+
+function fijarOpcionesFotosResolucion(opts) {
+  opcionesFotosResolucion = opts;
+  if (incActual) pintarFotos();
+}
+
 function pintarFotos() {
   const evidencias = incActual.evidencias || [];
   const reporte = evidencias.filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
   const resolucion = evidencias.filter((ev) => ev.tipo_evidencia === "RESOLUCION");
 
-  montarCarrusel(document.getElementById("fotosReporte"), reporte, "Sin fotos del reporte.");
+  montarCarrusel(
+    document.getElementById("fotosReporte"),
+    reporte,
+    "Sin fotos del reporte.",
+    opcionesFotosReporte,
+  );
   montarCarrusel(
     document.getElementById("fotosResolucion"),
     resolucion,
     "Sin fotos de resolución.",
+    opcionesFotosResolucion,
   );
 }
 
@@ -236,7 +302,7 @@ function prepararToggleFotos() {
     const btn = e.target.closest("[data-tab]");
     if (!btn) return;
     const esReporte = btn.dataset.tab === "reporte";
-    document.getElementById("fotosReporte").classList.toggle("d-none", !esReporte);
+    document.getElementById("tabReporte").classList.toggle("d-none", !esReporte);
     document.getElementById("fotosResolucionBloque").classList.toggle("d-none", esReporte);
     document.getElementById("btnFotosReportador").classList.toggle("active", esReporte);
     document.getElementById("btnFotosTecnico").classList.toggle("active", !esReporte);
@@ -277,17 +343,15 @@ async function cargarAsignaciones(id) {
   }
 }
 
-// Sin grupos visibles en Acciones, oculta la columna y la grilla pasa de 3 a 2 columnas
+// Sin grupos visibles en Acciones, oculta el sidebar y el contenido principal ocupa todo el ancho
 function ajustarLayout() {
   const col = document.getElementById("colGestion");
-  const grid = document.querySelector(".detalle-grid");
   const panel = document.getElementById("panelAcciones");
-  if (!col || !grid || !panel) return;
-  const tieneContenido = Array.from(
-    panel.querySelectorAll(".solo-admin, .gestion-estado, .gestion-fotos"),
-  ).some((el) => !el.classList.contains("d-none"));
+  if (!col || !panel) return;
+  const tieneContenido = Array.from(panel.querySelectorAll(".solo-admin, .gestion-estado")).some(
+    (el) => !el.classList.contains("d-none"),
+  );
   col.classList.toggle("d-none", !tieneContenido);
-  grid.classList.toggle("detalle-grid--2col", !tieneContenido);
 }
 
 async function cargarHistorial(id) {
@@ -310,29 +374,47 @@ async function cargarHistorial(id) {
       });
     }
 
-    cont.innerHTML = "";
-    eventos.forEach(function (ev) {
-      const cfg = estadoConfig[ev.estado] || estadoConfig.PENDIENTE;
+    // La API entrega lo más reciente primero; para la línea de tiempo (izquierda→derecha,
+    // antiguo→actual) se recorre al revés. El último paso (el más reciente) es el "actual".
+    const pasos = eventos.slice().reverse();
 
-      const fila = document.createElement("div");
-      fila.className = "historial-fila";
+    cont.innerHTML = "";
+    pasos.forEach(function (ev, i) {
+      const estadoMostrado = estadoParaVista(ev.estado, rolNombre());
+      const cfg = estadoConfig[estadoMostrado] || estadoConfig.PENDIENTE;
+      const esActual = i === pasos.length - 1;
+
+      const paso = document.createElement("div");
+      paso.className = "historial-paso" + (esActual ? " historial-paso--actual" : "");
 
       const punto = document.createElement("span");
-      punto.className = "historial-punto";
-      punto.style.background = colorEstado(ev.estado);
-      fila.appendChild(punto);
+      punto.className = "historial-paso-punto";
+      punto.style.background = colorEstado(estadoMostrado);
+      // "color" (no solo background) para que el anillo del paso actual (currentColor) tome el mismo tono.
+      punto.style.color = colorEstado(estadoMostrado);
+      paso.appendChild(punto);
 
-      const texto = document.createElement("span");
-      texto.className = "historial-texto";
-      texto.textContent = cfg.texto + " · " + ev.nombre;
-      fila.appendChild(texto);
+      const texto = document.createElement("div");
+      texto.className = "historial-paso-texto";
+
+      const estadoSpan = document.createElement("span");
+      estadoSpan.className = "historial-paso-estado";
+      estadoSpan.style.color = colorEstado(ev.estado);
+      estadoSpan.textContent = cfg.texto;
+      texto.appendChild(estadoSpan);
+
+      const quienSpan = document.createElement("span");
+      quienSpan.className = "historial-paso-quien";
+      quienSpan.textContent = ev.nombre;
+      texto.appendChild(quienSpan);
 
       const fechaSpan = document.createElement("span");
-      fechaSpan.className = "historial-fecha";
+      fechaSpan.className = "historial-paso-fecha";
       fechaSpan.textContent = new Date(ev.fecha).toLocaleString("es-EC");
-      fila.appendChild(fechaSpan);
+      texto.appendChild(fechaSpan);
 
-      cont.appendChild(fila);
+      paso.appendChild(texto);
+      cont.appendChild(paso);
     });
   } catch {
     cont.innerHTML = '<p class="text-danger small mb-0">No se pudo cargar el historial.</p>';

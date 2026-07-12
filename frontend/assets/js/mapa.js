@@ -137,7 +137,9 @@ function crearMapaBase(idContenedor, opciones) {
   const centro = opciones.centro || [-2.2267, -80.9012];
   const zoom = opciones.zoom || 14;
 
-  const map = L.map(idContenedor, { center: centro, zoom: zoom });
+  // zoomControl: false porque el de Leaflet nace arriba-izquierda, donde paneles como el feed de
+  // "Mis incidencias" lo tapan; se agrega abajo, a la derecha, apilado bajo el botón satélite/callejero.
+  const map = L.map(idContenedor, { center: centro, zoom: zoom, zoomControl: false });
 
   const satelite = L.tileLayer(TILES_SATELITE, {
     attribution: "Imágenes © Esri",
@@ -149,6 +151,7 @@ function crearMapaBase(idContenedor, opciones) {
   });
 
   agregarControlEstilo(map, satelite, callejero);
+  L.control.zoom({ position: "topright" }).addTo(map);
   observarTamanoMapa(map);
 
   return map;
@@ -159,6 +162,17 @@ function crearMapaBase(idContenedor, opciones) {
 function crearMapaIncidencias(idContenedor, opciones) {
   const map = crearMapaBase(idContenedor, opciones);
   let marcadores = {};
+  // Id del pin resaltado (seleccionado desde el feed); se reaplica tras cada pintarPines().
+  let idSeleccionado = null;
+
+  function marcarSeleccionado(id) {
+    idSeleccionado = id;
+    Object.keys(marcadores).forEach(function (key) {
+      const el = marcadores[key].getElement();
+      if (!el) return;
+      el.classList.toggle("mapa-pin-wrapper--seleccionado", key === String(id));
+    });
+  }
 
   function pintarPines(items, onSelect) {
     Object.values(marcadores).forEach(function (m) {
@@ -198,6 +212,9 @@ function crearMapaIncidencias(idContenedor, opciones) {
     } else if (puntos.length > 1) {
       map.fitBounds(L.latLngBounds(puntos), { padding: [60, 60], maxZoom: 16 });
     }
+
+    // Los pines se recrean enteros arriba; si había uno resaltado, se reaplica al nuevo elemento.
+    if (idSeleccionado != null) marcarSeleccionado(idSeleccionado);
   }
 
   function enfocar(id) {
@@ -205,6 +222,7 @@ function crearMapaIncidencias(idContenedor, opciones) {
     if (!marcador) return;
     map.setView(marcador.getLatLng(), 16);
     marcador.openPopup();
+    marcarSeleccionado(id);
   }
 
   return { map, pintarPines, enfocar };

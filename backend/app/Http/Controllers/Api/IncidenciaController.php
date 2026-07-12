@@ -42,8 +42,16 @@ class IncidenciaController extends Controller
             ->orderByRaw('(estado_incidencia = ?) ASC', [EstadoIncidencia::Resuelto->value])
             ->orderBy('created_at', 'desc');
 
+        $user = $request->user();
+
         if ($request->filled('estado')) {
-            $query->where('estado_incidencia', $request->estado);
+            // El ciudadano ve lo archivado como "Resuelto" (detalle-incidencia.js); su filtro
+            // "Resuelto" debe traer ambos, si no la mitad de sus resueltas "desaparecen" al filtrar.
+            if ($user->esNormal() && $request->estado === EstadoIncidencia::Resuelto->value) {
+                $query->whereIn('estado_incidencia', [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value]);
+            } else {
+                $query->where('estado_incidencia', $request->estado);
+            }
         } else {
             // CERRADO (archivo) sale del listado activo por defecto; se ve pidiendo ?estado=CERRADO explícito.
             $query->activas();
@@ -60,8 +68,6 @@ class IncidenciaController extends Controller
         if ($request->filled('tipo_id')) {
             $query->whereHas('subtipo', fn ($q) => $q->where('id_tipo_incidencia', $request->tipo_id));
         }
-
-        $user = $request->user();
 
         if ($user->esNormal()) {
             $query->where('id_usuario', $user->id);

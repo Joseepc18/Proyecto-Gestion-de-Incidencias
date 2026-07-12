@@ -1754,22 +1754,6 @@ html[data-theme="dark"] {
 
 /* Tarjeta de comentario (seguimiento) — adaptada a modo claro/oscuro */
 
-/* Lightbox — visor de evidencias a pantalla completa */
-.evidencia-foto {
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.evidencia-foto:hover {
-  transform: scale(1.04);
-}
-
-/* Miniatura mediana (130px) de evidencia ya subida. */
-.evidencia-foto-md {
-  width: 130px;
-  height: 130px;
-  object-fit: cover;
-}
-
 /* Miniatura pequeña (80px) de la cola de fotos antes de subir. */
 .foto-preview-chica {
   width: 80px;
@@ -2038,22 +2022,121 @@ html[data-theme="dark"] {
   margin: 0 auto;
 }
 
+/* Aparición suave del formulario de login al cargar la página (detalleFadeIn ya existe y sirve igual) */
+.auth-view-login form#loginForm {
+  animation: detalleFadeIn 0.5s ease both;
+}
+
 /* Hero del mapa (mitad izquierda) */
 .auth-hero {
   position: relative;
   width: 50%;
   flex-shrink: 0;
   z-index: 2;
+  overflow: hidden;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* Capa aparte para el zoom lento: así no pelea con el transform del deslizamiento del padre */
+.auth-hero-img {
+  position: absolute;
+  inset: 0;
   background-image: url("../images/png/banner-login.jpg");
   background-size: cover;
   background-position: center;
-  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  animation: authHeroZoom 20s ease-in-out infinite alternate;
+}
+@keyframes authHeroZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 .auth-hero-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(17, 24, 39, 0.5) 0%, rgba(17, 24, 39, 0.88) 100%);
 }
+
+/* Pines de incidencia sobre la foto: encima del overlay para que se vean bien contra el fondo
+   oscuro, mismos colores que estados.js (estadoConfig.color). Anillo tipo "radar" pulsando. */
+.auth-hero-pins {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Pin: contenedor sin rotar (así el ping queda un círculo normal); la punta de la gota
+   queda anclada al punto top/left gracias al translate(-50%, -100%). */
+.auth-hero-pin {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+/* La gota: cuadrado con 3 esquinas redondeadas rotado 45°, el truco clásico de pin de mapa */
+.auth-hero-pin-gota {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: currentColor;
+  border: 2px solid #fff;
+}
+/* Punto blanco en el centro de la gota (sin rotar, para que se vea circular) */
+.auth-hero-pin-gota::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%;
+  background: #fff;
+  transform: rotate(45deg);
+}
+
+/* Anillo tipo "radar" en la base de la gota, simulando reportes llegando en vivo */
+.auth-hero-pin-ping {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  animation: authHeroPinPing 2.2s ease-out infinite;
+}
+.auth-hero-pin--proceso .auth-hero-pin-ping {
+  animation-delay: 0.4s;
+}
+@keyframes authHeroPinPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.auth-hero-pin--pendiente {
+  color: #ef4444;
+}
+.auth-hero-pin--proceso {
+  color: #f59e0b;
+}
+.auth-hero-pin--resuelto {
+  color: #22c55e;
+}
+
 .auth-hero-content {
   position: absolute;
   inset: auto 2rem 2rem 2rem;
@@ -2244,13 +2327,6 @@ html[data-theme="dark"] {
   color: var(--admin-primary);
 }
 
-/* Variante mediana (130px): mismo tamaño que las miniaturas ya subidas, va inline al lado. */
-.foto-agregar-md {
-  width: 130px;
-  height: 130px;
-  font-size: var(--fs-3xl);
-}
-
 /* Mis incidencias — vista de mapa estilo centro de control */
 .mis-mapa-main {
   position: relative;
@@ -2299,10 +2375,58 @@ html[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   padding: 14px;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .mis-feed-lista {
   overflow-y: auto;
+  /* Respiro entre las tarjetas y el scrollbar nativo, que si no queda pegado al borde */
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}
+
+.mis-feed-contador {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--admin-muted);
+}
+
+/* Pestaña para ocultar/mostrar el panel de la lista (solo desktop/tablet: en móvil ya se apila) */
+.mis-feed-toggle {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mis-feed-toggle {
+    position: absolute;
+    top: 16px;
+    left: 336px;
+    z-index: 1101;
+    width: 26px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--admin-border);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-shadow: var(--admin-shadow);
+    transition: left 0.2s ease;
+  }
+
+  .mis-mapa-main.mis-feed-colapsado .mis-feed-toggle {
+    left: 16px;
+  }
+
+  .mis-mapa-main.mis-feed-colapsado .mis-feed {
+    transform: translateX(-40px);
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 /* Paginación de flechas (‹ ›) del feed de Mis Incidencias: evita el scroll del helper de números */
@@ -2396,6 +2520,28 @@ html[data-theme="dark"] {
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Pin de la incidencia seleccionada en el feed: anillo que "respira", sin mover el ancla del pin
+   (solo box-shadow, que no afecta el tamaño real del icono ni su punto sobre el mapa). */
+.mapa-pin-wrapper--seleccionado .mapa-pin-incidencia {
+  animation: mapaPinPulso 1.6s ease-in-out infinite;
+}
+
+@keyframes mapaPinPulso {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 0 0 4px #fff,
+      0 0 0 7px var(--admin-primary);
+  }
+  50% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 0 0 4px #fff,
+      0 0 0 10px var(--admin-primary);
+  }
 }
 
 /* Toggle satélite / callejero del mapa */
@@ -2686,9 +2832,11 @@ html[data-theme="dark"] {
   }
 }
 
-/* Franja lateral de la tarjeta de detalles según la prioridad */
+/* Tarjeta de Información: la más importante de la pantalla, con más presencia que Mapa/Fotos/
+   Historial — franja lateral más gruesa y sombra elevada. */
 .panel-acento {
-  border-left-width: 4px;
+  border-left-width: 5px;
+  box-shadow: var(--admin-shadow-lg);
 }
 
 .panel-acento.acento-alta {
@@ -2882,48 +3030,134 @@ html[data-theme="dark"] {
   background: #b45309;
 }
 
-/* Historial de estados: fila horizontal compacta (punto + label + fecha a la derecha) */
+/* Historial de estados: línea de tiempo (antiguo→actual). En móvil, vertical (punto + línea a la
+   izquierda, texto a la derecha) — una fila horizontal no cabe con 3 líneas de texto por paso.
+   Desde tablet (768px), horizontal: izquierda→derecha con el texto debajo de cada punto. El
+   último paso (el estado actual) se resalta más grande y en negrita en ambos casos. */
 .historial-lista {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  padding-top: 6px;
 }
 
-.historial-fila {
+.historial-paso {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 22px 2px;
+  text-align: left;
 }
 
-.historial-fila:hover {
-  background: var(--admin-surface-soft);
+.historial-paso:last-child {
+  padding-bottom: 0;
 }
 
-.historial-punto {
-  width: 9px;
-  height: 9px;
+/* Línea vertical (móvil): de la base de este punto a la del siguiente */
+.historial-paso:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+  background: var(--admin-border);
+}
+
+.historial-paso-punto {
+  position: relative;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
+  border: 2px solid var(--admin-surface);
+  box-shadow: 0 0 0 1px var(--admin-border);
   flex-shrink: 0;
+  margin-top: 3px;
 }
 
-.historial-texto {
-  flex: 1;
+.historial-paso--actual .historial-paso-punto {
+  width: 18px;
+  height: 18px;
+  margin-top: 0;
+  box-shadow: 0 0 0 2px currentColor;
+  animation: historialPulso 2s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .historial-lista {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .historial-paso {
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 150px;
+    min-width: 150px;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  /* Línea horizontal (tablet/desktop): del centro de este punto al del siguiente */
+  .historial-paso:not(:last-child)::after {
+    top: 6px;
+    bottom: auto;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+  }
+
+  .historial-paso-punto {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+}
+
+/* Anillo que "respira" en el paso actual, para que el ojo vaya directo al estado vigente */
+@keyframes historialPulso {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 5px currentColor;
+  }
+}
+
+.historial-paso-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historial-paso-estado {
   font-size: var(--fs-sm);
   font-weight: 600;
 }
 
-.historial-fecha {
+.historial-paso--actual .historial-paso-estado {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+}
+
+.historial-paso-quien {
   font-size: var(--fs-xs);
+  color: var(--admin-text);
+}
+
+.historial-paso-fecha {
+  font-size: var(--fs-2xs);
   color: var(--admin-muted);
   white-space: nowrap;
 }
 
-/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha / Técnico responsable */
+/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha /
+   Técnico responsable / Admin que atendió. auto-fit en vez de columnas fijas: no se estiran
+   de más en pantallas anchas, se acomodan solas según cuántas quepan. */
 .detalle-meta-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -2938,6 +3172,16 @@ html[data-theme="dark"] {
   background: var(--admin-surface);
   /* Sin esto el item no encoge bajo el nowrap de .meta-tile-valor y empuja la barra fuera */
   min-width: 0;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.meta-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--admin-shadow-lg);
+  border-color: var(--admin-primary);
 }
 
 .meta-tile-icono {
@@ -2979,9 +3223,79 @@ html[data-theme="dark"] .meta-tile-icono {
   white-space: nowrap;
 }
 
-@media (min-width: 992px) {
-  .detalle-meta-bar {
-    grid-template-columns: repeat(4, 1fr);
+/* Tipo / Subtipo / Dirección en la tarjeta de Información: campos destacados en grilla,
+   en vez de texto suelto, para aprovechar el ancho en pantallas grandes. */
+/* auto-fill + tope de 260px (no 1fr): en tarjetas anchas los campos quedan compactos y pegados
+   a la izquierda en vez de estirarse con huecos enormes entre "Tipo" y "Dirección". */
+.detalle-campos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 260px));
+  gap: 16px;
+}
+
+/* Label de campo (Tipo/Subtipo/Dirección/Descripción): más distintivo que un simple texto muted,
+   para que se lea como encabezado de sección dentro de la tarjeta, no como nota al pie. */
+.detalle-campo-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-primary);
+}
+
+.detalle-campo p {
+  font-size: var(--fs-md);
+}
+
+/* Estado y Prioridad: fila simple (sin caja), pero con badges más grandes y con sombra propia
+   que en el resto de la app (ahí siguen chicos, en tablas/listas). Es lo primero que se lee. */
+.detalle-estado-prioridad-fila {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detalle-estado-prioridad-fila .badge {
+  font-size: var(--fs-lg);
+  padding: 0.5em 0.9em;
+  font-weight: 700;
+}
+
+/* Destello breve cuando Estado/Prioridad cambian en vivo (WebSocket) o por la propia acción del
+   admin/técnico, para que el cambio se note en vez de aparecer seco. */
+#detalleEstado.badge-destello,
+#detallePrioridad.badge-destello {
+  animation: badgeDestello 0.5s ease;
+}
+
+@keyframes badgeDestello {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.15);
+    filter: brightness(1.3);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Respeta la preferencia del sistema de reducir movimiento: apaga las animaciones automáticas
+   (no las de hover, que las dispara el propio usuario). */
+@media (prefers-reduced-motion: reduce) {
+  .detalle-fade-in,
+  .historial-paso--actual .historial-paso-punto,
+  #detalleEstado.badge-destello,
+  #detallePrioridad.badge-destello,
+  .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
+  .auth-hero-img,
+  .auth-hero-pin-ping,
+  .auth-view-login form#loginForm {
+    animation: none !important;
   }
 }
 
@@ -3045,6 +3359,26 @@ html[data-theme="dark"] .meta-tile-icono {
   right: 8px;
 }
 
+/* Botón "×" sobre la foto actual, solo en modo edición (ciudadano dueño / técnico responsable) */
+.carrusel-fotos-eliminar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 23, 42, 0.55);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+}
+
+.carrusel-fotos-eliminar:hover {
+  background: var(--admin-danger);
+}
+
 .carrusel-fotos-dots {
   display: flex;
   justify-content: center;
@@ -3071,125 +3405,118 @@ html[data-theme="dark"] .meta-tile-icono {
   border-radius: 4px;
 }
 
-/* Contenedor de la meta-bar + el grid de columnas (apila en móvil, una sola pantalla en escritorio) */
-#detalleContenido {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.detalle-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detalle-col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Mapa más bajo en este layout */
-.detalle-grid .mapa-detalle {
-  height: 200px;
-}
-
-/* En tablet aprovechamos el ancho con 2 columnas (en móvil sigue apilado, en desktop pasa a 3) */
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .detalle-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    align-items: start;
+/* Detalle de incidencia: contenido principal (ancho) + sidebar de Acciones (angosto).
+   Sin anclaje a 100vh: la página scrollea normal cuando el contenido no cabe. */
+/* Aparición escalonada de las secciones al cargar el detalle (meta-bar, info, mapa+fotos,
+   historial, acciones) — se dispara cuando #detalleContenido deja de estar oculto. */
+@keyframes detalleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+.detalle-fade-in {
+  animation: detalleFadeIn 0.45s ease both;
+}
+
+.detalle-fade-in-1 {
+  animation-delay: 0.02s;
+}
+.detalle-fade-in-2 {
+  animation-delay: 0.08s;
+}
+.detalle-fade-in-3 {
+  animation-delay: 0.14s;
+}
+.detalle-fade-in-4 {
+  animation-delay: 0.2s;
+}
+.detalle-fade-in-5 {
+  animation-delay: 0.26s;
+}
+
+.detalle-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Mismo hover-lift que las meta-tarjetas, extendido a las tarjetas de esta pantalla
+   (Información, Mapa, Fotos, Historial, Acciones). Scoped a .detalle-cuerpo para no tocar
+   el hover de .panel en el resto de la app. */
+.detalle-cuerpo .panel {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.detalle-cuerpo .panel:hover {
+  transform: translateY(-3px);
+}
+
+.detalle-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Mapa y Fotos van en fila del mismo alto a partir de tablet; en móvil se apilan */
+.detalle-fila-media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.detalle-acciones-col {
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .detalle-fila-media {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detalle-fila-media .mapa-detalle {
+    height: 280px;
+  }
+
+  .detalle-fila-media .carrusel-fotos {
+    height: 280px;
+  }
+}
+
+/* A partir de desktop, sidebar de Acciones fijo al lado del contenido principal */
 @media (min-width: 1200px) {
-  /* La pantalla del detalle se ancla al alto de la ventana: no scrollea la página */
-  .detalle-shell {
-    height: 100vh;
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  .detalle-cuerpo {
+    flex-direction: row;
+    align-items: flex-start;
   }
 
-  .detalle-main {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .detalle-main > .container-fluid {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #detalleContenido {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .detalle-meta-bar {
-    flex: 0 0 auto;
-  }
-
-  .detalle-grid {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* Sin columna de gestión (ciudadano / técnico de apoyo): 2 columnas que ocupan todo el ancho */
-  .detalle-grid--2col {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .detalle-col {
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  /* Panel que crece y scrollea por dentro (fotos, historial) */
-  .detalle-fill {
+  .detalle-principal {
     flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
   }
 
-  .detalle-fill-cuerpo {
-    min-height: 0;
-    overflow-y: auto;
+  .detalle-acciones-col {
+    flex: 0 0 340px;
+    width: 340px;
+    position: sticky;
+    top: 16px;
   }
+}
 
-  /* El carrusel (altura fija) no debe scrollear: se ajusta al espacio en vez de forzar overflow */
-  #fotosReporteBloque .detalle-fill-cuerpo {
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden;
-  }
-
-  /* Solo al contenedor con carrusel montado, NO a #fotosReporte cuando es grid editable */
-  .carrusel-fotos-wrap,
-  #fotosResolucionBloque {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  /* Evita el salto del hover de panel en este layout apretado */
-  .detalle-grid .panel:hover {
-    transform: none;
-  }
+/* Espaciado + separador sutil entre secciones del panel de Acciones */
+.acciones-seccion + .acciones-seccion {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-border);
 }
 
 /* Burbuja flotante que abre el chat */

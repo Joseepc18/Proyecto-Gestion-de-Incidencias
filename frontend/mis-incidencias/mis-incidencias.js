@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let mapa = null;
@@ -15,6 +15,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!usuarioActual) return;
   aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
   cablearLogout();
+
+  // El ciudadano ve todo lo archivado como "Resuelto" (estados.js); un filtro "Archivado" aparte
+  // no tendría sentido para él, ya no distingue esa etiqueta en ningún lado de esta pantalla.
+  if (rolNombre() === "normal") {
+    const opcionArchivado = document.querySelector('[data-estado="CERRADO"]');
+    if (opcionArchivado) opcionArchivado.closest("li").remove();
+  }
 
   let timerBusqueda = null;
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
@@ -34,6 +41,21 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Boton Volver (solo movil): regresa de la vista de detalle a la lista.
   document.getElementById("btnVolverMapa").addEventListener("click", function () {
     document.querySelector(".mis-mapa-main").classList.remove("mis-ver-detalle");
+  });
+
+  // Colapsar/expandir el panel de la lista para ver el mapa completo (solo desktop/tablet).
+  const btnColapsar = document.getElementById("btnColapsarFeed");
+  const mapaMain = document.querySelector(".mis-mapa-main");
+  btnColapsar.addEventListener("click", function () {
+    const colapsado = mapaMain.classList.toggle("mis-feed-colapsado");
+    btnColapsar.innerHTML = colapsado
+      ? '<i class="bi bi-chevron-right" aria-hidden="true"></i>'
+      : '<i class="bi bi-chevron-left" aria-hidden="true"></i>';
+    btnColapsar.setAttribute(
+      "aria-label",
+      colapsado ? "Mostrar panel de incidencias" : "Ocultar panel de incidencias",
+    );
+    btnColapsar.title = colapsado ? "Mostrar panel de incidencias" : "Ocultar panel de incidencias";
   });
 
   mapa = crearMapaIncidencias("mapaMisIncidencias");
@@ -63,6 +85,10 @@ async function cargarLista() {
 
     incidenciasActuales = incidencias;
 
+    const total = respuesta.total || 0;
+    document.getElementById("misFeedContador").textContent =
+      total === 1 ? "1 incidencia" : total + " incidencias";
+
     if (incidencias.length === 0) {
       const hayFiltro = busqueda || filtroEstado;
       contenedor.innerHTML = hayFiltro
@@ -87,7 +113,6 @@ async function cargarLista() {
     // Paginación simple de flechas (‹ ›): no requiere hacer scroll hacia los números.
     const current = respuesta.current_page || 1;
     const last = respuesta.last_page || 1;
-    const total = respuesta.total || 0;
     renderFlechasPaginacion(current, last, total, respuesta.from || 0, respuesta.to || 0);
 
     refrescarMapa();
@@ -96,6 +121,11 @@ async function cargarLista() {
     contenedor.innerHTML =
       '<p class="text-danger small text-center py-4 mb-0">' + escaparHtml(error.message) + "</p>";
   }
+}
+
+// El ciudadano ve "Resuelto" en vez de "Archivado" (estados.js); admin/técnico ven el estado real.
+function rolNombre() {
+  return usuarioActual && usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
 }
 
 // HTML de una tarjeta del feed (reutilizado al pintar la lista y al actualizar una en vivo).
@@ -112,7 +142,7 @@ function tarjetaHtml(inc) {
     '<span class="card-codigo">' +
     codigoIncidencia(id) +
     "</span>" +
-    badgeEstadoHtml(inc.estado_incidencia) +
+    badgeEstadoHtml(estadoParaVista(inc.estado_incidencia, rolNombre())) +
     "</div>" +
     '<p class="card-titulo">' +
     escaparHtml(inc.nombre_incidencia) +
@@ -138,7 +168,7 @@ function refrescarMapa() {
         lng: Number(i.longitud_incidencia),
         // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
         titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
-        color: colorEstado(i.estado_incidencia),
+        color: colorEstado(estadoParaVista(i.estado_incidencia, rolNombre())),
       };
     });
   mapa.pintarPines(pines, seleccionarIncidencia);
@@ -248,7 +278,7 @@ async function seleccionarIncidencia(id) {
       "Creada: " + new Date(inc.created_at).toLocaleString("es-EC");
 
     const spanEstado = document.getElementById("detalleEstado");
-    spanEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
+    spanEstado.innerHTML = badgeEstadoHtml(estadoParaVista(inc.estado_incidencia, rolNombre()));
 
     document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(
       inc.prioridad_incidencia,
