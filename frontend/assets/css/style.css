@@ -2058,6 +2058,60 @@ html[data-theme="dark"] {
   inset: 0;
   background: linear-gradient(180deg, rgba(17, 24, 39, 0.5) 0%, rgba(17, 24, 39, 0.88) 100%);
 }
+
+/* Pines de incidencia sobre la foto: encima del overlay para que se vean bien contra el fondo
+   oscuro, mismos colores que estados.js (estadoConfig.color). Anillo tipo "radar" pulsando. */
+.auth-hero-pins {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.auth-hero-pin {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+}
+.auth-hero-pin::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px currentColor;
+  animation: authHeroPinPulso 2.2s ease-in-out infinite;
+}
+.auth-hero-pin--pendiente {
+  background: #ef4444;
+  color: #ef4444;
+}
+.auth-hero-pin--proceso {
+  background: #f59e0b;
+  color: #f59e0b;
+}
+.auth-hero-pin--proceso::after {
+  animation-delay: 0.4s;
+}
+.auth-hero-pin--resuelto {
+  background: #22c55e;
+  color: #22c55e;
+}
+.auth-hero-pin--resuelto::after {
+  animation-delay: 0.8s;
+}
+@keyframes authHeroPinPulso {
+  0% {
+    box-shadow: 0 0 0 2px currentColor;
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: 0 0 0 12px currentColor;
+    opacity: 0;
+  }
+}
+
 .auth-hero-content {
   position: absolute;
   inset: auto 2rem 2rem 2rem;
@@ -3214,6 +3268,7 @@ html[data-theme="dark"] .meta-tile-icono {
   #detallePrioridad.badge-destello,
   .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
   .auth-hero-img,
+  .auth-hero-pin::after,
   .auth-view-login form#loginForm {
     animation: none !important;
   }
