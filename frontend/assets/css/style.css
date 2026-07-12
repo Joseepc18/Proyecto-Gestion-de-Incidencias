@@ -2066,50 +2066,75 @@ html[data-theme="dark"] {
   inset: 0;
   z-index: 1;
 }
+
+/* Pin: contenedor sin rotar (así el ping queda un círculo normal); la punta de la gota
+   queda anclada al punto top/left gracias al translate(-50%, -100%). */
 .auth-hero-pin {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  transform: translate(-50%, -50%);
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
 }
-.auth-hero-pin::after {
+
+/* La gota: cuadrado con 3 esquinas redondeadas rotado 45°, el truco clásico de pin de mapa */
+.auth-hero-pin-gota {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: currentColor;
+  border: 2px solid #fff;
+}
+/* Punto blanco en el centro de la gota (sin rotar, para que se vea circular) */
+.auth-hero-pin-gota::after {
   content: "";
   position: absolute;
-  inset: -2px;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -5.5px 0 0 -5.5px;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px currentColor;
-  animation: authHeroPinPulso 2.2s ease-in-out infinite;
+  background: #fff;
+  transform: rotate(45deg);
 }
+
+/* Anillo tipo "radar" en la base de la gota, simulando reportes llegando en vivo */
+.auth-hero-pin-ping {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  animation: authHeroPinPing 2.2s ease-out infinite;
+}
+.auth-hero-pin--proceso .auth-hero-pin-ping {
+  animation-delay: 0.4s;
+}
+@keyframes authHeroPinPing {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
 .auth-hero-pin--pendiente {
-  background: #ef4444;
   color: #ef4444;
 }
 .auth-hero-pin--proceso {
-  background: #f59e0b;
   color: #f59e0b;
 }
-.auth-hero-pin--proceso::after {
-  animation-delay: 0.4s;
-}
 .auth-hero-pin--resuelto {
-  background: #22c55e;
   color: #22c55e;
-}
-.auth-hero-pin--resuelto::after {
-  animation-delay: 0.8s;
-}
-@keyframes authHeroPinPulso {
-  0% {
-    box-shadow: 0 0 0 2px currentColor;
-    opacity: 0.7;
-  }
-  100% {
-    box-shadow: 0 0 0 12px currentColor;
-    opacity: 0;
-  }
 }
 
 .auth-hero-content {
@@ -3268,7 +3293,7 @@ html[data-theme="dark"] .meta-tile-icono {
   #detallePrioridad.badge-destello,
   .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
   .auth-hero-img,
-  .auth-hero-pin::after,
+  .auth-hero-pin-ping,
   .auth-view-login form#loginForm {
     animation: none !important;
   }

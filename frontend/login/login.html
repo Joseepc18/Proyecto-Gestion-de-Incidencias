@@ -55,11 +55,20 @@
           <!-- Capa separada: el zoom lento (Ken Burns) no interfiere con el deslizamiento del padre -->
           <div class="auth-hero-img"></div>
           <div class="auth-hero-overlay"></div>
-          <!-- Pines de incidencia sobre el mapa: mismos colores que estados.js, con pulso en vivo -->
+          <!-- Pines de incidencia sobre el mapa: forma de gota (como mapa.js), mismos colores
+               que estados.js, con pulso en vivo -->
           <div class="auth-hero-pins" aria-hidden="true">
-            <span class="auth-hero-pin auth-hero-pin--pendiente" style="top: 46%; left: 18%"></span>
-            <span class="auth-hero-pin auth-hero-pin--proceso" style="top: 28%; left: 72%"></span>
-            <span class="auth-hero-pin auth-hero-pin--resuelto" style="top: 68%; left: 42%"></span>
+            <span class="auth-hero-pin auth-hero-pin--pendiente" style="top: 46%; left: 18%">
+              <span class="auth-hero-pin-ping"></span>
+              <span class="auth-hero-pin-gota"></span>
+            </span>
+            <span class="auth-hero-pin auth-hero-pin--proceso" style="top: 28%; left: 72%">
+              <span class="auth-hero-pin-ping"></span>
+              <span class="auth-hero-pin-gota"></span>
+            </span>
+            <span class="auth-hero-pin auth-hero-pin--resuelto" style="top: 68%; left: 42%">
+              <span class="auth-hero-pin-gota"></span>
+            </span>
           </div>
           <div class="auth-hero-content">
             <div class="auth-hero-brand">
