@@ -69,8 +69,8 @@ function conectarTiempoReal(id) {
     incActual.estado_incidencia = e.estado_incidencia;
     incActual.prioridad_incidencia = e.prioridad_incidencia;
     incActual.reapertura_pendiente = e.reapertura_pendiente;
-    pintarBadgeEstado(e.estado_incidencia);
-    pintarBadgePrioridad(e.prioridad_incidencia);
+    pintarBadgeEstado(e.estado_incidencia, true);
+    pintarBadgePrioridad(e.prioridad_incidencia, true);
     cargarHistorial(id);
     if (typeof gestionAlActualizarEnVivo === "function") gestionAlActualizarEnVivo();
   });
@@ -211,13 +211,18 @@ function activarMapaPicker(lat, lng, onCambio) {
   return picker;
 }
 
-function pintarBadgeEstado(estado) {
-  document.getElementById("detalleEstado").innerHTML = badgeEstadoHtml(estado);
+// animar=true en cambios en vivo o tras una acción propia (no en la carga inicial).
+function pintarBadgeEstado(estado, animar) {
+  const el = document.getElementById("detalleEstado");
+  el.innerHTML = badgeEstadoHtml(estado);
+  if (animar) destellarBadge(el);
 }
 
 // Pinta el badge de prioridad y la franja lateral de la tarjeta.
-function pintarBadgePrioridad(prioridad) {
-  document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(prioridad);
+function pintarBadgePrioridad(prioridad, animar) {
+  const el = document.getElementById("detallePrioridad");
+  el.innerHTML = badgePrioridadHtml(prioridad);
+  if (animar) destellarBadge(el);
 
   const panel = document.getElementById("panelDetalle");
   if (panel) {
@@ -225,6 +230,13 @@ function pintarBadgePrioridad(prioridad) {
     panel.classList.remove("acento-alta", "acento-media", "acento-baja");
     if (acento[prioridad]) panel.classList.add(acento[prioridad]);
   }
+}
+
+// Reinicia la animación de destello (por si ya estaba corriendo, forzando un reflow).
+function destellarBadge(el) {
+  el.classList.remove("badge-destello");
+  void el.offsetWidth;
+  el.classList.add("badge-destello");
 }
 
 // Opciones de edición del carrusel (botón "×" y "+ Agregar foto"), registradas por los módulos de

@@ -73,7 +73,7 @@ function prepararPrioridad(id) {
         body: JSON.stringify({ prioridad_incidencia: nueva }),
       });
       incActual.prioridad_incidencia = nueva;
-      pintarBadgePrioridad(nueva);
+      pintarBadgePrioridad(nueva, true);
       marcarPrioridadActiva();
       mostrarToast("Prioridad actualizada", "success");
     } catch (error) {
@@ -132,7 +132,7 @@ function prepararEstado(id) {
         body: JSON.stringify({ estado_incidencia: nuevo }),
       });
       incActual.estado_incidencia = actualizada.estado_incidencia;
-      pintarBadgeEstado(incActual.estado_incidencia);
+      pintarBadgeEstado(incActual.estado_incidencia, true);
       marcarEstadoActivo();
       cargarHistorial(id);
       mostrarToast("Estado actualizado", "success");
@@ -193,7 +193,7 @@ function prepararReaperturaAdmin(id) {
         });
         incActual.estado_incidencia = actualizada.estado_incidencia;
         incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
-        pintarBadgeEstado(incActual.estado_incidencia);
+        pintarBadgeEstado(incActual.estado_incidencia, true);
         marcarEstadoActivo();
         btnReabrir.classList.add("d-none");
         btnRechazar.classList.add("d-none");
@@ -322,7 +322,7 @@ function prepararAtencionAdmin(id) {
     try {
       const actualizada = await apiFetch("/incidencias/" + id + "/archivar", { method: "PATCH" });
       incActual.estado_incidencia = actualizada.estado_incidencia;
-      pintarBadgeEstado(incActual.estado_incidencia);
+      pintarBadgeEstado(incActual.estado_incidencia, true);
       marcarEstadoActivo();
       pintarAtencionAdmin();
       cargarHistorial(id);

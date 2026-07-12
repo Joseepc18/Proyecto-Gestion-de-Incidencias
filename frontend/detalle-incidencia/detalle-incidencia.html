@@ -109,7 +109,7 @@
             <!-- Contenido (oculto mientras carga) -->
             <div id="detalleContenido" class="d-none">
               <!-- Barra de meta-información: Reportado por / Provincia-Ciudad / Fecha de creación / Técnico responsable / Admin que atendió -->
-              <div class="detalle-meta-bar" id="detalleMetaBar">
+              <div class="detalle-meta-bar detalle-fade-in detalle-fade-in-1" id="detalleMetaBar">
                 <div class="meta-tile">
                   <span class="meta-tile-icono"
                     ><i class="bi bi-person" aria-hidden="true"></i
@@ -162,20 +162,19 @@
                 <!-- Contenido principal: Información, luego Mapa+Fotos en fila, luego Historial -->
                 <div class="detalle-principal">
                   <!-- Tarjeta principal -->
-                  <section class="panel panel-acento" id="panelDetalle">
+                  <section
+                    class="panel panel-acento detalle-fade-in detalle-fade-in-2"
+                    id="panelDetalle"
+                  >
                     <div class="p-3">
                       <!-- Vista (solo lectura) -->
                       <div id="datosVista">
-                        <!-- Estado / Prioridad: lo más importante de la tarjeta, con más jerarquía visual que el resto -->
-                        <div class="detalle-estado-prioridad-bar mb-3">
-                          <div class="detalle-estado-prioridad-item">
-                            <span class="detalle-campo-label">Estado</span>
-                            <span class="badge" id="detalleEstado"></span>
-                          </div>
-                          <div class="detalle-estado-prioridad-item">
-                            <span class="detalle-campo-label">Prioridad</span>
-                            <span class="badge" id="detallePrioridad"></span>
-                          </div>
+                        <!-- Estado / Prioridad: badges más grandes que en el resto de la app, sin caja alrededor -->
+                        <div class="detalle-estado-prioridad-fila mb-3">
+                          <span class="detalle-campo-label">Estado</span>
+                          <span class="badge" id="detalleEstado"></span>
+                          <span class="detalle-campo-label">Prioridad</span>
+                          <span class="badge" id="detallePrioridad"></span>
                         </div>
 
                         <!-- Tipo / Subtipo / Dirección: campos destacados que aprovechan el ancho -->
@@ -294,7 +293,7 @@
                   </section>
 
                   <!-- Fila: mapa + fotos, mismo alto -->
-                  <div class="detalle-fila-media">
+                  <div class="detalle-fila-media detalle-fade-in detalle-fade-in-3">
                     <!-- Mapa -->
                     <section class="panel">
                       <div class="p-3">
@@ -432,7 +431,7 @@
                   </div>
 
                   <!-- Historial de estados (formato horizontal compacto) -->
-                  <section class="panel">
+                  <section class="panel detalle-fade-in detalle-fade-in-4">
                     <div class="p-3">
                       <h3 class="panel-titulo-tool">
                         <i class="bi bi-clock-history me-1"></i> Historial de estados
@@ -444,7 +443,7 @@
 
                 <!-- Sidebar de Acciones (admin y/o técnico responsable) -->
                 <!-- Si queda vacío (ciudadano / técnico de apoyo), el JS la oculta y el contenido principal ocupa todo el ancho -->
-                <div class="detalle-acciones-col" id="colGestion">
+                <div class="detalle-acciones-col detalle-fade-in detalle-fade-in-5" id="colGestion">
                   <section class="panel" id="panelAcciones">
                     <div class="p-3">
                       <h3 class="panel-titulo-tool"><i class="bi bi-sliders me-1"></i> Acciones</h3>
