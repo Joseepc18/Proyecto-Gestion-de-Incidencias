@@ -2036,47 +2036,23 @@ html[data-theme="dark"] {
   overflow: hidden;
   transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
 }
-/* Mapa nocturno estilizado (SVG, no foto): cubre el panel igual que un background-size: cover */
-.auth-hero-map {
+/* Capa aparte para el zoom lento: así no pelea con el transform del deslizamiento del padre */
+.auth-hero-img {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  background-image: url("../images/png/banner-login.jpg");
+  background-size: cover;
+  background-position: center;
+  animation: authHeroZoom 20s ease-in-out infinite alternate;
 }
-
-/* Pin de incidencia sobre el mapa del hero: mismos colores que estados.js (estadoConfig.color) */
-.hero-pin--pendiente {
-  color: #ef4444;
-}
-.hero-pin--proceso {
-  color: #f59e0b;
-}
-.hero-pin--resuelto {
-  color: #22c55e;
-}
-.hero-pin-dot {
-  fill: currentColor;
-  stroke: #fff;
-  stroke-width: 2;
-}
-/* Anillo tipo "radar" que se expande y desvanece, simulando reportes llegando en vivo */
-.hero-pin-ping {
-  fill: currentColor;
-  opacity: 0.55;
-  transform-origin: center;
-  animation: heroPinPing 2.4s ease-out infinite;
-}
-@keyframes heroPinPing {
-  0% {
-    r: 6;
-    opacity: 0.55;
+@keyframes authHeroZoom {
+  from {
+    transform: scale(1);
   }
-  100% {
-    r: 20;
-    opacity: 0;
+  to {
+    transform: scale(1.08);
   }
 }
-
 .auth-hero-overlay {
   position: absolute;
   inset: 0;
@@ -3237,7 +3213,7 @@ html[data-theme="dark"] .meta-tile-icono {
   #detalleEstado.badge-destello,
   #detallePrioridad.badge-destello,
   .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
-  .hero-pin-ping,
+  .auth-hero-img,
   .auth-view-login form#loginForm {
     animation: none !important;
   }
