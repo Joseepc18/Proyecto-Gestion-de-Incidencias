@@ -2897,10 +2897,12 @@ html[data-theme="dark"] {
   white-space: nowrap;
 }
 
-/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha / Técnico responsable */
+/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha /
+   Técnico responsable / Admin que atendió. auto-fit en vez de columnas fijas: no se estiran
+   de más en pantallas anchas, se acomodan solas según cuántas quepan. */
 .detalle-meta-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
 }
@@ -2956,10 +2958,23 @@ html[data-theme="dark"] .meta-tile-icono {
   white-space: nowrap;
 }
 
-@media (min-width: 992px) {
-  .detalle-meta-bar {
-    grid-template-columns: repeat(4, 1fr);
-  }
+/* Tipo / Subtipo / Dirección en la tarjeta de Información: campos destacados en grilla,
+   en vez de texto suelto, para aprovechar el ancho en pantallas grandes. */
+.detalle-campos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.detalle-campo h6 {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detalle-campo p {
+  font-size: var(--fs-md);
 }
 
 /* Carrusel de fotos de solo lectura: una foto visible, flechas + puntos indicadores */

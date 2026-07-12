@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -342,6 +342,7 @@ function aplicarReclamo(actualizada) {
   incActual.reclamo_visto_en = actualizada.reclamo_visto_en;
   incActual.reclamo_vencido = actualizada.reclamo_vencido;
   pintarAtencionAdmin();
+  pintarMetaAdminAtiende();
   // Reclamar/liberar habilita o bloquea los controles de gestión en el acto.
   refrescarGestionSegunReclamo();
 }
@@ -407,11 +408,11 @@ let gestionFotosLista = false;
 function habilitarFotosResolucion(id) {
   if (gestionFotosLista) return;
   gestionFotosLista = true;
-  document.querySelectorAll(".gestion-fotos").forEach((el) => el.classList.remove("d-none"));
+  document.getElementById("evidenciasResolucionEdicion").classList.remove("d-none");
   prepararSubidaResolucion(id);
 
   // El carrusel de resolución gana el botón "×" (borra al instante) y "+ Agregar foto"
-  // (abre el mismo selector de cámara/galería que alimenta la dropzone de abajo).
+  // (abre el mismo selector de cámara/galería que alimenta la cola de subida de abajo).
   fijarOpcionesFotosResolucion({
     onEliminar: eliminarFotoResolucion,
     onAgregar: function () {
@@ -441,7 +442,6 @@ function prepararSubidaResolucion(id) {
   galeriaResolucion = crearGaleriaFotos({
     input: document.getElementById("inputResolucion"),
     inputCamara: document.getElementById("inputResolucionCamara"),
-    dropzone: document.getElementById("dropzoneResolucion"),
     preview: document.getElementById("resolucionPreview"),
     error: document.getElementById("resolucionError"),
     cupo: cupoResolucion,

@@ -270,8 +270,8 @@ function repintarVistaLectura() {
       ? incActual.subtipo.tipo.nombre_tipo_incidencia
       : "—";
   const subtipo = incActual.subtipo ? incActual.subtipo.nombre_subtipo_incidencia : "—";
-  document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
-  document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
+  document.getElementById("detalleTipoTexto").textContent = tipo;
+  document.getElementById("detalleSubtipoTexto").textContent = subtipo;
 
   const bloqueDesc = document.getElementById("detalleDescripcionBloque");
   if (incActual.descripcion_incidencia) {

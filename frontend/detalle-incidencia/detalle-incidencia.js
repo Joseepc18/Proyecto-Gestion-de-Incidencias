@@ -1,6 +1,6 @@
 // detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
-/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
+/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
 /* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
@@ -92,6 +92,7 @@ function conectarTiempoReal(id) {
     incActual.reclamo_visto_en = e.reclamo_visto_en;
     // Un reclamo recién hecho/liberado no está vencido; el detalle lo reevalúa con su timer.
     incActual.reclamo_vencido = false;
+    pintarMetaAdminAtiende();
     if (typeof gestionAlCambiarReclamo === "function") gestionAlCambiarReclamo();
   });
 }
@@ -112,8 +113,8 @@ async function cargarDetalle(id) {
 
     const tipo = inc.subtipo && inc.subtipo.tipo ? inc.subtipo.tipo.nombre_tipo_incidencia : "—";
     const subtipo = inc.subtipo ? inc.subtipo.nombre_subtipo_incidencia : "—";
-    document.getElementById("detalleTipoTexto").textContent = "Tipo: " + tipo;
-    document.getElementById("detalleSubtipoTexto").textContent = "Subtipo: " + subtipo;
+    document.getElementById("detalleTipoTexto").textContent = tipo;
+    document.getElementById("detalleSubtipoTexto").textContent = subtipo;
 
     const fecha = new Date(inc.created_at).toLocaleString("es-EC");
     const reporta = inc.usuario ? inc.usuario.name : "—";
@@ -121,6 +122,7 @@ async function cargarDetalle(id) {
     document.getElementById("metaReportadoPor").textContent = reporta;
     document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(inc.ciudad);
     document.getElementById("metaFechaCreacion").textContent = fecha;
+    pintarMetaAdminAtiende();
 
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
     if (inc.descripcion_incidencia) {
@@ -157,6 +159,15 @@ function provinciaCiudadTexto(ciudad) {
   if (!ciudad) return "—";
   const provincia = ciudad.provincia ? ciudad.provincia.nombre_provincia + " / " : "";
   return provincia + ciudad.nombre_ciudad;
+}
+
+// Tarjeta "Admin. que atendió" de la barra de meta-información. Ojo: solo refleja al admin mientras
+// tiene el reclamo activo (id_admin_atiende); al liberarlo vuelve a "Sin asignar" (el backend no
+// guarda un registro aparte de quién la atendió una vez liberada).
+function pintarMetaAdminAtiende() {
+  const el = document.getElementById("metaAdminAtiende");
+  if (!el || !incActual) return;
+  el.textContent = incActual.admin_atiende ? incActual.admin_atiende.name : "Sin asignar";
 }
 
 // Crea el mapa de solo-lectura con el pin de la incidencia (o un aviso si no hay ubicación).
@@ -256,7 +267,7 @@ function prepararToggleFotos() {
     const btn = e.target.closest("[data-tab]");
     if (!btn) return;
     const esReporte = btn.dataset.tab === "reporte";
-    document.getElementById("fotosReporte").classList.toggle("d-none", !esReporte);
+    document.getElementById("tabReporte").classList.toggle("d-none", !esReporte);
     document.getElementById("fotosResolucionBloque").classList.toggle("d-none", esReporte);
     document.getElementById("btnFotosReportador").classList.toggle("active", esReporte);
     document.getElementById("btnFotosTecnico").classList.toggle("active", !esReporte);
@@ -302,9 +313,9 @@ function ajustarLayout() {
   const col = document.getElementById("colGestion");
   const panel = document.getElementById("panelAcciones");
   if (!col || !panel) return;
-  const tieneContenido = Array.from(
-    panel.querySelectorAll(".solo-admin, .gestion-estado, .gestion-fotos"),
-  ).some((el) => !el.classList.contains("d-none"));
+  const tieneContenido = Array.from(panel.querySelectorAll(".solo-admin, .gestion-estado")).some(
+    (el) => !el.classList.contains("d-none"),
+  );
   col.classList.toggle("d-none", !tieneContenido);
 }
 
