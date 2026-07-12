@@ -2664,31 +2664,21 @@ html[data-theme="dark"] {
 }
 
 /* Tarjeta de Información: la más importante de la pantalla, con más presencia que Mapa/Fotos/
-   Historial — franja lateral más gruesa, sombra elevada y un tinte muy sutil del color de
-   prioridad hacia la esquina (--acento la fija cada variante, sin tocar el color del texto). */
+   Historial — franja lateral más gruesa y sombra elevada. */
 .panel-acento {
-  --acento: var(--admin-border);
   border-left-width: 5px;
   box-shadow: var(--admin-shadow-lg);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--acento) 7%, var(--admin-surface)) 0%,
-    var(--admin-surface) 60%
-  );
 }
 
 .panel-acento.acento-alta {
-  --acento: var(--admin-danger);
   border-left-color: var(--admin-danger);
 }
 
 .panel-acento.acento-media {
-  --acento: var(--admin-warning);
   border-left-color: var(--admin-warning);
 }
 
 .panel-acento.acento-baja {
-  --acento: var(--admin-success);
   border-left-color: var(--admin-success);
 }
 
@@ -3101,7 +3091,6 @@ html[data-theme="dark"] .meta-tile-icono {
   font-size: var(--fs-lg);
   padding: 0.5em 0.9em;
   font-weight: 700;
-  box-shadow: var(--admin-shadow);
 }
 
 /* Destello breve cuando Estado/Prioridad cambian en vivo (WebSocket) o por la propia acción del

@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -135,6 +135,13 @@ async function cargarDetalle(id) {
     document.getElementById("detalleDireccion").textContent =
       inc.direccion_incidencia || "No especificada";
 
+    const esTerminal = inc.estado_incidencia === "RESUELTO" || inc.estado_incidencia === "CERRADO";
+    document.getElementById("detalleTiempoTranscurrido").textContent =
+      esTerminal && inc.fecha_resolucion
+        ? "Resuelta en " + duracionEntre(inc.created_at, inc.fecha_resolucion)
+        : "Abierta " + tiempoRelativo(inc.created_at);
+    document.getElementById("detalleUltimaActividad").textContent = tiempoRelativo(inc.updated_at);
+
     pintarFotos();
 
     cargando.classList.add("d-none");
@@ -159,6 +166,15 @@ function provinciaCiudadTexto(ciudad) {
   if (!ciudad) return "—";
   const provincia = ciudad.provincia ? ciudad.provincia.nombre_provincia + " / " : "";
   return provincia + ciudad.nombre_ciudad;
+}
+
+// Duración entre dos fechas ISO (a diferencia de tiempoRelativo, que es "desde ahora").
+function duracionEntre(iso1, iso2) {
+  const seg = Math.floor((new Date(iso2).getTime() - new Date(iso1).getTime()) / 1000);
+  if (seg < 60) return "menos de un minuto";
+  if (seg < 3600) return Math.floor(seg / 60) + " min";
+  if (seg < 86400) return Math.floor(seg / 3600) + " h";
+  return Math.floor(seg / 86400) + " d";
 }
 
 // Tarjeta "Admin. que atendió" de la barra de meta-información. Ojo: solo refleja al admin mientras
