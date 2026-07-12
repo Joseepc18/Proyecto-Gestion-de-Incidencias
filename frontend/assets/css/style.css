@@ -2871,35 +2871,37 @@ html[data-theme="dark"] {
   background: #b45309;
 }
 
-/* Historial de estados: línea de tiempo horizontal (antiguo→actual, izquierda→derecha). Cada
-   paso es un punto conectado por una línea, con el estado/quién/fecha debajo; el último paso
-   (el estado actual) se resalta más grande y en negrita. */
+/* Historial de estados: línea de tiempo (antiguo→actual). En móvil, vertical (punto + línea a la
+   izquierda, texto a la derecha) — una fila horizontal no cabe con 3 líneas de texto por paso.
+   Desde tablet (768px), horizontal: izquierda→derecha con el texto debajo de cada punto. El
+   último paso (el estado actual) se resalta más grande y en negrita en ambos casos. */
 .historial-lista {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
   padding-top: 6px;
 }
 
 .historial-paso {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1 1 150px;
-  min-width: 150px;
-  padding: 0 10px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 22px 2px;
+  text-align: left;
 }
 
-/* Línea que conecta este punto con el siguiente (no en el último paso) */
+.historial-paso:last-child {
+  padding-bottom: 0;
+}
+
+/* Línea vertical (móvil): de la base de este punto a la del siguiente */
 .historial-paso:not(:last-child)::after {
   content: "";
   position: absolute;
-  top: 6px;
-  left: 50%;
-  width: 100%;
-  height: 2px;
+  top: 15px;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
   background: var(--admin-border);
 }
 
@@ -2911,14 +2913,46 @@ html[data-theme="dark"] {
   border-radius: 50%;
   border: 2px solid var(--admin-surface);
   box-shadow: 0 0 0 1px var(--admin-border);
-  margin-bottom: 10px;
+  flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .historial-paso--actual .historial-paso-punto {
   width: 18px;
   height: 18px;
+  margin-top: 0;
   box-shadow: 0 0 0 2px currentColor;
   animation: historialPulso 2s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .historial-lista {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .historial-paso {
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 150px;
+    min-width: 150px;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  /* Línea horizontal (tablet/desktop): del centro de este punto al del siguiente */
+  .historial-paso:not(:last-child)::after {
+    top: 6px;
+    bottom: auto;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+  }
+
+  .historial-paso-punto {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
 }
 
 /* Anillo que "respira" en el paso actual, para que el ojo vaya directo al estado vigente */
@@ -3032,9 +3066,11 @@ html[data-theme="dark"] .meta-tile-icono {
 
 /* Tipo / Subtipo / Dirección en la tarjeta de Información: campos destacados en grilla,
    en vez de texto suelto, para aprovechar el ancho en pantallas grandes. */
+/* auto-fill + tope de 260px (no 1fr): en tarjetas anchas los campos quedan compactos y pegados
+   a la izquierda en vez de estirarse con huecos enormes entre "Tipo" y "Dirección". */
 .detalle-campos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 260px));
   gap: 16px;
 }
 
