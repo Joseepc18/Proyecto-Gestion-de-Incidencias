@@ -2859,40 +2859,78 @@ html[data-theme="dark"] {
   background: #b45309;
 }
 
-/* Historial de estados: fila horizontal compacta (punto + label + fecha a la derecha) */
+/* Historial de estados: línea de tiempo horizontal (antiguo→actual, izquierda→derecha). Cada
+   paso es un punto conectado por una línea, con el estado/quién/fecha debajo; el último paso
+   (el estado actual) se resalta más grande y en negrita. */
 .historial-lista {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding-top: 6px;
 }
 
-.historial-fila {
+.historial-paso {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  flex: 1 1 150px;
+  min-width: 150px;
+  padding: 0 10px;
+  text-align: center;
 }
 
-.historial-fila:hover {
-  background: var(--admin-surface-soft);
+/* Línea que conecta este punto con el siguiente (no en el último paso) */
+.historial-paso:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--admin-border);
 }
 
-.historial-punto {
-  width: 9px;
-  height: 9px;
+.historial-paso-punto {
+  position: relative;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  flex-shrink: 0;
+  border: 2px solid var(--admin-surface);
+  box-shadow: 0 0 0 1px var(--admin-border);
+  margin-bottom: 10px;
 }
 
-.historial-texto {
-  flex: 1;
+.historial-paso--actual .historial-paso-punto {
+  width: 18px;
+  height: 18px;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.historial-paso-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historial-paso-estado {
   font-size: var(--fs-sm);
   font-weight: 600;
 }
 
-.historial-fecha {
+.historial-paso--actual .historial-paso-estado {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+}
+
+.historial-paso-quien {
   font-size: var(--fs-xs);
+  color: var(--admin-text);
+}
+
+.historial-paso-fecha {
+  font-size: var(--fs-2xs);
   color: var(--admin-muted);
   white-space: nowrap;
 }
@@ -2966,15 +3004,26 @@ html[data-theme="dark"] .meta-tile-icono {
   gap: 16px;
 }
 
-.detalle-campo h6 {
-  font-size: var(--fs-2xs);
+/* Label de campo (Tipo/Subtipo/Dirección/Descripción): más distintivo que un simple texto muted,
+   para que se lea como encabezado de sección dentro de la tarjeta, no como nota al pie. */
+.detalle-campo-label {
+  font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  color: var(--admin-primary);
 }
 
 .detalle-campo p {
   font-size: var(--fs-md);
+}
+
+/* Estado y Prioridad de la tarjeta principal: más grandes que el badge estándar (el resto de la
+   app los usa chico en tablas/tarjetas; acá es el dato más importante de la pantalla). */
+#panelDetalle #detalleEstado,
+#panelDetalle #detallePrioridad {
+  font-size: var(--fs-md);
+  padding: 0.42em 0.85em;
 }
 
 /* Carrusel de fotos de solo lectura: una foto visible, flechas + puntos indicadores */

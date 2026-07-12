@@ -339,29 +339,46 @@ async function cargarHistorial(id) {
       });
     }
 
-    cont.innerHTML = "";
-    eventos.forEach(function (ev) {
-      const cfg = estadoConfig[ev.estado] || estadoConfig.PENDIENTE;
+    // La API entrega lo más reciente primero; para la línea de tiempo (izquierda→derecha,
+    // antiguo→actual) se recorre al revés. El último paso (el más reciente) es el "actual".
+    const pasos = eventos.slice().reverse();
 
-      const fila = document.createElement("div");
-      fila.className = "historial-fila";
+    cont.innerHTML = "";
+    pasos.forEach(function (ev, i) {
+      const cfg = estadoConfig[ev.estado] || estadoConfig.PENDIENTE;
+      const esActual = i === pasos.length - 1;
+
+      const paso = document.createElement("div");
+      paso.className = "historial-paso" + (esActual ? " historial-paso--actual" : "");
 
       const punto = document.createElement("span");
-      punto.className = "historial-punto";
+      punto.className = "historial-paso-punto";
       punto.style.background = colorEstado(ev.estado);
-      fila.appendChild(punto);
+      // "color" (no solo background) para que el anillo del paso actual (currentColor) tome el mismo tono.
+      punto.style.color = colorEstado(ev.estado);
+      paso.appendChild(punto);
 
-      const texto = document.createElement("span");
-      texto.className = "historial-texto";
-      texto.textContent = cfg.texto + " · " + ev.nombre;
-      fila.appendChild(texto);
+      const texto = document.createElement("div");
+      texto.className = "historial-paso-texto";
+
+      const estadoSpan = document.createElement("span");
+      estadoSpan.className = "historial-paso-estado";
+      estadoSpan.style.color = colorEstado(ev.estado);
+      estadoSpan.textContent = cfg.texto;
+      texto.appendChild(estadoSpan);
+
+      const quienSpan = document.createElement("span");
+      quienSpan.className = "historial-paso-quien";
+      quienSpan.textContent = ev.nombre;
+      texto.appendChild(quienSpan);
 
       const fechaSpan = document.createElement("span");
-      fechaSpan.className = "historial-fecha";
+      fechaSpan.className = "historial-paso-fecha";
       fechaSpan.textContent = new Date(ev.fecha).toLocaleString("es-EC");
-      fila.appendChild(fechaSpan);
+      texto.appendChild(fechaSpan);
 
-      cont.appendChild(fila);
+      paso.appendChild(texto);
+      cont.appendChild(paso);
     });
   } catch {
     cont.innerHTML = '<p class="text-danger small mb-0">No se pudo cargar el historial.</p>';
