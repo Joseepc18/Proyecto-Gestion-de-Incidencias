@@ -2663,20 +2663,32 @@ html[data-theme="dark"] {
   }
 }
 
-/* Franja lateral de la tarjeta de detalles según la prioridad */
+/* Tarjeta de Información: la más importante de la pantalla, con más presencia que Mapa/Fotos/
+   Historial — franja lateral más gruesa, sombra elevada y un tinte muy sutil del color de
+   prioridad hacia la esquina (--acento la fija cada variante, sin tocar el color del texto). */
 .panel-acento {
-  border-left-width: 4px;
+  --acento: var(--admin-border);
+  border-left-width: 5px;
+  box-shadow: var(--admin-shadow-lg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--acento) 7%, var(--admin-surface)) 0%,
+    var(--admin-surface) 60%
+  );
 }
 
 .panel-acento.acento-alta {
+  --acento: var(--admin-danger);
   border-left-color: var(--admin-danger);
 }
 
 .panel-acento.acento-media {
+  --acento: var(--admin-warning);
   border-left-color: var(--admin-warning);
 }
 
 .panel-acento.acento-baja {
+  --acento: var(--admin-success);
   border-left-color: var(--admin-success);
 }
 
@@ -2955,6 +2967,16 @@ html[data-theme="dark"] {
   background: var(--admin-surface);
   /* Sin esto el item no encoge bajo el nowrap de .meta-tile-valor y empuja la barra fuera */
   min-width: 0;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.meta-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--admin-shadow-lg);
+  border-color: var(--admin-primary);
 }
 
 .meta-tile-icono {
@@ -3018,12 +3040,30 @@ html[data-theme="dark"] .meta-tile-icono {
   font-size: var(--fs-md);
 }
 
-/* Estado y Prioridad de la tarjeta principal: más grandes que el badge estándar (el resto de la
-   app los usa chico en tablas/tarjetas; acá es el dato más importante de la pantalla). */
-#panelDetalle #detalleEstado,
-#panelDetalle #detallePrioridad {
-  font-size: var(--fs-md);
-  padding: 0.42em 0.85em;
+/* Estado y Prioridad: lo más importante de la tarjeta. Chip propio con fondo, no solo un badge
+   suelto — así se distingue con más jerarquía del resto del contenido (Tipo/Subtipo/Dirección
+   son el siguiente nivel, Descripción el más bajo). */
+.detalle-estado-prioridad-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.detalle-estado-prioridad-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-border);
+}
+
+.detalle-estado-prioridad-item .badge {
+  font-size: var(--fs-lg);
+  padding: 0.5em 0.9em;
+  font-weight: 700;
+  width: fit-content;
 }
 
 /* Carrusel de fotos de solo lectura: una foto visible, flechas + puntos indicadores */

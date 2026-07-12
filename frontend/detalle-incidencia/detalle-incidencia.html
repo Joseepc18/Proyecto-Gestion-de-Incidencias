@@ -166,12 +166,16 @@
                     <div class="p-3">
                       <!-- Vista (solo lectura) -->
                       <div id="datosVista">
-                        <!-- Badges estado / prioridad -->
-                        <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
-                          <span class="text-muted small">Estado:</span>
-                          <span class="badge" id="detalleEstado"></span>
-                          <span class="text-muted small">Prioridad:</span>
-                          <span class="badge" id="detallePrioridad"></span>
+                        <!-- Estado / Prioridad: lo más importante de la tarjeta, con más jerarquía visual que el resto -->
+                        <div class="detalle-estado-prioridad-bar mb-3">
+                          <div class="detalle-estado-prioridad-item">
+                            <span class="detalle-campo-label">Estado</span>
+                            <span class="badge" id="detalleEstado"></span>
+                          </div>
+                          <div class="detalle-estado-prioridad-item">
+                            <span class="detalle-campo-label">Prioridad</span>
+                            <span class="badge" id="detallePrioridad"></span>
+                          </div>
                         </div>
 
                         <!-- Tipo / Subtipo / Dirección: campos destacados que aprovechan el ancho -->
