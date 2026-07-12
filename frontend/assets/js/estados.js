@@ -1,6 +1,6 @@
 // estados.js — Mapas compartidos de estado y prioridad de incidencias (clase, icono y etiqueta).
 
-/* exported estadoConfig, prioridadConfig, badgeEstadoHtml, badgePrioridadHtml, colorEstado */
+/* exported estadoConfig, prioridadConfig, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista */
 
 // color usa variables CSS para que pines de mapa e historial sigan el modo claro/oscuro.
 const estadoConfig = {
@@ -41,6 +41,13 @@ const prioridadConfig = {
   BAJA: { clase: "text-bg-success", icono: "bi-arrow-down-circle", texto: "Baja" },
   SIN_ASIGNAR: { clase: "text-bg-secondary", icono: "bi-dash-circle", texto: "Sin asignar" },
 };
+
+// El ciudadano ve "Resuelto" en vez de "Archivado": para él ya está resuelto, archivar es un
+// detalle interno del admin que no le aporta nada y solo genera dudas ("¿no era que se resolvió?").
+// Usado en detalle-incidencia y mis-incidencias (badges, pines del mapa y el filtro de estado).
+function estadoParaVista(estado, rolUsuario) {
+  return rolUsuario === "normal" && estado === "CERRADO" ? "RESUELTO" : estado;
+}
 
 function badgeEstadoHtml(estado) {
   const cfg = estadoConfig[estado] || estadoConfig.PENDIENTE;

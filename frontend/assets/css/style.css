@@ -2280,6 +2280,9 @@ html[data-theme="dark"] {
 
 .mis-feed-lista {
   overflow-y: auto;
+  /* Respiro entre las tarjetas y el scrollbar nativo, que si no queda pegado al borde */
+  padding-right: 6px;
+  scrollbar-gutter: stable;
 }
 
 /* Paginación de flechas (‹ ›) del feed de Mis Incidencias: evita el scroll del helper de números */

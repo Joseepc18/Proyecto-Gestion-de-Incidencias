@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let mapa = null;
@@ -15,6 +15,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!usuarioActual) return;
   aplicarMenuRol(usuarioActual.rol ? usuarioActual.rol.nombre_rol : "", usuarioActual.permisos);
   cablearLogout();
+
+  // El ciudadano ve todo lo archivado como "Resuelto" (estados.js); un filtro "Archivado" aparte
+  // no tendría sentido para él, ya no distingue esa etiqueta en ningún lado de esta pantalla.
+  if (rolNombre() === "normal") {
+    const opcionArchivado = document.querySelector('[data-estado="CERRADO"]');
+    if (opcionArchivado) opcionArchivado.closest("li").remove();
+  }
 
   let timerBusqueda = null;
   document.getElementById("filtroBusqueda").addEventListener("input", function () {
@@ -98,6 +105,11 @@ async function cargarLista() {
   }
 }
 
+// El ciudadano ve "Resuelto" en vez de "Archivado" (estados.js); admin/técnico ven el estado real.
+function rolNombre() {
+  return usuarioActual && usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
+}
+
 // HTML de una tarjeta del feed (reutilizado al pintar la lista y al actualizar una en vivo).
 function tarjetaHtml(inc) {
   const ciudad = inc.ciudad ? inc.ciudad.nombre_ciudad : "Sin ubicación";
@@ -112,7 +124,7 @@ function tarjetaHtml(inc) {
     '<span class="card-codigo">' +
     codigoIncidencia(id) +
     "</span>" +
-    badgeEstadoHtml(inc.estado_incidencia) +
+    badgeEstadoHtml(estadoParaVista(inc.estado_incidencia, rolNombre())) +
     "</div>" +
     '<p class="card-titulo">' +
     escaparHtml(inc.nombre_incidencia) +
@@ -138,7 +150,7 @@ function refrescarMapa() {
         lng: Number(i.longitud_incidencia),
         // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
         titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
-        color: colorEstado(i.estado_incidencia),
+        color: colorEstado(estadoParaVista(i.estado_incidencia, rolNombre())),
       };
     });
   mapa.pintarPines(pines, seleccionarIncidencia);
@@ -248,7 +260,7 @@ async function seleccionarIncidencia(id) {
       "Creada: " + new Date(inc.created_at).toLocaleString("es-EC");
 
     const spanEstado = document.getElementById("detalleEstado");
-    spanEstado.innerHTML = badgeEstadoHtml(inc.estado_incidencia);
+    spanEstado.innerHTML = badgeEstadoHtml(estadoParaVista(inc.estado_incidencia, rolNombre()));
 
     document.getElementById("detallePrioridad").innerHTML = badgePrioridadHtml(
       inc.prioridad_incidencia,

@@ -153,6 +153,36 @@ class IncidenciaTest extends TestCase
             ->assertJsonPath('data.0.nombre_incidencia', 'Fuga de agua en la avenida');
     }
 
+    // El ciudadano ve lo archivado como "Resuelto" (estados.js); su filtro ?estado=RESUELTO debe
+    // traer también lo CERRADO, o la mitad de sus resueltas "desaparecerían" al filtrar.
+    public function test_ciudadano_filtra_resuelto_y_tambien_trae_lo_archivado(): void
+    {
+        $autor = $this->crearUsuario('normal');
+
+        $this->crearIncidencia($autor, [
+            'nombre_incidencia' => 'Fuga resuelta y aun visible',
+            'estado_incidencia' => 'RESUELTO',
+        ]);
+        $this->crearIncidencia($autor, [
+            'nombre_incidencia' => 'Bache resuelto y ya archivado',
+            'estado_incidencia' => 'CERRADO',
+        ]);
+        $this->crearIncidencia($autor, [
+            'nombre_incidencia' => 'Semaforo aun pendiente',
+            'estado_incidencia' => 'PENDIENTE',
+        ]);
+
+        Sanctum::actingAs($autor);
+
+        $this->getJson('/api/incidencias?estado=RESUELTO')
+            ->assertOk()->assertJsonPath('total', 2);
+
+        // El admin, en cambio, sigue viendo el filtro exacto (RESUELTO y CERRADO no se mezclan).
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $this->getJson('/api/incidencias?estado=RESUELTO')
+            ->assertOk()->assertJsonPath('total', 1);
+    }
+
     public function test_cambiar_estado_respeta_las_dos_guardas(): void
     {
         // Guarda de ROL: el técnico responsable solo cierra EN_PROCESO→RESUELTO; PENDIENTE→RESUELTO

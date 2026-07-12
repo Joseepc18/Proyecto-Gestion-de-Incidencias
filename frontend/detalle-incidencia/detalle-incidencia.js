@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -229,16 +229,15 @@ function activarMapaPicker(lat, lng, onCambio) {
 
 // El ciudadano ve "Resuelto" en vez de "Archivado": para él ya está resuelto, archivar es un
 // detalle interno del admin que no le aporta nada y solo genera dudas ("¿no era que se resolvió?").
-function estadoParaVista(estado) {
-  const esCiudadano =
-    usuarioActual && usuarioActual.rol && usuarioActual.rol.nombre_rol === "normal";
-  return esCiudadano && estado === "CERRADO" ? "RESUELTO" : estado;
+// La regla vive en estados.js (la comparte mis-incidencias.js); acá solo se resuelve el rol.
+function rolNombre() {
+  return usuarioActual && usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
 }
 
 // animar=true en cambios en vivo o tras una acción propia (no en la carga inicial).
 function pintarBadgeEstado(estado, animar) {
   const el = document.getElementById("detalleEstado");
-  el.innerHTML = badgeEstadoHtml(estadoParaVista(estado));
+  el.innerHTML = badgeEstadoHtml(estadoParaVista(estado, rolNombre()));
   if (animar) destellarBadge(el);
 }
 
@@ -381,7 +380,7 @@ async function cargarHistorial(id) {
 
     cont.innerHTML = "";
     pasos.forEach(function (ev, i) {
-      const estadoMostrado = estadoParaVista(ev.estado);
+      const estadoMostrado = estadoParaVista(ev.estado, rolNombre());
       const cfg = estadoConfig[estadoMostrado] || estadoConfig.PENDIENTE;
       const esActual = i === pasos.length - 1;
 

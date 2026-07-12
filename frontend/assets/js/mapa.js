@@ -137,7 +137,9 @@ function crearMapaBase(idContenedor, opciones) {
   const centro = opciones.centro || [-2.2267, -80.9012];
   const zoom = opciones.zoom || 14;
 
-  const map = L.map(idContenedor, { center: centro, zoom: zoom });
+  // zoomControl: false porque el de Leaflet nace arriba-izquierda, donde paneles como el feed de
+  // "Mis incidencias" lo tapan; se agrega abajo, a la derecha, apilado bajo el botón satélite/callejero.
+  const map = L.map(idContenedor, { center: centro, zoom: zoom, zoomControl: false });
 
   const satelite = L.tileLayer(TILES_SATELITE, {
     attribution: "Imágenes © Esri",
@@ -149,6 +151,7 @@ function crearMapaBase(idContenedor, opciones) {
   });
 
   agregarControlEstilo(map, satelite, callejero);
+  L.control.zoom({ position: "topright" }).addTo(map);
   observarTamanoMapa(map);
 
   return map;
