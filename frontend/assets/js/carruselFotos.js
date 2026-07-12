@@ -1,4 +1,5 @@
-// carruselFotos.js — Carrusel de fotos de solo lectura: una foto visible, flechas + puntos indicadores.
+// carruselFotos.js — Carrusel de fotos: una foto visible, flechas + puntos indicadores. Opcionalmente
+// editable (botón "×" para borrar la foto actual y "+ Agregar foto") vía el 4.º parámetro de montarCarrusel.
 
 /* exported montarCarrusel */
 /* global escaparHtml */
@@ -6,14 +7,30 @@
 // Duración de la animación de deslizamiento (debe coincidir con la transición del CSS).
 const CARRUSEL_DURACION_MS = 200;
 
-// La imagen central lleva data-lightbox para reusar el visor de pantalla completa (lightbox.js)
-function montarCarrusel(contenedor, evidencias, mensajeVacio) {
-  // Distinto del grid de miniaturas del modo edición en este mismo contenedor (#fotosReporte)
+// Botón "+ Agregar foto" a todo lo ancho, debajo del carrusel (o del mensaje vacío si no hay fotos).
+function crearBotonAgregarFoto(onAgregar) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn btn-outline-primary btn-sm w-100 mt-2";
+  btn.innerHTML = '<i class="bi bi-camera me-1" aria-hidden="true"></i> Agregar foto';
+  btn.addEventListener("click", onAgregar);
+  return btn;
+}
+
+// opts (opcional): { onEliminar(idEvidencia), onAgregar(), puedeAgregar() }. Sin opts, carrusel de
+// solo lectura. Con opts, se suma el botón "×" sobre la foto actual y "+ Agregar foto" debajo.
+function montarCarrusel(contenedor, evidencias, mensajeVacio, opts) {
+  opts = opts || {};
   contenedor.className = "carrusel-fotos-wrap";
   contenedor.innerHTML = "";
 
+  const puedeAgregar = typeof opts.puedeAgregar === "function" && opts.puedeAgregar();
+
   if (!evidencias.length) {
     contenedor.innerHTML = '<p class="text-muted small mb-0">' + escaparHtml(mensajeVacio) + "</p>";
+    if (opts.onAgregar && puedeAgregar) {
+      contenedor.appendChild(crearBotonAgregarFoto(opts.onAgregar));
+    }
     return;
   }
 
@@ -39,6 +56,18 @@ function montarCarrusel(contenedor, evidencias, mensajeVacio) {
   btnNext.className = "carrusel-fotos-flecha carrusel-fotos-flecha--next";
   btnNext.setAttribute("aria-label", "Foto siguiente");
   btnNext.innerHTML = '<i class="bi bi-chevron-right" aria-hidden="true"></i>';
+
+  let btnEliminar = null;
+  if (opts.onEliminar) {
+    btnEliminar = document.createElement("button");
+    btnEliminar.type = "button";
+    btnEliminar.className = "carrusel-fotos-eliminar";
+    btnEliminar.setAttribute("aria-label", "Eliminar esta foto");
+    btnEliminar.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i>';
+    btnEliminar.addEventListener("click", function () {
+      opts.onEliminar(evidencias[indice].id_evidencia);
+    });
+  }
 
   const dots = document.createElement("div");
   dots.className = "carrusel-fotos-dots";
@@ -108,6 +137,10 @@ function montarCarrusel(contenedor, evidencias, mensajeVacio) {
   });
 
   wrap.append(btnPrev, img, btnNext);
+  if (btnEliminar) wrap.append(btnEliminar);
   contenedor.append(wrap, dots);
+  if (opts.onAgregar && puedeAgregar) {
+    contenedor.appendChild(crearBotonAgregarFoto(opts.onAgregar));
+  }
   pintar();
 }

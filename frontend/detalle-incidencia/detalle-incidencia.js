@@ -1,6 +1,6 @@
 // detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
-/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
+/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
 /* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, codigoIncidencia, iniciales, montarCarrusel, requerirSesion, cablearLogout, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
@@ -216,17 +216,37 @@ function pintarBadgePrioridad(prioridad) {
   }
 }
 
-// El módulo de edición sobrescribe #fotosReporte con su grid editable si es el dueño
+// Opciones de edición del carrusel (botón "×" y "+ Agregar foto"), registradas por los módulos de
+// rol: edicion.js para el reporte (ciudadano dueño), gestion.js para la resolución (técnico responsable).
+let opcionesFotosReporte = null;
+let opcionesFotosResolucion = null;
+
+function fijarOpcionesFotosReporte(opts) {
+  opcionesFotosReporte = opts;
+  if (incActual) pintarFotos();
+}
+
+function fijarOpcionesFotosResolucion(opts) {
+  opcionesFotosResolucion = opts;
+  if (incActual) pintarFotos();
+}
+
 function pintarFotos() {
   const evidencias = incActual.evidencias || [];
   const reporte = evidencias.filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
   const resolucion = evidencias.filter((ev) => ev.tipo_evidencia === "RESOLUCION");
 
-  montarCarrusel(document.getElementById("fotosReporte"), reporte, "Sin fotos del reporte.");
+  montarCarrusel(
+    document.getElementById("fotosReporte"),
+    reporte,
+    "Sin fotos del reporte.",
+    opcionesFotosReporte,
+  );
   montarCarrusel(
     document.getElementById("fotosResolucion"),
     resolucion,
     "Sin fotos de resolución.",
+    opcionesFotosResolucion,
   );
 }
 
@@ -277,17 +297,15 @@ async function cargarAsignaciones(id) {
   }
 }
 
-// Sin grupos visibles en Acciones, oculta la columna y la grilla pasa de 3 a 2 columnas
+// Sin grupos visibles en Acciones, oculta el sidebar y el contenido principal ocupa todo el ancho
 function ajustarLayout() {
   const col = document.getElementById("colGestion");
-  const grid = document.querySelector(".detalle-grid");
   const panel = document.getElementById("panelAcciones");
-  if (!col || !grid || !panel) return;
+  if (!col || !panel) return;
   const tieneContenido = Array.from(
     panel.querySelectorAll(".solo-admin, .gestion-estado, .gestion-fotos"),
   ).some((el) => !el.classList.contains("d-none"));
   col.classList.toggle("d-none", !tieneContenido);
-  grid.classList.toggle("detalle-grid--2col", !tieneContenido);
 }
 
 async function cargarHistorial(id) {

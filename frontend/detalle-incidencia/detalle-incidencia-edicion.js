@@ -2,7 +2,7 @@
 
 /* exported edicionAlCargarDetalle */
 
-/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto */
+/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto, pintarFotos, fijarOpcionesFotosReporte */
 
 // Catálogos + cascadas (helper compartido con registrar-incidencia); se cargan una sola vez.
 const catalogos = crearCatalogosIncidencia({
@@ -57,7 +57,6 @@ function edicionAlCargarDetalle() {
 
 // Activa en PENDIENTE y EN_PROCESO, independiente del modo edición de texto/ubicación
 function prepararFotosReporte() {
-  // Modo compacto: el azulejo "+" va inline en la grilla para no desbordar el panel
   galeriaReporte = crearGaleriaFotos({
     input: document.getElementById("editFotos"),
     inputCamara: document.getElementById("editFotosCamara"),
@@ -71,7 +70,21 @@ function prepararFotosReporte() {
     },
   });
 
-  renderEvidenciasReporteEditable();
+  // El carrusel del reporte gana el botón "×" (borra al instante) y "+ Agregar foto"
+  // (abre el mismo selector de cámara/galería que alimenta la cola de subida de arriba).
+  fijarOpcionesFotosReporte({
+    onEliminar: eliminarFotoInmediata,
+    onAgregar: function () {
+      abrirSelectorFuenteFoto(
+        document.getElementById("editFotosCamara"),
+        document.getElementById("editFotos"),
+      );
+    },
+    puedeAgregar: function () {
+      return cupoFotos() > 0;
+    },
+  });
+
   document.getElementById("evidenciasReporteEdicion").classList.remove("d-none");
 }
 
@@ -202,70 +215,12 @@ function evidenciasReporte() {
   return (incActual.evidencias || []).filter((ev) => ev.tipo_evidencia !== "RESOLUCION");
 }
 
-// Grid de miniaturas con botón × para borrar y un azulejo "+" si aún hay cupo
-function renderEvidenciasReporteEditable() {
-  const cont = document.getElementById("fotosReporte");
-  // Reemplaza el layout de carrusel (flex-columna) que deja montarCarrusel
-  cont.className = "d-flex gap-2 flex-wrap align-items-center";
-  cont.innerHTML = "";
-  const reporte = evidenciasReporte();
-
-  reporte.forEach(function (ev) {
-    const wrap = document.createElement("div");
-    wrap.className = "position-relative";
-
-    const img = document.createElement("img");
-    img.loading = "lazy";
-    img.src = ev.url_completa;
-    img.className = "evidencia-foto evidencia-foto-md rounded";
-    img.alt = "Evidencia";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-danger btn-sm position-absolute top-0 end-0 py-0 px-1";
-    btn.innerHTML = "&times;";
-    btn.addEventListener("click", function () {
-      eliminarFotoInmediata(ev.id_evidencia);
-    });
-
-    wrap.appendChild(img);
-    wrap.appendChild(btn);
-    cont.appendChild(wrap);
-  });
-
-  // Azulejo único: abre el mini-menú Cámara/Galería (mismo botón en Android e iPhone).
-  if (cupoFotos() > 0) {
-    const agregar = document.createElement("button");
-    agregar.type = "button";
-    agregar.className = "foto-agregar foto-agregar-md";
-    agregar.title = "Agregar foto";
-    agregar.innerHTML = '<i class="bi bi-camera" aria-hidden="true"></i>';
-    agregar.addEventListener("click", function () {
-      abrirSelectorFuenteFoto(
-        document.getElementById("editFotosCamara"),
-        document.getElementById("editFotos"),
-      );
-    });
-    cont.appendChild(agregar);
-  } else if (reporte.length === 0) {
-    cont.innerHTML = '<p class="text-muted small mb-0">Sin fotos del reporte.</p>';
-    return;
-  }
-
-  // Recordatorio del límite (ocupa toda la fila del grid con w-100).
-  const aviso = document.createElement("p");
-  aviso.className = "text-muted small mb-0 w-100";
-  aviso.innerHTML =
-    'Máximo 3 fotos. Para subir otra, elimina una con la <i class="bi bi-x-circle" aria-hidden="true"></i>.';
-  cont.appendChild(aviso);
-}
-
-// Elimina una foto del backend y actualiza la galería al instante.
+// Elimina una foto del backend y actualiza el carrusel al instante.
 async function eliminarFotoInmediata(idEv) {
   try {
     await apiFetch("/evidencias/" + idEv, { method: "DELETE" });
     incActual.evidencias = (incActual.evidencias || []).filter((ev) => ev.id_evidencia !== idEv);
-    renderEvidenciasReporteEditable();
+    pintarFotos();
     if (galeriaReporte) galeriaReporte.render();
   } catch (error) {
     mostrarToast("No se pudo eliminar la foto: " + error.message, "error");
@@ -295,7 +250,7 @@ async function subirFotosNuevas(archivos) {
       body: formData,
     });
     incActual.evidencias = actualizada.evidencias || [];
-    renderEvidenciasReporteEditable();
+    pintarFotos();
     galeriaReporte.limpiar();
     mostrarToast("Fotos subidas", "success");
   } catch (error) {

@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -409,6 +409,32 @@ function habilitarFotosResolucion(id) {
   gestionFotosLista = true;
   document.querySelectorAll(".gestion-fotos").forEach((el) => el.classList.remove("d-none"));
   prepararSubidaResolucion(id);
+
+  // El carrusel de resolución gana el botón "×" (borra al instante) y "+ Agregar foto"
+  // (abre el mismo selector de cámara/galería que alimenta la dropzone de abajo).
+  fijarOpcionesFotosResolucion({
+    onEliminar: eliminarFotoResolucion,
+    onAgregar: function () {
+      abrirSelectorFuenteFoto(
+        document.getElementById("inputResolucionCamara"),
+        document.getElementById("inputResolucion"),
+      );
+    },
+    puedeAgregar: function () {
+      return cupoResolucion() > 0;
+    },
+  });
+}
+
+// Elimina una foto de resolución ya subida (backend ya lo permite al técnico responsable).
+async function eliminarFotoResolucion(idEv) {
+  try {
+    await apiFetch("/evidencias/" + idEv, { method: "DELETE" });
+    incActual.evidencias = (incActual.evidencias || []).filter((ev) => ev.id_evidencia !== idEv);
+    pintarFotos();
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
 }
 
 function prepararSubidaResolucion(id) {

@@ -1754,22 +1754,6 @@ html[data-theme="dark"] {
 
 /* Tarjeta de comentario (seguimiento) — adaptada a modo claro/oscuro */
 
-/* Lightbox — visor de evidencias a pantalla completa */
-.evidencia-foto {
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.evidencia-foto:hover {
-  transform: scale(1.04);
-}
-
-/* Miniatura mediana (130px) de evidencia ya subida. */
-.evidencia-foto-md {
-  width: 130px;
-  height: 130px;
-  object-fit: cover;
-}
-
 /* Miniatura pequeña (80px) de la cola de fotos antes de subir. */
 .foto-preview-chica {
   width: 80px;
@@ -2242,13 +2226,6 @@ html[data-theme="dark"] {
 .foto-agregar:hover {
   border-color: var(--admin-primary);
   color: var(--admin-primary);
-}
-
-/* Variante mediana (130px): mismo tamaño que las miniaturas ya subidas, va inline al lado. */
-.foto-agregar-md {
-  width: 130px;
-  height: 130px;
-  font-size: var(--fs-3xl);
 }
 
 /* Mis incidencias — vista de mapa estilo centro de control */
@@ -3045,6 +3022,26 @@ html[data-theme="dark"] .meta-tile-icono {
   right: 8px;
 }
 
+/* Botón "×" sobre la foto actual, solo en modo edición (ciudadano dueño / técnico responsable) */
+.carrusel-fotos-eliminar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15, 23, 42, 0.55);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+}
+
+.carrusel-fotos-eliminar:hover {
+  background: var(--admin-danger);
+}
+
 .carrusel-fotos-dots {
   display: flex;
   justify-content: center;
@@ -3071,125 +3068,71 @@ html[data-theme="dark"] .meta-tile-icono {
   border-radius: 4px;
 }
 
-/* Contenedor de la meta-bar + el grid de columnas (apila en móvil, una sola pantalla en escritorio) */
-#detalleContenido {
+/* Detalle de incidencia: contenido principal (ancho) + sidebar de Acciones (angosto).
+   Sin anclaje a 100vh: la página scrollea normal cuando el contenido no cabe. */
+.detalle-cuerpo {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  gap: 16px;
 }
 
-.detalle-grid {
+.detalle-principal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  min-width: 0;
 }
 
-.detalle-col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Mapa y Fotos van en fila del mismo alto a partir de tablet; en móvil se apilan */
+.detalle-fila-media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: stretch;
 }
 
-/* Mapa más bajo en este layout */
-.detalle-grid .mapa-detalle {
-  height: 200px;
+.detalle-acciones-col {
+  min-width: 0;
 }
 
-/* En tablet aprovechamos el ancho con 2 columnas (en móvil sigue apilado, en desktop pasa a 3) */
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .detalle-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    align-items: start;
+@media (min-width: 768px) {
+  .detalle-fila-media {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detalle-fila-media .mapa-detalle {
+    height: 280px;
+  }
+
+  .detalle-fila-media .carrusel-fotos {
+    height: 280px;
   }
 }
 
+/* A partir de desktop, sidebar de Acciones fijo al lado del contenido principal */
 @media (min-width: 1200px) {
-  /* La pantalla del detalle se ancla al alto de la ventana: no scrollea la página */
-  .detalle-shell {
-    height: 100vh;
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  .detalle-cuerpo {
+    flex-direction: row;
+    align-items: flex-start;
   }
 
-  .detalle-main {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .detalle-main > .container-fluid {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #detalleContenido {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .detalle-meta-bar {
-    flex: 0 0 auto;
-  }
-
-  .detalle-grid {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* Sin columna de gestión (ciudadano / técnico de apoyo): 2 columnas que ocupan todo el ancho */
-  .detalle-grid--2col {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .detalle-col {
-    min-height: 0;
-    overflow-y: auto;
-  }
-
-  /* Panel que crece y scrollea por dentro (fotos, historial) */
-  .detalle-fill {
+  .detalle-principal {
     flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
   }
 
-  .detalle-fill-cuerpo {
-    min-height: 0;
-    overflow-y: auto;
+  .detalle-acciones-col {
+    flex: 0 0 340px;
+    width: 340px;
+    position: sticky;
+    top: 16px;
   }
+}
 
-  /* El carrusel (altura fija) no debe scrollear: se ajusta al espacio en vez de forzar overflow */
-  #fotosReporteBloque .detalle-fill-cuerpo {
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden;
-  }
-
-  /* Solo al contenedor con carrusel montado, NO a #fotosReporte cuando es grid editable */
-  .carrusel-fotos-wrap,
-  #fotosResolucionBloque {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  /* Evita el salto del hover de panel en este layout apretado */
-  .detalle-grid .panel:hover {
-    transform: none;
-  }
+/* Espaciado + separador sutil entre secciones del panel de Acciones */
+.acciones-seccion + .acciones-seccion {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-border);
 }
 
 /* Burbuja flotante que abre el chat */
