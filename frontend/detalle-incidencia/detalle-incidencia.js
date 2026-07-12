@@ -211,10 +211,18 @@ function activarMapaPicker(lat, lng, onCambio) {
   return picker;
 }
 
+// El ciudadano ve "Resuelto" en vez de "Archivado": para él ya está resuelto, archivar es un
+// detalle interno del admin que no le aporta nada y solo genera dudas ("¿no era que se resolvió?").
+function estadoParaVista(estado) {
+  const esCiudadano =
+    usuarioActual && usuarioActual.rol && usuarioActual.rol.nombre_rol === "normal";
+  return esCiudadano && estado === "CERRADO" ? "RESUELTO" : estado;
+}
+
 // animar=true en cambios en vivo o tras una acción propia (no en la carga inicial).
 function pintarBadgeEstado(estado, animar) {
   const el = document.getElementById("detalleEstado");
-  el.innerHTML = badgeEstadoHtml(estado);
+  el.innerHTML = badgeEstadoHtml(estadoParaVista(estado));
   if (animar) destellarBadge(el);
 }
 
@@ -357,7 +365,8 @@ async function cargarHistorial(id) {
 
     cont.innerHTML = "";
     pasos.forEach(function (ev, i) {
-      const cfg = estadoConfig[ev.estado] || estadoConfig.PENDIENTE;
+      const estadoMostrado = estadoParaVista(ev.estado);
+      const cfg = estadoConfig[estadoMostrado] || estadoConfig.PENDIENTE;
       const esActual = i === pasos.length - 1;
 
       const paso = document.createElement("div");
@@ -365,9 +374,9 @@ async function cargarHistorial(id) {
 
       const punto = document.createElement("span");
       punto.className = "historial-paso-punto";
-      punto.style.background = colorEstado(ev.estado);
+      punto.style.background = colorEstado(estadoMostrado);
       // "color" (no solo background) para que el anillo del paso actual (currentColor) tome el mismo tono.
-      punto.style.color = colorEstado(ev.estado);
+      punto.style.color = colorEstado(estadoMostrado);
       paso.appendChild(punto);
 
       const texto = document.createElement("div");
