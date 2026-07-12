@@ -52,8 +52,81 @@
       <section class="auth-slider" id="authSlider">
         <!-- Hero del mapa (se desliza al registrar) -->
         <div class="auth-hero">
-          <!-- Capa separada: el zoom lento (Ken Burns) no interfiere con el deslizamiento del padre -->
-          <div class="auth-hero-img"></div>
+          <!-- Mapa nocturno estilizado (no una foto): cuadrícula + costa + pines de incidencia -->
+          <svg
+            class="auth-hero-map"
+            viewBox="0 0 600 900"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern id="heroGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#22335c" stroke-width="1" />
+              </pattern>
+              <linearGradient id="heroWater" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0d3a66" />
+                <stop offset="100%" stop-color="#0a2647" />
+              </linearGradient>
+            </defs>
+
+            <rect width="600" height="900" fill="#0b1730" />
+            <rect width="600" height="900" fill="url(#heroGrid)" />
+
+            <!-- Manzanas -->
+            <g fill="#1e2f57" opacity="0.7">
+              <rect x="40" y="60" width="60" height="40" rx="3" />
+              <rect x="130" y="80" width="45" height="60" rx="3" />
+              <rect x="60" y="150" width="70" height="45" rx="3" />
+              <rect x="200" y="40" width="50" height="70" rx="3" />
+              <rect x="30" y="230" width="55" height="55" rx="3" />
+              <rect x="150" y="240" width="80" height="40" rx="3" />
+              <rect x="240" y="180" width="45" height="65" rx="3" />
+              <rect x="60" y="330" width="65" height="50" rx="3" />
+              <rect x="180" y="350" width="50" height="70" rx="3" />
+              <rect x="270" y="300" width="60" height="45" rx="3" />
+              <rect x="40" y="440" width="70" height="45" rx="3" />
+              <rect x="150" y="460" width="55" height="60" rx="3" />
+              <rect x="250" y="430" width="45" height="70" rx="3" />
+              <rect x="70" y="560" width="60" height="55" rx="3" />
+              <rect x="190" y="580" width="70" height="40" rx="3" />
+              <rect x="50" y="670" width="55" height="65" rx="3" />
+              <rect x="170" y="700" width="60" height="45" rx="3" />
+              <rect x="90" y="790" width="70" height="50" rx="3" />
+            </g>
+
+            <!-- Costa -->
+            <path
+              d="M430,0 C480,150 380,280 460,420 C520,550 400,650 480,900 L600,900 L600,0 Z"
+              fill="url(#heroWater)"
+            />
+            <path
+              d="M430,0 C480,150 380,280 460,420 C520,550 400,650 480,900"
+              fill="none"
+              stroke="#3b82f6"
+              stroke-width="2"
+              opacity="0.35"
+            />
+
+            <!-- Pines de incidencia (mismos colores que estados.js) -->
+            <g class="hero-pin hero-pin--pendiente" transform="translate(140,180)">
+              <circle class="hero-pin-ping" r="6" />
+              <circle class="hero-pin-dot" r="6" />
+            </g>
+            <g class="hero-pin hero-pin--proceso" transform="translate(260,340)">
+              <circle class="hero-pin-ping" r="6" />
+              <circle class="hero-pin-dot" r="6" />
+            </g>
+            <g class="hero-pin hero-pin--resuelto" transform="translate(100,520)">
+              <circle class="hero-pin-dot" r="6" />
+            </g>
+            <g class="hero-pin hero-pin--pendiente" transform="translate(220,640)">
+              <circle class="hero-pin-dot" r="6" />
+            </g>
+            <g class="hero-pin hero-pin--proceso" transform="translate(150,780)">
+              <circle class="hero-pin-ping" r="6" />
+              <circle class="hero-pin-dot" r="6" />
+            </g>
+          </svg>
           <div class="auth-hero-overlay"></div>
           <div class="auth-hero-content">
             <div class="auth-hero-brand">
