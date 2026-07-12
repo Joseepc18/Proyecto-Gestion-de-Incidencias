@@ -2022,16 +2022,36 @@ html[data-theme="dark"] {
   margin: 0 auto;
 }
 
+/* Aparición suave del formulario de login al cargar la página (detalleFadeIn ya existe y sirve igual) */
+.auth-view-login form#loginForm {
+  animation: detalleFadeIn 0.5s ease both;
+}
+
 /* Hero del mapa (mitad izquierda) */
 .auth-hero {
   position: relative;
   width: 50%;
   flex-shrink: 0;
   z-index: 2;
+  overflow: hidden;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* Capa aparte para el zoom lento: así no pelea con el transform del deslizamiento del padre */
+.auth-hero-img {
+  position: absolute;
+  inset: 0;
   background-image: url("../images/png/banner-login.jpg");
   background-size: cover;
   background-position: center;
-  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  animation: authHeroZoom 20s ease-in-out infinite alternate;
+}
+@keyframes authHeroZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 .auth-hero-overlay {
   position: absolute;
@@ -3192,7 +3212,9 @@ html[data-theme="dark"] .meta-tile-icono {
   .historial-paso--actual .historial-paso-punto,
   #detalleEstado.badge-destello,
   #detallePrioridad.badge-destello,
-  .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia {
+  .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
+  .auth-hero-img,
+  .auth-view-login form#loginForm {
     animation: none !important;
   }
 }
