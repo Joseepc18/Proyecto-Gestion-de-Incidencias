@@ -39,6 +39,17 @@
 
           <div id="mapaMisIncidencias" class="mis-mapa"></div>
 
+          <!-- Pestaña para colapsar/expandir el panel de la lista (solo desktop/tablet) -->
+          <button
+            type="button"
+            class="mis-feed-toggle"
+            id="btnColapsarFeed"
+            aria-label="Ocultar panel de incidencias"
+            title="Ocultar panel de incidencias"
+          >
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+          </button>
+
           <!-- Panel flotante izquierdo: feed de incidencias -->
           <section class="mis-panel mis-feed" id="feedPanel">
             <div class="mis-feed-header">
@@ -75,6 +86,7 @@
                   </ul>
                 </div>
               </div>
+              <p class="mis-feed-contador mb-0 mt-2" id="misFeedContador"></p>
             </div>
 
             <!-- Lista de tarjetas (la llena el JS) -->

@@ -2276,6 +2276,9 @@ html[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   padding: 14px;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .mis-feed-lista {
@@ -2283,6 +2286,48 @@ html[data-theme="dark"] {
   /* Respiro entre las tarjetas y el scrollbar nativo, que si no queda pegado al borde */
   padding-right: 6px;
   scrollbar-gutter: stable;
+}
+
+.mis-feed-contador {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--admin-muted);
+}
+
+/* Pestaña para ocultar/mostrar el panel de la lista (solo desktop/tablet: en móvil ya se apila) */
+.mis-feed-toggle {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mis-feed-toggle {
+    position: absolute;
+    top: 16px;
+    left: 336px;
+    z-index: 1101;
+    width: 26px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--admin-border);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-shadow: var(--admin-shadow);
+    transition: left 0.2s ease;
+  }
+
+  .mis-mapa-main.mis-feed-colapsado .mis-feed-toggle {
+    left: 16px;
+  }
+
+  .mis-mapa-main.mis-feed-colapsado .mis-feed {
+    transform: translateX(-40px);
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 /* Paginación de flechas (‹ ›) del feed de Mis Incidencias: evita el scroll del helper de números */
@@ -2376,6 +2421,28 @@ html[data-theme="dark"] {
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Pin de la incidencia seleccionada en el feed: anillo que "respira", sin mover el ancla del pin
+   (solo box-shadow, que no afecta el tamaño real del icono ni su punto sobre el mapa). */
+.mapa-pin-wrapper--seleccionado .mapa-pin-incidencia {
+  animation: mapaPinPulso 1.6s ease-in-out infinite;
+}
+
+@keyframes mapaPinPulso {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 0 0 4px #fff,
+      0 0 0 7px var(--admin-primary);
+  }
+  50% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      0 0 0 4px #fff,
+      0 0 0 10px var(--admin-primary);
+  }
 }
 
 /* Toggle satélite / callejero del mapa */
@@ -3124,7 +3191,8 @@ html[data-theme="dark"] .meta-tile-icono {
   .detalle-fade-in,
   .historial-paso--actual .historial-paso-punto,
   #detalleEstado.badge-destello,
-  #detallePrioridad.badge-destello {
+  #detallePrioridad.badge-destello,
+  .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia {
     animation: none !important;
   }
 }

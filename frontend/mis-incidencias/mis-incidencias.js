@@ -43,6 +43,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.querySelector(".mis-mapa-main").classList.remove("mis-ver-detalle");
   });
 
+  // Colapsar/expandir el panel de la lista para ver el mapa completo (solo desktop/tablet).
+  const btnColapsar = document.getElementById("btnColapsarFeed");
+  const mapaMain = document.querySelector(".mis-mapa-main");
+  btnColapsar.addEventListener("click", function () {
+    const colapsado = mapaMain.classList.toggle("mis-feed-colapsado");
+    btnColapsar.innerHTML = colapsado
+      ? '<i class="bi bi-chevron-right" aria-hidden="true"></i>'
+      : '<i class="bi bi-chevron-left" aria-hidden="true"></i>';
+    btnColapsar.setAttribute(
+      "aria-label",
+      colapsado ? "Mostrar panel de incidencias" : "Ocultar panel de incidencias",
+    );
+    btnColapsar.title = colapsado ? "Mostrar panel de incidencias" : "Ocultar panel de incidencias";
+  });
+
   mapa = crearMapaIncidencias("mapaMisIncidencias");
 
   cargarLista();
@@ -70,6 +85,10 @@ async function cargarLista() {
 
     incidenciasActuales = incidencias;
 
+    const total = respuesta.total || 0;
+    document.getElementById("misFeedContador").textContent =
+      total === 1 ? "1 incidencia" : total + " incidencias";
+
     if (incidencias.length === 0) {
       const hayFiltro = busqueda || filtroEstado;
       contenedor.innerHTML = hayFiltro
@@ -94,7 +113,6 @@ async function cargarLista() {
     // Paginación simple de flechas (‹ ›): no requiere hacer scroll hacia los números.
     const current = respuesta.current_page || 1;
     const last = respuesta.last_page || 1;
-    const total = respuesta.total || 0;
     renderFlechasPaginacion(current, last, total, respuesta.from || 0, respuesta.to || 0);
 
     refrescarMapa();
