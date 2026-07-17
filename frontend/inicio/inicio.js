@@ -86,7 +86,8 @@ async function renderDashboard(datos, silencioso) {
   if (hayChart) {
     try {
       pintarGraficas(datos);
-    } catch {
+    } catch (err) {
+      console.error(err);
       if (!silencioso) mostrarToast("No se pudieron dibujar las gráficas.", "error");
     }
   } else if (!silencioso) {
@@ -97,7 +98,8 @@ async function renderDashboard(datos, silencioso) {
   if (hayLeaflet) {
     try {
       await pintarMapa(datos.por_provincia || []);
-    } catch {
+    } catch (err) {
+      console.error(err);
       if (!silencioso) mostrarToast("No se pudo dibujar el mapa.", "error");
     }
   } else if (!silencioso) {
@@ -180,6 +182,13 @@ function pintarKpis(totales) {
   document.getElementById("kpiResueltas").textContent = Number(totales.resueltas || 0);
 }
 
+// Crea una gráfica destruyendo antes cualquiera ya montada en ese lienzo (idempotente al repintar).
+function nuevaGrafica(idCanvas, config) {
+  const canvas = document.getElementById(idCanvas);
+  Chart.getChart(canvas)?.destroy();
+  return new Chart(canvas, config);
+}
+
 // Crea (o recrea) las gráficas a partir de las métricas cacheadas.
 function pintarGraficas(datos) {
   graficos.forEach((g) => g.destroy());
@@ -199,10 +208,12 @@ function pintarGraficas(datos) {
   const porTipo = (datos.por_tipo || []).filter((t) => Number(t.total || 0) > 0);
   const prioridad = datos.por_prioridad || {};
 
-  graficos.push(crearDonaEstado(document.getElementById("graficoEstado"), totales));
+  const canvasEstado = document.getElementById("graficoEstado");
+  Chart.getChart(canvasEstado)?.destroy();
+  graficos.push(crearDonaEstado(canvasEstado, totales));
 
   graficos.push(
-    new Chart(document.getElementById("graficoTipo"), {
+    nuevaGrafica("graficoTipo", {
       type: "bar",
       data: {
         labels: porTipo.map((t) => t.nombre_tipo_incidencia),
@@ -234,7 +245,7 @@ function pintarGraficas(datos) {
   );
 
   graficos.push(
-    new Chart(document.getElementById("graficoPrioridad"), {
+    nuevaGrafica("graficoPrioridad", {
       type: "doughnut",
       data: {
         labels: ["Alta", "Media", "Baja", "Sin asignar"],
@@ -263,7 +274,7 @@ function pintarGraficas(datos) {
 
   const conPromedio = porTipo.filter((t) => t.promedio_dias_resolucion !== null);
   graficos.push(
-    new Chart(document.getElementById("graficoPromedio"), {
+    nuevaGrafica("graficoPromedio", {
       type: "bar",
       data: {
         labels: conPromedio.map((t) => t.nombre_tipo_incidencia),
@@ -291,7 +302,7 @@ function pintarGraficas(datos) {
     conteoMes[m.mes] = Number(m.total || 0);
   });
   graficos.push(
-    new Chart(document.getElementById("graficoMes"), {
+    nuevaGrafica("graficoMes", {
       type: "line",
       data: {
         labels: meses.map((m) => m.etiqueta),
@@ -365,7 +376,8 @@ async function pintarMapa(porProvincia) {
       const resp = await fetch("../assets/geo/ecuador-provincias.geojson");
       geojsonProv = await resp.json();
       acercarGalapagos(geojsonProv);
-    } catch {
+    } catch (err) {
+      console.error(err);
       mostrarToast("No se pudo cargar el mapa de provincias.", "error");
       return;
     }
@@ -388,6 +400,12 @@ async function pintarMapa(porProvincia) {
   }
 
   if (!mapaProv) {
+    // Si perdimos la referencia al volver a la página pero el contenedor sigue "inicializado", lo reseteamos antes de recrear.
+    const cont = document.getElementById("mapaProvincias");
+    if (cont._leaflet_id) {
+      cont._leaflet_id = null;
+      cont.innerHTML = "";
+    }
     mapaProv = L.map("mapaProvincias", {
       attributionControl: false,
       scrollWheelZoom: true,

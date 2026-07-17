@@ -73,7 +73,8 @@ async function cargarPanel() {
   // Mapa y gráficas van por separado: el fallo de una parte no debe borrar la otra.
   try {
     pintarMapa(activas);
-  } catch {
+  } catch (err) {
+    console.error(err);
     mostrarToast("No se pudo dibujar el mapa.", "error");
   }
 
@@ -81,7 +82,8 @@ async function cargarPanel() {
   if (hayChart) {
     try {
       pintarGraficas(datos);
-    } catch {
+    } catch (err) {
+      console.error(err);
       mostrarToast("No se pudieron dibujar las gráficas.", "error");
     }
   } else {
@@ -147,8 +149,15 @@ function pintarLista(activas) {
 
 // Mapa con un pin por incidencia activa (color según estado); el clic lleva al detalle.
 function pintarMapa(activas) {
+  const cont = document.getElementById("mapaAsignadas");
+  // El panel se repinta en cada evento de tiempo real: reseteamos el contenedor para no chocar con "Map container is already initialized".
+  if (cont._leaflet_id) {
+    cont._leaflet_id = null;
+    cont.innerHTML = "";
+  }
+
   if (!activas.length) {
-    document.getElementById("mapaAsignadas").innerHTML =
+    cont.innerHTML =
       '<p class="text-muted small p-3 mb-0">No hay incidencias activas que ubicar.</p>';
     return;
   }
@@ -188,11 +197,15 @@ function pintarGraficas(datos) {
 
   const totales = datos.totales || {};
 
-  graficos.push(crearDonaEstado(document.getElementById("graficoEstado"), totales));
+  const canvasEstado = document.getElementById("graficoEstado");
+  Chart.getChart(canvasEstado)?.destroy();
+  graficos.push(crearDonaEstado(canvasEstado, totales));
 
   const semanas = datos.por_semana || [];
+  const canvasSemana = document.getElementById("graficoSemana");
+  Chart.getChart(canvasSemana)?.destroy();
   graficos.push(
-    new Chart(document.getElementById("graficoSemana"), {
+    new Chart(canvasSemana, {
       type: "bar",
       data: {
         labels: semanas.map((s) => etiquetaSemana(s.semana)),
