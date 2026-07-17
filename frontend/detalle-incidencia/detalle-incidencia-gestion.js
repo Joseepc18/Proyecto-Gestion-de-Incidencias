@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -28,6 +28,7 @@ function gestionAlCargarDetalle(id) {
   habilitarGestionEstado(id);
   prepararReaperturaAdmin(id);
   prepararAtencionAdmin(id);
+  prepararReclasificacion(id);
 }
 
 // Hook del núcleo: al cargar las asignaciones. Habilita al responsable y pinta las listas del admin.
@@ -249,6 +250,91 @@ function refrescarGestionSegunReclamo() {
   marcarEstadoActivo();
   marcarPrioridadActiva();
   renderAsignaciones(ultimasAsignaciones, incActual.id_incidencia);
+  marcarReclasificacionSegunReclamo();
+}
+
+// Catálogos tipo→subtipo para reclasificar (solo admin); instancia propia, sin provincia/ciudad.
+let catalogosGestion = null;
+
+// Carga los catálogos, preselecciona el tipo/subtipo actual y cablea el botón de guardar.
+async function prepararReclasificacion(id) {
+  catalogosGestion = crearCatalogosIncidencia({ tipo: "gestionTipo", subtipo: "gestionSubtipo" });
+  try {
+    await catalogosGestion.cargar();
+  } catch (error) {
+    mostrarToast("No se pudieron cargar los catálogos: " + error.message, "error");
+    return;
+  }
+  preseleccionarReclasificacion();
+  document.getElementById("btnGuardarReclasificacion").addEventListener("click", function () {
+    guardarReclasificacion(id);
+  });
+  marcarReclasificacionSegunReclamo();
+}
+
+// Deja los selects en el tipo/subtipo actual de la incidencia.
+function preseleccionarReclasificacion() {
+  const idTipo =
+    incActual.subtipo && incActual.subtipo.tipo ? incActual.subtipo.tipo.id_tipo_incidencia : "";
+  document.getElementById("gestionTipo").value = idTipo || "";
+  catalogosGestion.poblarSubtipos(idTipo);
+  if (incActual.subtipo) {
+    document.getElementById("gestionSubtipo").value = incActual.subtipo.id_subtipo_incidencia;
+  }
+}
+
+// Reclasificar respeta el mismo candado que estado/prioridad: solo el dueño del reclamo y no congelada.
+function marcarReclasificacionSegunReclamo() {
+  const seccion = document.getElementById("reclasificacionSeccion");
+  if (!seccion) return;
+  const habilitada = soyDuenoDelReclamo() && !gestionBloqueada();
+  document.getElementById("gestionTipo").disabled = !habilitada;
+  document.getElementById("gestionSubtipo").disabled =
+    !habilitada || !document.getElementById("gestionTipo").value;
+  document.getElementById("btnGuardarReclasificacion").disabled = !habilitada;
+}
+
+// Envía el nuevo subtipo (reasignarlo cambia el tipo) con el mismo patrón que la prioridad.
+async function guardarReclasificacion(id) {
+  const idSubtipo = document.getElementById("gestionSubtipo").value;
+  if (!idSubtipo) {
+    mostrarToast("Selecciona un subtipo", "warning");
+    return;
+  }
+  if (incActual.subtipo && String(incActual.subtipo.id_subtipo_incidencia) === String(idSubtipo)) {
+    return;
+  }
+
+  const btn = document.getElementById("btnGuardarReclasificacion");
+  const spinner = document.getElementById("reclasificacionSpinner");
+  btn.disabled = true;
+  spinner.classList.remove("d-none");
+  try {
+    const actualizada = await apiFetch("/incidencias/" + id, {
+      method: "PUT",
+      body: JSON.stringify({ id_subtipo_incidencia: idSubtipo }),
+    });
+    incActual.subtipo = actualizada.subtipo;
+    incActual.id_subtipo_incidencia = actualizada.id_subtipo_incidencia;
+    repintarTipoSubtipo();
+    mostrarToast("Reclasificación guardada", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add("d-none");
+  }
+}
+
+// Repinta los textos de solo lectura de tipo/subtipo tras reclasificar (sin recargar).
+function repintarTipoSubtipo() {
+  const tipo =
+    incActual.subtipo && incActual.subtipo.tipo
+      ? incActual.subtipo.tipo.nombre_tipo_incidencia
+      : "—";
+  const subtipo = incActual.subtipo ? incActual.subtipo.nombre_subtipo_incidencia : "—";
+  document.getElementById("detalleTipoTexto").textContent = tipo;
+  document.getElementById("detalleSubtipoTexto").textContent = subtipo;
 }
 
 // Recalcula "vencido" en el cliente desde el último latido; el servidor revalida al liberar (fuente de verdad).

@@ -40,6 +40,13 @@ function crearCatalogosIncidencia(ids) {
     estado.tipos = await apiFetch("/catalogos/tipos-incidencia");
     agregarOpciones(el(ids.tipo), estado.tipos, "id_tipo_incidencia", "nombre_tipo_incidencia");
 
+    el(ids.tipo).addEventListener("change", function () {
+      poblarSubtipos(parseInt(this.value));
+    });
+
+    // Provincia/ciudad son opcionales: el panel de gestión solo reclasifica tipo/subtipo.
+    if (!ids.provincia) return;
+
     estado.ciudades = await apiFetch("/catalogos/ciudades");
     const provincias = await apiFetch("/catalogos/provincias");
     agregarOpciones(el(ids.provincia), provincias, "id_provincia", "nombre_provincia");
@@ -52,9 +59,6 @@ function crearCatalogosIncidencia(ids) {
       })
       .catch(function () {});
 
-    el(ids.tipo).addEventListener("change", function () {
-      poblarSubtipos(parseInt(this.value));
-    });
     el(ids.provincia).addEventListener("change", function () {
       poblarCiudades(parseInt(this.value));
     });
