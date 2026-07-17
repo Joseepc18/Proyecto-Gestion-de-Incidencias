@@ -4,6 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -15,10 +16,13 @@ class IncidenciaEliminada implements ShouldBroadcast
 
     public function __construct(public int $idIncidencia) {}
 
-    // Tablero de presencia de administradores; la autorización vive en routes/channels.php.
+    // Tablero de admins (quita la fila) + canal de la incidencia (saca al que tiene el detalle abierto).
     public function broadcastOn(): array
     {
-        return [new PresenceChannel('tablero')];
+        return [
+            new PresenceChannel('tablero'),
+            new PrivateChannel('incidencia.updates.'.$this->idIncidencia),
+        ];
     }
 
     // Nombre corto del evento; el front escucha ".IncidenciaEliminada".
