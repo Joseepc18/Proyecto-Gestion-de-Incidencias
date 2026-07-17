@@ -8,6 +8,8 @@ use App\Events\IncidenciaActualizada;
 use App\Events\IncidenciaCambioEstado;
 use App\Events\IncidenciaCreada;
 use App\Events\IncidenciaEliminada;
+use App\Events\IncidenciaPurgada;
+use App\Events\IncidenciaRestaurada;
 use App\Events\ReclamoCambiado;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
@@ -221,6 +223,8 @@ class IncidenciaController extends Controller
         $incidencia = Incidencia::onlyTrashed()->findOrFail($id);
         $incidencia->restore();
 
+        broadcast(new IncidenciaRestaurada($incidencia->id_incidencia));
+
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
 
@@ -248,6 +252,8 @@ class IncidenciaController extends Controller
                     BitacoraError::registrar($request->user(), 'ARCHIVO', 'IncidenciaController@purgarIncidencia', 'no se pudo borrar '.$ruta);
                 }
             }
+
+            broadcast(new IncidenciaPurgada($id));
 
             return ['message' => 'Incidencia eliminada definitivamente'];
         } catch (\Throwable $e) {
