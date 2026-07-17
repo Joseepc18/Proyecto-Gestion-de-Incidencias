@@ -252,9 +252,33 @@
                         id="dfRecovery"
                         class="df-recovery list-unstyled font-monospace mb-0"
                       ></ul>
+                      <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button
+                          class="btn btn-outline-secondary btn-sm"
+                          type="button"
+                          id="btnDfCopiar"
+                        >
+                          <i class="bi bi-clipboard" aria-hidden="true"></i> Copiar
+                        </button>
+                        <button
+                          class="btn btn-outline-secondary btn-sm"
+                          type="button"
+                          id="btnDfDescargar"
+                        >
+                          <i class="bi bi-download" aria-hidden="true"></i> Descargar
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <form id="dfConfirmForm" class="row g-2 align-items-end mt-2" novalidate>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="dfGuardadosCheck" />
+                        <label class="form-check-label" for="dfGuardadosCheck">
+                          He guardado mis códigos de recuperación en un lugar seguro.
+                        </label>
+                      </div>
+                    </div>
                     <div class="col-auto">
                       <label class="form-label" for="dfConfirmCode">Código de la app</label>
                       <input
@@ -267,7 +291,7 @@
                       />
                     </div>
                     <div class="col-auto">
-                      <button class="btn btn-primary" type="submit">
+                      <button class="btn btn-primary" type="submit" id="btnDfConfirmar" disabled>
                         <i class="bi bi-check-lg" aria-hidden="true"></i> Confirmar
                       </button>
                     </div>
