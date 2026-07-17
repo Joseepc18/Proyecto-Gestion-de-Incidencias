@@ -487,6 +487,32 @@
                         </div>
                       </div>
 
+                      <!-- Reclasificar tipo/subtipo (solo admin dueño del reclamo): reasignar el subtipo cambia el tipo -->
+                      <div class="acciones-seccion solo-admin d-none" id="reclasificacionSeccion">
+                        <label class="form-label small fw-semibold mb-2">Reclasificar</label>
+                        <select id="gestionTipo" class="form-select form-select-sm mb-2">
+                          <option value="">Selecciona un tipo…</option>
+                        </select>
+                        <select
+                          id="gestionSubtipo"
+                          class="form-select form-select-sm mb-2"
+                          disabled
+                        >
+                          <option value="">Primero selecciona un tipo</option>
+                        </select>
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm w-100"
+                          id="btnGuardarReclasificacion"
+                        >
+                          <span
+                            id="reclasificacionSpinner"
+                            class="spinner-border spinner-border-sm d-none me-1"
+                          ></span>
+                          <i class="bi bi-tag me-1" aria-hidden="true"></i> Guardar reclasificación
+                        </button>
+                      </div>
+
                       <!-- Atención administrativa (solo admin): estado del candado v2 + archivar. Reclamar/Liberar están arriba. -->
                       <div class="acciones-seccion solo-admin d-none">
                         <label class="form-label small fw-semibold mb-2"
