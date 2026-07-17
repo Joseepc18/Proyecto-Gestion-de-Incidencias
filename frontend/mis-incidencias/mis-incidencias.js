@@ -202,7 +202,11 @@ function suscribirIncidencias() {
   vigentes.forEach(function (id) {
     if (canalesSuscritos.has(id)) return;
     canalesSuscritos.add(id);
-    echo.private("incidencia.updates." + id).listen(".IncidenciaActualizada", actualizarEnVivo);
+    echo
+      .private("incidencia.updates." + id)
+      .listen(".IncidenciaActualizada", actualizarEnVivo)
+      // Si eliminan una incidencia visible, recargamos la lista para quitar su tarjeta, contador y pin.
+      .listen(".IncidenciaEliminada", cargarLista);
   });
 }
 
