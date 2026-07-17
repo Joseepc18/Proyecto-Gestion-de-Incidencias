@@ -1,7 +1,7 @@
 // inicio.js — Protege el panel, muestra el dashboard del admin y maneja logout.
 
 // Guarda las gráficas creadas para poder destruirlas y repintarlas al cambiar de tema.
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, ejesChart */
+/* global apiFetchReintentar, aplicarMenuRol, tienePermiso, mostrarToast, Chart, L, requerirSesion, cablearLogout, inicioSegunRol, asegurarLibreria, colorVar, normalizarTexto, observarCambioDeTema, aplicarTemaChart, crearDonaEstado, ejesChart, obtenerEcho */
 
 let graficos = [];
 // Guarda las métricas ya cargadas para repintar sin volver a pedirlas al servidor.
@@ -47,36 +47,49 @@ document.addEventListener("DOMContentLoaded", async function () {
   await cargarDashboard();
 });
 
-// Pide las métricas al backend y pinta KPIs + gráficas + tabla + mapa.
+// Carga inicial: pide las métricas (con reintentos ante micro-cortes) y pinta el panel.
 async function cargarDashboard() {
   let datos;
   try {
-    datos = await apiFetch("/dashboard/metricas");
+    datos = await apiFetchReintentar("/dashboard/metricas", {}, 2);
   } catch {
-    mostrarToast("No se pudieron cargar las métricas del panel.", "error");
+    mostrarErrorDashboard();
     return;
   }
 
+  quitarErrorDashboard();
+  await renderDashboard(datos, false);
+  conectarTablero();
+}
+
+// Pinta KPIs + gráficas + mapa a partir de las métricas. En modo silencioso (refresco en vivo) no muestra toasts de error.
+async function renderDashboard(datos, silencioso) {
   metricasCache = datos;
   const totales = datos.totales || {};
 
+  const vacio = document.getElementById("inicioVacio");
+  const panel = document.getElementById("adminDashboard");
+
+  // Sin datos: mostramos el estado vacío y ocultamos el panel (también al pasar de tener datos a cero en vivo).
   if (Number(totales.total || 0) === 0) {
-    document.getElementById("inicioVacio").classList.remove("d-none");
+    vacio.classList.remove("d-none");
+    panel.classList.add("d-none");
     return;
   }
 
+  vacio.classList.add("d-none");
   pintarKpis(totales);
-  document.getElementById("adminDashboard").classList.remove("d-none");
+  panel.classList.remove("d-none");
 
-  // Gráficas y mapa se dibujan por separado: el fallo de una parte no debe borrar la otra
+  // Gráficas y mapa se dibujan por separado: el fallo de una parte no debe borrar la otra.
   const hayChart = await asegurarLibreria("Chart", "../assets/vendors/chartjs/chart.umd.min.js");
   if (hayChart) {
     try {
       pintarGraficas(datos);
     } catch {
-      mostrarToast("No se pudieron dibujar las gráficas.", "error");
+      if (!silencioso) mostrarToast("No se pudieron dibujar las gráficas.", "error");
     }
-  } else {
+  } else if (!silencioso) {
     mostrarToast("No se pudieron cargar las gráficas.", "error");
   }
 
@@ -85,11 +98,78 @@ async function cargarDashboard() {
     try {
       await pintarMapa(datos.por_provincia || []);
     } catch {
-      mostrarToast("No se pudo dibujar el mapa.", "error");
+      if (!silencioso) mostrarToast("No se pudo dibujar el mapa.", "error");
     }
-  } else {
+  } else if (!silencioso) {
     mostrarToast("No se pudo cargar el mapa.", "error");
   }
+}
+
+// Muestra un aviso con botón "Reintentar" en vez de dejar el panel en blanco tras agotar los reintentos.
+function mostrarErrorDashboard() {
+  mostrarToast("No se pudieron cargar las métricas del panel.", "error");
+  let aviso = document.getElementById("dashboardError");
+  if (!aviso) {
+    aviso = document.createElement("section");
+    aviso.id = "dashboardError";
+    aviso.className = "row g-3 mt-1";
+    aviso.innerHTML =
+      '<div class="col-12"><article class="metric-card">' +
+      '<p class="metric-label mb-2">No se pudo cargar el panel</p>' +
+      '<p class="mb-3 text-muted">Revisa tu conexión e inténtalo de nuevo.</p>' +
+      '<button type="button" class="btn btn-primary" id="btnReintentarDashboard">Reintentar</button>' +
+      "</article></div>";
+    document.getElementById("inicioVacio").insertAdjacentElement("beforebegin", aviso);
+    aviso.querySelector("#btnReintentarDashboard").addEventListener("click", cargarDashboard);
+  }
+  aviso.classList.remove("d-none");
+}
+
+// Quita el aviso de error cuando una carga posterior sí tiene éxito.
+function quitarErrorDashboard() {
+  const aviso = document.getElementById("dashboardError");
+  if (aviso) aviso.classList.add("d-none");
+}
+
+// Timer del debounce y bandera de refresco aplazado mientras la pestaña está oculta.
+let refrescoTimer = null;
+let refrescoPendiente = false;
+
+// Se une al canal de presencia 'tablero' y agenda un refresco al detectar cambios de incidencias.
+function conectarTablero() {
+  const echo = obtenerEcho();
+  if (!echo) return;
+  echo
+    .join("tablero")
+    .listen(".IncidenciaCreada", programarRefresco)
+    .listen(".IncidenciaActualizada", programarRefresco)
+    .listen(".IncidenciaEliminada", programarRefresco);
+
+  // Al volver a la pestaña, si hubo cambios mientras estaba oculta, refrescamos una vez.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && refrescoPendiente) programarRefresco();
+  });
+}
+
+// Junta ráfagas de eventos en un solo refetch (debounce) y repinta desde caché sin recrear todo de cero.
+function programarRefresco() {
+  clearTimeout(refrescoTimer);
+  refrescoTimer = setTimeout(async function () {
+    // En segundo plano no repintamos: dejamos la marca para refrescar al volver a la pestaña.
+    if (document.hidden) {
+      refrescoPendiente = true;
+      return;
+    }
+    refrescoPendiente = false;
+    let datos;
+    try {
+      // Refresco de fondo: reintenta en silencio y, si aun así falla, no molesta con un toast.
+      datos = await apiFetchReintentar("/dashboard/metricas", { sinSpinner: true }, 2);
+    } catch {
+      return;
+    }
+    await renderDashboard(datos, true);
+  }, 3500);
 }
 
 // Rellena las 4 tarjetas KPI con los conteos globales.
