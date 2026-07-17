@@ -399,7 +399,7 @@ function prepararAtencionAdmin(id) {
   btnArchivar.addEventListener("click", async function () {
     const ok = await confirmar({
       titulo: "Cerrar / Archivar incidencia",
-      mensaje: "Pasará a Archivado y quedará de solo lectura para todos.",
+      mensaje: "Pasará a Cerrada y quedará de solo lectura para todos.",
       textoConfirmar: "Archivar",
     });
     if (!ok) return;

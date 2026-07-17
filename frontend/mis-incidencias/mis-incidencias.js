@@ -91,17 +91,26 @@ async function cargarLista() {
 
     if (incidencias.length === 0) {
       const hayFiltro = busqueda || filtroEstado;
+      // El técnico no reporta, se le asignan incidencias: el vacío sin filtro cambia según el rol.
+      const vacioSinFiltro =
+        rolNombre() === "normal"
+          ? estadoVacioHtml(
+              "bi-clipboard-check",
+              "Aún no tienes incidencias",
+              "Cuando reportes una incidencia aparecerá aquí.",
+            )
+          : estadoVacioHtml(
+              "bi-inbox",
+              "Sin asignaciones",
+              "Cuando te asignen una incidencia aparecerá aquí.",
+            );
       contenedor.innerHTML = hayFiltro
         ? estadoVacioHtml(
             "bi-search",
             "Sin coincidencias",
             "Ninguna incidencia coincide con la búsqueda o el filtro.",
           )
-        : estadoVacioHtml(
-            "bi-clipboard-check",
-            "Aún no tienes incidencias",
-            "Cuando reportes una incidencia aparecerá aquí.",
-          );
+        : vacioSinFiltro;
       document.getElementById("paginacionMis").innerHTML = "";
       refrescarMapa();
       suscribirIncidencias();

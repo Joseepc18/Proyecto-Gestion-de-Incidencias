@@ -33,7 +33,7 @@ enum EstadoIncidencia: string
             self::Pendiente => 'Pendiente',
             self::EnProceso => 'En proceso',
             self::Resuelto => 'Resuelto',
-            self::Cerrado => 'Archivado',
+            self::Cerrado => 'Cerrada',
         };
     }
 }

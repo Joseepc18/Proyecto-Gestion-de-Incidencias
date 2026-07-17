@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Gate;
 
 class EliminarIncidenciaRequest extends FormRequest
 {
-    // Autoriza antes de validar: admin siempre; el autor solo si PENDIENTE.
+    // Autoriza antes de validar: solo se elimina en estado PENDIENTE (para todos los roles).
     public function authorize(): bool
     {
         Gate::authorize('eliminar', $this->route('incidencia'));
