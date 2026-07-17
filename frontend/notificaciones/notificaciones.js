@@ -1,6 +1,6 @@
 // notificaciones.js — Bandeja completa (NO confundir con assets/js/notificaciones.js, la campana).
 
-/* global apiFetch, aplicarMenuRol, mostrarToast, rutaDetalleIncidencia, tiempoRelativo, estadoVacioHtml, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, rutaDetalleIncidencia, tiempoRelativo, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let notificaciones = [];
@@ -221,6 +221,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     const abrirChat = item.dataset.tipo === "COMENTARIO";
     window.location.href = rutaDetalleIncidencia(item.dataset.incidencia, rol, abrirChat);
   });
+
+  // Bandeja en vivo: refresca la lista cuando llega una notificación nueva por WebSocket.
+  const echo = obtenerEcho();
+  if (echo) {
+    echo.private("App.Models.User." + usuarioActual.id).notification(function () {
+      cargar();
+    });
+  }
 
   cargar();
 });
