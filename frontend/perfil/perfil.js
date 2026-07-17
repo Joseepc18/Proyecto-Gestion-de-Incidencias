@@ -195,6 +195,12 @@ function iniciarDosFactor(usuario) {
   document
     .getElementById("btnDfDisableCancelar")
     .addEventListener("click", () => pintarEstadoDosFactor(true));
+  document.getElementById("btnDfCopiar").addEventListener("click", copiarCodigosRecuperacion);
+  document.getElementById("btnDfDescargar").addEventListener("click", descargarCodigosRecuperacion);
+  // Sin confirmar que se guardaron los códigos no se puede terminar la activación.
+  document.getElementById("dfGuardadosCheck").addEventListener("change", (e) => {
+    document.getElementById("btnDfConfirmar").disabled = !e.target.checked;
+  });
   document.getElementById("dfConfirmForm").addEventListener("submit", confirmarDosFactor);
   document.getElementById("dfDisableForm").addEventListener("submit", desactivarDosFactor);
 }
@@ -218,6 +224,41 @@ function pintarEstadoDosFactor(activa) {
   document.getElementById("dfDisableForm").classList.add("d-none");
   document.getElementById("dfConfirmCode").value = "";
   document.getElementById("dfDisableCode").value = "";
+  reiniciarGuardadoCodigos();
+}
+
+// Vuelve el flujo de activación a "códigos sin guardar": desmarca y bloquea confirmar.
+function reiniciarGuardadoCodigos() {
+  document.getElementById("dfGuardadosCheck").checked = false;
+  document.getElementById("btnDfConfirmar").disabled = true;
+}
+
+// Junta los códigos de recuperación de la lista en texto (uno por línea).
+function textoCodigosRecuperacion() {
+  return Array.from(document.querySelectorAll("#dfRecovery li"))
+    .map((li) => li.textContent)
+    .join("\n");
+}
+
+// Copia los códigos al portapapeles; son sensibles, no salen a ningún otro lado.
+async function copiarCodigosRecuperacion() {
+  try {
+    await navigator.clipboard.writeText(textoCodigosRecuperacion());
+    mostrarToast("Códigos copiados.", "success");
+  } catch {
+    mostrarToast("No se pudieron copiar los códigos.", "error");
+  }
+}
+
+// Descarga los códigos como .txt local mediante un Blob, sin enviarlos al servidor.
+function descargarCodigosRecuperacion() {
+  const blob = new Blob([textoCodigosRecuperacion() + "\n"], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = "codigos-recuperacion.txt";
+  enlace.click();
+  URL.revokeObjectURL(url);
 }
 
 // Paso 1: genera el secreto y muestra el QR + los códigos de recuperación.
@@ -237,6 +278,7 @@ async function activarDosFactor() {
       lista.appendChild(li);
     });
 
+    reiniciarGuardadoCodigos();
     btn.classList.add("d-none");
     document.getElementById("dfSetup").classList.remove("d-none");
     document.getElementById("dfConfirmCode").focus();
