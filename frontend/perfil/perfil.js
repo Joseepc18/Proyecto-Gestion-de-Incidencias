@@ -1,7 +1,7 @@
-// perfil.js — Edición del perfil propio: nombre, correo, contraseña y foto.
+// perfil.js — Edición del perfil propio: nombre y foto inline; correo y contraseña por modal.
 
 // URL firmada de la foto guardada en el servidor (temporal); null si no tiene.
-/* global apiFetch, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar, OPCIONES_COMPRESION, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar, OPCIONES_COMPRESION, requerirSesion, cablearLogout, abrirModal */
 
 let fotoActual = null;
 // Foto nueva ya comprimida lista para subir; null si no se cambió.
@@ -10,8 +10,12 @@ let fotoSeleccionada = null;
 let quitarFoto = false;
 // objectURL del preview para liberarlo al reemplazarlo.
 let previewUrl = null;
-// Correo actual confirmado; sirve para saber si el usuario está intentando cambiarlo.
+// Nombre confirmado; los modales de correo/contraseña lo reenvían sin cambio (el backend lo exige).
+let nombreOriginal = "";
+// Correo confirmado; sirve de valor "sin cambio" para los modales.
 let emailOriginal = "";
+// ¿El usuario tiene 2FA activo? Los modales piden el código solo si es true.
+let dosFactorActivo = false;
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuario = await requerirSesion();
@@ -20,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   document.getElementById("perfilNombre").value = usuario.name;
   document.getElementById("perfilEmail").value = usuario.email;
+  nombreOriginal = usuario.name;
   emailOriginal = usuario.email;
   mostrarAvisoPendiente(usuario.email_pendiente || null);
 
@@ -37,6 +42,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("btnQuitarFoto").addEventListener("click", quitarLaFoto);
 
   document.getElementById("formPerfil").addEventListener("submit", guardarPerfil);
+  document.getElementById("btnCambiarCorreo").addEventListener("click", abrirModalCorreo);
+  document.getElementById("btnCambiarPassword").addEventListener("click", abrirModalPassword);
 
   iniciarDosFactor(usuario);
 });
@@ -92,44 +99,16 @@ function mostrarAvatar(src) {
   }
 }
 
-// Guarda los cambios. Usa POST + _method=PUT porque PHP no parsea multipart en PUT.
+// Guarda nombre y foto (no son sensibles: el correo va sin cambio, así el backend no pide contraseña).
 async function guardarPerfil(e) {
   e.preventDefault();
   const btn = document.getElementById("btnGuardarPerfil");
   const spinner = document.getElementById("perfilSpinner");
 
-  const emailNuevo = document.getElementById("perfilEmail").value.trim();
   const datos = new FormData();
   datos.append("_method", "PUT");
   datos.append("name", document.getElementById("perfilNombre").value.trim());
-  datos.append("email", emailNuevo);
-
-  const password = document.getElementById("perfilPassword").value;
-  const passwordConfirm = document.getElementById("perfilPasswordConfirm").value;
-  if (password) {
-    if (password !== passwordConfirm) {
-      mostrarToast("Las contraseñas no coinciden.", "error");
-      return;
-    }
-    datos.append("password", password);
-    datos.append("password_confirmation", passwordConfirm);
-  }
-
-  // Cambiar correo o contraseña es sensible: exige la contraseña actual (y el código 2FA si lo tiene).
-  const cambiaEmail = emailNuevo !== emailOriginal;
-  const sensible = cambiaEmail || Boolean(password);
-  const currentPassword = document.getElementById("perfilCurrentPassword").value;
-  if (sensible && !currentPassword) {
-    mostrarToast("Ingresa tu contraseña actual para confirmar el cambio.", "error");
-    return;
-  }
-  if (currentPassword) {
-    datos.append("current_password", currentPassword);
-  }
-  const dosFactorCode = document.getElementById("perfilDosFactorCode").value.trim();
-  if (dosFactorCode) {
-    datos.append("two_factor_code", dosFactorCode);
-  }
+  datos.append("email", emailOriginal);
 
   if (fotoSeleccionada) {
     datos.append("foto", fotoSeleccionada);
@@ -146,34 +125,150 @@ async function guardarPerfil(e) {
     fotoActual = usuario.foto_perfil || null;
     fotoSeleccionada = null;
     quitarFoto = false;
-    document.getElementById("perfilPassword").value = "";
-    document.getElementById("perfilPasswordConfirm").value = "";
-    document.getElementById("perfilCurrentPassword").value = "";
-    document.getElementById("perfilDosFactorCode").value = "";
     mostrarAvatar(fotoActual);
 
-    // El correo no cambia al instante: reflejamos el confirmado y mostramos el pendiente si lo hay.
-    emailOriginal = usuario.email;
-    document.getElementById("perfilEmail").value = usuario.email;
-    mostrarAvisoPendiente(usuario.email_pendiente || null);
-
+    nombreOriginal = usuario.name;
+    document.getElementById("perfilNombre").value = usuario.name;
     document.getElementById("nombreUsuario").textContent = usuario.name;
     cachearFotoNavbar(fotoActual);
 
-    if (cambiaEmail) {
-      mostrarToast(
-        "Te enviamos un enlace a tu nuevo correo. El cambio se aplicará al confirmarlo.",
-        "success",
-      );
-    } else {
-      mostrarToast("Perfil actualizado", "success");
-    }
+    mostrarToast("Perfil actualizado", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
   } finally {
     btn.disabled = false;
     spinner.classList.add("d-none");
   }
+}
+
+// Campo de contraseña con botón mostrar/ocultar (los cablea password.js por delegación).
+function campoPasswordHtml(id, etiqueta, atributos, ayuda) {
+  return (
+    '<div class="mb-3">' +
+    '<label class="form-label" for="' +
+    id +
+    '">' +
+    etiqueta +
+    "</label>" +
+    '<div class="input-group">' +
+    '<input class="form-control" type="password" id="' +
+    id +
+    '" ' +
+    (atributos || "") +
+    " />" +
+    '<button class="btn toggle-password" type="button" data-target="' +
+    id +
+    '" aria-label="Mostrar contraseña" aria-pressed="false">' +
+    '<i class="bi bi-eye" aria-hidden="true"></i></button>' +
+    "</div>" +
+    (ayuda ? '<div class="form-text">' + ayuda + "</div>" : "") +
+    "</div>"
+  );
+}
+
+// Campo de código 2FA; vacío si el usuario no tiene 2FA activo (entonces el backend no lo exige).
+function campoDosFactorHtml(id) {
+  if (!dosFactorActivo) return "";
+  return (
+    '<div class="mb-3">' +
+    '<label class="form-label" for="' +
+    id +
+    '">Código de verificación (2FA)</label>' +
+    '<input class="form-control" type="text" id="' +
+    id +
+    '" inputmode="numeric" autocomplete="one-time-code" required />' +
+    '<div class="form-text">Ingresa el código de tu app de autenticación.</div>' +
+    "</div>"
+  );
+}
+
+// Modal chico para cambiar el correo: nuevo correo + contraseña actual (+ código 2FA si aplica).
+function abrirModalCorreo() {
+  const cuerpoHtml =
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mNuevoCorreo">Nuevo correo</label>' +
+    '<input class="form-control" type="email" id="mNuevoCorreo" autocomplete="email" required />' +
+    "</div>" +
+    campoPasswordHtml(
+      "mCorreoActual",
+      "Contraseña actual",
+      'autocomplete="current-password" required',
+    ) +
+    campoDosFactorHtml("mCorreoCodigo");
+
+  return abrirModal({
+    titulo: "Cambiar correo",
+    cuerpoHtml,
+    textoConfirmar: "Enviar enlace",
+    alConfirmar: async function (form) {
+      const datos = new FormData();
+      datos.append("_method", "PUT");
+      datos.append("name", nombreOriginal);
+      datos.append("email", form.querySelector("#mNuevoCorreo").value.trim());
+      datos.append("current_password", form.querySelector("#mCorreoActual").value);
+      const codigo = form.querySelector("#mCorreoCodigo");
+      if (codigo) datos.append("two_factor_code", codigo.value.trim());
+
+      const usuario = await apiFetch("/perfil", { method: "POST", body: datos });
+
+      // El correo es diferido: el confirmado sigue igual y el nuevo queda como pendiente.
+      emailOriginal = usuario.email;
+      document.getElementById("perfilEmail").value = usuario.email;
+      mostrarAvisoPendiente(usuario.email_pendiente || null);
+      mostrarToast(
+        "Te enviamos un enlace a tu nuevo correo. El cambio se aplicará al confirmarlo.",
+        "success",
+      );
+    },
+  });
+}
+
+// Modal chico para cambiar la contraseña: nueva + confirmar + contraseña actual (+ código 2FA si aplica).
+function abrirModalPassword() {
+  const cuerpoHtml =
+    campoPasswordHtml(
+      "mNuevaPass",
+      "Nueva contraseña",
+      'minlength="8" autocomplete="new-password" required',
+      "Mínimo 8 caracteres, con letras y números.",
+    ) +
+    campoPasswordHtml(
+      "mNuevaPass2",
+      "Confirmar nueva contraseña",
+      'minlength="8" autocomplete="new-password" required',
+    ) +
+    campoPasswordHtml(
+      "mPassActual",
+      "Contraseña actual",
+      'autocomplete="current-password" required',
+    ) +
+    campoDosFactorHtml("mPassCodigo");
+
+  return abrirModal({
+    titulo: "Cambiar contraseña",
+    cuerpoHtml,
+    textoConfirmar: "Guardar contraseña",
+    alConfirmar: async function (form) {
+      const password = form.querySelector("#mNuevaPass").value;
+      const passwordConfirm = form.querySelector("#mNuevaPass2").value;
+      if (password !== passwordConfirm) {
+        throw new Error("Las contraseñas no coinciden.");
+      }
+
+      const datos = new FormData();
+      datos.append("_method", "PUT");
+      datos.append("name", nombreOriginal);
+      datos.append("email", emailOriginal);
+      datos.append("password", password);
+      datos.append("password_confirmation", passwordConfirm);
+      datos.append("current_password", form.querySelector("#mPassActual").value);
+      const codigo = form.querySelector("#mPassCodigo");
+      if (codigo) datos.append("two_factor_code", codigo.value.trim());
+
+      await apiFetch("/perfil", { method: "POST", body: datos });
+      mostrarToast("Contraseña actualizada", "success");
+    },
+  });
 }
 
 // ¿El rol exige 2FA? (admin/super_admin); se usa para reponer el aviso al desactivar.
@@ -207,14 +302,13 @@ function iniciarDosFactor(usuario) {
 
 // Pinta el estado (activa/inactiva), muestra la acción que toca y oculta los sub-formularios.
 function pintarEstadoDosFactor(activa) {
+  dosFactorActivo = activa;
   const badge = document.getElementById("dfEstado");
   badge.textContent = activa ? "Activa" : "Inactiva";
   badge.className = "badge " + (activa ? "bg-success" : "bg-secondary");
 
   document.getElementById("btnDfActivar").classList.toggle("d-none", activa);
   document.getElementById("btnDfDesactivar").classList.toggle("d-none", !activa);
-  // El campo de código 2FA del formulario de cuenta solo aplica si el 2FA está activo.
-  document.getElementById("perfilDosFactorGrupo").classList.toggle("d-none", !activa);
   // El aviso de obligatoriedad solo aplica a roles privilegiados sin 2FA activo.
   document
     .getElementById("dfRequeridoAviso")

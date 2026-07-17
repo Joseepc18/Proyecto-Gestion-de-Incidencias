@@ -85,7 +85,19 @@
                     </div>
                     <div class="mb-3">
                       <label for="perfilEmail" class="form-label">Correo</label>
-                      <input class="form-control" type="email" id="perfilEmail" required />
+                      <div class="input-group">
+                        <input class="form-control" type="email" id="perfilEmail" readonly />
+                        <button
+                          class="btn btn-outline-secondary"
+                          type="button"
+                          id="btnCambiarCorreo"
+                        >
+                          <i class="bi bi-pencil" aria-hidden="true"></i> Cambiar
+                        </button>
+                      </div>
+                      <div class="form-text">
+                        El cambio de correo pide tu contraseña actual y se confirma por un enlace.
+                      </div>
                     </div>
                     <div class="mb-3" id="perfilPendienteAviso" hidden>
                       <div class="alert alert-info mb-0" role="alert">
@@ -96,94 +108,14 @@
                       </div>
                     </div>
                     <div class="mb-3">
-                      <label for="perfilPassword" class="form-label">Nueva contraseña</label>
-                      <div class="input-group">
-                        <input
-                          class="form-control"
-                          type="password"
-                          id="perfilPassword"
-                          minlength="8"
-                          placeholder="Dejar vacío para no cambiar"
-                          autocomplete="new-password"
-                        />
-                        <button
-                          class="btn toggle-password"
-                          type="button"
-                          data-target="perfilPassword"
-                          aria-label="Mostrar contraseña"
-                          aria-pressed="false"
-                        >
-                          <i class="bi bi-eye" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                      <div class="form-text">
-                        Mínimo 8 caracteres. Déjala vacía para conservarla.
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <label for="perfilPasswordConfirm" class="form-label">
-                        Confirmar nueva contraseña
-                      </label>
-                      <div class="input-group">
-                        <input
-                          class="form-control"
-                          type="password"
-                          id="perfilPasswordConfirm"
-                          minlength="8"
-                          placeholder="Repite la nueva contraseña"
-                          autocomplete="new-password"
-                        />
-                        <button
-                          class="btn toggle-password"
-                          type="button"
-                          data-target="perfilPasswordConfirm"
-                          aria-label="Mostrar contraseña"
-                          aria-pressed="false"
-                        >
-                          <i class="bi bi-eye" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    </div>
-                    <div class="mb-3">
-                      <label for="perfilCurrentPassword" class="form-label"
-                        >Contraseña actual</label
+                      <label class="form-label d-block">Contraseña</label>
+                      <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        id="btnCambiarPassword"
                       >
-                      <div class="input-group">
-                        <input
-                          class="form-control"
-                          type="password"
-                          id="perfilCurrentPassword"
-                          autocomplete="current-password"
-                        />
-                        <button
-                          class="btn toggle-password"
-                          type="button"
-                          data-target="perfilCurrentPassword"
-                          aria-label="Mostrar contraseña"
-                          aria-pressed="false"
-                        >
-                          <i class="bi bi-eye" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                      <div class="form-text">
-                        Requerida solo para cambiar el correo o la contraseña.
-                      </div>
-                    </div>
-                    <div class="mb-3 d-none" id="perfilDosFactorGrupo">
-                      <label for="perfilDosFactorCode" class="form-label">
-                        Código de verificación (2FA)
-                      </label>
-                      <input
-                        class="form-control"
-                        type="text"
-                        id="perfilDosFactorCode"
-                        inputmode="numeric"
-                        autocomplete="one-time-code"
-                      />
-                      <div class="form-text">
-                        Con 2FA activo, confirma los cambios de correo o contraseña con un código de
-                        tu app.
-                      </div>
+                        <i class="bi bi-key" aria-hidden="true"></i> Cambiar contraseña
+                      </button>
                     </div>
                     <div class="d-flex justify-content-end">
                       <button class="btn btn-primary" type="submit" id="btnGuardarPerfil">
@@ -347,6 +279,7 @@
     <script defer src="../assets/js/compresion.js"></script>
     <script defer src="../assets/js/toast.js"></script>
     <script defer src="../assets/js/confirmar.js"></script>
+    <script defer src="../assets/js/modal.js"></script>
     <script defer src="../assets/js/password.js"></script>
     <script defer src="../assets/js/layout.js"></script>
     <script defer src="../assets/vendors/reverb/pusher.min.js"></script>
