@@ -73,6 +73,43 @@ class UsuariosTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $suspendido->id, 'deleted_at' => null]);
     }
 
+    public function test_super_admin_restablece_el_2fa_de_otro_usuario(): void
+    {
+        $superAdmin = $this->crearUsuario('super_admin');
+        Sanctum::actingAs($superAdmin);
+        // El admin nace con 2FA confirmado (conDosFactor por defecto).
+        $admin = $this->crearUsuario('admin');
+
+        $this->postJson("/api/usuarios/{$admin->id}/reset-2fa")->assertOk();
+
+        $admin->refresh();
+        $this->assertNull($admin->two_factor_secret);
+        $this->assertNull($admin->two_factor_recovery_codes);
+        $this->assertNull($admin->two_factor_confirmed_at);
+
+        // Queda registrado en la bitácora que ven los super_admin.
+        $this->assertDatabaseHas('bitacora_errores', [
+            'tipo_error' => 'AUTENTICACION',
+            'descripcion_error' => "UserController@resetearDosFactor: El super_admin {$superAdmin->id} restableció el 2FA del usuario {$admin->id}.",
+        ]);
+    }
+
+    public function test_super_admin_no_puede_restablecer_su_propio_2fa(): void
+    {
+        $superAdmin = $this->crearUsuario('super_admin');
+        Sanctum::actingAs($superAdmin);
+
+        $this->postJson("/api/usuarios/{$superAdmin->id}/reset-2fa")->assertForbidden();
+    }
+
+    public function test_un_admin_sin_permiso_no_puede_restablecer_2fa(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $otro = $this->crearUsuario('admin');
+
+        $this->postJson("/api/usuarios/{$otro->id}/reset-2fa")->assertForbidden();
+    }
+
     public function test_listado_filtra_por_busqueda_de_nombre_o_correo(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));

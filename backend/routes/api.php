@@ -162,6 +162,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
         Route::delete('/usuarios/{usuario}', [UserController::class, 'eliminar']);
         Route::post('/usuarios/{id}/restaurar', [UserController::class, 'restaurar'])->where('id', '[0-9]+');
+        // Restablecer el 2FA de otro admin que perdió su dispositivo (nunca el propio; forzado en el FormRequest).
+        Route::post('/usuarios/{usuario}/reset-2fa', [UserController::class, 'resetearDosFactor']);
         Route::get('/roles', [UserController::class, 'roles']);
     });
 
