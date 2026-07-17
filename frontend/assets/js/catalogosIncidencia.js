@@ -57,6 +57,7 @@ function crearCatalogosIncidencia(ids) {
       .then((g) => {
         estado.cantonesGeo = g;
       })
+      // Se ignora a propósito: si falla la carga de cantones, no se autocompleta provincia/ciudad y el usuario los elige a mano.
       .catch(function () {});
 
     el(ids.provincia).addEventListener("change", function () {
