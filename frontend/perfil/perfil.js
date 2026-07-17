@@ -1,16 +1,12 @@
-// perfil.js — Edición del perfil propio: nombre y foto inline; correo y contraseña por modal.
+// perfil.js — Edición del perfil propio: la foto se guarda sola; nombre, correo y contraseña por modal.
 
 // URL firmada de la foto guardada en el servidor (temporal); null si no tiene.
 /* global apiFetch, aplicarMenuRol, mostrarToast, imageCompression, pintarAvatarNavbar, OPCIONES_COMPRESION, requerirSesion, cablearLogout, abrirModal */
 
 let fotoActual = null;
-// Foto nueva ya comprimida lista para subir; null si no se cambió.
-let fotoSeleccionada = null;
-// true si el usuario pidió quitar la foto sin reemplazarla.
-let quitarFoto = false;
 // objectURL del preview para liberarlo al reemplazarlo.
 let previewUrl = null;
-// Nombre confirmado; los modales de correo/contraseña lo reenvían sin cambio (el backend lo exige).
+// Nombre confirmado; los modales lo reenvían sin cambio (el backend lo exige).
 let nombreOriginal = "";
 // Correo confirmado; sirve de valor "sin cambio" para los modales.
 let emailOriginal = "";
@@ -41,35 +37,71 @@ document.addEventListener("DOMContentLoaded", async function () {
   inputFoto.addEventListener("change", procesarFoto);
   document.getElementById("btnQuitarFoto").addEventListener("click", quitarLaFoto);
 
-  document.getElementById("formPerfil").addEventListener("submit", guardarPerfil);
+  document.getElementById("btnCambiarNombre").addEventListener("click", abrirModalNombre);
   document.getElementById("btnCambiarCorreo").addEventListener("click", abrirModalCorreo);
   document.getElementById("btnCambiarPassword").addEventListener("click", abrirModalPassword);
 
   iniciarDosFactor(usuario);
 });
 
-// Comprime la foto elegida y la muestra como preview.
+// Comprime la foto elegida y la sube al momento; si falla, revierte al avatar guardado.
 async function procesarFoto() {
   const input = document.getElementById("perfilFoto");
   const file = input.files[0];
   input.value = "";
   if (!file) return;
 
+  let foto;
   try {
     const comprimida = await imageCompression(file, OPCIONES_COMPRESION);
-    fotoSeleccionada = new File([comprimida], "perfil.jpg", { type: "image/jpeg" });
-    quitarFoto = false;
-    mostrarAvatar(URL.createObjectURL(fotoSeleccionada));
+    foto = new File([comprimida], "perfil.jpg", { type: "image/jpeg" });
   } catch {
     mostrarToast("No se pudo procesar la imagen", "error");
+    return;
+  }
+
+  await guardarFoto({ foto }, "Foto actualizada");
+}
+
+// Quita la foto en el servidor al momento (solo si había); si falla, revierte.
+async function quitarLaFoto() {
+  if (fotoActual === null) return;
+  await guardarFoto({ quitar_foto: "1" }, "Foto eliminada");
+}
+
+// Sube el estado de la foto a /perfil (nombre/correo sin cambio → el backend no pide contraseña).
+async function guardarFoto(campos, mensajeOk) {
+  avatarCargando(true);
+  const datos = new FormData();
+  datos.append("_method", "PUT");
+  datos.append("name", nombreOriginal);
+  datos.append("email", emailOriginal);
+  Object.entries(campos).forEach(([clave, valor]) => datos.append(clave, valor));
+
+  try {
+    const usuario = await apiFetch("/perfil", { method: "POST", body: datos });
+    fotoActual = usuario.foto_perfil || null;
+    cachearFotoNavbar(fotoActual);
+    mostrarAvatar(fotoActual);
+    mostrarToast(mensajeOk, "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+    mostrarAvatar(fotoActual);
+  } finally {
+    avatarCargando(false);
   }
 }
 
-// Marca la foto para borrarse (si había en el servidor) y vuelve al icono por defecto.
-function quitarLaFoto() {
-  fotoSeleccionada = null;
-  quitarFoto = fotoActual !== null;
-  mostrarAvatar(null);
+// Muestra un spinner en el avatar mientras la foto se sube y bloquea sus botones.
+function avatarCargando(cargando) {
+  document.getElementById("btnCambiarFoto").disabled = cargando;
+  document.getElementById("btnQuitarFoto").disabled = cargando;
+  if (!cargando) return;
+  const spinner = document.createElement("span");
+  spinner.className = "spinner-border";
+  spinner.setAttribute("role", "status");
+  spinner.setAttribute("aria-label", "Subiendo foto");
+  document.getElementById("perfilAvatar").replaceChildren(spinner);
 }
 
 // Pinta el avatar de la página: imagen si hay src, o el icono por defecto. Muestra "Quitar" solo si hay foto.
@@ -99,46 +131,32 @@ function mostrarAvatar(src) {
   }
 }
 
-// Guarda nombre y foto (no son sensibles: el correo va sin cambio, así el backend no pide contraseña).
-async function guardarPerfil(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnGuardarPerfil");
-  const spinner = document.getElementById("perfilSpinner");
+// Modal chico para cambiar el nombre: un solo campo, sin contraseña ni 2FA (no es sensible).
+function abrirModalNombre() {
+  const cuerpoHtml =
+    '<div class="mb-3">' +
+    '<label class="form-label" for="mNuevoNombre">Nuevo nombre</label>' +
+    '<input class="form-control" type="text" id="mNuevoNombre" minlength="3" maxlength="100" autocomplete="name" required />' +
+    "</div>";
 
-  const datos = new FormData();
-  datos.append("_method", "PUT");
-  datos.append("name", document.getElementById("perfilNombre").value.trim());
-  datos.append("email", emailOriginal);
+  return abrirModal({
+    titulo: "Cambiar nombre",
+    cuerpoHtml,
+    textoConfirmar: "Guardar nombre",
+    alConfirmar: async function (form) {
+      const datos = new FormData();
+      datos.append("_method", "PUT");
+      datos.append("name", form.querySelector("#mNuevoNombre").value.trim());
+      datos.append("email", emailOriginal);
 
-  if (fotoSeleccionada) {
-    datos.append("foto", fotoSeleccionada);
-  } else if (quitarFoto) {
-    datos.append("quitar_foto", "1");
-  }
+      const usuario = await apiFetch("/perfil", { method: "POST", body: datos });
 
-  btn.disabled = true;
-  spinner.classList.remove("d-none");
-
-  try {
-    const usuario = await apiFetch("/perfil", { method: "POST", body: datos });
-
-    fotoActual = usuario.foto_perfil || null;
-    fotoSeleccionada = null;
-    quitarFoto = false;
-    mostrarAvatar(fotoActual);
-
-    nombreOriginal = usuario.name;
-    document.getElementById("perfilNombre").value = usuario.name;
-    document.getElementById("nombreUsuario").textContent = usuario.name;
-    cachearFotoNavbar(fotoActual);
-
-    mostrarToast("Perfil actualizado", "success");
-  } catch (error) {
-    mostrarToast(error.message, "error");
-  } finally {
-    btn.disabled = false;
-    spinner.classList.add("d-none");
-  }
+      nombreOriginal = usuario.name;
+      document.getElementById("perfilNombre").value = usuario.name;
+      document.getElementById("nombreUsuario").textContent = usuario.name;
+      mostrarToast("Nombre actualizado", "success");
+    },
+  });
 }
 
 // Campo de contraseña con botón mostrar/ocultar (los cablea password.js por delegación).

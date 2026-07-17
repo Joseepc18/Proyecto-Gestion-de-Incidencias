@@ -81,7 +81,16 @@
                   <div class="col-12 col-lg-8">
                     <div class="mb-3">
                       <label for="perfilNombre" class="form-label">Nombre</label>
-                      <input class="form-control" type="text" id="perfilNombre" required />
+                      <div class="input-group">
+                        <input class="form-control" type="text" id="perfilNombre" readonly />
+                        <button
+                          class="btn btn-outline-secondary"
+                          type="button"
+                          id="btnCambiarNombre"
+                        >
+                          <i class="bi bi-pencil" aria-hidden="true"></i> Cambiar
+                        </button>
+                      </div>
                     </div>
                     <div class="mb-3">
                       <label for="perfilEmail" class="form-label">Correo</label>
@@ -115,16 +124,6 @@
                         id="btnCambiarPassword"
                       >
                         <i class="bi bi-key" aria-hidden="true"></i> Cambiar contraseña
-                      </button>
-                    </div>
-                    <div class="d-flex justify-content-end">
-                      <button class="btn btn-primary" type="submit" id="btnGuardarPerfil">
-                        <span
-                          class="spinner-border spinner-border-sm me-1 d-none"
-                          id="perfilSpinner"
-                          role="status"
-                        ></span>
-                        <i class="bi bi-check-lg" aria-hidden="true"></i> Guardar cambios
                       </button>
                     </div>
                   </div>
