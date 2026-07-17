@@ -25,7 +25,7 @@ const estadoConfig = {
   CERRADO: {
     clase: "badge-estado-cerrado",
     icono: "bi-archive",
-    texto: "Archivado",
+    texto: "Cerrada",
     color: "var(--admin-muted)",
   },
 };

@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (incidencias.length === 0) {
       tbody.innerHTML = verArchivo
-        ? filaVaciaHtml(8, "bi-archive", "Archivo vacío", "Todavía no hay incidencias archivadas.")
+        ? filaVaciaHtml(8, "bi-archive", "Sin cerradas", "Todavía no hay incidencias cerradas.")
         : filaVaciaHtml(
             8,
             "bi-clipboard-x",
@@ -210,7 +210,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           handler: () => verDetalle(inc.id_incidencia),
         },
       ];
-      if (esAdmin || esAutor) {
+      // Solo se elimina en PENDIENTE (regla transversal); en proceso o cerradas quedan permanentes.
+      if ((esAdmin || esAutor) && inc.estado_incidencia === "PENDIENTE") {
         acciones.push({
           icon: "bi bi-trash me-2",
           label: "Eliminar",
@@ -235,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("btnVistaBandeja").classList.toggle("active", !archivo);
     document.getElementById("btnVistaArchivo").classList.toggle("active", archivo);
     document.getElementById("tituloListado").textContent = archivo
-      ? "Archivo de incidencias"
+      ? "Incidencias cerradas"
       : "Listado de incidencias";
     document.getElementById("filtroEstado").disabled = archivo;
     paginaActual = 1;

@@ -41,6 +41,27 @@ class PapeleraTest extends TestCase
         $this->getJson('/api/incidencias/'.$incidencia->id_incidencia)->assertStatus(404);
     }
 
+    // Solo se elimina en PENDIENTE: ni el admin (con permiso) puede borrar una En proceso o Cerrada.
+    public function test_solo_se_elimina_en_estado_pendiente(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $admin = $this->crearUsuario('admin');
+        Sanctum::actingAs($admin);
+
+        $enProceso = $this->crearIncidencia($autor, ['estado_incidencia' => 'EN_PROCESO']);
+        $this->deleteJson("/api/incidencias/{$enProceso->id_incidencia}", ['motivo' => 'Motivo de prueba'])
+            ->assertStatus(403);
+
+        $cerrada = $this->crearIncidencia($autor, ['estado_incidencia' => 'CERRADO']);
+        $this->deleteJson("/api/incidencias/{$cerrada->id_incidencia}", ['motivo' => 'Motivo de prueba'])
+            ->assertStatus(403);
+
+        $pendiente = $this->crearIncidencia($autor, ['estado_incidencia' => 'PENDIENTE']);
+        $this->deleteJson("/api/incidencias/{$pendiente->id_incidencia}", ['motivo' => 'Motivo de prueba'])
+            ->assertOk();
+        $this->assertSoftDeleted('incidencias', ['id_incidencia' => $pendiente->id_incidencia]);
+    }
+
     // super_admin es view-only y ya no tiene incidencias.papelera por defecto (ver PermisosNuevosTest).
     public function test_solo_quien_tiene_incidencias_papelera_ve_la_papelera(): void
     {
