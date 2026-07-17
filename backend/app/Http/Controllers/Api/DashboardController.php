@@ -63,14 +63,16 @@ class DashboardController extends Controller
                 ->selectRaw("to_char(date_trunc('month', created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil'), 'YYYY-MM') AS mes, COUNT(*) AS total")
                 ->get();
 
+            // Se castea a array plano antes de cachear: un Collection/stdClass cacheado no se rehidrata
+            // al deserializar en prod (llega como __PHP_Incomplete_Class) y rompe el dashboard al volver (#24).
             return [
-                'totales' => $totales,
+                'totales' => (array) $totales,
                 'promedio_dias' => $promedioGlobal,
-                'por_prioridad' => $porPrioridad,
-                'por_tipo' => $porTipo,
-                'por_ubicacion' => $porUbicacion,
-                'por_provincia' => $porProvincia,
-                'por_mes' => $porMes,
+                'por_prioridad' => (array) $porPrioridad,
+                'por_tipo' => $porTipo->map(fn ($f) => (array) $f)->all(),
+                'por_ubicacion' => $porUbicacion->map(fn ($f) => (array) $f)->all(),
+                'por_provincia' => $porProvincia->map(fn ($f) => (array) $f)->all(),
+                'por_mes' => $porMes->map(fn ($f) => (array) $f)->all(),
             ];
         });
 
