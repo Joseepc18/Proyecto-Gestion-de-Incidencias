@@ -1,6 +1,6 @@
 // api.js — Capa base de comunicación con el backend; URL relativa (mismo origen vía nginx).
 
-/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, aplicarMenuRol, tienePermiso, escaparHtml, hayCargaActiva */
+/* exported guardarToken, obtenerToken, eliminarToken, apiFetch, apiFetchReintentar, aplicarMenuRol, tienePermiso, escaparHtml, hayCargaActiva */
 /* global toastFlash */
 
 const API_BASE = "/api";
@@ -192,6 +192,23 @@ async function apiFetch(endpoint, opciones = {}) {
       spinnerFin();
     }
   }
+}
+
+// Igual que apiFetch pero reintenta ante fallos de red (micro-cortes) con un pequeño backoff antes de propagar el error.
+async function apiFetchReintentar(endpoint, opciones = {}, intentos = 2, esperaMs = 400) {
+  let ultimoError;
+  for (let i = 0; i <= intentos; i++) {
+    try {
+      return await apiFetch(endpoint, opciones);
+    } catch (error) {
+      ultimoError = error;
+      // No malgastamos reintentos en el último ciclo.
+      if (i < intentos) {
+        await new Promise((resolve) => setTimeout(resolve, esperaMs * (i + 1)));
+      }
+    }
+  }
+  throw ultimoError;
 }
 
 // Muestra/oculta los enlaces del menú por permiso (no por nombre de rol); el rol solo distingue técnico/normal.
