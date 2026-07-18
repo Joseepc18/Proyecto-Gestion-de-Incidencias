@@ -3,7 +3,7 @@ name: Deploy - Aplicación (Backend + Frontend)
 on:
   push:
     branches:
-      - develop
+      - main
 
 jobs:
   deploy:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Traer últimos cambios
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
-        run: git pull origin develop
+        run: git pull origin main
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
