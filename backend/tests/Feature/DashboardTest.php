@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AsignacionIncidencia;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -35,6 +36,22 @@ class DashboardTest extends TestCase
                 'por_provincia',
                 'por_mes',
             ]);
+    }
+
+    // Blinda la regresión de #24: cacheado como Collection/stdClass no se rehidrataba y rompía el dashboard al volver.
+    public function test_metricas_se_cachean_como_arrays_planos(): void
+    {
+        $this->crearIncidencia($this->crearUsuario('normal'));
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $this->getJson('/api/dashboard/metricas')->assertOk();
+
+        $cache = Cache::get('dashboard_metricas');
+        $this->assertIsArray($cache['totales']);
+        $this->assertIsArray($cache['por_prioridad']);
+        $this->assertIsArray($cache['por_tipo']);
+        $this->assertIsArray($cache['por_ubicacion']);
+        $this->assertIsArray($cache['por_provincia']);
+        $this->assertIsArray($cache['por_mes']);
     }
 
     // El dashboard del técnico es solo para técnicos y cuenta únicamente SUS asignaciones.

@@ -195,6 +195,16 @@ function menuAccionesUsuario(u, suspendido) {
       handler: () => abrirModalUsuario(u),
     });
   }
+  // Restablecer 2FA: solo para roles con 2FA obligatorio (admin/super_admin) y no suspendidos.
+  const rolConDosFactor =
+    u.rol && (u.rol.nombre_rol === "admin" || u.rol.nombre_rol === "super_admin");
+  if (!suspendido && rolConDosFactor) {
+    acciones.push({
+      icon: "bi bi-shield-lock me-2",
+      label: "Restablecer 2FA",
+      handler: () => restablecerDosFactor(u.id, u.name),
+    });
+  }
   if (suspendido) {
     acciones.push({
       icon: "bi bi-arrow-counterclockwise me-2",
@@ -313,6 +323,27 @@ async function suspenderUsuario(id, nombre) {
     await apiFetch("/usuarios/" + id, { method: "DELETE" });
     await cargarUsuarios();
     mostrarToast("Usuario suspendido", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+// Restablece el 2FA de otro usuario (recuperación cuando perdió su dispositivo); deberá configurarlo de nuevo al entrar.
+async function restablecerDosFactor(id, nombre) {
+  const ok = await confirmar({
+    titulo: "¿Restablecer 2FA?",
+    mensaje:
+      'Se borrará la verificación en dos pasos de "' +
+      nombre +
+      '". Deberá configurarla de nuevo la próxima vez que inicie sesión.',
+    textoConfirmar: "Restablecer",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/usuarios/" + id + "/reset-2fa", { method: "POST" });
+    mostrarToast("2FA restablecido", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
   }

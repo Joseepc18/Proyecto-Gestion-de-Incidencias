@@ -91,17 +91,26 @@ async function cargarLista() {
 
     if (incidencias.length === 0) {
       const hayFiltro = busqueda || filtroEstado;
+      // El técnico no reporta, se le asignan incidencias: el vacío sin filtro cambia según el rol.
+      const vacioSinFiltro =
+        rolNombre() === "normal"
+          ? estadoVacioHtml(
+              "bi-clipboard-check",
+              "Aún no tienes incidencias",
+              "Cuando reportes una incidencia aparecerá aquí.",
+            )
+          : estadoVacioHtml(
+              "bi-inbox",
+              "Sin asignaciones",
+              "Cuando te asignen una incidencia aparecerá aquí.",
+            );
       contenedor.innerHTML = hayFiltro
         ? estadoVacioHtml(
             "bi-search",
             "Sin coincidencias",
             "Ninguna incidencia coincide con la búsqueda o el filtro.",
           )
-        : estadoVacioHtml(
-            "bi-clipboard-check",
-            "Aún no tienes incidencias",
-            "Cuando reportes una incidencia aparecerá aquí.",
-          );
+        : vacioSinFiltro;
       document.getElementById("paginacionMis").innerHTML = "";
       refrescarMapa();
       suscribirIncidencias();
@@ -169,6 +178,7 @@ function refrescarMapa() {
         // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
         titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
         color: colorEstado(estadoParaVista(i.estado_incidencia, rolNombre())),
+        tipo: i.subtipo && i.subtipo.tipo ? i.subtipo.tipo.nombre_tipo_incidencia : null,
       };
     });
   mapa.pintarPines(pines, seleccionarIncidencia);
@@ -193,7 +203,11 @@ function suscribirIncidencias() {
   vigentes.forEach(function (id) {
     if (canalesSuscritos.has(id)) return;
     canalesSuscritos.add(id);
-    echo.private("incidencia.updates." + id).listen(".IncidenciaActualizada", actualizarEnVivo);
+    echo
+      .private("incidencia.updates." + id)
+      .listen(".IncidenciaActualizada", actualizarEnVivo)
+      // Si eliminan una incidencia visible, recargamos la lista para quitar su tarjeta, contador y pin.
+      .listen(".IncidenciaEliminada", cargarLista);
   });
 }
 

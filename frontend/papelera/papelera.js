@@ -1,6 +1,6 @@
 // papelera.js — Listado de incidencias eliminadas, restaurar y purgar (solo admin/super_admin).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout, obtenerEcho */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -142,6 +142,16 @@ document.addEventListener("DOMContentLoaded", async function () {
       cargarPapelera();
     }, 400);
   });
+
+  // Papelera en vivo: recarga ante enviar/restaurar/purgar de otro admin, sin recargar la página.
+  const echo = obtenerEcho();
+  if (echo) {
+    echo
+      .join("tablero")
+      .listen(".IncidenciaEliminada", cargarPapelera)
+      .listen(".IncidenciaRestaurada", cargarPapelera)
+      .listen(".IncidenciaPurgada", cargarPapelera);
+  }
 
   cargarPapelera();
 });

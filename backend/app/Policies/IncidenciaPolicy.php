@@ -53,17 +53,20 @@ class IncidenciaPolicy
         return Response::deny('No autorizado');
     }
 
-    // Eliminar: quien tiene el permiso de eliminar (siempre) o autor (solo mientras esté PENDIENTE, para no perder trazabilidad).
+    // Eliminar: SOLO mientras está PENDIENTE, para todos los roles (ni admin ni super_admin borran en proceso o cerradas).
+    // Así el archivo histórico y las métricas del dashboard quedan permanentes; para deshacer un cierre se usa la reapertura.
     public function eliminar(User $user, Incidencia $incidencia): Response
     {
+        if ($incidencia->estado_incidencia !== EstadoIncidencia::Pendiente) {
+            return Response::deny('Solo puedes eliminar incidencias pendientes; en proceso o cerradas quedan permanentes.');
+        }
+
         if ($user->tienePermiso('incidencias.eliminar')) {
             return Response::allow();
         }
 
         if ($incidencia->id_usuario === $user->id) {
-            return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente
-                ? Response::allow()
-                : Response::deny('No puedes eliminar esta incidencia porque ya está en proceso o resuelta.');
+            return Response::allow();
         }
 
         return Response::deny('No autorizado');

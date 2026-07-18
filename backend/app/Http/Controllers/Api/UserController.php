@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarUsuarioRequest;
 use App\Http\Requests\CrearUsuarioRequest;
+use App\Http\Requests\ReiniciarDosFactorRequest;
 use App\Http\Resources\UserResource;
+use App\Models\BitacoraError;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 
 class UserController extends Controller
 {
@@ -108,6 +111,27 @@ class UserController extends Controller
         $usuario->delete();
 
         return ['message' => 'Usuario suspendido'];
+    }
+
+    // Restablece el 2FA de otro usuario (recuperación de cuentas bloqueadas): solo super_admin, nunca sobre sí mismo (validado en el FormRequest).
+    public function resetearDosFactor(ReiniciarDosFactorRequest $request, User $usuario, DisableTwoFactorAuthentication $disable)
+    {
+        if (! $usuario->two_factor_secret && ! $usuario->two_factor_confirmed_at) {
+            return response()->json(['message' => 'El usuario no tiene la verificación en dos pasos activa.'], 409);
+        }
+
+        // Pone en null two_factor_secret/recovery_codes/confirmed_at; a diferencia de /2fa (propio) aquí NO se pide código.
+        $disable($usuario);
+
+        // Queda en la bitácora que ven los super_admin (única superficie de auditoría de la app).
+        BitacoraError::registrar(
+            $request->user(),
+            'AUTENTICACION',
+            'UserController@resetearDosFactor',
+            "El super_admin {$request->user()->id} restableció el 2FA del usuario {$usuario->id}."
+        );
+
+        return response()->json(['message' => 'Se restableció el 2FA del usuario. Deberá configurarlo de nuevo al iniciar sesión.']);
     }
 
     // Sirve la foto de perfil del disco privado; protegida por firma (igual patrón que EvidenciaController@archivo).

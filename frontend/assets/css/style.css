@@ -2512,19 +2512,41 @@ html[data-theme="dark"] {
   }
 }
 
-/* Pin circular para incidencias (divIcon de Leaflet) */
-.mapa-pin-incidencia {
+/* Pin de gota para incidencias (divIcon de Leaflet): fondo por estado (--pin-color) con el icono
+   del tipo dentro. Cuadrado con 3 esquinas redondeadas rotado 45°, el truco clásico de pin de mapa. */
+.mapa-pin-gota {
   display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
   border: 2px solid #fff;
+  background: var(--pin-color, #2563eb);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+/* Icono del tipo, contrarrotado para verse derecho y centrado en la parte redonda de la gota */
+.mapa-pin-gota i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Al pasar el cursor la gota crece (mantiene la rotación base de -45°) */
+.mapa-pin-wrapper:hover .mapa-pin-gota {
+  transform: rotate(-45deg) scale(1.25);
+  z-index: 500;
 }
 
 /* Pin de la incidencia seleccionada en el feed: anillo que "respira", sin mover el ancla del pin
    (solo box-shadow, que no afecta el tamaño real del icono ni su punto sobre el mapa). */
-.mapa-pin-wrapper--seleccionado .mapa-pin-incidencia {
+.mapa-pin-wrapper--seleccionado .mapa-pin-gota {
   animation: mapaPinPulso 1.6s ease-in-out infinite;
 }
 
@@ -3291,7 +3313,7 @@ html[data-theme="dark"] .meta-tile-icono {
   .historial-paso--actual .historial-paso-punto,
   #detalleEstado.badge-destello,
   #detallePrioridad.badge-destello,
-  .mapa-pin-wrapper--seleccionado .mapa-pin-incidencia,
+  .mapa-pin-wrapper--seleccionado .mapa-pin-gota,
   .auth-hero-img,
   .auth-hero-pin-ping,
   .auth-view-login form#loginForm {

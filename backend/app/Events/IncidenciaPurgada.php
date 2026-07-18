@@ -4,34 +4,32 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-// Se emite al enviar una incidencia a la papelera; viaja al tablero para que desaparezca sola de la lista.
-class IncidenciaEliminada implements ShouldBroadcast
+// Se emite al purgar una incidencia de la papelera; viaja al tablero para que la papelera se refresque sola.
+class IncidenciaPurgada implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(public int $idIncidencia) {}
 
-    // Tablero de admins (quita la fila) + canal de la incidencia (saca al que tiene el detalle abierto).
+    // Tablero de admins (mismo canal que ya usa la eliminación).
     public function broadcastOn(): array
     {
         return [
             new PresenceChannel('tablero'),
-            new PrivateChannel('incidencia.updates.'.$this->idIncidencia),
         ];
     }
 
-    // Nombre corto del evento; el front escucha ".IncidenciaEliminada".
+    // Nombre corto del evento; el front escucha ".IncidenciaPurgada".
     public function broadcastAs(): string
     {
-        return 'IncidenciaEliminada';
+        return 'IncidenciaPurgada';
     }
 
-    // El front solo necesita el id para quitar la fila.
+    // El front solo necesita el id.
     public function broadcastWith(): array
     {
         return ['id_incidencia' => $this->idIncidencia];

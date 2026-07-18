@@ -63,14 +63,16 @@ class DashboardController extends Controller
                 ->selectRaw("to_char(date_trunc('month', created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Guayaquil'), 'YYYY-MM') AS mes, COUNT(*) AS total")
                 ->get();
 
+            // Se castea a array plano antes de cachear: un Collection/stdClass cacheado no se rehidrata
+            // al deserializar en prod (llega como __PHP_Incomplete_Class) y rompe el dashboard al volver (#24).
             return [
-                'totales' => $totales,
+                'totales' => (array) $totales,
                 'promedio_dias' => $promedioGlobal,
-                'por_prioridad' => $porPrioridad,
-                'por_tipo' => $porTipo,
-                'por_ubicacion' => $porUbicacion,
-                'por_provincia' => $porProvincia,
-                'por_mes' => $porMes,
+                'por_prioridad' => (array) $porPrioridad,
+                'por_tipo' => $porTipo->map(fn ($f) => (array) $f)->all(),
+                'por_ubicacion' => $porUbicacion->map(fn ($f) => (array) $f)->all(),
+                'por_provincia' => $porProvincia->map(fn ($f) => (array) $f)->all(),
+                'por_mes' => $porMes->map(fn ($f) => (array) $f)->all(),
             ];
         });
 
@@ -118,10 +120,13 @@ class DashboardController extends Controller
         // Sus incidencias sin resolver (mapa y lista): prioridad ALTA primero y las más viejas arriba.
         $activas = $asignadas()
             ->whereNotIn('i.estado_incidencia', [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
+            ->leftJoin('subtipos_incidencia as st', 'st.id_subtipo_incidencia', '=', 'i.id_subtipo_incidencia')
+            ->leftJoin('tipos_incidencia as ti', 'ti.id_tipo_incidencia', '=', 'st.id_tipo_incidencia')
             ->orderByRaw('CASE i.prioridad_incidencia WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END', [PrioridadIncidencia::Alta->value, PrioridadIncidencia::Media->value])
             ->orderBy('i.created_at')
             ->select('i.id_incidencia', 'i.nombre_incidencia', 'i.prioridad_incidencia', 'i.estado_incidencia',
-                'i.latitud_incidencia', 'i.longitud_incidencia', 'i.created_at', 'a.rol_asignado')
+                'i.latitud_incidencia', 'i.longitud_incidencia', 'i.created_at', 'a.rol_asignado',
+                'ti.nombre_tipo_incidencia as tipo_nombre')
             ->get();
 
         return response()->json([
