@@ -120,10 +120,13 @@ class DashboardController extends Controller
         // Sus incidencias sin resolver (mapa y lista): prioridad ALTA primero y las más viejas arriba.
         $activas = $asignadas()
             ->whereNotIn('i.estado_incidencia', [EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value])
+            ->leftJoin('subtipos_incidencia as st', 'st.id_subtipo_incidencia', '=', 'i.id_subtipo_incidencia')
+            ->leftJoin('tipos_incidencia as ti', 'ti.id_tipo_incidencia', '=', 'st.id_tipo_incidencia')
             ->orderByRaw('CASE i.prioridad_incidencia WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END', [PrioridadIncidencia::Alta->value, PrioridadIncidencia::Media->value])
             ->orderBy('i.created_at')
             ->select('i.id_incidencia', 'i.nombre_incidencia', 'i.prioridad_incidencia', 'i.estado_incidencia',
-                'i.latitud_incidencia', 'i.longitud_incidencia', 'i.created_at', 'a.rol_asignado')
+                'i.latitud_incidencia', 'i.longitud_incidencia', 'i.created_at', 'a.rol_asignado',
+                'ti.nombre_tipo_incidencia as tipo_nombre')
             ->get();
 
         return response()->json([

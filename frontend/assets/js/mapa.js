@@ -157,6 +157,21 @@ function crearMapaBase(idContenedor, opciones) {
   return map;
 }
 
+// Icono (Bootstrap Icons) por nombre de tipo de incidencia; los tipos son dinámicos, así que los
+// nuevos caen al icono por defecto. Elegir el icono por tipo desde catálogos es otra tarea (#29).
+const ICONO_POR_TIPO = {
+  "Vialidad y Transporte": "bi-cone-striped",
+  "Servicios Públicos": "bi-lightbulb",
+  "Aseo Urbano": "bi-trash",
+  "Parques y Medio Ambiente": "bi-tree",
+  "Seguridad y Convivencia": "bi-shield-exclamation",
+  Otro: "bi-three-dots",
+};
+
+function iconoDeTipo(nombre) {
+  return ICONO_POR_TIPO[nombre] || "bi-geo-alt";
+}
+
 // Mapa de incidencias: pinta pines (coloreados por estado) y permite enfocarlos.
 // eslint-disable-next-line no-unused-vars
 function crearMapaIncidencias(idContenedor, opciones) {
@@ -185,12 +200,19 @@ function crearMapaIncidencias(idContenedor, opciones) {
       if (it.lat == null || it.lng == null) return;
 
       const color = it.color || "#2563eb";
+      // Gota (teardrop) con el icono del tipo dentro; el fondo lo da el estado (it.color).
       const icono = L.divIcon({
         className: "mapa-pin-wrapper",
-        html: '<span class="mapa-pin-incidencia" style="background:' + color + '"></span>',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -10],
+        html:
+          '<span class="mapa-pin-gota" style="--pin-color:' +
+          color +
+          '"><i class="bi ' +
+          iconoDeTipo(it.tipo) +
+          '"></i></span>',
+        // La punta de la gota apunta al punto: el ancla va en la punta inferior, no al centro.
+        iconSize: [30, 38],
+        iconAnchor: [15, 36],
+        popupAnchor: [0, -34],
       });
 
       const marcador = L.marker([it.lat, it.lng], { icon: icono }).addTo(map);
