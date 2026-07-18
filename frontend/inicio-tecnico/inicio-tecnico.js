@@ -169,6 +169,7 @@ function pintarMapa(activas) {
       lng: Number(inc.longitud_incidencia),
       titulo: codigoIncidencia(inc.id_incidencia) + " — " + inc.nombre_incidencia,
       color: colorEstado(inc.estado_incidencia),
+      tipo: inc.tipo_nombre || null,
     };
   });
 

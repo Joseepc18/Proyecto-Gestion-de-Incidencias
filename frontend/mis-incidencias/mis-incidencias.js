@@ -178,6 +178,7 @@ function refrescarMapa() {
         // titulo en crudo: mapa.js lo escapa dentro del bindPopup (defensa en profundidad).
         titulo: codigoIncidencia(i.id_incidencia) + " — " + i.nombre_incidencia,
         color: colorEstado(estadoParaVista(i.estado_incidencia, rolNombre())),
+        tipo: i.subtipo && i.subtipo.tipo ? i.subtipo.tipo.nombre_tipo_incidencia : null,
       };
     });
   mapa.pintarPines(pines, seleccionarIncidencia);
