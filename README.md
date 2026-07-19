@@ -2,13 +2,12 @@
 
 > Plataforma web para el **registro, seguimiento y gestión de incidencias urbanas georreferenciadas**: la ciudadanía reporta problemas con ubicación en el mapa y evidencia fotográfica, y el equipo municipal los atiende de punta a punta (asignación, cambios de estado, chat en tiempo real y tablero de indicadores).
 
-<!-- Badges de stack y estado. Estáticos (shields.io); no exponen datos del proyecto. -->
+<!-- Badges de stack. Estáticos (shields.io); no exponen datos del proyecto. -->
 ![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
 ![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?logo=bootstrap&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Estado](https://img.shields.io/badge/estado-en%20desarrollo-yellow)
 
 🔗 **Demo en vivo:** [incidenciasupse.site](https://incidenciasupse.site)
 
@@ -16,7 +15,6 @@ Proyecto integrador de la carrera de Tecnologías de la Información (UPSE).
 
 ## Tabla de contenidos
 
-- [Capturas](#capturas)
 - [Funcionalidades por rol](#funcionalidades-por-rol)
 - [Stack tecnológico](#stack-tecnológico)
 - [Arquitectura](#arquitectura)
@@ -27,13 +25,6 @@ Proyecto integrador de la carrera de Tecnologías de la Información (UPSE).
 - [CI y pruebas](#ci-y-pruebas)
 - [Despliegue](#despliegue)
 - [Equipo](#equipo)
-
-## Capturas
-
-<!-- Reemplazar los placeholders por imágenes/GIF reales cuando estén disponibles. -->
-| Reporte con mapa | Tablero de indicadores | Detalle y chat |
-| :--------------: | :--------------------: | :------------: |
-| ![Registrar incidencia](docs/img/registrar.png) | ![Dashboard](docs/img/dashboard.png) | ![Detalle](docs/img/detalle.png) |
 
 ## Funcionalidades por rol
 
@@ -146,7 +137,7 @@ Para aplicar el formato en lugar de solo comprobarlo: `npm run format` (frontend
 ## Despliegue
 
 - La producción corre con el **mismo `docker-compose.yml`** en un servidor Linux, expuesto a internet mediante un **túnel de Cloudflare** (`cloudflared`) con HTTPS y WebSockets (WSS).
-- El *auto-deploy* se dispara con un `push` a la rama `develop` (GitHub Actions sobre un *runner* self-hosted, `.github/workflows/deploy.yml`): `git pull` → build del frontend (`npm ci && npm run build`, esbuild → `frontend/dist`) → reinicia `backend`, `frontend` (nginx), `horizon`, `reverb` y `scheduler`. En producción `FRONTEND_ROOT=./frontend/dist`, así que Nginx sirve el **build minificado**, no el árbol crudo. Las **migraciones** y las **reconstrucciones de imagen** (`--build`, tras cambios de infra o dependencias nuevas) se aplican a mano tras el deploy.
+- El *auto-deploy* se dispara con un `push` a la rama `main` (GitHub Actions sobre un *runner* self-hosted, `.github/workflows/deploy.yml`): `git pull` → build del frontend (`npm ci && npm run build`, esbuild → `frontend/dist`) → reinicia `backend`, `frontend` (nginx), `horizon`, `reverb` y `scheduler`. En producción `FRONTEND_ROOT=./frontend/dist`, así que Nginx sirve el **build minificado**, no el árbol crudo. Las **migraciones** y las **reconstrucciones de imagen** (`--build`, tras cambios de infra o dependencias nuevas) se aplican a mano tras el deploy.
 - En producción el `.env` se gestiona directamente en el servidor (no viaja por git) y no contiene secretos en el repositorio.
 
 ## Equipo
