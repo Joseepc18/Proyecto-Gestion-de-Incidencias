@@ -2,7 +2,7 @@
 
 /* exported edicionAlCargarDetalle */
 
-/* global apiFetch, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto, pintarFotos, fijarOpcionesFotosReporte */
+/* global apiFetch, tienePermiso, mostrarToast, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto, pintarFotos, fijarOpcionesFotosReporte */
 
 // Catálogos + cascadas (helper compartido con registrar-incidencia); se cargan una sola vez.
 const catalogos = crearCatalogosIncidencia({
@@ -45,11 +45,8 @@ function edicionAlCargarDetalle() {
   lngEdit = incActual.longitud_incidencia != null ? Number(incActual.longitud_incidencia) : null;
 
   const btnEditar = document.getElementById("btnEditar");
-  const btnEliminar = document.getElementById("btnEliminar");
   btnEditar.classList.remove("d-none");
-  btnEliminar.classList.remove("d-none");
   btnEditar.addEventListener("click", entrarEdicion);
-  btnEliminar.addEventListener("click", eliminarIncidencia);
   document.getElementById("btnCancelarEdicion").addEventListener("click", salirEdicion);
   document.getElementById("btnGuardarEdicion").addEventListener("click", guardarCambios);
   document.getElementById("datosEdicion").addEventListener("input", actualizarBotonGuardar);
@@ -124,7 +121,6 @@ async function entrarEdicion() {
   document.getElementById("edicionAcciones").classList.remove("d-none");
   document.getElementById("edicionAcciones").classList.add("d-flex");
   document.getElementById("btnEditar").classList.add("d-none");
-  document.getElementById("btnEliminar").classList.add("d-none");
 
   pickerEdicion = activarMapaPicker(latEdit, lngEdit, function (lat, lng) {
     latEdit = lat;
@@ -190,7 +186,6 @@ function salirEdicion() {
   acciones.classList.add("d-none");
   acciones.classList.remove("d-flex");
   document.getElementById("btnEditar").classList.remove("d-none");
-  document.getElementById("btnEliminar").classList.remove("d-none");
   const controles = document.getElementById("mapaEditControles");
   controles.classList.add("d-none");
   controles.classList.remove("d-flex");
@@ -380,20 +375,3 @@ async function solicitarReapertura() {
 }
 
 // Eliminar la incidencia completa.
-async function eliminarIncidencia() {
-  const ok = await confirmar({
-    titulo: "Eliminar incidencia",
-    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
-    textoConfirmar: "Eliminar",
-    peligro: true,
-  });
-  if (!ok) return;
-
-  try {
-    await apiFetch("/incidencias/" + incActual.id_incidencia, { method: "DELETE" });
-    toastFlash("Incidencia eliminada", "success");
-    window.location.href = "../mis-incidencias/mis-incidencias.html";
-  } catch (error) {
-    mostrarToast("No se pudo eliminar: " + error.message, "error");
-  }
-}

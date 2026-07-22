@@ -32,20 +32,25 @@
 
         <main class="dashboard-content">
           <!-- Hero: BANNER de ancho completo cuyo color lo pone la prioridad (clase prio-* vía JS).
-               Reúne código+fecha+tiempos, título, estado/prioridad, botones por rol, la línea de
-               tiempo (al centro) y las personas implicadas. El icono de fondo cambia con la prioridad. -->
+               Reúne el enlace Volver, código+fecha+tiempos, título, estado/prioridad, botones
+               (Editar + acciones de admin) y la línea de tiempo. El icono de fondo cambia con la prioridad. -->
           <header class="detalle-hero detalle-fade-in detalle-fade-in-1" id="detalleHero">
             <i class="detalle-hero-icono bi bi-fire" id="detalleHeroIcono" aria-hidden="true"></i>
+
+            <!-- Volver: arriba del hero, dentro del banner (siempre visible). Texto/destino los pone el JS. -->
+            <a
+              class="detalle-volver"
+              id="btnVolver"
+              href="../gestion-incidencias/gestion-incidencias.html"
+            >
+              <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
 
             <div class="detalle-hero-top">
               <div class="detalle-hero-titulo-zona">
                 <!-- Línea superior: código + fecha de creación + tiempos (contexto, discreto) -->
                 <div class="detalle-hero-linea-meta">
                   <span class="detalle-hero-codigo" id="detalleCodigo">Incidencia</span>
-                  <span class="hero-sec">
-                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
-                    Fecha de creación: <span id="metaFechaCreacion">—</span>
-                  </span>
                   <span class="hero-sec">
                     <i class="bi bi-hourglass-split" aria-hidden="true"></i>
                     <span id="detalleTiempoTranscurrido">—</span>
@@ -56,19 +61,15 @@
                   </span>
                 </div>
                 <h1 class="detalle-hero-titulo" id="detalleTitulo">Detalle de incidencia</h1>
-                <div class="detalle-hero-badges">
-                  <span class="badge" id="detalleEstado"></span>
-                  <span class="badge" id="detallePrioridad"></span>
+                <!-- Insignia de prioridad: "Prioridad:" + pill, debajo del título (a la izquierda,
+                     así no tapa el icono de fondo). El JS rellena el pill con icono+nivel y su color.
+                     El estado ya se ve en el historial, por eso no tiene badge. -->
+                <div class="detalle-hero-prio-fila">
+                  <span class="detalle-hero-prio-label">Prioridad:</span>
+                  <span class="detalle-hero-prio" id="detallePrioridad" title="Prioridad"></span>
                 </div>
               </div>
               <div class="heading-actions detalle-hero-acciones">
-                <!-- Editar/Eliminar: solo el ciudadano dueño y mientras esté PENDIENTE -->
-                <button class="btn btn-primary btn-sm d-none" type="button" id="btnEditar">
-                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-                </button>
-                <button class="btn btn-outline-danger btn-sm d-none" type="button" id="btnEliminar">
-                  <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
-                </button>
                 <!-- Solo el ciudadano dueño, y solo mientras esté RESUELTO -->
                 <button
                   class="btn btn-outline-warning btn-sm d-none"
@@ -95,7 +96,7 @@
                 </button>
                 <!-- Reclamar/Liberar la atención (solo admin): es el candado que habilita gestionar -->
                 <button
-                  class="btn btn-outline-primary btn-sm d-none"
+                  class="btn btn-primary btn-sm d-none"
                   type="button"
                   id="btnReclamarIncidencia"
                 >
@@ -108,14 +109,6 @@
                 >
                   <i class="bi bi-unlock" aria-hidden="true"></i> Liberar
                 </button>
-                <!-- El destino y el texto los pone el JS según el rol -->
-                <a
-                  class="btn btn-outline-secondary btn-sm"
-                  id="btnVolver"
-                  href="../gestion-incidencias/gestion-incidencias.html"
-                >
-                  <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
-                </a>
               </div>
             </div>
 
@@ -142,7 +135,7 @@
                   <!-- Tarjeta principal -->
                   <section class="panel detalle-fade-in detalle-fade-in-2" id="panelDetalle">
                     <div class="p-3">
-                      <!-- Vista (solo lectura): involucrados (izquierda) + información (derecha) -->
+                      <!-- Vista (solo lectura): involucrados (izquierda) + Información (derecha) -->
                       <div id="datosVista" class="info-layout">
                         <!-- Columna izquierda: las 3 personas implicadas, cada una con color de rol -->
                         <div class="info-involucrados">
@@ -175,55 +168,51 @@
                           </div>
                         </div>
 
-                        <!-- Columna derecha: campos de la incidencia -->
+                        <!-- Columna derecha: descripción protagonista + tipo/ubicación -->
                         <div class="info-principal">
-                          <h2 class="panel-titulo-tool">
-                            <i class="bi bi-info-circle me-1"></i> Información
-                          </h2>
-                          <!-- Tipo / Subtipo / Provincia-Ciudad / Dirección: rejilla con icono por campo -->
-                          <div class="info-grid mb-3">
-                            <div class="info-item">
-                              <span class="info-icono"
-                                ><i class="bi bi-tag" aria-hidden="true"></i
-                              ></span>
-                              <div class="info-texto">
-                                <span class="info-label">Tipo</span>
-                                <span class="info-valor" id="detalleTipoTexto"></span>
-                              </div>
-                            </div>
-                            <div class="info-item">
-                              <span class="info-icono"
-                                ><i class="bi bi-tags" aria-hidden="true"></i
-                              ></span>
-                              <div class="info-texto">
-                                <span class="info-label">Subtipo</span>
-                                <span class="info-valor" id="detalleSubtipoTexto"></span>
-                              </div>
-                            </div>
-                            <div class="info-item">
-                              <span class="info-icono"
-                                ><i class="bi bi-geo-alt" aria-hidden="true"></i
-                              ></span>
-                              <div class="info-texto">
-                                <span class="info-label">Provincia / Ciudad</span>
-                                <span class="info-valor" id="metaProvinciaCiudad"></span>
-                              </div>
-                            </div>
-                            <div class="info-item">
-                              <span class="info-icono"
-                                ><i class="bi bi-signpost-2" aria-hidden="true"></i
-                              ></span>
-                              <div class="info-texto">
-                                <span class="info-label">Dirección</span>
-                                <span class="info-valor" id="detalleDireccion"></span>
-                              </div>
-                            </div>
+                          <!-- Cabecera: título + Editar (aquí, porque edita justamente estos datos;
+                               solo el ciudadano dueño y en PENDIENTE. Lo revela el JS). -->
+                          <div class="info-cabecera">
+                            <h2 class="panel-titulo-tool mb-0">
+                              <i class="bi bi-info-circle me-1"></i> Información
+                            </h2>
+                            <button
+                              class="btn btn-primary btn-sm d-none"
+                              type="button"
+                              id="btnEditar"
+                            >
+                              <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                            </button>
                           </div>
 
-                          <!-- Descripción: bloque destacado con franja lateral -->
-                          <div id="detalleDescripcionBloque" class="info-descripcion">
-                            <span class="info-label">Descripción</span>
-                            <p id="detalleDescripcion" class="mb-0"></p>
+                          <!-- Descripción del reporte: contenido principal, en grande -->
+                          <div id="detalleDescripcionBloque" class="info-descripcion-hero">
+                            <span class="info-label">Descripción del reporte</span>
+                            <p id="detalleDescripcion" class="info-descripcion-texto mb-0"></p>
+                          </div>
+
+                          <!-- Tipo y ubicación (metadatos compactos, sin cajas) -->
+                          <div class="info-meta">
+                            <div class="info-meta-fila">
+                              <span class="info-meta-icono"
+                                ><i class="bi bi-tag" aria-hidden="true"></i
+                              ></span>
+                              <span class="info-meta-label">Tipo</span>
+                              <span class="info-meta-valor">
+                                <span id="detalleTipoTexto"></span
+                                ><span class="info-meta-sub" id="detalleSubtipoTexto"></span>
+                              </span>
+                            </div>
+                            <div class="info-meta-fila">
+                              <span class="info-meta-icono"
+                                ><i class="bi bi-geo-alt" aria-hidden="true"></i
+                              ></span>
+                              <span class="info-meta-label">Ubicación</span>
+                              <span class="info-meta-valor">
+                                <span id="metaProvinciaCiudad"></span
+                                ><span class="info-meta-sub" id="detalleDireccion"></span>
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
