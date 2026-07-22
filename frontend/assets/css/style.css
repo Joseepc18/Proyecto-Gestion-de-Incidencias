@@ -133,9 +133,11 @@ a {
 .brand-title,
 .brand-subtitle,
 .nav-text,
-.sidebar-footer-text {
+.sidebar-footer-copy {
   min-width: 0;
-  transition: opacity 0.16s ease, width 0.16s ease;
+  transition:
+    opacity 0.16s ease,
+    width 0.16s ease;
 }
 
 .brand-title,
@@ -195,25 +197,21 @@ a {
   font-size: var(--fs-xs);
 }
 
+/* Pie del sidebar: copyright + versión en una línea discreta */
 .sidebar-footer {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
   margin-top: auto;
   margin-inline: 1.25rem;
   padding: 1rem 0;
   color: #d1d5db;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: var(--fs-md);
   white-space: nowrap;
 }
 
-.status-dot {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: #22c55e;
+.sidebar-footer-copy {
+  font-size: var(--fs-xs);
+  opacity: 0.7;
 }
 
 .sidebar-backdrop {
@@ -977,7 +975,7 @@ html.verificando-sesion .auth-theme-toggle {
 
   body.sidebar-mini .brand-copy,
   body.sidebar-mini .nav-text,
-  body.sidebar-mini .sidebar-footer-text {
+  body.sidebar-mini .sidebar-footer-copy {
     width: 0;
     opacity: 0;
     overflow: hidden;
@@ -2399,23 +2397,40 @@ html[data-theme="dark"] {
 }
 
 @media (min-width: 768px) {
+  /* Botón circular montado sobre el borde derecho del panel (que termina en 336px): mitad dentro,
+     mitad fuera, centrado en el borde. Patrón típico de paneles colapsables, más limpio que la
+     pestaña. Al colapsar, el panel se va y el botón queda flotando sobre el mapa. */
   .mis-feed-toggle {
     position: absolute;
-    top: 16px;
-    left: 336px;
+    top: 20px;
+    left: 320px;
     z-index: 1101;
-    width: 26px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--admin-border);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
+    border-radius: 50%;
     background: var(--admin-surface);
-    color: var(--admin-text);
+    color: var(--admin-muted);
+    font-size: var(--fs-sm);
+    cursor: pointer;
     box-shadow: var(--admin-shadow);
-    transition: left 0.2s ease;
+    transition:
+      left 0.2s ease,
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  /* Al pasar el cursor: se tiñe de primario y crece un poco, como invitando a tocarlo */
+  .mis-feed-toggle:hover {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: #fff;
+    transform: scale(1.1);
   }
 
   .mis-mapa-main.mis-feed-colapsado .mis-feed-toggle {
@@ -2426,6 +2441,54 @@ html[data-theme="dark"] {
     transform: translateX(-40px);
     opacity: 0;
     pointer-events: none;
+  }
+}
+
+/* Botón Eliminar de la tarjeta de detalle: arranca como icono (círculo) y al pasar el cursor
+   se despliega mostrando el texto y se rellena de rojo. El texto crece con max-width. */
+.mis-btn-eliminar {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--admin-danger);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--admin-danger);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.mis-btn-eliminar-txt {
+  max-width: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.25s ease,
+    margin-left 0.25s ease;
+}
+
+.mis-btn-eliminar:hover,
+.mis-btn-eliminar:focus-visible {
+  background: var(--admin-danger);
+  color: #fff;
+}
+
+.mis-btn-eliminar:hover .mis-btn-eliminar-txt,
+.mis-btn-eliminar:focus-visible .mis-btn-eliminar-txt {
+  max-width: 160px;
+  margin-left: 6px;
+}
+
+/* Sin animación de despliegue si el usuario pidió reducir movimiento (el color sí cambia) */
+@media (prefers-reduced-motion: reduce) {
+  .mis-btn-eliminar-txt {
+    transition: none;
   }
 }
 
