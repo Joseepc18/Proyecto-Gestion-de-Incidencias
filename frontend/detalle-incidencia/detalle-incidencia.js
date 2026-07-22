@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, toastFlash, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, prioridadConfig, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, toastFlash, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -123,12 +123,10 @@ async function cargarDetalle(id) {
     document.getElementById("detalleTipoTexto").textContent = tipo;
     document.getElementById("detalleSubtipoTexto").textContent = subtipo;
 
-    const fecha = new Date(inc.created_at).toLocaleString("es-EC");
     const reporta = inc.usuario ? inc.usuario.name : "—";
 
     document.getElementById("metaReportadoPor").textContent = reporta;
     document.getElementById("metaProvinciaCiudad").textContent = provinciaCiudadTexto(inc.ciudad);
-    document.getElementById("metaFechaCreacion").textContent = fecha;
     pintarMetaAdminAtiende();
 
     const bloqueDesc = document.getElementById("detalleDescripcionBloque");
@@ -241,24 +239,34 @@ function rolNombre() {
   return usuarioActual && usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
 }
 
-// animar=true en cambios en vivo o tras una acción propia (no en la carga inicial).
+// El estado ya no tiene badge propio (se ve en el historial); la función se mantiene para los
+// llamadores (carga y updates en vivo) pero es no-op si el elemento no existe.
 function pintarBadgeEstado(estado, animar) {
   const el = document.getElementById("detalleEstado");
+  if (!el) return;
   el.innerHTML = badgeEstadoHtml(estadoParaVista(estado, rolNombre()));
   if (animar) destellarBadge(el);
 }
 
-// Pinta el badge de prioridad y la franja lateral de la tarjeta.
+// Insignia de prioridad (pill propio del hero) + tiñe el hero (fondo + icono translúcido).
+// El diseño del pill es exclusivo del detalle, por eso no reusa badgePrioridadHtml (compartido).
 function pintarBadgePrioridad(prioridad, animar) {
   const el = document.getElementById("detallePrioridad");
-  el.innerHTML = badgePrioridadHtml(prioridad);
+  const clave = prioridadConfig[prioridad] ? prioridad : "SIN_ASIGNAR";
+  const cfg = prioridadConfig[clave];
+  el.className = "detalle-hero-prio prio-chip--" + clave.toLowerCase().replace(/_/g, "");
+  el.innerHTML = `<i class="bi ${cfg.icono}" aria-hidden="true"></i><span>${cfg.texto}</span>`;
   if (animar) destellarBadge(el);
 
-  const panel = document.getElementById("panelDetalle");
-  if (panel) {
-    const acento = { ALTA: "acento-alta", MEDIA: "acento-media", BAJA: "acento-baja" };
-    panel.classList.remove("acento-alta", "acento-media", "acento-baja");
-    if (acento[prioridad]) panel.classList.add(acento[prioridad]);
+  const hero = document.getElementById("detalleHero");
+  if (hero) {
+    const clasePrio = { ALTA: "prio-alta", MEDIA: "prio-media", BAJA: "prio-baja" };
+    hero.classList.remove("prio-alta", "prio-media", "prio-baja");
+    if (clasePrio[prioridad]) hero.classList.add(clasePrio[prioridad]);
+
+    // El icono de fondo reusa el mismo de la insignia de prioridad (estados.js = única fuente).
+    const icono = document.getElementById("detalleHeroIcono");
+    if (icono) icono.className = "detalle-hero-icono bi " + cfg.icono;
   }
 }
 

@@ -31,24 +31,45 @@
         <nav class="navbar admin-navbar navbar-expand" id="adminNavbar"></nav>
 
         <main class="dashboard-content">
-          <div class="container-fluid px-3 px-lg-4 py-4">
-            <div class="page-heading">
-              <div class="page-heading-copy">
-                <span class="page-icon"><i class="bi bi-card-text" aria-hidden="true"></i></span>
-                <div>
-                  <p class="eyebrow mb-1" id="detalleCodigo">Incidencia</p>
-                  <h1 class="h3 mb-1" id="detalleTitulo">Detalle de incidencia</h1>
-                  <p class="text-muted mb-0">Detalle de la incidencia reportada.</p>
+          <!-- Hero: BANNER de ancho completo cuyo color lo pone la prioridad (clase prio-* vía JS).
+               Reúne el enlace Volver, código+fecha+tiempos, título, estado/prioridad, botones
+               (Editar + acciones de admin) y la línea de tiempo. El icono de fondo cambia con la prioridad. -->
+          <header class="detalle-hero detalle-fade-in detalle-fade-in-1" id="detalleHero">
+            <i class="detalle-hero-icono bi bi-fire" id="detalleHeroIcono" aria-hidden="true"></i>
+
+            <!-- Volver: arriba del hero, dentro del banner (siempre visible). Texto/destino los pone el JS. -->
+            <a
+              class="detalle-volver"
+              id="btnVolver"
+              href="../gestion-incidencias/gestion-incidencias.html"
+            >
+              <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
+            </a>
+
+            <div class="detalle-hero-top">
+              <div class="detalle-hero-titulo-zona">
+                <!-- Línea superior: código + fecha de creación + tiempos (contexto, discreto) -->
+                <div class="detalle-hero-linea-meta">
+                  <span class="detalle-hero-codigo" id="detalleCodigo">Incidencia</span>
+                  <span class="hero-sec">
+                    <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+                    <span id="detalleTiempoTranscurrido">—</span>
+                  </span>
+                  <span class="hero-sec">
+                    <i class="bi bi-activity" aria-hidden="true"></i>
+                    Última actividad: <span id="detalleUltimaActividad">—</span>
+                  </span>
+                </div>
+                <h1 class="detalle-hero-titulo" id="detalleTitulo">Detalle de incidencia</h1>
+                <!-- Insignia de prioridad: "Prioridad:" + pill, debajo del título (a la izquierda,
+                     así no tapa el icono de fondo). El JS rellena el pill con icono+nivel y su color.
+                     El estado ya se ve en el historial, por eso no tiene badge. -->
+                <div class="detalle-hero-prio-fila">
+                  <span class="detalle-hero-prio-label">Prioridad:</span>
+                  <span class="detalle-hero-prio" id="detallePrioridad" title="Prioridad"></span>
                 </div>
               </div>
-              <div class="heading-actions d-flex gap-2">
-                <!-- Editar/Eliminar: solo el ciudadano dueño y mientras esté PENDIENTE -->
-                <button class="btn btn-primary btn-sm d-none" type="button" id="btnEditar">
-                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-                </button>
-                <button class="btn btn-outline-danger btn-sm d-none" type="button" id="btnEliminar">
-                  <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
-                </button>
+              <div class="heading-actions detalle-hero-acciones">
                 <!-- Solo el ciudadano dueño, y solo mientras esté RESUELTO -->
                 <button
                   class="btn btn-outline-warning btn-sm d-none"
@@ -75,7 +96,7 @@
                 </button>
                 <!-- Reclamar/Liberar la atención (solo admin): es el candado que habilita gestionar -->
                 <button
-                  class="btn btn-outline-primary btn-sm d-none"
+                  class="btn btn-primary btn-sm d-none"
                   type="button"
                   id="btnReclamarIncidencia"
                 >
@@ -88,17 +109,16 @@
                 >
                   <i class="bi bi-unlock" aria-hidden="true"></i> Liberar
                 </button>
-                <!-- El destino y el texto los pone el JS según el rol -->
-                <a
-                  class="btn btn-outline-secondary btn-sm"
-                  id="btnVolver"
-                  href="../gestion-incidencias/gestion-incidencias.html"
-                >
-                  <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver
-                </a>
               </div>
             </div>
 
+            <!-- Línea de tiempo del historial, al centro del banner (aparece con animación por paso) -->
+            <div class="detalle-hero-timeline">
+              <div id="historialTimeline" class="historial-lista"></div>
+            </div>
+          </header>
+
+          <div class="container-fluid px-3 px-lg-4 py-4">
             <!-- Spinner de carga -->
             <div id="detalleCargando" class="text-center py-5">
               <div class="spinner-border text-primary" role="status">
@@ -108,103 +128,92 @@
 
             <!-- Contenido (oculto mientras carga) -->
             <div id="detalleContenido" class="d-none">
-              <!-- Barra de meta-información: Reportado por / Provincia-Ciudad / Fecha de creación / Técnico responsable / Admin que atendió -->
-              <div class="detalle-meta-bar detalle-fade-in detalle-fade-in-1" id="detalleMetaBar">
-                <div class="meta-tile">
-                  <span class="meta-tile-icono"
-                    ><i class="bi bi-person" aria-hidden="true"></i
-                  ></span>
-                  <div class="meta-tile-texto">
-                    <span class="meta-tile-label">Reportado por</span>
-                    <span class="meta-tile-valor" id="metaReportadoPor">—</span>
-                  </div>
-                </div>
-                <div class="meta-tile">
-                  <span class="meta-tile-icono"
-                    ><i class="bi bi-geo-alt" aria-hidden="true"></i
-                  ></span>
-                  <div class="meta-tile-texto">
-                    <span class="meta-tile-label">Provincia / Ciudad</span>
-                    <span class="meta-tile-valor" id="metaProvinciaCiudad">—</span>
-                  </div>
-                </div>
-                <div class="meta-tile">
-                  <span class="meta-tile-icono"
-                    ><i class="bi bi-calendar-event" aria-hidden="true"></i
-                  ></span>
-                  <div class="meta-tile-texto">
-                    <span class="meta-tile-label">Fecha de creación</span>
-                    <span class="meta-tile-valor" id="metaFechaCreacion">—</span>
-                  </div>
-                </div>
-                <div class="meta-tile">
-                  <span class="meta-tile-icono"
-                    ><i class="bi bi-person-gear" aria-hidden="true"></i
-                  ></span>
-                  <div class="meta-tile-texto">
-                    <span class="meta-tile-label">Técnico responsable</span>
-                    <span class="meta-tile-valor" id="metaTecnicoResponsable">—</span>
-                  </div>
-                </div>
-                <div class="meta-tile">
-                  <span class="meta-tile-icono"
-                    ><i class="bi bi-shield-check" aria-hidden="true"></i
-                  ></span>
-                  <div class="meta-tile-texto">
-                    <span class="meta-tile-label">Admin. que atendió</span>
-                    <span class="meta-tile-valor" id="metaAdminAtiende">—</span>
-                  </div>
-                </div>
-              </div>
-
               <!-- Contenido principal (ancho) + sidebar de Acciones (angosto, solo admin/responsable) -->
               <div class="detalle-cuerpo">
                 <!-- Contenido principal: Información, luego Mapa+Fotos en fila, luego Historial -->
                 <div class="detalle-principal">
                   <!-- Tarjeta principal -->
-                  <section
-                    class="panel panel-acento detalle-fade-in detalle-fade-in-2"
-                    id="panelDetalle"
-                  >
+                  <section class="panel detalle-fade-in detalle-fade-in-2" id="panelDetalle">
                     <div class="p-3">
-                      <!-- Vista (solo lectura) -->
-                      <div id="datosVista">
-                        <!-- Estado / Prioridad: badges más grandes que en el resto de la app, sin caja alrededor -->
-                        <div class="detalle-estado-prioridad-fila mb-3">
-                          <span class="detalle-campo-label">Estado</span>
-                          <span class="badge" id="detalleEstado"></span>
-                          <span class="detalle-campo-label">Prioridad</span>
-                          <span class="badge" id="detallePrioridad"></span>
+                      <!-- Vista (solo lectura): involucrados (izquierda) + Información (derecha) -->
+                      <div id="datosVista" class="info-layout">
+                        <!-- Columna izquierda: las 3 personas implicadas, cada una con color de rol -->
+                        <div class="info-involucrados">
+                          <div class="involucrado involucrado--reporta">
+                            <span class="involucrado-avatar"
+                              ><i class="bi bi-person-fill" aria-hidden="true"></i
+                            ></span>
+                            <div class="involucrado-texto">
+                              <span class="involucrado-label">Reportado por</span>
+                              <span class="involucrado-nombre" id="metaReportadoPor">—</span>
+                            </div>
+                          </div>
+                          <div class="involucrado involucrado--tecnico">
+                            <span class="involucrado-avatar"
+                              ><i class="bi bi-person-gear" aria-hidden="true"></i
+                            ></span>
+                            <div class="involucrado-texto">
+                              <span class="involucrado-label">Técnico responsable</span>
+                              <span class="involucrado-nombre" id="metaTecnicoResponsable">—</span>
+                            </div>
+                          </div>
+                          <div class="involucrado involucrado--admin">
+                            <span class="involucrado-avatar"
+                              ><i class="bi bi-shield-fill-check" aria-hidden="true"></i
+                            ></span>
+                            <div class="involucrado-texto">
+                              <span class="involucrado-label">Admin. que atendió</span>
+                              <span class="involucrado-nombre" id="metaAdminAtiende">—</span>
+                            </div>
+                          </div>
                         </div>
 
-                        <!-- Tipo / Subtipo / Dirección: campos destacados que aprovechan el ancho -->
-                        <div class="detalle-campos-grid mb-3">
-                          <div class="detalle-campo">
-                            <h6 class="detalle-campo-label mb-1">Tipo</h6>
-                            <p class="mb-0 fw-semibold" id="detalleTipoTexto"></p>
+                        <!-- Columna derecha: descripción protagonista + tipo/ubicación -->
+                        <div class="info-principal">
+                          <!-- Cabecera: título + Editar (aquí, porque edita justamente estos datos;
+                               solo el ciudadano dueño y en PENDIENTE. Lo revela el JS). -->
+                          <div class="info-cabecera">
+                            <h2 class="panel-titulo-tool mb-0">
+                              <i class="bi bi-info-circle me-1"></i> Información
+                            </h2>
+                            <button
+                              class="btn btn-primary btn-sm d-none"
+                              type="button"
+                              id="btnEditar"
+                            >
+                              <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                            </button>
                           </div>
-                          <div class="detalle-campo">
-                            <h6 class="detalle-campo-label mb-1">Subtipo</h6>
-                            <p class="mb-0 fw-semibold" id="detalleSubtipoTexto"></p>
-                          </div>
-                          <div class="detalle-campo">
-                            <h6 class="detalle-campo-label mb-1">Dirección</h6>
-                            <p class="mb-0 fw-semibold" id="detalleDireccion"></p>
-                          </div>
-                          <div class="detalle-campo">
-                            <h6 class="detalle-campo-label mb-1">Tiempo transcurrido</h6>
-                            <p class="mb-0 fw-semibold" id="detalleTiempoTranscurrido"></p>
-                          </div>
-                          <div class="detalle-campo">
-                            <h6 class="detalle-campo-label mb-1">Última actividad</h6>
-                            <p class="mb-0 fw-semibold" id="detalleUltimaActividad"></p>
-                          </div>
-                        </div>
 
-                        <!-- Descripción -->
-                        <div id="detalleDescripcionBloque" class="mb-0">
-                          <h6 class="detalle-campo-label mb-1">Descripción</h6>
-                          <p id="detalleDescripcion" class="mb-0"></p>
+                          <!-- Descripción del reporte: contenido principal, en grande -->
+                          <div id="detalleDescripcionBloque" class="info-descripcion-hero">
+                            <span class="info-label">Descripción del reporte</span>
+                            <p id="detalleDescripcion" class="info-descripcion-texto mb-0"></p>
+                          </div>
+
+                          <!-- Tipo y ubicación (metadatos compactos, sin cajas) -->
+                          <div class="info-meta">
+                            <div class="info-meta-fila">
+                              <span class="info-meta-icono"
+                                ><i class="bi bi-tag" aria-hidden="true"></i
+                              ></span>
+                              <span class="info-meta-label">Tipo</span>
+                              <span class="info-meta-valor">
+                                <span id="detalleTipoTexto"></span
+                                ><span class="info-meta-sub" id="detalleSubtipoTexto"></span>
+                              </span>
+                            </div>
+                            <div class="info-meta-fila">
+                              <span class="info-meta-icono"
+                                ><i class="bi bi-geo-alt" aria-hidden="true"></i
+                              ></span>
+                              <span class="info-meta-label">Ubicación</span>
+                              <span class="info-meta-valor">
+                                <span id="metaProvinciaCiudad"></span
+                                ><span class="info-meta-sub" id="detalleDireccion"></span>
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -437,21 +446,11 @@
                       </div>
                     </section>
                   </div>
-
-                  <!-- Historial de estados (formato horizontal compacto) -->
-                  <section class="panel detalle-fade-in detalle-fade-in-4">
-                    <div class="p-3">
-                      <h3 class="panel-titulo-tool">
-                        <i class="bi bi-clock-history me-1"></i> Historial de estados
-                      </h3>
-                      <div id="historialTimeline" class="historial-lista"></div>
-                    </div>
-                  </section>
                 </div>
 
                 <!-- Sidebar de Acciones (admin y/o técnico responsable) -->
                 <!-- Si queda vacío (ciudadano / técnico de apoyo), el JS la oculta y el contenido principal ocupa todo el ancho -->
-                <div class="detalle-acciones-col detalle-fade-in detalle-fade-in-5" id="colGestion">
+                <div class="detalle-acciones-col detalle-fade-in detalle-fade-in-4" id="colGestion">
                   <section class="panel" id="panelAcciones">
                     <div class="p-3">
                       <h3 class="panel-titulo-tool"><i class="bi bi-sliders me-1"></i> Acciones</h3>

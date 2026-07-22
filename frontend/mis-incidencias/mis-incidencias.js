@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, toastFlash, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let mapa = null;
@@ -42,6 +42,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   document.getElementById("btnVolverMapa").addEventListener("click", function () {
     document.querySelector(".mis-mapa-main").classList.remove("mis-ver-detalle");
   });
+
+  // Eliminar la incidencia seleccionada (el botón solo aparece en PENDIENTE, ver seleccionarIncidencia).
+  document.getElementById("btnEliminarInc").addEventListener("click", eliminarSeleccionada);
 
   // Colapsar/expandir el panel de la lista para ver el mapa completo (solo desktop/tablet).
   const btnColapsar = document.getElementById("btnColapsarFeed");
@@ -286,6 +289,10 @@ async function seleccionarIncidencia(id) {
     const editable = esAdmin || inc.estado_incidencia === "PENDIENTE";
     document.getElementById("avisoEdicion").classList.toggle("d-none", editable);
 
+    // Eliminar solo cuando el dueño puede: mientras la incidencia siga en PENDIENTE.
+    const borrable = !esAdmin && inc.estado_incidencia === "PENDIENTE";
+    document.getElementById("btnEliminarInc").classList.toggle("d-none", !borrable);
+
     document.getElementById("detalleCodigo").textContent = codigoIncidencia(inc.id_incidencia);
     document.getElementById("detalleTitulo").textContent = inc.nombre_incidencia;
     document.getElementById("detalleFecha").textContent =
@@ -327,6 +334,27 @@ async function seleccionarIncidencia(id) {
     });
   } catch (error) {
     mostrarToast("Error al cargar el detalle: " + error.message, "error");
+  }
+}
+
+// Borra la incidencia seleccionada (el botón solo se muestra en PENDIENTE; el backend también
+// restringe el borrado a dueño + PENDIENTE). Tras borrar, recarga para limpiar lista, contador y pin.
+async function eliminarSeleccionada() {
+  if (!seleccionadaId) return;
+  const ok = await confirmar({
+    titulo: "Eliminar incidencia",
+    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+    textoConfirmar: "Eliminar",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/incidencias/" + seleccionadaId, { method: "DELETE" });
+    toastFlash("Incidencia eliminada", "success");
+    location.reload();
+  } catch (error) {
+    mostrarToast("Error: " + error.message, "error");
   }
 }
 

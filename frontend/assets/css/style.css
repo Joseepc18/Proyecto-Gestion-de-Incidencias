@@ -133,9 +133,11 @@ a {
 .brand-title,
 .brand-subtitle,
 .nav-text,
-.sidebar-footer-text {
+.sidebar-footer-copy {
   min-width: 0;
-  transition: opacity 0.16s ease, width 0.16s ease;
+  transition:
+    opacity 0.16s ease,
+    width 0.16s ease;
 }
 
 .brand-title,
@@ -195,25 +197,21 @@ a {
   font-size: var(--fs-xs);
 }
 
+/* Pie del sidebar: copyright + versión en una línea discreta */
 .sidebar-footer {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
   margin-top: auto;
   margin-inline: 1.25rem;
   padding: 1rem 0;
   color: #d1d5db;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: var(--fs-md);
   white-space: nowrap;
 }
 
-.status-dot {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: #22c55e;
+.sidebar-footer-copy {
+  font-size: var(--fs-xs);
+  opacity: 0.7;
 }
 
 .sidebar-backdrop {
@@ -977,7 +975,7 @@ html.verificando-sesion .auth-theme-toggle {
 
   body.sidebar-mini .brand-copy,
   body.sidebar-mini .nav-text,
-  body.sidebar-mini .sidebar-footer-text {
+  body.sidebar-mini .sidebar-footer-copy {
     width: 0;
     opacity: 0;
     overflow: hidden;
@@ -2399,23 +2397,40 @@ html[data-theme="dark"] {
 }
 
 @media (min-width: 768px) {
+  /* Botón circular montado sobre el borde derecho del panel (que termina en 336px): mitad dentro,
+     mitad fuera, centrado en el borde. Patrón típico de paneles colapsables, más limpio que la
+     pestaña. Al colapsar, el panel se va y el botón queda flotando sobre el mapa. */
   .mis-feed-toggle {
     position: absolute;
-    top: 16px;
-    left: 336px;
+    top: 20px;
+    left: 320px;
     z-index: 1101;
-    width: 26px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--admin-border);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
+    border-radius: 50%;
     background: var(--admin-surface);
-    color: var(--admin-text);
+    color: var(--admin-muted);
+    font-size: var(--fs-sm);
+    cursor: pointer;
     box-shadow: var(--admin-shadow);
-    transition: left 0.2s ease;
+    transition:
+      left 0.2s ease,
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  /* Al pasar el cursor: se tiñe de primario y crece un poco, como invitando a tocarlo */
+  .mis-feed-toggle:hover {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: #fff;
+    transform: scale(1.1);
   }
 
   .mis-mapa-main.mis-feed-colapsado .mis-feed-toggle {
@@ -2426,6 +2441,54 @@ html[data-theme="dark"] {
     transform: translateX(-40px);
     opacity: 0;
     pointer-events: none;
+  }
+}
+
+/* Botón Eliminar de la tarjeta de detalle: arranca como icono (círculo) y al pasar el cursor
+   se despliega mostrando el texto y se rellena de rojo. El texto crece con max-width. */
+.mis-btn-eliminar {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--admin-danger);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--admin-danger);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.mis-btn-eliminar-txt {
+  max-width: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.25s ease,
+    margin-left 0.25s ease;
+}
+
+.mis-btn-eliminar:hover,
+.mis-btn-eliminar:focus-visible {
+  background: var(--admin-danger);
+  color: #fff;
+}
+
+.mis-btn-eliminar:hover .mis-btn-eliminar-txt,
+.mis-btn-eliminar:focus-visible .mis-btn-eliminar-txt {
+  max-width: 160px;
+  margin-left: 6px;
+}
+
+/* Sin animación de despliegue si el usuario pidió reducir movimiento (el color sí cambia) */
+@media (prefers-reduced-motion: reduce) {
+  .mis-btn-eliminar-txt {
+    transition: none;
   }
 }
 
@@ -2854,25 +2917,6 @@ html[data-theme="dark"] {
   }
 }
 
-/* Tarjeta de Información: la más importante de la pantalla, con más presencia que Mapa/Fotos/
-   Historial — franja lateral más gruesa y sombra elevada. */
-.panel-acento {
-  border-left-width: 5px;
-  box-shadow: var(--admin-shadow-lg);
-}
-
-.panel-acento.acento-alta {
-  border-left-color: var(--admin-danger);
-}
-
-.panel-acento.acento-media {
-  border-left-color: var(--admin-warning);
-}
-
-.panel-acento.acento-baja {
-  border-left-color: var(--admin-success);
-}
-
 /* Detalle admin: herramientas de gestión (columna derecha) */
 .panel-titulo-tool {
   font-size: var(--fs-xs);
@@ -3174,119 +3218,505 @@ html[data-theme="dark"] {
   white-space: nowrap;
 }
 
-/* Barra de meta-información (arriba del grid): Reportado por / Provincia-Ciudad / Fecha /
-   Técnico responsable / Admin que atendió. auto-fit en vez de columnas fijas: no se estiran
-   de más en pantallas anchas, se acomodan solas según cuántas quepan. */
-.detalle-meta-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+/* Hero del detalle: BANNER de ancho completo (va fuera del container-fluid, de borde a borde)
+   teñido por la prioridad (--prio). Sin recuadro ni esquinas: solo fondo de color + acento
+   inferior. La clase prio-* la pone el JS (pintarBadgePrioridad); sin ella arranca en neutro. */
+.detalle-hero {
+  --prio: var(--admin-primary);
+  position: relative;
+  overflow: hidden;
+  padding: 16px clamp(1rem, 2.5vw, 1.5rem);
+  border-bottom: 3px solid var(--prio);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--prio) 14%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--prio) 30%, var(--admin-surface)),
+    color-mix(in srgb, var(--prio) 13%, var(--admin-surface))
+  );
 }
 
-.meta-tile {
+/* En oscuro el tinte necesita más carga para no verse apagado */
+html[data-theme="dark"] .detalle-hero {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--prio) 32%, var(--admin-surface)),
+    color-mix(in srgb, var(--prio) 11%, var(--admin-surface))
+  );
+}
+
+.detalle-hero.prio-alta {
+  --prio: var(--admin-danger);
+}
+.detalle-hero.prio-media {
+  --prio: var(--admin-warning);
+}
+.detalle-hero.prio-baja {
+  --prio: var(--admin-success);
+}
+
+/* Icono grande translúcido al fondo derecha: refuerza la prioridad sin restar legibilidad */
+.detalle-hero-icono {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14rem;
+  line-height: 1;
+  color: var(--prio);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-theme="dark"] .detalle-hero-icono {
+  opacity: 0.13;
+}
+
+/* El contenido va por encima del icono de fondo */
+.detalle-hero-top,
+.detalle-hero-timeline {
+  position: relative;
+  z-index: 1;
+}
+
+/* Línea superior: código + fecha + tiempos, en una sola fila discreta */
+.detalle-hero-linea-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  background: var(--admin-surface);
-  /* Sin esto el item no encoge bajo el nowrap de .meta-tile-valor y empuja la barra fuera */
-  min-width: 0;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+  gap: 4px 16px;
+  margin-bottom: 6px;
 }
 
-.meta-tile:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--admin-shadow-lg);
-  border-color: var(--admin-primary);
-}
-
-.meta-tile-icono {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #eaf2ff;
-  color: var(--admin-primary);
-  font-size: var(--fs-base);
-}
-
-html[data-theme="dark"] .meta-tile-icono {
-  background: #1e3a5f;
-  color: #bfdbfe;
-}
-
-.meta-tile-texto {
+.detalle-hero-top {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.detalle-hero-titulo-zona {
   min-width: 0;
 }
 
-.meta-tile-label {
-  font-size: var(--fs-2xs);
+.detalle-hero-codigo {
+  font-size: var(--fs-xs);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--prio);
+}
+
+.detalle-hero-titulo {
+  margin: 0 0 8px;
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--admin-text);
+}
+
+/* "Prioridad:" + pill, en una fila debajo del título */
+.detalle-hero-prio-fila {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detalle-hero-prio-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--admin-muted);
 }
 
-.meta-tile-valor {
-  font-size: var(--fs-md);
+/* Insignia de prioridad del hero: pill sólido en el color de la prioridad.
+   El color lo da la clase prio-chip--* (la pone el JS). */
+.detalle-hero-prio {
+  --pc: var(--admin-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: #fff;
+  background: var(--pc);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--pc) 40%, transparent);
+}
+
+.detalle-hero-prio i {
+  font-size: 1.05em;
+}
+
+.prio-chip--alta {
+  --pc: var(--admin-danger);
+}
+.prio-chip--media {
+  --pc: var(--admin-warning);
+}
+.prio-chip--baja {
+  --pc: var(--admin-success);
+}
+.prio-chip--sinasignar {
+  --pc: var(--admin-muted);
+}
+
+.detalle-hero-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Botones del hero: sobre el banner teñido se ven lavados. Se les da peso, elevación y realce
+   en hover para que resalten como una barra de acciones destacada. */
+.detalle-hero-acciones .btn {
   font-weight: 600;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.detalle-hero-acciones .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.24);
+}
+
+/* "Volver" y demás outline gris: se pierden en el banner → cuerpo sólido de superficie */
+.detalle-hero-acciones .btn-outline-secondary {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.detalle-hero-acciones .btn-outline-secondary:hover,
+.detalle-hero-acciones .btn-outline-secondary:focus-visible {
+  background: var(--admin-surface-soft);
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
+
+/* Línea de tiempo dentro del hero, al centro. Sin filetes: solo separación por espacio */
+.detalle-hero-timeline {
+  margin: 14px 0;
+}
+
+/* El punto del paso lleva un anillo del color del fondo del hero (no del surface plano),
+   para que no se vea un halo claro sobre el banner teñido (se nota sobre todo en ALTA). */
+.detalle-hero-timeline .historial-paso-punto {
+  border-color: color-mix(in srgb, var(--prio) 18%, var(--admin-surface));
+}
+
+/* Cada paso del historial entra en cascada al cargar (efecto "sale con animación") */
+@keyframes heroPasoIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detalle-hero-timeline .historial-paso {
+  animation: heroPasoIn 0.4s ease both;
+}
+.detalle-hero-timeline .historial-paso:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.detalle-hero-timeline .historial-paso:nth-child(2) {
+  animation-delay: 0.28s;
+}
+.detalle-hero-timeline .historial-paso:nth-child(3) {
+  animation-delay: 0.41s;
+}
+.detalle-hero-timeline .historial-paso:nth-child(4) {
+  animation-delay: 0.54s;
+}
+.detalle-hero-timeline .historial-paso:nth-child(n + 5) {
+  animation-delay: 0.67s;
+}
+
+.hero-sec {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  color: var(--admin-muted);
+}
+
+@media (max-width: 575px) {
+  .detalle-hero-acciones {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  /* Botones más compactos en celular: menos peso visual y cada texto en una sola línea
+     (así "Volver a la lista" no se parte y no se ven enormes). */
+  .detalle-hero-acciones .btn {
+    padding: 0.28rem 0.55rem;
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+  }
+
+  .detalle-hero-icono {
+    font-size: 10rem;
+    opacity: 0.06;
+  }
+}
+
+/* Enlace "Volver": arriba a la izquierda DENTRO del hero (sin dejar hueco sobre el banner).
+   Enlace de texto limpio (sin caja), con la flecha que se desliza en hover. */
+.detalle-volver {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--admin-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.detalle-volver i {
+  transition: transform 0.15s ease;
+}
+
+.detalle-volver:hover {
+  color: var(--admin-primary);
+}
+
+.detalle-volver:hover i {
+  transform: translateX(-3px);
+}
+
+/* Panel Información en dos columnas: involucrados (izquierda) + contenido (derecha) */
+.info-layout {
+  display: flex;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.info-principal {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Cabecera de Información: título a la izquierda, botón Editar a la derecha */
+.info-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Columna de involucrados: tarjeta suave con las 3 personas, cada una con color según su rol */
+.info-involucrados {
+  flex: 0 0 auto;
+  width: min(280px, 32%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-border);
+}
+
+.involucrado {
+  --rol: var(--admin-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.involucrado:hover {
+  background: color-mix(in srgb, var(--rol) 10%, transparent);
+  transform: translateX(2px);
+}
+
+.involucrado--reporta {
+  --rol: var(--admin-primary);
+}
+.involucrado--tecnico {
+  --rol: var(--admin-success);
+}
+.involucrado--admin {
+  --rol: var(--admin-warning);
+}
+
+.involucrado-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rol), color-mix(in srgb, var(--rol) 62%, #000));
+  color: #fff;
+  font-size: var(--fs-lg);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--rol) 35%, transparent);
+}
+
+.involucrado-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.involucrado-label {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rol);
+}
+
+.involucrado-nombre {
+  font-size: var(--fs-md);
+  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Tipo / Subtipo / Dirección en la tarjeta de Información: campos destacados en grilla,
-   en vez de texto suelto, para aprovechar el ancho en pantallas grandes. */
-/* auto-fill + tope de 260px (no 1fr): en tarjetas anchas los campos quedan compactos y pegados
-   a la izquierda en vez de estirarse con huecos enormes entre "Tipo" y "Dirección". */
-.detalle-campos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 260px));
-  gap: 16px;
-}
-
-/* Label de campo (Tipo/Subtipo/Dirección/Descripción): más distintivo que un simple texto muted,
-   para que se lea como encabezado de sección dentro de la tarjeta, no como nota al pie. */
-.detalle-campo-label {
-  font-size: var(--fs-xs);
+.info-label {
+  font-size: var(--fs-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--admin-primary);
+  color: var(--admin-muted);
 }
 
-.detalle-campo p {
-  font-size: var(--fs-md);
+/* Descripción protagonista: el texto del reporte, en grande, con franja lateral. Borde suave
+   para que se lea como un bloque aun cuando el fondo casi se confunde con el panel (modo claro). */
+.info-descripcion-hero {
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--admin-border);
+  border-left: 4px solid var(--admin-primary);
+  border-radius: 0 12px 12px 0;
+  background: var(--admin-surface-soft);
 }
 
-/* Estado y Prioridad: fila simple (sin caja), pero con badges más grandes y con sombra propia
-   que en el resto de la app (ahí siguen chicos, en tablas/listas). Es lo primero que se lee. */
-.detalle-estado-prioridad-fila {
+.info-descripcion-hero .info-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.info-descripcion-texto {
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+  color: var(--admin-text);
+}
+
+/* Tira de metadatos: filas etiqueta→valor compactas, sin cajas. Etiqueta de ancho fijo para
+   que los valores queden alineados como una mini ficha. */
+.info-meta {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-meta-fila {
+  display: grid;
+  grid-template-columns: 20px 96px 1fr;
+  align-items: baseline;
   gap: 10px;
 }
 
-.detalle-estado-prioridad-fila .badge {
-  font-size: var(--fs-lg);
-  padding: 0.5em 0.9em;
-  font-weight: 700;
+.info-meta-icono {
+  color: var(--admin-primary);
+  font-size: var(--fs-base);
+  text-align: center;
 }
 
-/* Destello breve cuando Estado/Prioridad cambian en vivo (WebSocket) o por la propia acción del
+.info-meta-label {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-muted);
+}
+
+.info-meta-valor {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  min-width: 0;
+}
+
+/* Valor secundario (subtipo / dirección): en línea, más discreto, con un punto de separación */
+.info-meta-sub {
+  color: var(--admin-muted);
+  font-weight: 500;
+}
+
+.info-meta-sub::before {
+  content: "·";
+  margin: 0 6px;
+  color: var(--admin-border);
+}
+
+@media (max-width: 767px) {
+  /* Involucrados en celular: pasan a fila arriba, repartidos */
+  .info-layout {
+    flex-direction: column;
+  }
+
+  .info-involucrados {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+
+  .involucrado {
+    flex: 1 1 200px;
+  }
+
+  /* Historial en celular: centrado (punto arriba, texto debajo) en vez de pegado a la izquierda,
+     para que se lea igual que en desktop. El conector vertical va por el centro. */
+  .detalle-hero-timeline .historial-paso {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .detalle-hero-timeline .historial-paso-punto {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .detalle-hero-timeline .historial-paso:not(:last-child)::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Metadatos en celular: etiqueta más angosta para dar aire al valor */
+  .info-meta-fila {
+    grid-template-columns: 18px 76px 1fr;
+    gap: 8px;
+  }
+}
+
+/* Destello breve cuando la Prioridad cambia en vivo (WebSocket) o por la propia acción del
    admin/técnico, para que el cambio se note en vez de aparecer seco. */
-#detalleEstado.badge-destello,
 #detallePrioridad.badge-destello {
   animation: badgeDestello 0.5s ease;
 }
@@ -3310,8 +3740,8 @@ html[data-theme="dark"] .meta-tile-icono {
    (no las de hover, que las dispara el propio usuario). */
 @media (prefers-reduced-motion: reduce) {
   .detalle-fade-in,
+  .detalle-hero-timeline .historial-paso,
   .historial-paso--actual .historial-paso-punto,
-  #detalleEstado.badge-destello,
   #detallePrioridad.badge-destello,
   .mapa-pin-wrapper--seleccionado .mapa-pin-gota,
   .auth-hero-img,

@@ -132,8 +132,8 @@
     '<nav class="sidebar-nav">' +
     navHtml +
     "</nav>" +
-    '<div class="sidebar-footer"><span class="status-dot"></span>' +
-    '<span class="sidebar-footer-text">Sistema activo</span></div>';
+    '<div class="sidebar-footer">' +
+    '<span class="sidebar-footer-copy">© 2026 UPSE</span></div>';
 
   navbar.innerHTML =
     '<div class="container-fluid px-3 px-lg-4">' +
