@@ -3,7 +3,7 @@
 /* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
-/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, toastFlash, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, badgePrioridadHtml, prioridadConfig, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, toastFlash, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 let incActual = null;
 let usuarioActual = null;
@@ -248,17 +248,22 @@ function pintarBadgeEstado(estado, animar) {
   if (animar) destellarBadge(el);
 }
 
-// Pinta el badge de prioridad y la franja lateral de la tarjeta.
+// Pinta el badge de prioridad y tiñe el hero (color de fondo + icono translúcido) según prioridad.
 function pintarBadgePrioridad(prioridad, animar) {
   const el = document.getElementById("detallePrioridad");
   el.innerHTML = badgePrioridadHtml(prioridad);
   if (animar) destellarBadge(el);
 
-  const panel = document.getElementById("panelDetalle");
-  if (panel) {
-    const acento = { ALTA: "acento-alta", MEDIA: "acento-media", BAJA: "acento-baja" };
-    panel.classList.remove("acento-alta", "acento-media", "acento-baja");
-    if (acento[prioridad]) panel.classList.add(acento[prioridad]);
+  const hero = document.getElementById("detalleHero");
+  if (hero) {
+    const clasePrio = { ALTA: "prio-alta", MEDIA: "prio-media", BAJA: "prio-baja" };
+    hero.classList.remove("prio-alta", "prio-media", "prio-baja");
+    if (clasePrio[prioridad]) hero.classList.add(clasePrio[prioridad]);
+
+    // El icono de fondo reusa el mismo de la insignia de prioridad (estados.js = única fuente).
+    const icono = document.getElementById("detalleHeroIcono");
+    const cfg = prioridadConfig[prioridad] || prioridadConfig.BAJA;
+    if (icono) icono.className = "detalle-hero-icono bi " + cfg.icono;
   }
 }
 
