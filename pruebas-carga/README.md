@@ -23,6 +23,32 @@ bcrypt del login.
 > `carga-auth.yml` se queda alrededor de 2/s. Para carga alta autenticada de verdad
 > harían falta muchos usuarios distintos, cada uno con su propio cupo de 120/min.
 
+**3. Capacidad — `carga-capacidad.yml` → `GET /api/incidencias` con un POOL de usuarios.**
+Responde "¿cuántos usuarios aguanta?": levanta N ciudadanos y reparte la carga entre ellos
+(round-robin por `carga-capacidad.js`), así el rate limiter deja de ser el techo y el límite
+pasa a ser el hardware. Sube en rampa hasta que la latencia se degrada o el CPU satura.
+
+Los ciudadanos de prueba se crean y se borran con un comando dedicado (correos `@test.local`,
+que nadie real usa, así el borrado es seguro):
+
+```bash
+docker compose exec backend php artisan carga:usuarios-prueba crear --cantidad=15
+# ... correr la prueba ...
+docker compose exec backend php artisan carga:usuarios-prueba borrar
+```
+
+> ⚠️ **`/api/login` está limitado a 5/min POR IP** (`throttle:5,1,login`). Levantar el pool
+> desde una sola IP obliga a **escalonar** los logins en tandas de 5 (el processor ya lo hace,
+> con una pausa de 61 s entre tandas: con N=15 el arranque tarda ~2 min).
+
+### Cómo se traduce a usuarios
+
+La prueba mide **peticiones por segundo**, no personas conectadas. La conversión es la ley de
+Little: `usuarios ≈ req/s × segundos entre clic y clic`. Una persona navegando de verdad hace
+una petición cada ~7 s (abre, lee, entra a un detalle), así que un techo de 45 req/s equivale
+a unos **300 usuarios navegando a la vez**, o ~200 con margen para no correr al 100 % de CPU.
+El supuesto del "cada 7 s" es el que más mueve el número: conviene declararlo al reportar.
+
 ## Cómo correrla
 
 Requiere Node (ya lo usa el frontend). Artillery se baja con `npx`, no hace falta instalarlo.

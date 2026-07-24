@@ -1,0 +1,66 @@
+# Prueba de CAPACIDAD autenticada: cuántos usuarios concurrentes aguanta el listado real.
+# A diferencia de carga-auth.yml (un solo usuario, topado a ~2 req/s por su throttle),
+# aquí se loguean MUCHOS ciudadanos distintos y se reparte la carga entre ellos, cada uno
+# con su propio cupo de 120 req/min. Así el rate limiter deja de ser el techo y el que
+# manda es el hardware: la corrida sube en rampa hasta que la latencia se degrada o el
+# CPU de las réplicas se satura. Ese punto de quiebre, por la ley de Little
+# (usuarios ≈ throughput × segundos de lectura entre clics), se traduce a usuarios reales.
+#
+# Necesita N ciudadanos de prueba (rol normal, SIN 2FA) ya creados, con correos
+# carga1@test.local ... cargaN@test.local y una misma contraseña. Se crean y se borran
+# con el comando artisan: php artisan carga:usuarios-prueba {crear|borrar} --cantidad=N
+#
+# Correr desde la RAÍZ del repo (el processor y el --output son relativos al cwd):
+#   CARGA_USUARIOS=15 CARGA_PASSWORD=password123 \
+#     npx artillery@latest run -e prod \
+#       --output pruebas-carga/resultado-capacidad-prod.json pruebas-carga/carga-capacidad.yml
+#
+# ⚠️ Deja el sitio lento ~2 min. No correr con usuarios reales usando la app.
+
+config:
+  target: "http://127.0.0.1"
+  processor: "./carga-capacidad.js"
+  # Rampa creciente: cada fase sube la tasa de llegada. El pool de usuarios se reparte
+  # round-robin, así ninguno pasa su cupo mientras haya suficientes en el pool.
+  phases:
+    - duration: 20
+      arrivalRate: 5
+      name: "Calentamiento (5/s)"
+    - duration: 30
+      arrivalRate: 5
+      rampTo: 15
+      name: "Rampa 5 → 15/s"
+    - duration: 30
+      arrivalRate: 15
+      rampTo: 30
+      name: "Rampa 15 → 30/s"
+    - duration: 30
+      arrivalRate: 30
+      name: "Sostenido 30/s (busca el quiebre)"
+  environments:
+    prod:
+      target: "https://incidenciasupse.site"
+      phases:
+        - duration: 20
+          arrivalRate: 5
+          name: "Prod calentamiento (5/s)"
+        - duration: 30
+          arrivalRate: 5
+          rampTo: 15
+          name: "Prod rampa 5 → 15/s"
+        - duration: 30
+          arrivalRate: 15
+          rampTo: 25
+          name: "Prod rampa 15 → 25/s"
+
+scenarios:
+  - name: "Listar incidencias (pool de usuarios)"
+    beforeScenario: "tokenDelPool"
+    flow:
+      - get:
+          url: "/api/incidencias"
+          headers:
+            Authorization: "Bearer {{ token }}"
+            Accept: "application/json"
+          expect:
+            - statusCode: 200
