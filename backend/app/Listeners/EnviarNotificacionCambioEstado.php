@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Enums\EstadoIncidencia;
 use App\Events\IncidenciaCambioEstado;
+use App\Models\Incidencia;
 use App\Models\User;
 use App\Notifications\IncidenciaNotification;
 
@@ -43,9 +44,11 @@ class EnviarNotificacionCambioEstado
     // Devuelve [tipo, mensaje al reportador, mensaje a los técnicos] según la transición.
     private function mensajes(string $anterior, string $nuevo, string $nombre): array
     {
-        // RESUELTO: antes lo mandaba el SP resolver_incidencia.
+        // RESUELTO: antes lo mandaba el SP resolver_incidencia. Al reportador se le avisa el plazo para pedir reapertura antes del archivado.
         if ($nuevo === EstadoIncidencia::Resuelto->value) {
-            return ['CAMBIO_ESTADO', 'Tu incidencia ha sido resuelta: '.$nombre, 'La incidencia ha sido marcada como resuelta: '.$nombre];
+            $horas = Incidencia::HORAS_PARA_ARCHIVAR;
+
+            return ['CAMBIO_ESTADO', 'Tu incidencia ha sido resuelta: '.$nombre.'. Tienes '.$horas.' horas para solicitar la reapertura antes de que se archive.', 'La incidencia ha sido marcada como resuelta: '.$nombre];
         }
 
         // Única reapertura real: RESUELTO -> EN_PROCESO (RESUELTO -> CERRADO es archivado, cae al genérico).

@@ -288,7 +288,15 @@ class IncidenciaTest extends TestCase
             ->assertJson(['message' => 'No se puede cambiar el estado de una incidencia ya resuelta']);
 
         // Una sola notificación de cambio de estado y una sola transición a RESUELTO en el historial.
-        $this->assertCount(1, $this->notificacionesDe($reportador, 'CAMBIO_ESTADO'));
+        $notificaciones = $this->notificacionesDe($reportador, 'CAMBIO_ESTADO');
+        $this->assertCount(1, $notificaciones);
+
+        // El aviso al reportador incluye el plazo para pedir reapertura, tomado de la constante (no hardcodeado).
+        $this->assertStringContainsString(
+            'Tienes '.Incidencia::HORAS_PARA_ARCHIVAR.' horas para solicitar la reapertura',
+            $notificaciones->first()->data['mensaje']
+        );
+
         $this->assertSame(1, DB::table('historial_estados')
             ->where('id_incidencia', $incidencia->id_incidencia)
             ->where('estado_nuevo', 'RESUELTO')
