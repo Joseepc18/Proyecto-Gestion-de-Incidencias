@@ -13,6 +13,23 @@ use Illuminate\Support\Collection;
 
 abstract class TestCase extends BaseTestCase
 {
+    // Corre con la app ya creada pero antes de que RefreshDatabase lance su migrate:fresh: última red
+    // para no rehacer una base que no sea la de pruebas (ver la salvaguarda de tests/bootstrap.php).
+    protected function setUpTraits()
+    {
+        $conexion = config('database.default');
+        $base = (string) config("database.connections.{$conexion}.database");
+
+        if (! str_ends_with($base, '_test')) {
+            throw new \RuntimeException(
+                "La suite apunta a la base '{$base}' y se esperaba una terminada en '_test'. ".
+                'RefreshDatabase la borraría entera: revisá phpunit.xml y que la config no esté cacheada.'
+            );
+        }
+
+        return parent::setUpTraits();
+    }
+
     // Notificaciones nativas de un usuario cuyo data->tipo coincide (tipo viaja dentro del payload json).
     protected function notificacionesDe(User $usuario, string $tipo): Collection
     {
