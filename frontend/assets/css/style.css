@@ -3500,11 +3500,6 @@ html[data-theme="dark"] .detalle-hero-icono {
     font-size: var(--fs-xs);
     white-space: nowrap;
   }
-
-  .detalle-hero-icono {
-    font-size: 10rem;
-    opacity: 0.06;
-  }
 }
 
 /* Enlace "Volver": arriba a la izquierda DENTRO del hero (sin dejar hueco sobre el banner).
@@ -3724,6 +3719,12 @@ html[data-theme="dark"] .detalle-hero-icono {
 
   .involucrado {
     flex: 1 1 200px;
+  }
+
+  /* La línea de tiempo pasa a vertical y ocupa el centro: el icono de fondo (escudo) se le
+     encimaba y se veía sucio en celular → se oculta (es decorativo, aria-hidden). */
+  .detalle-hero-icono {
+    display: none;
   }
 
   /* Historial en celular: centrado (punto arriba, texto debajo) en vez de pegado a la izquierda,
