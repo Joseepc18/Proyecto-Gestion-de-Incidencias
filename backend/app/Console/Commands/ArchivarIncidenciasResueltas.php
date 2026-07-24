@@ -17,7 +17,7 @@ class ArchivarIncidenciasResueltas extends Command
     {
         // Sin set_config('app.actor_id'): el trigger de historial queda con id_usuario NULL, o sea "lo hizo el sistema".
         $incidencias = Incidencia::resueltas()
-            ->where('fecha_resolucion', '<=', now()->subHours(24))
+            ->where('fecha_resolucion', '<=', now()->subHours(Incidencia::HORAS_PARA_ARCHIVAR))
             ->where('reapertura_solicitada', false)
             ->get();
 

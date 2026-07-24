@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Incidencia;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,6 +29,8 @@ class IncidenciaResource extends JsonResource
             'id_subtipo_incidencia' => $this->id_subtipo_incidencia,
             'id_usuario' => $this->id_usuario,
             'fecha_resolucion' => $this->fecha_resolucion,
+            // Plazo (horas) para pedir reapertura antes del archivado; el frontend lo muestra junto al botón sin hardcodear el 24.
+            'horas_para_archivar' => Incidencia::HORAS_PARA_ARCHIVAR,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,

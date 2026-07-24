@@ -348,6 +348,22 @@ function prepararSolicitudReapertura() {
   const btn = document.getElementById("btnSolicitarReapertura");
   btn.classList.remove("d-none");
   btn.addEventListener("click", solicitarReapertura);
+  mostrarAvisoPlazoReapertura();
+}
+
+// Aviso del plazo para pedir reapertura antes de que el sistema archive la incidencia.
+// Las horas vienen del backend (Incidencia::HORAS_PARA_ARCHIVAR) para no desincronizar con el job.
+function mostrarAvisoPlazoReapertura() {
+  const horas = incActual.horas_para_archivar;
+  if (!horas) return;
+
+  const aviso = document.getElementById("avisoPlazoReapertura");
+  const texto = document.getElementById("avisoPlazoReaperturaTexto");
+  texto.textContent =
+    "Tienes " +
+    horas +
+    " horas desde que se resolvió para solicitar la reapertura; luego se archiva automáticamente.";
+  aviso.classList.remove("d-none");
 }
 
 async function solicitarReapertura() {
@@ -372,6 +388,8 @@ async function solicitarReapertura() {
 
   mostrarToast("Solicitud enviada. Un administrador la revisará.", "success");
   document.getElementById("btnSolicitarReapertura").classList.add("d-none");
+  // Ya hay solicitud pendiente: el job no la archiva, así que el aviso del plazo deja de aplicar.
+  document.getElementById("avisoPlazoReapertura").classList.add("d-none");
 }
 
 // Eliminar la incidencia completa.

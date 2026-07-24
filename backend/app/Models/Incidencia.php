@@ -24,6 +24,10 @@ class Incidencia extends Model
     // Tope de fotos por tipo de evidencia (REPORTE/RESOLUCION); debe coincidir con v_limite del trigger fn_limite_evidencias.
     public const LIMITE_EVIDENCIAS_POR_TIPO = 3;
 
+    // Horas que una incidencia RESUELTO tiene para pedir reapertura antes de que el command incidencias:archivar-resueltas la cierre.
+    // Fuente única del plazo: lo usan el job, la notificación al reportador y el IncidenciaResource (el frontend lo lee de ahí).
+    public const HORAS_PARA_ARCHIVAR = 24;
+
     // Set de relaciones para la respuesta de detalle tras mutar la incidencia; un solo lugar para todos los endpoints.
     public const RELACIONES_DETALLE = ['usuario', 'subtipo.tipo', 'ciudad.provincia', 'adminAtiende'];
 
