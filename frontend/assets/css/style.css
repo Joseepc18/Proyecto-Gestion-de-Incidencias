@@ -3400,6 +3400,21 @@ html[data-theme="dark"] .detalle-hero-icono {
   color: var(--admin-primary);
 }
 
+/* Igual que los outline gris: el outline ámbar se camufla sobre el banner teñido, y peor con
+   prioridad Media (el banner es del mismo ámbar) → cuerpo sólido con el ámbar en borde y texto. */
+.detalle-hero-acciones .btn-outline-warning {
+  background: var(--admin-surface);
+  border-color: var(--admin-warning);
+  color: var(--admin-warning);
+}
+
+.detalle-hero-acciones .btn-outline-warning:hover,
+.detalle-hero-acciones .btn-outline-warning:focus-visible {
+  background: color-mix(in srgb, var(--admin-warning) 14%, var(--admin-surface));
+  border-color: var(--admin-warning);
+  color: var(--admin-warning);
+}
+
 /* Línea de tiempo dentro del hero, al centro. Sin filetes: solo separación por espacio */
 .detalle-hero-timeline {
   margin: 14px 0;
