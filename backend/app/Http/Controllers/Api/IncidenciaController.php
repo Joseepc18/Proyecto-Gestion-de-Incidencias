@@ -382,13 +382,15 @@ class IncidenciaController extends Controller
     // El admin decide no reabrir: apaga la bandera (sin tocar el estado) y avisa al reportador por qué se queda como estaba.
     public function rechazarReapertura(RechazarReaperturaRequest $request, Incidencia $incidencia)
     {
+        $motivo = $request->validated()['motivo'];
+
         $incidencia->update(['reapertura_solicitada' => false]);
         broadcast(new IncidenciaActualizada($incidencia));
 
         if ($reportador = User::find($incidencia->id_usuario)) {
             $reportador->notify(new IncidenciaNotification(
                 'REAPERTURA_RECHAZADA',
-                'Revisamos tu solicitud de reapertura: la incidencia se mantiene resuelta: '.$incidencia->nombre_incidencia,
+                'Revisamos tu solicitud de reapertura y la incidencia se mantiene resuelta: '.$incidencia->nombre_incidencia.'. Motivo: '.$motivo,
                 $incidencia->id_incidencia,
                 correo: true,
             ));

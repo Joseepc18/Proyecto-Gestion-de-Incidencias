@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -166,6 +166,14 @@ function marcarEstadoActivo() {
 }
 
 // El admin reabre o rechaza, solo si hay una solicitud del reportador sin revisar
+// Motivos frecuentes para rechazar una reapertura; "Otro" abre un textarea libre.
+const MOTIVOS_RECHAZO_REAPERTURA = [
+  "La incidencia ya quedó resuelta correctamente",
+  "No hay evidencia de que el problema persista",
+  "El reporte no corresponde a esta incidencia",
+  "La solicitud está fuera del alcance del servicio",
+];
+
 function prepararReaperturaAdmin(id) {
   const hayPendiente = incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente;
 
@@ -211,27 +219,30 @@ function prepararReaperturaAdmin(id) {
   if (btnRechazar.dataset.cableado !== "1") {
     btnRechazar.dataset.cableado = "1";
     btnRechazar.addEventListener("click", async function () {
-      const ok = await confirmar({
+      let actualizada = null;
+      const promesaModal = abrirModal({
         titulo: "No reabrir la incidencia",
-        mensaje: "La incidencia se mantiene resuelta y se le avisará al ciudadano por qué.",
+        cuerpoHtml:
+          '<p class="text-secondary small">La incidencia se mantiene resuelta y este motivo se le enviará al ciudadano.</p>' +
+          motivoConOtroHtml(MOTIVOS_RECHAZO_REAPERTURA),
         textoConfirmar: "No reabrir",
+        alConfirmar: async function (form) {
+          actualizada = await apiFetch("/incidencias/" + id + "/rechazar-reapertura", {
+            method: "POST",
+            body: JSON.stringify({ motivo: leerMotivoSeleccionado(form) }),
+          });
+        },
       });
-      if (!ok) return;
 
-      btnRechazar.disabled = true;
-      try {
-        const actualizada = await apiFetch("/incidencias/" + id + "/rechazar-reapertura", {
-          method: "POST",
-        });
-        incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
-        btnReabrir.classList.add("d-none");
-        btnRechazar.classList.add("d-none");
-        mostrarToast("Solicitud de reapertura rechazada", "success");
-      } catch (error) {
-        mostrarToast(error.message, "error");
-      } finally {
-        btnRechazar.disabled = false;
-      }
+      cablearMotivoConOtro();
+
+      const confirmado = await promesaModal;
+      if (!confirmado) return;
+
+      incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
+      btnReabrir.classList.add("d-none");
+      btnRechazar.classList.add("d-none");
+      mostrarToast("Solicitud de reapertura rechazada", "success");
     });
   }
 }
