@@ -192,6 +192,35 @@ class PermisosTest extends TestCase
         ])->assertStatus(422);
     }
 
+    // Al rechazar la reapertura el motivo es obligatorio y viaja en la notificación al reportador.
+    public function test_rechazar_reapertura_exige_motivo_y_lo_notifica(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual.',
+        ])->assertOk();
+
+        Sanctum::actingAs($admin);
+        // Sin motivo: 422.
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura")
+            ->assertStatus(422)->assertJsonValidationErrors('motivo');
+
+        // Con motivo: apaga la bandera y notifica al reportador con el motivo dentro del mensaje.
+        $motivo = 'Se verificó en sitio y el bache ya está tapado.';
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", [
+            'motivo' => $motivo,
+        ])->assertOk()->assertJson(['reapertura_pendiente' => false]);
+
+        $notificacion = $this->notificacionesDe($reportador, 'REAPERTURA_RECHAZADA')->first();
+        $this->assertNotNull($notificacion);
+        $this->assertStringContainsString($motivo, $notificacion->data['mensaje']);
+    }
+
     // El reclamo es el candado: sin reclamar, el admin no puede gestionar (cambiar estado, asignar ni editar).
     public function test_admin_debe_reclamar_antes_de_gestionar(): void
     {

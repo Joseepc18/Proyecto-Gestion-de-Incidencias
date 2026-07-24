@@ -17,6 +17,8 @@ class RechazarReaperturaRequest extends FormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ];
     }
 }
