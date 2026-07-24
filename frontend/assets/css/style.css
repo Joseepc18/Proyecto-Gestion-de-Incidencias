@@ -2051,10 +2051,16 @@ html[data-theme="dark"] {
     transform: scale(1.08);
   }
 }
+/* Gradiente claro arriba (deja ver el mapa) y oscuro solo abajo, donde va el título blanco */
 .auth-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.5) 0%, rgba(17, 24, 39, 0.88) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(17, 24, 39, 0.28) 0%,
+    rgba(17, 24, 39, 0.2) 42%,
+    rgba(17, 24, 39, 0.78) 100%
+  );
 }
 
 /* Pines de incidencia sobre la foto: encima del overlay para que se vean bien contra el fondo
@@ -2239,6 +2245,10 @@ html[data-theme="dark"] {
   }
   .auth-hero {
     height: 160px;
+  }
+  /* En el hero corto de móvil las gotas caen sobre el título: son decorativas, se ocultan */
+  .auth-hero-pins {
+    display: none;
   }
   .auth-view {
     position: relative;
