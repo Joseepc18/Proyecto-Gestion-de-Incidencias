@@ -393,11 +393,17 @@ async function cargarHistorial(id) {
     // antiguo→actual) se recorre al revés. El último paso (el más reciente) es el "actual".
     const pasos = eventos.slice().reverse();
 
+    // El ciudadano ve CERRADO como "Resuelto" (estados.js): se colapsan pasos consecutivos que se ven igual para no repetir "Resuelto" en la línea de tiempo.
+    const vista = (ev) => estadoParaVista(ev.estado, rolNombre());
+    const pasosVisibles = pasos.filter(function (ev, i) {
+      return i === 0 || vista(ev) !== vista(pasos[i - 1]);
+    });
+
     cont.innerHTML = "";
-    pasos.forEach(function (ev, i) {
+    pasosVisibles.forEach(function (ev, i) {
       const estadoMostrado = estadoParaVista(ev.estado, rolNombre());
       const cfg = estadoConfig[estadoMostrado] || estadoConfig.PENDIENTE;
-      const esActual = i === pasos.length - 1;
+      const esActual = i === pasosVisibles.length - 1;
 
       const paso = document.createElement("div");
       paso.className = "historial-paso" + (esActual ? " historial-paso--actual" : "");
