@@ -54,8 +54,11 @@ class IncidenciaController extends Controller
             } else {
                 $query->where('estado_incidencia', $request->estado);
             }
+        } elseif ($user->esNormal()) {
+            // El ciudadano ve CERRADO como "Resuelto": su "Todos" debe incluir las archivadas, si no
+            // sus incidencias resueltas desaparecen del listado por defecto (y "Resuelto" mostraría más que "Todos").
         } else {
-            // CERRADO (archivo) sale del listado activo por defecto; se ve pidiendo ?estado=CERRADO explícito.
+            // Admin/técnico: CERRADO (archivo) sale del listado activo por defecto; se ve pidiendo ?estado=CERRADO explícito.
             $query->activas();
         }
         if ($request->filled('prioridad')) {
