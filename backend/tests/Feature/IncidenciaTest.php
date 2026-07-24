@@ -183,6 +183,28 @@ class IncidenciaTest extends TestCase
             ->assertOk()->assertJsonPath('total', 1);
     }
 
+    // El "Todos" del ciudadano debe incluir lo archivado (que él ve como "Resuelto"); si no,
+    // filtrar por "Resuelto" mostraría más incidencias que "Todos", que es lo contrario de lo esperado.
+    public function test_ciudadano_todos_incluye_lo_archivado(): void
+    {
+        $autor = $this->crearUsuario('normal');
+
+        $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+        $this->crearIncidencia($autor, ['estado_incidencia' => 'CERRADO']);
+        $this->crearIncidencia($autor, ['estado_incidencia' => 'PENDIENTE']);
+
+        Sanctum::actingAs($autor);
+
+        // "Todos" (sin estado) trae las 3, incluida la archivada.
+        $this->getJson('/api/incidencias')
+            ->assertOk()->assertJsonPath('total', 3);
+
+        // Al admin/técnico, en cambio, "Todos" sigue ocultando lo CERRADO (listado activo).
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $this->getJson('/api/incidencias')
+            ->assertOk()->assertJsonPath('total', 2);
+    }
+
     public function test_cambiar_estado_respeta_las_dos_guardas(): void
     {
         // Guarda de ROL: el técnico responsable solo cierra EN_PROCESO→RESUELTO; PENDIENTE→RESUELTO
