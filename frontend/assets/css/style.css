@@ -2041,6 +2041,8 @@ html[data-theme="dark"] {
   background-image: url("../images/png/banner-login.jpg");
   background-size: cover;
   background-position: center;
+  /* La foto es de tarde (oscura de origen): se sube el brillo para que el mapa se aprecie mejor */
+  filter: brightness(1.18) saturate(1.05);
   animation: authHeroZoom 20s ease-in-out infinite alternate;
 }
 @keyframes authHeroZoom {
@@ -2057,9 +2059,9 @@ html[data-theme="dark"] {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(17, 24, 39, 0.28) 0%,
-    rgba(17, 24, 39, 0.2) 42%,
-    rgba(17, 24, 39, 0.78) 100%
+    rgba(17, 24, 39, 0.16) 0%,
+    rgba(17, 24, 39, 0.1) 42%,
+    rgba(17, 24, 39, 0.72) 100%
   );
 }
 
@@ -2244,7 +2246,23 @@ html[data-theme="dark"] {
     transform: none !important;
   }
   .auth-hero {
-    height: 160px;
+    height: 200px;
+  }
+  /* En móvil el contenido no cabía en el hero y la marca (logo + nombre) se recortaba arriba:
+     se compacta el texto y se sube algo la altura para que se vea la marca completa. */
+  .auth-hero-content {
+    inset: auto 1.25rem 1.1rem 1.25rem;
+  }
+  .auth-hero-brand {
+    margin-bottom: 0.35rem;
+    font-size: var(--fs-md);
+  }
+  .auth-hero-content h2 {
+    font-size: var(--fs-lg);
+    margin-bottom: 0.25rem;
+  }
+  .auth-hero-content p {
+    font-size: var(--fs-sm);
   }
   /* En el hero corto de móvil las gotas caen sobre el título: son decorativas, se ocultan */
   .auth-hero-pins {
