@@ -34,6 +34,8 @@ class IncidenciaResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
+            // Días de retención en la papelera antes del borrado definitivo; el front calcula el contador sin hardcodear el 30.
+            'dias_retencion_papelera' => Incidencia::DIAS_RETENCION_PAPELERA,
             // Habilita el botón "Reabrir" del admin cuando el reportador ya lo pidió (solo relevante en RESUELTO).
             'reapertura_pendiente' => (bool) $this->reapertura_solicitada,
             // Admin que reclamó la incidencia (columna "Atendido por" y botón "Archivar").

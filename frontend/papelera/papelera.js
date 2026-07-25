@@ -84,13 +84,43 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  // Celda con el contador para el borrado definitivo: deleted_at + días de retención, con badge según urgencia.
+  function celdaContador(inc) {
+    const td = document.createElement("td");
+    td.dataset.label = "Se elimina en";
+
+    const dias = inc.dias_retencion_papelera;
+    const purga = new Date(inc.deleted_at).getTime() + dias * 86400000;
+    const diasRestantes = Math.ceil((purga - Date.now()) / 86400000);
+
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    if (diasRestantes <= 0) {
+      badge.classList.add("text-bg-danger");
+      badge.textContent = "En la próxima limpieza";
+    } else {
+      const clase =
+        diasRestantes <= 3
+          ? "text-bg-danger"
+          : diasRestantes <= 7
+            ? "text-bg-warning"
+            : "text-bg-secondary";
+      badge.classList.add(clase);
+      badge.textContent = diasRestantes === 1 ? "1 día" : diasRestantes + " días";
+    }
+
+    td.title = "Borrado automático a los " + dias + " días en la papelera";
+    td.appendChild(badge);
+    return td;
+  }
+
   function renderizarTabla(incidencias) {
     const tbody = document.getElementById("tbodyPapelera");
     tbody.innerHTML = "";
 
     if (incidencias.length === 0) {
       tbody.innerHTML = filaVaciaHtml(
-        5,
+        6,
         "bi-trash3",
         "Papelera vacía",
         "No hay incidencias eliminadas.",
@@ -110,6 +140,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       tr.appendChild(celdaTabla(nombreTipo, "Tipo", true));
       tr.appendChild(celdaTabla(nombreCiudad, "Ciudad", true));
       tr.appendChild(celdaTabla(fecha, "Eliminada"));
+      tr.appendChild(celdaContador(inc));
 
       const acciones = [
         {

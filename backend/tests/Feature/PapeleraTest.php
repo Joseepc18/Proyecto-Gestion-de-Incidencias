@@ -74,7 +74,9 @@ class PapeleraTest extends TestCase
         Sanctum::actingAs($this->crearUsuario('admin'));
         $this->getJson('/api/incidencias/papelera')
             ->assertOk()
-            ->assertJsonFragment(['id_incidencia' => $incidencia->id_incidencia]);
+            ->assertJsonFragment(['id_incidencia' => $incidencia->id_incidencia])
+            // El contador del front lee el plazo de retención desde la respuesta, sin hardcodear el 30.
+            ->assertJsonPath('data.0.dias_retencion_papelera', 30);
     }
 
     public function test_restaurar_incidencia_la_devuelve_al_listado_activo(): void
