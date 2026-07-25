@@ -174,15 +174,26 @@ const MOTIVOS_RECHAZO_REAPERTURA = [
   "La solicitud está fuera del alcance del servicio",
 ];
 
-function prepararReaperturaAdmin(id) {
-  const hayPendiente = incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente;
-
+// Reabrir/rechazar una reapertura solo lo ve el admin DUEÑO del reclamo (mismo candado que el backend); otro admin debe reclamarla antes.
+function actualizarBotonesReapertura() {
   const btnReabrir = document.getElementById("btnReabrirIncidencia");
   const btnRechazar = document.getElementById("btnRechazarReapertura");
   if (!btnReabrir || !btnRechazar) return;
 
-  btnReabrir.classList.toggle("d-none", !hayPendiente);
-  btnRechazar.classList.toggle("d-none", !hayPendiente);
+  const mostrar =
+    incActual.estado_incidencia === "RESUELTO" &&
+    incActual.reapertura_pendiente &&
+    soyDuenoDelReclamo();
+  btnReabrir.classList.toggle("d-none", !mostrar);
+  btnRechazar.classList.toggle("d-none", !mostrar);
+}
+
+function prepararReaperturaAdmin(id) {
+  const btnReabrir = document.getElementById("btnReabrirIncidencia");
+  const btnRechazar = document.getElementById("btnRechazarReapertura");
+  if (!btnReabrir || !btnRechazar) return;
+
+  actualizarBotonesReapertura();
 
   if (btnReabrir.dataset.cableado !== "1") {
     btnReabrir.dataset.cableado = "1";
@@ -262,6 +273,7 @@ function refrescarGestionSegunReclamo() {
   marcarPrioridadActiva();
   renderAsignaciones(ultimasAsignaciones, incActual.id_incidencia);
   marcarReclasificacionSegunReclamo();
+  actualizarBotonesReapertura();
 }
 
 // Catálogos tipo→subtipo para reclasificar (solo admin); instancia propia, sin provincia/ciudad.
@@ -487,11 +499,7 @@ function gestionAlActualizarEnVivo() {
   if (!esAdmin) return;
   marcarPrioridadActiva();
   pintarAtencionAdmin();
-  const hayPendiente = incActual.estado_incidencia === "RESUELTO" && incActual.reapertura_pendiente;
-  const btnReabrir = document.getElementById("btnReabrirIncidencia");
-  const btnRechazar = document.getElementById("btnRechazarReapertura");
-  if (btnReabrir) btnReabrir.classList.toggle("d-none", !hayPendiente);
-  if (btnRechazar) btnRechazar.classList.toggle("d-none", !hayPendiente);
+  actualizarBotonesReapertura();
 }
 
 // Hook del núcleo: llegó un cambio de candado en vivo (otro admin reclamó/liberó).

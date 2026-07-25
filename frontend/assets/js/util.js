@@ -7,7 +7,7 @@
 function etiquetaRol(nombreRol) {
   const mapa = {
     super_admin: "Administrador del Sistema",
-    admin: "Administrador",
+    admin: "Supervisor",
     tecnico: "Técnico",
     normal: "Ciudadano",
   };

@@ -206,6 +206,8 @@ class PermisosTest extends TestCase
         ])->assertOk();
 
         Sanctum::actingAs($admin);
+        // El admin reclama la incidencia antes de gestionarla (rechazar la reapertura).
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
         // Sin motivo: 422.
         $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura")
             ->assertStatus(422)->assertJsonValidationErrors('motivo');
@@ -219,6 +221,37 @@ class PermisosTest extends TestCase
         $notificacion = $this->notificacionesDe($reportador, 'REAPERTURA_RECHAZADA')->first();
         $this->assertNotNull($notificacion);
         $this->assertStringContainsString($motivo, $notificacion->data['mensaje']);
+    }
+
+    // Rechazar una reapertura respeta el candado: solo el admin dueño del reclamo, no cualquier admin (igual que reabrir).
+    public function test_admin_ajeno_no_puede_rechazar_reapertura_sin_reclamar(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $dueno = $this->crearUsuario('admin');
+        $ajeno = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual.',
+        ])->assertOk();
+
+        // El dueño reclama la incidencia.
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        // Otro admin (no dueño del reclamo) no puede rechazar la reapertura.
+        Sanctum::actingAs($ajeno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", [
+            'motivo' => 'No procede.',
+        ])->assertStatus(403);
+
+        // El dueño sí puede.
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", [
+            'motivo' => 'Se verificó en sitio.',
+        ])->assertOk()->assertJson(['reapertura_pendiente' => false]);
     }
 
     // El reclamo es el candado: sin reclamar, el admin no puede gestionar (cambiar estado, asignar ni editar).
