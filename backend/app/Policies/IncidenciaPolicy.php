@@ -137,16 +137,16 @@ class IncidenciaPolicy
             : Response::deny('Solo puedes solicitar la reapertura de una incidencia ya resuelta.');
     }
 
-    // Rechazar la solicitud de reapertura: quien tiene el permiso de gestión, y solo si hay una solicitud pendiente.
+    // Rechazar la solicitud de reapertura: mismo candado que reabrir → el admin DUEÑO del reclamo, y solo si hay una solicitud pendiente.
     public function rechazarReapertura(User $user, Incidencia $incidencia): Response
     {
-        if (! $user->tienePermiso('incidencias.gestionar')) {
-            return Response::deny('No autorizado');
+        if (! $incidencia->reapertura_solicitada) {
+            return Response::deny('Esta incidencia no tiene una solicitud de reapertura pendiente.');
         }
 
-        return $incidencia->reapertura_solicitada
-            ? Response::allow()
-            : Response::deny('Esta incidencia no tiene una solicitud de reapertura pendiente.');
+        return $user->tienePermiso('incidencias.gestionar')
+            ? $this->esDuenoDelReclamo($user, $incidencia)
+            : Response::deny('No autorizado');
     }
 
     // Asignar un técnico: solo quien tiene el permiso de gestión y es DUEÑO del reclamo (el estado RESUELTO ya lo valida el controller con su propio 422).
