@@ -8,11 +8,14 @@ use App\Enums\RolAsignacion;
 use App\Exceptions\AlmacenamientoException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Storage;
 
 class Incidencia extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, Prunable, SoftDeletes;
 
     protected $table = 'incidencias';
 
@@ -27,6 +30,10 @@ class Incidencia extends Model
     // Horas que una incidencia RESUELTO tiene para pedir reapertura antes de que el command incidencias:archivar-resueltas la cierre.
     // Fuente única del plazo: lo usan el job, la notificación al reportador y el IncidenciaResource (el frontend lo lee de ahí).
     public const HORAS_PARA_ARCHIVAR = 24;
+
+    // Días en la papelera (soft-deleted) tras los cuales "php artisan model:prune" borra la incidencia DEFINITIVAMENTE.
+    // Cada incidencia cuenta sus propios días desde su deleted_at (purga rodante, no en bloque).
+    public const DIAS_RETENCION_PAPELERA = 30;
 
     // Set de relaciones para la respuesta de detalle tras mutar la incidencia; un solo lugar para todos los endpoints.
     public const RELACIONES_DETALLE = ['usuario', 'subtipo.tipo', 'ciudad.provincia', 'adminAtiende'];
@@ -166,6 +173,30 @@ class Incidencia extends Model
                 $datos['tipo_evidencia'] = $tipo;
             }
             $this->evidencias()->create($datos);
+        }
+    }
+
+    // Selección de model:prune: incidencias en la papelera hace más de DIAS_RETENCION_PAPELERA (cada una por su deleted_at).
+    public function prunable()
+    {
+        return static::where('deleted_at', '<=', now()->subDays(self::DIAS_RETENCION_PAPELERA));
+    }
+
+    // Antes de que prune() haga el forceDelete: limpia lo que la fila no arrastra sola (no hay ON DELETE CASCADE).
+    // Réplica de IncidenciaController@purgarIncidencia: hijos + notificaciones + archivos físicos de las evidencias.
+    protected function pruning(): void
+    {
+        $rutasEvidencias = $this->evidencias->pluck('url_evidencia');
+
+        $this->comentarios()->delete();
+        $this->historialEstados()->delete();
+        $this->asignaciones()->delete();
+        DatabaseNotification::where('data->id_incidencia', (string) $this->id_incidencia)->delete();
+
+        foreach ($rutasEvidencias as $ruta) {
+            if (! Storage::disk('evidencias')->delete($ruta)) {
+                BitacoraError::registrar(null, 'ARCHIVO', 'Incidencia@pruning', 'no se pudo borrar '.$ruta);
+            }
         }
     }
 }
