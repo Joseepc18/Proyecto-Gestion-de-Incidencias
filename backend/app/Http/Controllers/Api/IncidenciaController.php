@@ -343,12 +343,9 @@ class IncidenciaController extends Controller
             $incidencia->refresh();
         }
 
-        // Se marcan leídas las solicitudes de los admins ANTES de emitir el evento, para que el aviso "reabierta" del listener llegue sin leer.
+        // Se marcan leídas ANTES de emitir el evento, para que el aviso "reabierta" del listener llegue sin leer.
         if ($esReaperturaDeAdmin) {
-            DatabaseNotification::whereNull('read_at')
-                ->where('data->tipo', 'SOLICITUD_REAPERTURA')
-                ->where('data->id_incidencia', (string) $incidencia->id_incidencia)
-                ->update(['read_at' => now()]);
+            $this->cerrarAvisosDeReapertura($incidencia);
         }
 
         // Dispara los listeners (notificar + invalidar caché); cubre la rama del SP, que al ser SQL crudo no pasa por el observer de Eloquent.
@@ -383,18 +380,23 @@ class IncidenciaController extends Controller
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
     }
 
+    // Marca leídos los avisos SOLICITUD_REAPERTURA de la incidencia: la solicitud ya tuvo desenlace (reabierta,
+    // rechazada o retirada) y ningún gestor debe seguir persiguiendo un aviso de algo que ya no está pendiente.
+    private function cerrarAvisosDeReapertura(Incidencia $incidencia): void
+    {
+        DatabaseNotification::whereNull('read_at')
+            ->where('data->tipo', 'SOLICITUD_REAPERTURA')
+            ->where('data->id_incidencia', (string) $incidencia->id_incidencia)
+            ->update(['read_at' => now()]);
+    }
+
     // El reportador retira su propia solicitud: apaga la bandera y la incidencia vuelve al flujo normal de archivado.
     // Es la salida del limbo cuando nadie la contesta; una vez retirada puede volver a pedirla.
     public function cancelarReapertura(CancelarReaperturaRequest $request, Incidencia $incidencia)
     {
         $incidencia->update(['reapertura_solicitada' => false]);
         broadcast(new IncidenciaActualizada($incidencia));
-
-        // La solicitud ya no existe: se marcan leídas para que ningún admin persiga un aviso retirado.
-        DatabaseNotification::whereNull('read_at')
-            ->where('data->tipo', 'SOLICITUD_REAPERTURA')
-            ->where('data->id_incidencia', (string) $incidencia->id_incidencia)
-            ->update(['read_at' => now()]);
+        $this->cerrarAvisosDeReapertura($incidencia);
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
     }
@@ -406,6 +408,7 @@ class IncidenciaController extends Controller
 
         $incidencia->update(['reapertura_solicitada' => false]);
         broadcast(new IncidenciaActualizada($incidencia));
+        $this->cerrarAvisosDeReapertura($incidencia);
 
         if ($reportador = User::find($incidencia->id_usuario)) {
             $reportador->notify(new IncidenciaNotification(

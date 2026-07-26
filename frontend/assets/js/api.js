@@ -33,6 +33,8 @@ function eliminarToken() {
   localStorage.removeItem("perfil_foto");
   localStorage.removeItem("rol_usuario");
   localStorage.removeItem("permisos_usuario");
+  // Si sobrevive, la siguiente cuenta que entre en este navegador se suscribe al canal privado del anterior.
+  localStorage.removeItem("usuario_id");
 }
 
 // ¿El usuario autenticado tiene esta clave de permiso? (cacheada en localStorage por requerirSesion/login).
