@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         6,
         "bi-trash3",
         "Papelera vacía",
-        "No hay incidencias eliminadas.",
+        "No hay incidencias en la papelera.",
       );
       return;
     }
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       tr.appendChild(celdaTabla(inc.nombre_incidencia, "Título"));
       tr.appendChild(celdaTabla(nombreTipo, "Tipo", true));
       tr.appendChild(celdaTabla(nombreCiudad, "Ciudad", true));
-      tr.appendChild(celdaTabla(fecha, "Eliminada"));
+      tr.appendChild(celdaTabla(fecha, "En papelera desde"));
       tr.appendChild(celdaContador(inc));
 
       const acciones = [
