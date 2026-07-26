@@ -1,6 +1,6 @@
 // layout.js — Inyecta el sidebar y navbar compartidos; el enlace activo se marca con data-page del <body>.
 
-/* global aplicarMenuRol, escaparHtml */
+/* global aplicarMenuRol, escaparHtml, tienePermiso, iniciarHeartbeatReclamo */
 
 (function () {
   const sidebar = document.getElementById("adminSidebar");
@@ -192,4 +192,18 @@
   if (typeof aplicarMenuRol === "function") {
     aplicarMenuRol(localStorage.getItem("rol_usuario") || "");
   }
+
+  // El latido del candado vive aquí, no en las páginas de gestión: la app es multipágina, y latiendo solo
+  // en Gestión y Detalle bastaba con irse al dashboard para que los reclamos del Supervisor vencieran
+  // sin que él hubiera abandonado la app. La regla es liberar al salir de la app, no al cambiar de página.
+  function arrancarLatidoSiGestiona() {
+    if (typeof iniciarHeartbeatReclamo !== "function") return;
+    if (tienePermiso("incidencias.gestionar")) iniciarHeartbeatReclamo();
+  }
+
+  // realtime.js se carga después de este archivo, así que el arranque espera a que terminen los defer.
+  document.addEventListener("DOMContentLoaded", arrancarLatidoSiGestiona);
+  // Refuerzo para la primera carga tras el login, cuando los permisos aún no están cacheados;
+  // requerirSesion los guarda antes de emitir el evento e iniciarHeartbeatReclamo ignora el segundo arranque.
+  window.addEventListener("sesion-lista", arrancarLatidoSiGestiona);
 })();

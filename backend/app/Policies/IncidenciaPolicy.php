@@ -147,6 +147,19 @@ class IncidenciaPolicy
             : Response::deny('Solo puedes solicitar la reapertura de una incidencia ya resuelta.');
     }
 
+    // Retirar la propia solicitud: solo el reportador y solo si sigue pendiente.
+    // Sin comprobar el estado a propósito: si una fila quedó archivada con la bandera encendida, retirarla es la única forma de limpiarla.
+    public function cancelarReapertura(User $user, Incidencia $incidencia): Response
+    {
+        if ($incidencia->id_usuario !== $user->id) {
+            return Response::deny('No autorizado');
+        }
+
+        return $incidencia->reapertura_solicitada
+            ? Response::allow()
+            : Response::deny('No tienes una solicitud de reapertura pendiente.');
+    }
+
     // Rechazar la solicitud de reapertura: mismo candado que reabrir → el admin DUEÑO del reclamo, y solo si hay una solicitud pendiente.
     public function rechazarReapertura(User $user, Incidencia $incidencia): Response
     {

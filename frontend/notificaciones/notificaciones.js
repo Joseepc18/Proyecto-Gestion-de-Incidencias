@@ -17,6 +17,7 @@ function iconoTipo(tipo) {
     EVIDENCIA: "bi-camera",
     INCIDENCIA_ELIMINADA: "bi-trash",
     SOLICITUD_REAPERTURA: "bi-arrow-counterclockwise",
+    RECLAMO_TOMADO: "bi-unlock",
   };
   return iconos[tipo] || "bi-bell";
 }

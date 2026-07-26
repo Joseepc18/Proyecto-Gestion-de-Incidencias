@@ -121,11 +121,7 @@ function prepararEstado(id) {
     if (nuevo === incActual.estado_incidencia) return;
 
     if (nuevo === "RESUELTO") {
-      const ok = await confirmar({
-        titulo: "Marcar como resuelto",
-        mensaje: "Se registrará la fecha de resolución y se notificará a los involucrados.",
-        textoConfirmar: "Resolver",
-      });
+      const ok = await confirmarResolucion();
       if (!ok) return;
     }
 
@@ -144,6 +140,29 @@ function prepararEstado(id) {
       mostrarToast(error.message, "error");
       marcarEstadoActivo();
     }
+  });
+}
+
+// Resolver es irreversible para las fotos: en RESUELTO ya no se suben evidencias de resolución.
+// Por eso, si no hay ninguna, el modal avisa antes; es un aviso, no un bloqueo, porque hay trabajos legítimos sin foto.
+function confirmarResolucion() {
+  const sinFotos = !(incActual.evidencias || []).some((ev) => ev.tipo_evidencia === "RESOLUCION");
+
+  if (sinFotos) {
+    return confirmar({
+      titulo: "Resolver sin fotos de la resolución",
+      mensaje:
+        "No has subido ninguna foto del trabajo terminado y, una vez resuelta, ya no se podrán subir. " +
+        "Súbelas primero si vas a documentarlo.",
+      textoConfirmar: "Resolver igualmente",
+      peligro: true,
+    });
+  }
+
+  return confirmar({
+    titulo: "Marcar como resuelto",
+    mensaje: "Se registrará la fecha de resolución y se notificará a los involucrados.",
+    textoConfirmar: "Resolver",
   });
 }
 
@@ -265,8 +284,8 @@ function prepararReaperturaAdmin(id) {
   }
 }
 
-// Milisegundos sin latido tras los que el candado se ve "vencido" en el cliente (igual al TTL del backend).
-const RECLAMO_TTL_MS = 120000;
+// Milisegundos sin latido tras los que el candado se ve "vencido" en el cliente (igual a Incidencia::RECLAMO_TTL_SEGUNDOS).
+const RECLAMO_TTL_MS = 300000;
 
 // El admin solo gestiona (estado/prioridad/asignaciones) la incidencia que él mismo reclamó (candado del backend).
 function soyDuenoDelReclamo() {

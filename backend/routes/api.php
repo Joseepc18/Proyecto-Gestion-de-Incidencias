@@ -103,6 +103,7 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
     Route::get('/incidencias/{incidencia}/historial', [IncidenciaController::class, 'historialIncidencia']);
     Route::patch('/incidencias/{incidencia}/estado', [IncidenciaController::class, 'cambiarEstado'])->middleware('2fa');
     Route::post('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'solicitarReapertura'])->middleware('verificado');
+    Route::delete('/incidencias/{incidencia}/solicitar-reapertura', [IncidenciaController::class, 'cancelarReapertura'])->middleware('verificado');
     Route::post('/incidencias/{incidencia}/rechazar-reapertura', [IncidenciaController::class, 'rechazarReapertura'])->middleware('2fa');
     Route::post('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'reclamarIncidencia'])->middleware('2fa');
     Route::delete('/incidencias/{incidencia}/reclamar', [IncidenciaController::class, 'liberarReclamo'])->middleware('2fa');
