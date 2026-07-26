@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (esAutor) {
       const ok = await confirmar({
         titulo: "Eliminar incidencia",
-        mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+        mensaje: "Se enviará a la papelera y podrás restaurarla desde ahí. ¿Deseas continuar?",
         textoConfirmar: "Eliminar",
         peligro: true,
       });
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       try {
         await apiFetch("/incidencias/" + id, { method: "DELETE" });
-        toastFlash("Incidencia eliminada", "success");
+        toastFlash("Incidencia enviada a la papelera", "success");
         location.reload();
       } catch (error) {
         mostrarToast("Error: " + error.message, "error");
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const confirmado = await promesaModal;
     if (!confirmado) return;
 
-    toastFlash("Incidencia eliminada", "success");
+    toastFlash("Incidencia enviada a la papelera", "success");
     location.reload();
   }
 
