@@ -61,6 +61,25 @@ class BackendExtraTest extends TestCase
         ])->assertStatus(403);
     }
 
+    // Editar sigue al mismo corte que escribir: el supervisor que soltó el candado ya no puede hacer ninguna de las dos.
+    public function test_un_admin_no_edita_su_comentario_si_ya_solto_el_candado(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+        $idComentario = $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
+            'comentario' => 'Voy en camino.',
+        ])->assertStatus(201)->json('id_comentario');
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $this->putJson("/api/comentarios/{$idComentario}", [
+            'comentario' => 'Corrijo: llego mañana.',
+        ])->assertStatus(403);
+    }
+
     public function test_editar_comentario_reemite_evento_realtime(): void
     {
         Event::fake([ComentarioActualizado::class]);
