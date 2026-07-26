@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\BitacoraError;
 use App\Models\Incidencia;
 use App\Models\Notificacion;
 use Illuminate\Foundation\Inspiring;
@@ -26,6 +27,9 @@ Schedule::command('incidencias:digest-diario')->dailyAt('07:00');
 // Limpieza nativa de Laravel: tokens de Sanctum vencidos hace más de 24h.
 Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();
 
-// Limpieza nativa de Laravel: notificaciones leídas hace +30 días y papelera de incidencias con +30 días
-// en soft-delete (cada incidencia por su propio deleted_at; ver App\Models\Notificacion y App\Models\Incidencia).
-Schedule::command('model:prune', ['--model' => [Notificacion::class, Incidencia::class]])->daily();
+// Limpieza nativa de Laravel: trabajos en cola que fallaron hace más de 7 días (tabla failed_jobs).
+Schedule::command('queue:prune-failed', ['--hours' => 168])->daily();
+
+// Limpieza nativa de Laravel: cada modelo trae su propio criterio en su método prunable(). Notificaciones
+// leídas hace +30 días, papelera de incidencias con +30 días en soft-delete y bitácora de errores de +90 días.
+Schedule::command('model:prune', ['--model' => [Notificacion::class, Incidencia::class, BitacoraError::class]])->daily();
