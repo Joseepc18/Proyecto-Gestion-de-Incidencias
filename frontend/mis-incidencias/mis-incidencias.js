@@ -1,6 +1,6 @@
 // mis-incidencias.js — Vista maestro-detalle del usuario (lista + detalle embebido).
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, toastFlash, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, requerirSesion, cablearLogout, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, confirmar, toastFlash, crearMapaIncidencias, escaparHtml, badgeEstadoHtml, badgePrioridadHtml, colorEstado, estadoParaVista, rutaDetalleIncidencia, codigoIncidencia, estadoVacioHtml, avisoEnvioAPapelera, requerirSesion, cablearLogout, obtenerEcho */
 
 let usuarioActual = null;
 let mapa = null;
@@ -337,13 +337,14 @@ async function seleccionarIncidencia(id) {
   }
 }
 
-// Borra la incidencia seleccionada (el botón solo se muestra en PENDIENTE; el backend también
+// Envía a la papelera la seleccionada (el botón solo se muestra en PENDIENTE; el backend también
 // restringe el borrado a dueño + PENDIENTE). Tras borrar, recarga para limpiar lista, contador y pin.
 async function eliminarSeleccionada() {
   if (!seleccionadaId) return;
+  const inc = incidenciasActuales.find((i) => i.id_incidencia === seleccionadaId);
   const ok = await confirmar({
     titulo: "Eliminar incidencia",
-    mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+    mensaje: avisoEnvioAPapelera(inc && inc.dias_retencion_papelera),
     textoConfirmar: "Eliminar",
     peligro: true,
   });
@@ -351,7 +352,7 @@ async function eliminarSeleccionada() {
 
   try {
     await apiFetch("/incidencias/" + seleccionadaId, { method: "DELETE" });
-    toastFlash("Incidencia eliminada", "success");
+    toastFlash("Incidencia enviada a la papelera", "success");
     location.reload();
   } catch (error) {
     mostrarToast("Error: " + error.message, "error");

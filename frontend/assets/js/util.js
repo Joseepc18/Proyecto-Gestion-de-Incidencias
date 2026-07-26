@@ -1,7 +1,7 @@
-// util.js — Helpers pequeños reutilizables: iniciales, código de incidencia y tiempo relativo.
+// util.js — Helpers pequeños reutilizables de presentación: textos de la UI, fechas, celdas y vacíos.
 
-/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto, celdaTabla, etiquetaRol */
-/* global escaparHtml */
+/* exported iniciales, codigoIncidencia, tiempoRelativo, estadoVacioHtml, filaVaciaHtml, asegurarLibreria, normalizarTexto, celdaTabla, etiquetaRol, avisoEnvioAPapelera */
+/* global escaparHtml, tienePermiso */
 
 // Etiqueta legible de un nombre_rol; única fuente para no mostrar el slug crudo en la UI.
 function etiquetaRol(nombreRol) {
@@ -12,6 +12,23 @@ function etiquetaRol(nombreRol) {
     normal: "Ciudadano",
   };
   return mapa[nombreRol] || "Usuario";
+}
+
+// Borrar manda la incidencia a la papelera, pero solo quien tiene incidencias.papelera puede entrar a
+// restaurarla: para el resto la papelera es invisible y lo único cierto es el plazo de la purga.
+function avisoEnvioAPapelera(diasRetencion) {
+  const purga = diasRetencion
+    ? " Si nadie la restaura, se borra sola a los " + diasRetencion + " días."
+    : "";
+
+  if (tienePermiso("incidencias.papelera")) {
+    return "Se enviará a la papelera y podrás restaurarla desde ahí." + purga;
+  }
+
+  return (
+    "Se enviará a la papelera, pero tú no podrás entrar ahí a recuperarla: solo un administrador puede restaurarla." +
+    purga
+  );
 }
 
 // Normaliza un texto (sin tildes, minúsculas, espacios colapsados) para cruzar nombres o GeoJSON.
