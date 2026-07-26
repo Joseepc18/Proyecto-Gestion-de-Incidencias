@@ -37,3 +37,6 @@ AGENTS.md
 
 # Secreto del Basic Auth de Horizon (se crea a mano en cada entorno)
 nginx/horizon.htpasswd
+# Override local de Compose (opcional, solo Windows/macOS). Se copia desde
+# docker-compose.override.yml.example; nunca debe activarse en el servidor.
+docker-compose.override.yml
