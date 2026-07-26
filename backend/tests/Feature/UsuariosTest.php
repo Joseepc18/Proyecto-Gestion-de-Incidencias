@@ -50,6 +50,56 @@ class UsuariosTest extends TestCase
         ]))->assertStatus(422)->assertJsonValidationErrors('id_rol');
     }
 
+    public function test_super_admin_no_puede_editarse_a_si_mismo(): void
+    {
+        $superAdmin = $this->crearUsuario('super_admin');
+        Sanctum::actingAs($superAdmin);
+
+        $this->putJson("/api/usuarios/{$superAdmin->id}", $this->datosUsuario([
+            'name' => $superAdmin->name,
+            'email' => $superAdmin->email,
+        ]))->assertForbidden();
+
+        // Sigue siendo super_admin: el formulario no pudo degradarlo.
+        $this->assertTrue($superAdmin->fresh()->esSuperAdmin());
+    }
+
+    public function test_super_admin_no_puede_editar_a_otro_super_admin(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $otro = $this->crearUsuario('super_admin');
+
+        $this->putJson("/api/usuarios/{$otro->id}", $this->datosUsuario([
+            'name' => $otro->name,
+            'email' => $otro->email,
+        ]))->assertForbidden();
+
+        $this->assertTrue($otro->fresh()->esSuperAdmin());
+    }
+
+    public function test_super_admin_edita_a_un_admin_y_a_un_tecnico(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $admin = $this->crearUsuario('admin');
+        $tecnico = $this->crearUsuario('tecnico');
+        $idRolTecnico = Rol::where('nombre_rol', 'tecnico')->value('id_rol');
+
+        $this->putJson("/api/usuarios/{$admin->id}", $this->datosUsuario([
+            'name' => 'Supervisor Editado',
+            'email' => $admin->email,
+            'id_rol' => $idRolTecnico,
+        ]))->assertOk();
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'name' => 'Supervisor Editado', 'id_rol' => $idRolTecnico]);
+
+        $this->putJson("/api/usuarios/{$tecnico->id}", $this->datosUsuario([
+            'name' => 'Tecnico Editado',
+            'email' => $tecnico->email,
+        ]))->assertOk();
+
+        $this->assertDatabaseHas('users', ['id' => $tecnico->id, 'name' => 'Tecnico Editado']);
+    }
+
     public function test_suspender_usuario_es_borrado_logico(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
