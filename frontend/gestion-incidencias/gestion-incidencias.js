@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (esAutor) {
       const ok = await confirmar({
         titulo: "Eliminar incidencia",
-        mensaje: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+        mensaje: "Se enviará a la papelera y podrás restaurarla desde ahí. ¿Deseas continuar?",
         textoConfirmar: "Eliminar",
         peligro: true,
       });
