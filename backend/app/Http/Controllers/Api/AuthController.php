@@ -151,7 +151,8 @@ class AuthController extends Controller
             $user->email_pendiente = $emailNuevo;
         }
 
-        if (! empty($datos['password'])) {
+        $cambiaPassword = ! empty($datos['password']);
+        if ($cambiaPassword) {
             $user->password = $datos['password'];
         }
 
@@ -174,6 +175,17 @@ class AuthController extends Controller
         }
 
         $user->save();
+
+        // Mismo criterio que el restablecimiento por correo: cambiar la clave expulsa a las sesiones
+        // vivas. Se conserva la actual para no desconectar a quien acaba de hacer el cambio.
+        if ($cambiaPassword) {
+            // data_get y no ->id: autenticado por sesión (o con Sanctum::actingAs) el token es
+            // transitorio y no tiene clave, y en ese caso se borran todos.
+            $idTokenActual = data_get($request->user()->currentAccessToken(), 'id');
+            $user->tokens()
+                ->when($idTokenActual, fn ($consulta) => $consulta->whereKeyNot($idTokenActual))
+                ->delete();
+        }
 
         if ($cambiaEmail) {
             // Enlace de confirmación al correo NUEVO: solo al pulsarlo se promueve a email definitivo.

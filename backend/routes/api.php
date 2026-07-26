@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', HealthController::class)->middleware('throttle:120,1');
 
 // Rutas públicas (sin token) — con límite de intentos para frenar fuerza bruta.
-// El 3er parámetro (prefijo) es obligatorio en cada una: sin sesión, Laravel keyea el throttle
-// solo por IP (ignora la ruta/dominio), así que rutas con el mismo N,M compartirían cupo entre sí.
+// En las que usan la forma N,M el 3er parámetro (prefijo) es obligatorio: sin sesión, Laravel keyea
+// el throttle solo por IP (ignora la ruta/dominio), así que dos rutas con el mismo N,M compartirían
+// cupo entre sí. Las que apuntan a un limitador con nombre ya llevan el prefijo en su propia clave.
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1,register');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1,login');
+// Limitador con nombre (definido en AppServiceProvider): cuenta por IP y además por correo.
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 // Login con Google (OAuth) — navegación del navegador, devuelven redirecciones
 Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle']);
@@ -45,7 +47,7 @@ Route::get('/email/confirmar-cambio/{id}/{hash}', [AuthController::class, 'verif
     ->middleware('throttle:6,1,email-confirmar-cambio');
 
 // Segundo factor del login (público): la credencial es el challenge_token efímero emitido por /login.
-Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:6,1,2fa-challenge');
+Route::post('/2fa/challenge', [AuthController::class, 'dosFactorChallenge'])->middleware('throttle:2fa-challenge');
 
 // Archivo de evidencia privado: lo carga el <img> (sin token Bearer), por eso la credencial es la firma con expiración.
 Route::get('/evidencias/{evidencia}/archivo', [EvidenciaController::class, 'archivo'])

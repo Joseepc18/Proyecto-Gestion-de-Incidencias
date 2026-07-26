@@ -68,4 +68,27 @@ class ComandosProgramadosTest extends TestCase
 
         $this->assertNoNotificado($autor, 'RECORDATORIO_CHAT');
     }
+
+    public function test_usuarios_de_prueba_de_carga_no_se_crean_en_produccion(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+
+        $this->artisan('carga:usuarios-prueba', ['accion' => 'crear', '--cantidad' => 1])
+            ->assertFailed();
+
+        $this->assertDatabaseMissing('users', ['email' => 'carga1@test.local']);
+    }
+
+    public function test_usuarios_de_prueba_de_carga_se_crean_y_se_borran_fuera_de_produccion(): void
+    {
+        $this->artisan('carga:usuarios-prueba', ['accion' => 'crear', '--cantidad' => 2])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('users', ['email' => 'carga1@test.local']);
+
+        // El borrado es físico: no debe quedar ni la fila suspendida.
+        $this->artisan('carga:usuarios-prueba', ['accion' => 'borrar'])->assertSuccessful();
+
+        $this->assertSame(0, User::withTrashed()->where('email', 'like', 'carga%@test.local')->count());
+    }
 }
