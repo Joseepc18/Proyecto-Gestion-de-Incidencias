@@ -57,6 +57,8 @@ class IncidenciaTest extends TestCase
     public function test_crear_en_en_proceso_registra_historial_inicial(): void
     {
         $admin = $this->crearUsuario('admin');
+        // El rol admin no nace pudiendo reportar: se le activa el permiso como lo haría el panel.
+        $this->darPermisoAlRol('admin', 'incidencias.crear');
         Sanctum::actingAs($admin);
 
         $this->postJson('/api/incidencias', $this->datosIncidenciaValidos([

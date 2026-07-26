@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class ActualizarIncidenciaRequest extends FormRequest
 {
-    // Autoriza antes de validar: admin/técnico asignado siempre; el autor solo si PENDIENTE.
+    // Autoriza antes de validar: el autor solo si PENDIENTE; el gestor solo si reclamó la incidencia.
     public function authorize(): bool
     {
         Gate::authorize('actualizar', $this->route('incidencia'));
@@ -30,7 +30,10 @@ class ActualizarIncidenciaRequest extends FormRequest
             'id_subtipo_incidencia' => 'sometimes|exists:subtipos_incidencia,id_subtipo_incidencia',
         ];
 
-        if ($this->user()?->esAdmin()) {
+        // La prioridad es gestión: la fija quien tiene el permiso, y nunca sobre su propio reporte
+        // (ahí entró por la vía del autor, que solo corrige los datos de lo que reportó).
+        $usuario = $this->user();
+        if ($usuario?->tienePermiso('incidencias.gestionar') && $this->route('incidencia')->id_usuario !== $usuario->id) {
             $reglas['prioridad_incidencia'] = ['sometimes', Rule::enum(PrioridadIncidencia::class)];
         }
 

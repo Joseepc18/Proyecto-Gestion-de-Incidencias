@@ -12,6 +12,14 @@ class IncidenciaPolicy
 {
     use AutorizaReclamo;
 
+    // Reportar una incidencia: permiso configurable desde el panel (por defecto solo lo tiene el ciudadano).
+    public function crear(User $user): Response
+    {
+        return $user->tienePermiso('incidencias.crear')
+            ? Response::allow()
+            : Response::deny('Tu rol no puede reportar incidencias.');
+    }
+
     // Ver una incidencia: el admin ve todas; el ciudadano las suyas; el técnico solo las que tiene asignadas.
     public function ver(User $user, Incidencia $incidencia): Response
     {
@@ -33,21 +41,23 @@ class IncidenciaPolicy
         return $this->ver($user, $incidencia);
     }
 
-    // Editar los detalles: quien tiene el permiso de gestión y es dueño del reclamo, o el autor mientras esté PENDIENTE; en RESUELTO/CERRADO es de solo lectura para todos.
+    // Editar los detalles: el autor mientras esté PENDIENTE, o quien tiene el permiso de gestión y es dueño del reclamo; en RESUELTO/CERRADO es de solo lectura para todos.
     public function actualizar(User $user, Incidencia $incidencia): Response
     {
         if ($incidencia->esTerminal()) {
             return Response::deny('La incidencia está resuelta; no se puede editar.');
         }
 
-        if ($user->tienePermiso('incidencias.gestionar')) {
-            return $this->esDuenoDelReclamo($user, $incidencia);
-        }
-
+        // El autor va primero aunque tenga el permiso de gestión: corregir el propio reporte es la vía
+        // del autor, no gestión (y gestionar lo propio se lo niega esDuenoDelReclamo).
         if ($incidencia->id_usuario === $user->id) {
             return $incidencia->estado_incidencia === EstadoIncidencia::Pendiente
                 ? Response::allow()
                 : Response::deny('No puedes editar esta incidencia porque ya está en proceso. Usa los comentarios para comunicarte con el equipo.');
+        }
+
+        if ($user->tienePermiso('incidencias.gestionar')) {
+            return $this->esDuenoDelReclamo($user, $incidencia);
         }
 
         return Response::deny('No autorizado');
@@ -164,6 +174,10 @@ class IncidenciaPolicy
             return Response::deny('No autorizado');
         }
 
+        if ($this->reportoLaIncidencia($user, $incidencia)) {
+            return Response::deny('No puedes atender una incidencia que tú mismo reportaste.');
+        }
+
         return $incidencia->estaCerrada()
             ? Response::deny('No se puede reclamar una incidencia archivada.')
             : Response::allow();
@@ -172,9 +186,11 @@ class IncidenciaPolicy
     // Liberar: la operación inversa de reclamar, y por eso NO comparte su regla.
     // Sin comprobar el estado a propósito: el candado se suelta siempre, también en archivadas, o una incidencia mal cerrada queda trabada sin salida.
     // Quién puede soltarlo (dueño, super_admin o lease vencido) lo resuelve el controller con sus 422.
+    // Excepción consciente por NOMBRE de rol: el super_admin es la llave maestra del candado y no tiene
+    // incidencias.gestionar (es view-only), así que sin esto su rama en el controller nunca se alcanzaba.
     public function liberar(User $user, Incidencia $incidencia): Response
     {
-        return $user->tienePermiso('incidencias.gestionar')
+        return $user->tienePermiso('incidencias.gestionar') || $user->esSuperAdmin()
             ? Response::allow()
             : Response::deny('No autorizado');
     }

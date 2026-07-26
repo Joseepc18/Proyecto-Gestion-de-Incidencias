@@ -72,24 +72,48 @@ class AdminPermisosTest extends TestCase
         $this->assertDatabaseCount('rol_permiso', $filasAntes);
     }
 
-    // Si YA hay otro rol con permisos.administrar, sí se le puede quitar a super_admin (deja de ser el único).
-    public function test_se_puede_quitar_permisos_administrar_a_super_admin_si_otro_rol_lo_tiene(): void
+    // Los permisos de gobierno están fijados al rol super_admin: ni siquiera con otro rol de respaldo se le quitan.
+    public function test_no_se_puede_quitar_un_permiso_fijado_al_super_admin(): void
     {
         Sanctum::actingAs($this->crearUsuario('super_admin'));
         $rolSuper = Rol::where('nombre_rol', 'super_admin')->value('id_rol');
         $rolAdmin = Rol::where('nombre_rol', 'admin')->value('id_rol');
         $idAdministrar = Permiso::where('clave_permiso', 'permisos.administrar')->value('id_permiso');
+        $idUsuarios = Permiso::where('clave_permiso', 'usuarios.administrar')->value('id_permiso');
 
-        // Primero se lo damos también a admin.
+        // Con respaldo o sin él da igual: primero le damos permisos.administrar también a admin,
+        // así el que rechaza es el guard de permisos fijos y no el anti-lockout.
         $permisosAdminActuales = DB::table('rol_permiso')->where('id_rol', $rolAdmin)->pluck('id_permiso')->all();
         $this->putJson("/api/roles/{$rolAdmin}/permisos", ['permisos' => [...$permisosAdminActuales, $idAdministrar]])
             ->assertOk();
 
-        // Ahora sí se le puede quitar a super_admin: admin queda como respaldo.
-        $this->putJson("/api/roles/{$rolSuper}/permisos", ['permisos' => []])->assertOk();
+        // Intentar dejar al super_admin solo con usuarios.administrar (le falta permisos.administrar).
+        $this->putJson("/api/roles/{$rolSuper}/permisos", ['permisos' => [$idUsuarios]])
+            ->assertStatus(422)
+            ->assertJsonFragment(['message' => 'El Administrador del Sistema no puede quedarse sin los permisos de gobierno (usuarios y permisos)']);
 
-        $this->assertDatabaseMissing('rol_permiso', ['id_rol' => $rolSuper, 'id_permiso' => $idAdministrar]);
-        $this->assertDatabaseHas('rol_permiso', ['id_rol' => $rolAdmin, 'id_permiso' => $idAdministrar]);
+        // No se tocó nada: conserva los dos permisos fijos.
+        $this->assertDatabaseHas('rol_permiso', ['id_rol' => $rolSuper, 'id_permiso' => $idAdministrar]);
+        $this->assertDatabaseHas('rol_permiso', ['id_rol' => $rolSuper, 'id_permiso' => $idUsuarios]);
+    }
+
+    // Lo fijado es solo el gobierno: el resto de la fila del super_admin sigue siendo editable.
+    public function test_al_super_admin_si_se_le_puede_quitar_un_permiso_no_fijado(): void
+    {
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $rolSuper = Rol::where('nombre_rol', 'super_admin')->value('id_rol');
+        $idCatalogos = Permiso::where('clave_permiso', 'catalogos.administrar')->value('id_permiso');
+
+        // Se reenvía su set actual sin catalogos.administrar; los dos fijos siguen dentro.
+        $sinCatalogos = DB::table('rol_permiso')
+            ->where('id_rol', $rolSuper)
+            ->where('id_permiso', '!=', $idCatalogos)
+            ->pluck('id_permiso')
+            ->all();
+
+        $this->putJson("/api/roles/{$rolSuper}/permisos", ['permisos' => $sinCatalogos])->assertOk();
+
+        $this->assertDatabaseMissing('rol_permiso', ['id_rol' => $rolSuper, 'id_permiso' => $idCatalogos]);
     }
 
     // End-to-end: dar 'usuarios.administrar' a un rol le abre la gestión de usuarios

@@ -1,9 +1,9 @@
-// detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable)
+// detalle-incidencia-gestion.js — Herramientas de gestión (admin y técnico responsable) y la llave maestra del super_admin
 
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esSuperAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -21,7 +21,10 @@ function gestionBloqueada() {
 
 // Hook del núcleo: al cargar el detalle. Revela y cablea lo del admin.
 function gestionAlCargarDetalle(id) {
-  if (!esAdmin) return;
+  if (!esAdmin) {
+    if (esSuperAdmin) prepararLlaveMaestra(id);
+    return;
+  }
   document.querySelectorAll(".solo-admin").forEach((el) => el.classList.remove("d-none"));
   prepararPrioridad(id);
   prepararAsignacion(id);
@@ -376,11 +379,10 @@ function prepararAtencionAdmin(id) {
   pintarAtencionAdmin();
 
   const btnReclamar = document.getElementById("btnReclamarIncidencia");
-  const btnForzar = document.getElementById("btnForzarLiberar");
   const btnArchivar = document.getElementById("btnArchivarIncidencia");
+  cablearForzarLiberar(id);
   if (btnReclamar.dataset.cableado === "1") return;
   btnReclamar.dataset.cableado = "1";
-  btnForzar.dataset.cableado = "1";
   btnArchivar.dataset.cableado = "1";
 
   // Repinta cada 15s para revelar el botón de tomar/forzar cuando el lease de otro admin caduca, sin recargar.
@@ -396,30 +398,6 @@ function prepararAtencionAdmin(id) {
       mostrarToast(error.message, "error");
     } finally {
       btnReclamar.disabled = false;
-    }
-  });
-
-  btnForzar.addEventListener("click", async function () {
-    const soyYo = incActual.admin_atiende && incActual.admin_atiende.id === usuarioActual.id;
-    const ok = await confirmar({
-      titulo: soyYo ? "Liberar atención" : "Forzar liberar",
-      mensaje: soyYo
-        ? "Dejará de estar a tu cargo y otro administrador podrá tomarla."
-        : "Quitarás la atención al administrador actual para que quede libre.",
-      textoConfirmar: soyYo ? "Liberar" : "Forzar",
-      peligro: !soyYo,
-    });
-    if (!ok) return;
-
-    btnForzar.disabled = true;
-    try {
-      const actualizada = await apiFetch("/incidencias/" + id + "/reclamar", { method: "DELETE" });
-      aplicarReclamo(actualizada);
-      mostrarToast("Atención liberada", "success");
-    } catch (error) {
-      mostrarToast(error.message, "error");
-    } finally {
-      btnForzar.disabled = false;
     }
   });
 
@@ -448,14 +426,52 @@ function prepararAtencionAdmin(id) {
   });
 }
 
+// Cablea el botón de soltar el candado: lo comparten el Supervisor dueño y el Administrador del Sistema.
+function cablearForzarLiberar(id) {
+  const btnForzar = document.getElementById("btnForzarLiberar");
+  if (btnForzar.dataset.cableado === "1") return;
+  btnForzar.dataset.cableado = "1";
+
+  btnForzar.addEventListener("click", async function () {
+    const soyYo = incActual.admin_atiende && incActual.admin_atiende.id === usuarioActual.id;
+    const ok = await confirmar({
+      titulo: soyYo ? "Liberar atención" : "Forzar liberar",
+      mensaje: soyYo
+        ? "Dejará de estar a tu cargo y otro administrador podrá tomarla."
+        : "Quitarás la atención al administrador actual para que quede libre.",
+      textoConfirmar: soyYo ? "Liberar" : "Forzar",
+      peligro: !soyYo,
+    });
+    if (!ok) return;
+
+    btnForzar.disabled = true;
+    try {
+      const actualizada = await apiFetch("/incidencias/" + id + "/reclamar", { method: "DELETE" });
+      aplicarReclamo(actualizada);
+      mostrarToast("Atención liberada", "success");
+    } catch (error) {
+      mostrarToast(error.message, "error");
+    } finally {
+      btnForzar.disabled = false;
+    }
+  });
+}
+
 // Vuelca en incActual la respuesta de reclamar/liberar y repinta la sección de atención.
 function aplicarReclamo(actualizada) {
   incActual.id_admin_atiende = actualizada.id_admin_atiende;
   incActual.admin_atiende = actualizada.admin_atiende;
   incActual.reclamo_visto_en = actualizada.reclamo_visto_en;
   incActual.reclamo_vencido = actualizada.reclamo_vencido;
-  pintarAtencionAdmin();
   pintarMetaAdminAtiende();
+
+  // Al Administrador del Sistema solo se le pinta la llave maestra: no gestiona, así que no tiene panel.
+  if (!esAdmin) {
+    pintarLlaveMaestra();
+    return;
+  }
+
+  pintarAtencionAdmin();
   // Reclamar/liberar habilita o bloquea los controles de gestión en el acto.
   refrescarGestionSegunReclamo();
 }
@@ -500,14 +516,28 @@ function pintarAtencionAdmin() {
 
   // Otro admin puede tomar el candado directamente cuando el lease del dueño venció.
   btnReclamar.classList.toggle("d-none", !(vencido && !soyYo));
-  // El dueño libera el suyo cuando quiera; super_admin fuerza un lease activo de otro.
   etiquetarBotonLiberar(btnForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
-  // Solo el dueño libera su propio reclamo; nadie más puede forzar uno activo (super_admin es view-only).
+  // Entre Supervisores solo el dueño suelta su propio candado; forzar uno activo es de la llave maestra.
   btnForzar.classList.toggle("d-none", !soyYo);
   // Archivar solo el dueño y solo si está RESUELTO; con una reapertura sin contestar hay que responderla primero (el backend responde 422).
   const archivable =
     soyYo && incActual.estado_incidencia === "RESUELTO" && !incActual.reapertura_pendiente;
   btnArchivar.classList.toggle("d-none", !archivable);
+}
+
+// El Administrador del Sistema no gestiona incidencias, pero sí es la llave maestra del candado:
+// se le cablea solo "Forzar liberar" (el resto del panel de gestión sigue apagado para él).
+function prepararLlaveMaestra(id) {
+  pintarLlaveMaestra();
+  cablearForzarLiberar(id);
+}
+
+// Solo hay algo que liberar si la incidencia está a cargo de alguien; sin candado, el botón se esconde.
+function pintarLlaveMaestra() {
+  const btnForzar = document.getElementById("btnForzarLiberar");
+  const hayCandado = !!incActual.admin_atiende;
+  btnForzar.classList.toggle("d-none", !hayCandado);
+  if (hayCandado) etiquetarBotonLiberar(btnForzar, " Forzar liberar");
 }
 
 // Rehace el contenido del botón de liberar (icono + texto), que cambia según quién sea el dueño.
@@ -530,7 +560,10 @@ function gestionAlActualizarEnVivo() {
 
 // Hook del núcleo: llegó un cambio de candado en vivo (otro admin reclamó/liberó).
 function gestionAlCambiarReclamo() {
-  if (!esAdmin) return;
+  if (!esAdmin) {
+    if (esSuperAdmin) pintarLlaveMaestra();
+    return;
+  }
   pintarAtencionAdmin();
   refrescarGestionSegunReclamo();
 }
@@ -724,9 +757,13 @@ async function prepararAsignacion(id) {
 }
 
 // Rellena ambos selects con los técnicos que aún no están asignados (sin refetch).
+// Fuera queda también el técnico que reportó la incidencia: nadie atiende lo que él mismo reportó
+// (el backend lo rechaza igual, esto solo evita ofrecerlo).
 function refrescarSelectsTecnicos() {
   const asignados = ultimasAsignaciones.map((a) => (a.usuario ? a.usuario.id : null));
-  const disponibles = listaTecnicos.filter((t) => !asignados.includes(t.id));
+  const disponibles = listaTecnicos.filter(
+    (t) => !asignados.includes(t.id) && t.id !== incActual.id_usuario,
+  );
   ["selectResponsable", "selectAyudante"].forEach(function (idSelect) {
     const select = document.getElementById(idSelect);
     if (!select) return;

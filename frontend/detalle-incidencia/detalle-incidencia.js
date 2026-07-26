@@ -1,6 +1,6 @@
 // detalle-incidencia.js — Núcleo de la pantalla de detalle (común a los 3 roles)
 
-/* exported incActual, usuarioActual, esAdmin, esRolAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
+/* exported incActual, usuarioActual, esAdmin, esRolAdmin, esSuperAdmin, idActual, responsableActual, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosReporte, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, activarMapaPicker, provinciaCiudadTexto */
 
 // Estado compartido (los módulos por rol lo leen).
 /* global apiFetch, aplicarMenuRol, tienePermiso, crearMapaIncidencias, crearMapaPicker, crearChat, escaparHtml, estadoConfig, colorEstado, badgeEstadoHtml, prioridadConfig, estadoParaVista, codigoIncidencia, iniciales, tiempoRelativo, montarCarrusel, requerirSesion, cablearLogout, toastFlash, gestionAlCargarDetalle, edicionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, obtenerEcho, iniciarHeartbeatReclamo, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
@@ -10,6 +10,8 @@ let usuarioActual = null;
 let esAdmin = false;
 // Rol admin o super_admin (independiente del permiso incidencias.gestionar): decide visibilidad del chat.
 let esRolAdmin = false;
+// Administrador del Sistema: no gestiona, pero es la llave maestra del candado de atención.
+let esSuperAdmin = false;
 let idActual = null;
 // técnico responsable actual (chat + herramientas del responsable)
 let responsableActual = null;
@@ -31,6 +33,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   let rol = usuarioActual.rol ? usuarioActual.rol.nombre_rol : "";
   esAdmin = tienePermiso("incidencias.gestionar");
   esRolAdmin = rol === "admin" || rol === "super_admin";
+  esSuperAdmin = rol === "super_admin";
   aplicarMenuRol(rol, usuarioActual.permisos);
 
   const btnVolver = document.getElementById("btnVolver");

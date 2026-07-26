@@ -97,9 +97,12 @@ function pintarFilas(permisos, roles) {
   });
 }
 
-// Una celda con el checkbox del par (rol, permiso).
+// Una celda con el checkbox del par (rol, permiso). Los permisos de gobierno del Administrador del
+// Sistema van marcados y bloqueados: sin ellos nadie podría recuperar el sistema (el backend los rechaza igual).
 function celdaCheck(rol, permiso) {
   const marcado = inicial[rol.id_rol].has(permiso.id_permiso) ? " checked" : "";
+  const fijo = (rol.permisos_fijos || []).indexOf(permiso.id_permiso) !== -1;
+  const bloqueo = fijo ? ' disabled title="Permiso de gobierno: no se puede quitar"' : "";
   return (
     '<td class="text-center"><input class="form-check-input" type="checkbox" data-rol="' +
     rol.id_rol +
@@ -107,6 +110,7 @@ function celdaCheck(rol, permiso) {
     permiso.id_permiso +
     '"' +
     marcado +
+    bloqueo +
     ' aria-label="' +
     escaparHtml(
       etiquetaRol(rol.nombre_rol) + ": " + (permiso.descripcion_permiso || permiso.clave_permiso),

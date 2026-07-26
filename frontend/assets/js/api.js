@@ -215,7 +215,6 @@ async function apiFetchReintentar(endpoint, opciones = {}, intentos = 2, esperaM
 function aplicarMenuRol(rol, permisos) {
   if (rol) localStorage.setItem("rol_usuario", rol);
   if (Array.isArray(permisos)) localStorage.setItem("permisos_usuario", JSON.stringify(permisos));
-  const esNormal = rol === "normal";
   const esTecnico = rol === "tecnico";
   const esRolAdmin = rol === "admin" || rol === "super_admin";
   const gestiona = tienePermiso("incidencias.gestionar");
@@ -240,7 +239,7 @@ function aplicarMenuRol(rol, permisos) {
   mostrar("navUsuarios", tienePermiso("usuarios.administrar"));
   mostrar("navCatalogos", tienePermiso("catalogos.administrar"));
   mostrar("navMisIncidencias", !gestiona && !esRolAdmin);
-  mostrar("navRegistrar", gestiona || esNormal);
+  mostrar("navRegistrar", tienePermiso("incidencias.crear"));
 
   const navMis = document.getElementById("navMisIncidencias");
   const textoMis = navMis ? navMis.querySelector(".nav-text") : null;

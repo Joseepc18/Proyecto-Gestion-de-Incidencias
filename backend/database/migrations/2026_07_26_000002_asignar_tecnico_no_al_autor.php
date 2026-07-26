@@ -1,15 +1,15 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
+// Última capa del conflicto de interés: el técnico que reportó una incidencia no puede quedar asignado a ella.
+// Repite entero el cuerpo del procedimiento (create_procedimientos_almacenados ya corrió en producción y no
+// se vuelve a aplicar); CREATE OR REPLACE lo deja idéntico corra una vez o las dos.
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        // Procedimiento asignar_tecnico: valida (incidencia existe, rol técnico, no es el autor, sin duplicado, RESPONSABLE/APOYO) y asigna el técnico.
         DB::unprepared("
         CREATE OR REPLACE PROCEDURE asignar_tecnico(
             p_id_incidencia BIGINT,
@@ -73,56 +73,11 @@ return new class extends Migration
         END;
         \$\$;
         ");
-
-        // Procedimiento resolver_incidencia: pasa a RESUELTO (los triggers hacen historial y fecha); las notificaciones las emite el listener EnviarNotificacionCambioEstado, ya no se insertan aquí.
-        DB::unprepared("
-        CREATE OR REPLACE PROCEDURE resolver_incidencia(
-            p_id_incidencia BIGINT,
-            p_id_usuario    BIGINT
-        )
-        LANGUAGE plpgsql
-        AS \$\$
-        DECLARE
-            v_existe        INT;
-            v_estado_actual VARCHAR;
-        BEGIN
-            -- Validación 1: ¿existe la incidencia?
-            SELECT COUNT(*) INTO v_existe
-            FROM incidencias WHERE id_incidencia = p_id_incidencia;
-
-            IF v_existe = 0 THEN
-                RAISE EXCEPTION 'La incidencia % no existe.', p_id_incidencia;
-            END IF;
-
-            -- Validación 2: ¿ya está resuelta? FOR UPDATE bloquea la fila: dos resolvers concurrentes se serializan y el perdedor recae aquí viendo 'RESUELTO', sin duplicar historial ni evento.
-            SELECT estado_incidencia INTO v_estado_actual
-            FROM incidencias WHERE id_incidencia = p_id_incidencia
-            FOR UPDATE;
-
-            IF v_estado_actual = 'RESUELTO' THEN
-                RAISE EXCEPTION 'La incidencia % ya está resuelta.', p_id_incidencia;
-            END IF;
-
-            -- Publica el actor para el trigger de historial (local a la transacción).
-            PERFORM set_config('app.actor_id', p_id_usuario::text, true);
-
-            -- Cambia el estado a RESUELTO; los triggers de fecha e historial hacen el resto automáticamente.
-            UPDATE incidencias
-            SET estado_incidencia = 'RESUELTO',
-                updated_at = NOW()
-            WHERE id_incidencia = p_id_incidencia;
-
-        END;
-        \$\$;
-        ");
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        DB::unprepared('DROP PROCEDURE IF EXISTS asignar_tecnico(BIGINT, BIGINT, VARCHAR);');
-        DB::unprepared('DROP PROCEDURE IF EXISTS resolver_incidencia(BIGINT, BIGINT);');
+        // Sin vuelta atrás propia: quitar la validación exigiría reescribir el procedimiento entero
+        // con el cuerpo viejo, que es justo lo que create_procedimientos_almacenados vuelve a crear.
     }
 };

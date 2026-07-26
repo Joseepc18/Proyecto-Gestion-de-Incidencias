@@ -12,6 +12,7 @@ class PermisosSeeder extends Seeder
     {
         // Catálogo de permisos base (clave => descripción). firstOrCreate = idempotente.
         $definiciones = [
+            'incidencias.crear' => 'Reportar (registrar) una incidencia nueva',
             'incidencias.gestionar' => 'Gestionar incidencias: cambiar estado, asignar técnicos y prioridades',
             'incidencias.papelera' => 'Ver, restaurar y purgar la papelera de incidencias',
             'incidencias.eliminar' => 'Eliminar (enviar a la papelera) una incidencia',
@@ -31,12 +32,13 @@ class PermisosSeeder extends Seeder
         }
 
         // Permisos base por rol. super_admin es view-only en incidencias (audita, no gestiona);
-        // admin conserva todo lo operativo.
+        // admin conserva todo lo operativo. Reportar es del ciudadano: si se le activa a otro rol,
+        // ese rol podrá reportar pero no gestionar lo que él mismo reportó (conflicto de interés).
         $asignaciones = [
             'super_admin' => ['dashboard.ver', 'bitacora.ver', 'usuarios.administrar', 'catalogos.administrar', 'permisos.administrar'],
             'admin' => ['incidencias.gestionar', 'incidencias.papelera', 'incidencias.eliminar', 'dashboard.ver'],
             'tecnico' => [],
-            'normal' => [],
+            'normal' => ['incidencias.crear'],
         ];
 
         foreach ($asignaciones as $nombreRol => $claves) {

@@ -5,9 +5,9 @@
 /* global apiFetch, obtenerToken, eliminarToken, tienePermiso, inicioSegunRol, toastFlash */
 
 // Guard de rol por página: quién puede ver cada carpeta. Se expresa con permisos (misma fuente
-// que aplicarMenuRol, para no duplicar reglas); solo normal/tecnico se distinguen por rol porque
-// no tienen permisos. Las páginas no listadas (detalle-incidencia, perfil, notificaciones, login)
-// no tienen restricción de rol.
+// que aplicarMenuRol, para no duplicar reglas); solo los paneles propios de normal/tecnico se
+// distinguen por rol, porque son pantallas del rol y no de un permiso. Las páginas no listadas
+// (detalle-incidencia, perfil, notificaciones, login) no tienen restricción de rol.
 function rolPermitidoEnPagina(pagina, rol) {
   switch (pagina) {
     case "inicio":
@@ -27,7 +27,7 @@ function rolPermitidoEnPagina(pagina, rol) {
     case "catalogos":
       return tienePermiso("catalogos.administrar");
     case "registrar":
-      return tienePermiso("incidencias.gestionar") || rol === "normal";
+      return tienePermiso("incidencias.crear");
     case "mis-incidencias":
       return rol === "normal" || rol === "tecnico";
     default:
