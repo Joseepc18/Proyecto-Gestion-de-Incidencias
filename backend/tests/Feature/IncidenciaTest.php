@@ -424,6 +424,28 @@ class IncidenciaTest extends TestCase
         $this->assertNull($incidencia->reclamo_visto_en);
     }
 
+    // Archivar con una solicitud de reapertura sin contestar dejaría al ciudadano sin respuesta y la bandera encendida para siempre
+    // (una vez CERRADO ya nadie puede rechazarla). Misma regla que el auto-archivado, que salta estas incidencias.
+    public function test_no_se_archiva_con_una_reapertura_pendiente(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'reapertura_solicitada' => true]);
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertStatus(422);
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia->value);
+
+        // Contestada la solicitud (aquí, rechazándola), ya se archiva.
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", ['motivo' => 'El trabajo quedó verificado en sitio.'])->assertOk();
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertOk();
+
+        $this->assertSame('CERRADO', $incidencia->fresh()->estado_incidencia->value);
+    }
+
     // Liberar ya no se autoriza con el gate de reclamar (que niega en archivadas): si no, una fila mal cerrada queda trabada para siempre.
     public function test_el_candado_de_una_incidencia_archivada_se_puede_liberar(): void
     {

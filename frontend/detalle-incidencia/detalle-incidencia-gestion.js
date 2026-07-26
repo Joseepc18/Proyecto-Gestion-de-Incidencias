@@ -217,6 +217,8 @@ function prepararReaperturaAdmin(id) {
         marcarEstadoActivo();
         btnReabrir.classList.add("d-none");
         btnRechazar.classList.add("d-none");
+        // Ya no está RESUELTO: el botón de archivar debe desaparecer sin recargar.
+        pintarAtencionAdmin();
         cargarHistorial(id);
         mostrarToast("Incidencia reabierta", "success");
       } catch (error) {
@@ -253,6 +255,8 @@ function prepararReaperturaAdmin(id) {
       incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
       btnReabrir.classList.add("d-none");
       btnRechazar.classList.add("d-none");
+      // Contestada la solicitud, ya se puede archivar: revela el botón sin recargar.
+      pintarAtencionAdmin();
       mostrarToast("Solicitud de reapertura rechazada", "success");
     });
   }
@@ -500,8 +504,10 @@ function pintarAtencionAdmin() {
   etiquetarBotonLiberar(btnForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
   // Solo el dueño libera su propio reclamo; nadie más puede forzar uno activo (super_admin es view-only).
   btnForzar.classList.toggle("d-none", !soyYo);
-  // Archivar solo el dueño y solo si está RESUELTO.
-  btnArchivar.classList.toggle("d-none", !(soyYo && incActual.estado_incidencia === "RESUELTO"));
+  // Archivar solo el dueño y solo si está RESUELTO; con una reapertura sin contestar hay que responderla primero (el backend responde 422).
+  const archivable =
+    soyYo && incActual.estado_incidencia === "RESUELTO" && !incActual.reapertura_pendiente;
+  btnArchivar.classList.toggle("d-none", !archivable);
 }
 
 // Rehace el contenido del botón de liberar (icono + texto), que cambia según quién sea el dueño.

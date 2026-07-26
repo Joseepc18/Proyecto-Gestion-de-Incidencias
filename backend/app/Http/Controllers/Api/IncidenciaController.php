@@ -484,6 +484,12 @@ class IncidenciaController extends Controller
             return response()->json(['message' => 'Solo se pueden archivar incidencias resueltas.'], 422);
         }
 
+        // Con una solicitud de reapertura sin contestar no se archiva: el ciudadano pidió algo y se le responde
+        // con Reabrir o No reabrir (que le manda el motivo). Es la regla que ya aplicaba el auto-archivado, que salta estas incidencias.
+        if ($incidencia->reapertura_solicitada) {
+            return response()->json(['message' => 'Hay una solicitud de reapertura pendiente: respóndela antes de archivar.'], 422);
+        }
+
         DB::transaction(function () use ($incidencia, $request) {
             DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
             // El candado se suelta en el mismo update que archiva: una incidencia cerrada ya no se gestiona, así que no debe quedar a cargo de nadie.

@@ -219,7 +219,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reapertura_solicitada\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 3
 			path: app/Http/Controllers/Api/IncidenciaController.php
 
 		-
