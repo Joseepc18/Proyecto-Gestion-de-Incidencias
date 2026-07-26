@@ -51,9 +51,25 @@ class ComandosProgramadosTest extends TestCase
 
         $primeraVez = $this->notificacionesDe($autor, 'RECORDATORIO_CHAT')->count();
 
-        // Corre de nuevo enseguida: no debe duplicar el aviso (TTL de 7 días en caché).
+        // Corre de nuevo dentro de la ventana: no debe duplicar el aviso (lo frena la marca en caché).
         Artisan::call('incidencias:recordar-chat-sin-leer');
         $this->assertSame($primeraVez, $this->notificacionesDe($autor, 'RECORDATORIO_CHAT')->count());
+    }
+
+    public function test_recordar_chat_sin_leer_no_persigue_hilos_viejos(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor);
+
+        // Notificación que nunca se leyó y ya salió de la ventana: el aviso fue definitivo, no se repite.
+        $autor->notify(new IncidenciaNotification('COMENTARIO', 'Nuevo comentario', $incidencia->id_incidencia));
+        DatabaseNotification::where('notifiable_id', $autor->id)
+            ->where('data->tipo', 'COMENTARIO')
+            ->update(['created_at' => now()->subDays(10)]);
+
+        Artisan::call('incidencias:recordar-chat-sin-leer');
+
+        $this->assertNoNotificado($autor, 'RECORDATORIO_CHAT');
     }
 
     public function test_recordar_chat_sin_leer_ignora_mensajes_recientes(): void

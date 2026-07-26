@@ -138,7 +138,10 @@ let refrescoTimer = null;
 let refrescoPendiente = false;
 
 // Se une al canal de presencia 'tablero' y agenda un refresco al detectar cambios de incidencias.
+// El canal solo autoriza a quien gestiona (routes/channels.php); sin el permiso ni se pide, para no
+// provocar un 403 y los reintentos del socket. Quien solo ve el dashboard lo refresca recargando.
 function conectarTablero() {
+  if (!tienePermiso("incidencias.gestionar")) return;
   const echo = obtenerEcho();
   if (!echo) return;
   echo

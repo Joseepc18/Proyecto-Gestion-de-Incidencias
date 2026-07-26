@@ -223,6 +223,31 @@ class PermisosTest extends TestCase
         $this->assertStringContainsString($motivo, $notificacion->data['mensaje']);
     }
 
+    // Los tres desenlaces de una solicitud cierran el aviso de los demás gestores: nadie persigue algo ya resuelto.
+    public function test_rechazar_reapertura_marca_leidos_los_avisos_de_los_demas_admins(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($reportador);
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $dueno = $this->crearUsuario('admin');
+        $otroAdmin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($reportador);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El hueco sigue igual.',
+        ])->assertOk();
+
+        $this->assertNull($this->notificacionesDe($otroAdmin, 'SOLICITUD_REAPERTURA')->first()->read_at);
+
+        Sanctum::actingAs($dueno);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", [
+            'motivo' => 'Se verificó en sitio.',
+        ])->assertOk();
+
+        $this->assertNotNull($this->notificacionesDe($otroAdmin, 'SOLICITUD_REAPERTURA')->first()->read_at);
+    }
+
     // Rechazar una reapertura respeta el candado: solo el admin dueño del reclamo, no cualquier admin (igual que reabrir).
     public function test_admin_ajeno_no_puede_rechazar_reapertura_sin_reclamar(): void
     {

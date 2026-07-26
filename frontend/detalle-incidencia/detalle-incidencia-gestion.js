@@ -3,7 +3,7 @@
 /* exported gestionAlCargarDetalle, gestionAlCargarAsignaciones, gestionAsignacionesError, gestionAlActualizarEnVivo, gestionAlCambiarReclamo, soyDuenoDelReclamo */
 
 // Lista de técnicos y últimas asignaciones cargadas (para poblar los selects sin refetch).
-/* global apiFetch, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esSuperAdmin, esResponsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
+/* global apiFetch, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearComboboxBuscable, crearCatalogosIncidencia, estadoConfig, prioridadConfig, incActual, usuarioActual, esAdmin, esSuperAdmin, esResponsableActual, responsableActual, pintarBadgeEstado, pintarBadgePrioridad, pintarFotos, fijarOpcionesFotosResolucion, pintarMetaAdminAtiende, cargarHistorial, cargarAsignaciones, iniciales */
 
 let listaTecnicos = [];
 let ultimasAsignaciones = [];
@@ -151,9 +151,7 @@ function confirmarResolucion() {
   if (sinFotos) {
     return confirmar({
       titulo: "Resolver sin fotos de la resolución",
-      mensaje:
-        "No has subido ninguna foto del trabajo terminado y, una vez resuelta, ya no se podrán subir. " +
-        "Súbelas primero si vas a documentarlo.",
+      mensaje: avisoSinFotosResolucion(),
       textoConfirmar: "Resolver igualmente",
       peligro: true,
     });
@@ -164,6 +162,29 @@ function confirmarResolucion() {
     mensaje: "Se registrará la fecha de resolución y se notificará a los involucrados.",
     textoConfirmar: "Resolver",
   });
+}
+
+// Solo el técnico RESPONSABLE genera evidencia de tipo RESOLUCION (EvidenciaController@subir), así que el
+// aviso cambia según quién resuelve: al supervisor no se le puede pedir que suba fotos que no puede subir.
+function avisoSinFotosResolucion() {
+  const comun = "Una vez resuelta, ya no se podrán subir fotos del trabajo terminado. ";
+
+  if (esResponsableActual()) {
+    return comun + "No has subido ninguna: súbelas primero si vas a documentarlo.";
+  }
+
+  if (!responsableActual) {
+    return (
+      comun +
+      "Esta incidencia no tiene técnico responsable asignado, así que nadie puede subirlas. " +
+      "Si quieres documentarla, asigna un responsable antes de resolver."
+    );
+  }
+
+  return (
+    comun +
+    "El técnico responsable no subió ninguna, y solo él puede hacerlo: pídeselas antes de resolver."
+  );
 }
 
 // RESUELTO/CERRADO quedan bloqueados para todos: RESUELTO solo sale con "Reabrir"; CERRADO ya es definitivo.

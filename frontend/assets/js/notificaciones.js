@@ -104,12 +104,15 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Push en vivo: la campana se actualiza sola en cuanto llega una notificación por WebSocket.
-  let suscrito = false;
+  // Guardamos a QUÉ id estamos suscritos, no un simple "ya me suscribí": el id cacheado puede ser de la
+  // sesión anterior, y si requerirSesion confirma otro hay que soltar ese canal y tomar el bueno.
+  let idSuscrito = null;
   function suscribir(idUsuario) {
-    if (suscrito || !idUsuario) return;
+    if (!idUsuario || String(idUsuario) === String(idSuscrito)) return;
     const echo = obtenerEcho();
     if (!echo) return;
-    suscrito = true;
+    if (idSuscrito) echo.leave("App.Models.User." + idSuscrito);
+    idSuscrito = idUsuario;
     // .notification() escucha el evento nativo que Laravel emite al canal privado del usuario.
     echo.private("App.Models.User." + idUsuario).notification(function () {
       cargar();

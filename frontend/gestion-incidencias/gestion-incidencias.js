@@ -291,7 +291,10 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Tablero en vivo: nuevas incidencias, cambios de estado/prioridad y de candado, sin recargar la página.
+  // Igual que en el dashboard: el canal de presencia solo autoriza a quien gestiona, así que quien entra
+  // aquí de solo lectura (dashboard.ver sin incidencias.gestionar) no lo pide y se queda con la carga normal.
   function conectarTablero() {
+    if (!tienePermiso("incidencias.gestionar")) return;
     const echo = obtenerEcho();
     if (!echo) return;
     const tablero = echo.join("tablero");
