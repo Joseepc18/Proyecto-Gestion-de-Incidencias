@@ -480,6 +480,8 @@ function configurarChatFlotante(id) {
     fab.classList.add("d-none");
     pintarParticipantes();
     if (!chatCreado) {
+      // Responder en el chat del propio reporte es la vía del autor, no gestión: queda fuera del candado.
+      const esAutor = incActual && incActual.id_usuario === usuarioActual.id;
       crearChat("chatContenedor", id, usuarioActual, {
         // Terminal (RESUELTO/CERRADO) para todos; admin/super_admin sin permiso de gestión (view-only);
         // o admin con permiso pero que no reclamó (mismo candado que estado/prioridad/asignaciones).
@@ -487,7 +489,7 @@ function configurarChatFlotante(id) {
           (incActual &&
             (incActual.estado_incidencia === "RESUELTO" ||
               incActual.estado_incidencia === "CERRADO")) ||
-          (esRolAdmin && (!esAdmin || !soyDuenoDelReclamo())),
+          (esRolAdmin && !esAutor && (!esAdmin || !soyDuenoDelReclamo())),
       });
       chatCreado = true;
     }
