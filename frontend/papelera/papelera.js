@@ -175,7 +175,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   });
 
   // Papelera en vivo: recarga ante enviar/restaurar/purgar de otro admin, sin recargar la página.
-  const echo = obtenerEcho();
+  // El canal de presencia solo autoriza a quien gestiona (routes/channels.php), permiso distinto del
+  // que abre esta página, así que sin él ni se pide para no provocar un 403 y los reintentos del socket.
+  const echo = tienePermiso("incidencias.gestionar") ? obtenerEcho() : null;
   if (echo) {
     echo
       .join("tablero")

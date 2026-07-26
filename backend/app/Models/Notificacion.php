@@ -11,7 +11,7 @@ class Notificacion extends DatabaseNotification
 {
     use Prunable;
 
-    protected function prunable()
+    public function prunable()
     {
         return static::whereNotNull('read_at')->where('read_at', '<=', now()->subDays(30));
     }
