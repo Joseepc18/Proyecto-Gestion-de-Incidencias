@@ -4270,6 +4270,30 @@ html[data-theme="dark"] .badge-rol-super_admin {
   color: #fbbf24;
 }
 
+/* Fila de un usuario suspendido: la .table-secondary de Bootstrap fija un gris claro que no sigue al tema. */
+.fila-suspendida > td {
+  background-color: var(--admin-surface-soft);
+  color: var(--admin-muted);
+}
+
+/* Aviso de solicitud de reactivación: pill suave, mismo lenguaje que las de rol que tiene al lado. */
+.badge-solicitud {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #92400e;
+  background-color: rgba(217, 119, 6, 0.14);
+  border: 1px solid rgba(217, 119, 6, 0.24);
+}
+
+html[data-theme="dark"] .badge-solicitud {
+  color: #fcd34d;
+  background-color: rgba(217, 119, 6, 0.18);
+  border-color: rgba(217, 119, 6, 0.38);
+}
+
 /* Páginas de error (404 / 500): centradas, con branding */
 .error-page {
   min-height: 100vh;

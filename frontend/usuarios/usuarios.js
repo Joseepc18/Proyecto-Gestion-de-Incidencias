@@ -82,7 +82,7 @@ async function cargarUsuarios() {
     tbody.innerHTML = "";
     usuarios.forEach(function (u) {
       const tr = document.createElement("tr");
-      if (suspendidos) tr.classList.add("table-secondary");
+      if (suspendidos) tr.classList.add("fila-suspendida");
 
       const tdAvatar = document.createElement("td");
       tdAvatar.className = "td-avatar";
@@ -178,12 +178,12 @@ function crearAvisoSolicitud(solicitud) {
   bloque.className = "small mt-1";
 
   const badge = document.createElement("span");
-  badge.className = "badge text-bg-warning";
+  badge.className = "badge-solicitud";
   badge.textContent = "Solicitó reactivación";
   bloque.appendChild(badge);
 
   const motivo = document.createElement("div");
-  motivo.className = "text-secondary";
+  motivo.className = "mt-1";
   motivo.textContent = solicitud.motivo;
   bloque.appendChild(motivo);
 
