@@ -24,8 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Le indicamos a Laravel que confíe en todos los proxies (Cloudflare)
-        $middleware->trustProxies(at: '*');
+        // Los proxies confiables NO se fijan aquí: TrustProxies los lee de config/trustedproxy.php
+        // en cada petición. Confiar en todos ('*') hacía que Laravel tomara la primera entrada de
+        // X-Forwarded-For —la que escribe el cliente— como IP, y con eso se saltaba el throttle.
 
         // Toda la API se trata como JSON (sin token → 401 limpio, no 500).
         $middleware->api(prepend: [

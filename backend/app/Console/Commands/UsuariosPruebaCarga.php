@@ -20,6 +20,14 @@ class UsuariosPruebaCarga extends Command
 
         // Se manejan como correos reservados: nadie real usa @test.local, así el borrado es seguro.
         if ($accion === 'crear') {
+            // Son cuentas ya verificadas y con una clave conocida: en producción serían puertas abiertas.
+            // El borrado sí se permite en cualquier entorno, para poder limpiar si alguna llegó a colarse.
+            if ($this->getLaravel()->environment('production')) {
+                $this->error('Este comando no se puede correr en producción: crearía cuentas verificadas con una contraseña conocida.');
+
+                return self::FAILURE;
+            }
+
             $idRol = Rol::where('nombre_rol', 'normal')->value('id_rol');
             $hash = Hash::make($this->option('password'));
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Laravel\Sanctum\PersonalAccessToken;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Tests\TestCase;
@@ -113,6 +114,57 @@ class AuthTest extends TestCase
         }
 
         $this->postJson('/api/login', $credenciales)->assertStatus(429);
+    }
+
+    public function test_el_limite_de_login_no_se_esquiva_falsificando_x_forwarded_for(): void
+    {
+        $credenciales = ['email' => 'noexiste@ejemplo.com', 'password' => 'claveMala'];
+
+        // Sin proxies confiables la cabecera del cliente se ignora: los intentos caen todos en el mismo cubo.
+        for ($i = 1; $i <= 5; $i++) {
+            $this->withHeader('X-Forwarded-For', "198.51.100.{$i}")->postJson('/api/login', $credenciales);
+        }
+
+        $this->withHeader('X-Forwarded-For', '198.51.100.6')
+            ->postJson('/api/login', $credenciales)
+            ->assertStatus(429);
+    }
+
+    public function test_el_limite_por_cuenta_frena_los_intentos_repartidos_entre_varias_ips(): void
+    {
+        $credenciales = ['email' => 'victima@ejemplo.com', 'password' => 'claveMala'];
+
+        // Cada intento llega desde una IP distinta, así que el cubo por IP (5/min) nunca se agota.
+        for ($i = 1; $i <= 10; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => "203.0.113.{$i}"])->postJson('/api/login', $credenciales);
+        }
+
+        // El 11.º lo corta el cubo por correo (10/min).
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.11'])
+            ->postJson('/api/login', $credenciales)
+            ->assertStatus(429);
+    }
+
+    public function test_cambiar_la_contrasena_desde_el_perfil_cierra_las_demas_sesiones(): void
+    {
+        $usuario = $this->crearUsuario('normal');
+        // Dos sesiones abiertas: la que hace el cambio y otra que debe quedar fuera.
+        $tokenOtroDispositivo = $usuario->createToken('otro_dispositivo')->plainTextToken;
+        $tokenActual = $usuario->createToken('auth_token')->plainTextToken;
+
+        $this->withToken($tokenActual)->putJson('/api/perfil', [
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'password' => 'NuevaClave123',
+            'password_confirmation' => 'NuevaClave123',
+            'current_password' => 'password',
+        ])->assertOk();
+
+        // Se comprueba sobre los tokens y no con otra petición: dentro de un mismo test el guard
+        // ya tiene el usuario resuelto en memoria y no volvería a validar la credencial.
+        $this->assertNull(PersonalAccessToken::findToken($tokenOtroDispositivo));
+        $this->assertNotNull(PersonalAccessToken::findToken($tokenActual));
+        $this->assertDatabaseCount('personal_access_tokens', 1);
     }
 
     public function test_olvide_password_no_revela_correos_inexistentes(): void
