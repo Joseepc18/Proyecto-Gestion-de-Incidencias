@@ -467,6 +467,25 @@ function actualizarChatFab() {
   }
 }
 
+// Por qué no se puede escribir en el chat, con el mismo orden que IncidenciaPolicy::comentar.
+// Cadena vacía = se puede escribir; el texto se le muestra a quien mira, así que dice qué hacer.
+function motivoChatSoloLectura() {
+  if (
+    incActual &&
+    (incActual.estado_incidencia === "RESUELTO" || incActual.estado_incidencia === "CERRADO")
+  ) {
+    return "La incidencia está resuelta: el chat es solo de lectura.";
+  }
+
+  // Responder en el propio reporte es la vía del autor, no gestión: queda fuera del candado.
+  const esAutor = incActual && incActual.id_usuario === usuarioActual.id;
+  if (!esRolAdmin || esAutor) return "";
+
+  if (!esAdmin) return "Tu rol solo puede leer el chat de esta incidencia.";
+
+  return soyDuenoDelReclamo() ? "" : "Reclama la incidencia para escribir en el chat.";
+}
+
 let chatCreado = false;
 let chatAbiertoAuto = false;
 
@@ -481,13 +500,7 @@ function configurarChatFlotante(id) {
     pintarParticipantes();
     if (!chatCreado) {
       crearChat("chatContenedor", id, usuarioActual, {
-        // Terminal (RESUELTO/CERRADO) para todos; admin/super_admin sin permiso de gestión (view-only);
-        // o admin con permiso pero que no reclamó (mismo candado que estado/prioridad/asignaciones).
-        soloLectura:
-          (incActual &&
-            (incActual.estado_incidencia === "RESUELTO" ||
-              incActual.estado_incidencia === "CERRADO")) ||
-          (esRolAdmin && (!esAdmin || !soyDuenoDelReclamo())),
+        avisoSoloLectura: motivoChatSoloLectura(),
       });
       chatCreado = true;
     }

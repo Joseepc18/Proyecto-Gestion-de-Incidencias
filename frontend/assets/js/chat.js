@@ -1,16 +1,17 @@
 // chat.js — Chat reutilizable de una incidencia (reportador ↔ admin ↔ técnico responsable).
 
-/* global apiFetch, obtenerEcho, iniciales, etiquetaRol */
+/* global apiFetch, obtenerEcho, iniciales, etiquetaRol, escaparHtml */
 /* exported crearChat */
 
-// opts.soloLectura deshabilita el input y muestra un aviso (incidencia RESUELTO)
+// opts.avisoSoloLectura: motivo por el que no se puede escribir; quita el input y lo muestra en su lugar.
+// Vacío o ausente = se puede escribir. El motivo lo decide quien llama, que es el que conoce la regla.
 function crearChat(idContenedor, idIncidencia, usuario, opts) {
   const cont = document.getElementById(idContenedor);
   if (!cont) return null;
-  const soloLectura = !!(opts && opts.soloLectura);
+  const soloLectura = !!(opts && opts.avisoSoloLectura);
 
   const inputHtml = soloLectura
-    ? '<p class="chat-solo-lectura">La incidencia está resuelta: el chat es solo de lectura.</p>'
+    ? '<p class="chat-solo-lectura">' + escaparHtml(opts.avisoSoloLectura) + "</p>"
     : '<form class="chat-form" id="chatForm">' +
       '<textarea class="form-control" id="chatTexto" rows="1" ' +
       'placeholder="Escribe un mensaje…" required></textarea>' +

@@ -109,6 +109,43 @@ class ConflictoInteresTest extends TestCase
         ]);
     }
 
+    // H-44: responder en el chat del propio reporte es la vía del autor, no gestión; antes el conflicto
+    // de interés dejaba al Supervisor autor sin poder contestarle al Supervisor que sí la atiende.
+    public function test_el_supervisor_autor_si_comenta_en_el_chat_de_su_reporte(): void
+    {
+        $supervisor = $this->crearUsuario('admin');
+        $incidencia = $this->crearIncidencia($supervisor, ['id_admin_atiende' => $this->crearUsuario('admin')->id]);
+        Sanctum::actingAs($supervisor);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
+            'comentario' => 'Adjunto la referencia exacta del poste.',
+        ])->assertCreated();
+    }
+
+    // El autor sin rol gestor nunca pasó por la rama de gestión: que la corrección no le cambie nada.
+    public function test_el_tecnico_autor_sigue_comentando_en_su_reporte(): void
+    {
+        $tecnico = $this->crearUsuario('tecnico');
+        $incidencia = $this->crearIncidencia($tecnico);
+        Sanctum::actingAs($tecnico);
+
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
+            'comentario' => 'Ya pasé por el sitio.',
+        ])->assertCreated();
+    }
+
+    // La excepción es solo para el autor: sobre una incidencia ajena el Administrador del Sistema sigue siendo view-only.
+    public function test_el_super_admin_sigue_sin_escribir_en_el_chat_de_una_incidencia_ajena(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+
+        $this->getJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios")->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/comentarios", [
+            'comentario' => 'Hola',
+        ])->assertStatus(403);
+    }
+
     public function test_no_se_puede_asignar_como_tecnico_al_autor_de_la_incidencia(): void
     {
         $tecnico = $this->crearUsuario('tecnico');
