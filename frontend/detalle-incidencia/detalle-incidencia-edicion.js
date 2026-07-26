@@ -446,5 +446,3 @@ async function cancelarReapertura() {
     btn.disabled = false;
   }
 }
-
-// Eliminar la incidencia completa.
