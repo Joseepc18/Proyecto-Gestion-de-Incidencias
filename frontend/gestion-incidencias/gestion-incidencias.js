@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout, obtenerEcho */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, avisoEnvioAPapelera, requerirSesion, cablearLogout, obtenerEcho */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -31,11 +31,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   ];
 
   // Si es de otro usuario, pide el motivo (se le notifica al dueño); si es propia, solo confirma.
-  async function eliminarIncidencia(id, esAutor) {
+  async function eliminarIncidencia(id, esAutor, diasRetencion) {
     if (esAutor) {
       const ok = await confirmar({
         titulo: "Eliminar incidencia",
-        mensaje: "Se enviará a la papelera y podrás restaurarla desde ahí. ¿Deseas continuar?",
+        mensaje: avisoEnvioAPapelera(diasRetencion),
         textoConfirmar: "Eliminar",
         peligro: true,
       });
@@ -54,7 +54,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     const promesaModal = abrirModal({
       titulo: "Eliminar incidencia",
       cuerpoHtml:
-        '<p class="text-secondary small">Se notificará al ciudadano el motivo de la eliminación.</p>' +
+        '<p class="text-secondary small">' +
+        avisoEnvioAPapelera(diasRetencion) +
+        " Se notificará al ciudadano el motivo de la eliminación.</p>" +
         motivoConOtroHtml(MOTIVOS_ELIMINACION),
       textoConfirmar: "Eliminar",
       peligro: true,
@@ -216,7 +218,8 @@ document.addEventListener("DOMContentLoaded", async function () {
           icon: "bi bi-trash me-2",
           label: "Eliminar",
           peligro: true,
-          handler: () => eliminarIncidencia(inc.id_incidencia, esAutor),
+          handler: () =>
+            eliminarIncidencia(inc.id_incidencia, esAutor, inc.dias_retencion_papelera),
         });
       }
 
