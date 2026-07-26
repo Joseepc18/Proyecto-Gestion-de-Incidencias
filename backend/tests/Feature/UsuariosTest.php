@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -196,5 +197,38 @@ class UsuariosTest extends TestCase
         $idsSuspendidos = collect($conFiltro->json('data'))->pluck('id')->all();
         $this->assertContains($suspendido->id, $idsSuspendidos);
         $this->assertNotContains($activo->id, $idsSuspendidos);
+    }
+
+    // Las cuentas del seeder nacen verificadas: sin email_verified_at el middleware 'verificado' les cerraría comentarios y evidencias.
+    public function test_las_cuentas_privilegiadas_del_seeder_nacen_verificadas(): void
+    {
+        $this->assertNotNull(User::where('email', 'jose2905.jepc@gmail.com')->value('email_verified_at'));
+        $this->assertNotNull(User::where('email', 'admin@sistema.com')->value('email_verified_at'));
+    }
+
+    // Ascender a Administrador del Sistema solo existe por artisan: la UI no ofrece el rol super_admin.
+    public function test_comando_promueve_una_cuenta_a_super_admin(): void
+    {
+        $tecnico = $this->crearUsuario('tecnico');
+
+        $this->assertSame(0, Artisan::call('usuario:promover-superadmin', ['email' => $tecnico->email]));
+
+        $this->assertTrue($tecnico->fresh()->esSuperAdmin());
+    }
+
+    // Correo inexistente: falla sin tocar nada, para que un typo no promueva a quien no era.
+    public function test_comando_promover_falla_si_el_correo_no_existe(): void
+    {
+        $this->assertSame(1, Artisan::call('usuario:promover-superadmin', ['email' => 'nadie@sistema.com']));
+    }
+
+    // Repetir el comando no rompe: es idempotente (útil si se corre dos veces en un procedimiento manual).
+    public function test_comando_promover_es_idempotente(): void
+    {
+        $superAdmin = $this->crearUsuario('super_admin');
+
+        $this->assertSame(0, Artisan::call('usuario:promover-superadmin', ['email' => $superAdmin->email]));
+
+        $this->assertTrue($superAdmin->fresh()->esSuperAdmin());
     }
 }

@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Gate;
 
 class LiberarReclamoRequest extends FormRequest
 {
-    // Solo admin (mismo gate que reclamar); el detalle dueño/super_admin/vencido lo resuelve el controller.
+    // Gate propio, NO el de reclamar: reclamar se niega en archivadas y eso dejaba el candado puesto sin forma de soltarlo.
     public function authorize(): bool
     {
-        Gate::authorize('reclamar', $this->route('incidencia'));
+        Gate::authorize('liberar', $this->route('incidencia'));
 
         return true;
     }

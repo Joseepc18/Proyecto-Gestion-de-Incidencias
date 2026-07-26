@@ -188,7 +188,9 @@ function crearAvatar(u) {
 // Suspendidos se restauran; normales solo se suspenden; técnicos/admins además se editan
 function menuAccionesUsuario(u, suspendido) {
   const acciones = [];
-  if (!suspendido && u.rol && u.rol.nombre_rol !== "normal") {
+  // Ni ciudadanos ni Administradores del Sistema: la UserPolicy deniega ambos, así que el botón solo llevaría a un 403.
+  const rolEditable = u.rol && u.rol.nombre_rol !== "normal" && u.rol.nombre_rol !== "super_admin";
+  if (!suspendido && rolEditable) {
     acciones.push({
       icon: "bi bi-pencil me-2",
       label: "Editar",

@@ -403,6 +403,97 @@ class IncidenciaTest extends TestCase
         $this->assertNotNull($incidencia->fecha_resolucion);
     }
 
+    // Archivar suelta el candado en el mismo update: una cerrada no se gestiona, así que no puede quedar a cargo de nadie.
+    public function test_archivar_libera_el_candado_de_atencion(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', null)
+            ->assertJsonPath('admin_atiende', null);
+
+        $incidencia->refresh();
+        $this->assertNull($incidencia->id_admin_atiende);
+        $this->assertNull($incidencia->reclamo_visto_en);
+    }
+
+    // Archivar con una solicitud de reapertura sin contestar dejaría al ciudadano sin respuesta y la bandera encendida para siempre
+    // (una vez CERRADO ya nadie puede rechazarla). Misma regla que el auto-archivado, que salta estas incidencias.
+    public function test_no_se_archiva_con_una_reapertura_pendiente(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'reapertura_solicitada' => true]);
+
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertStatus(422);
+        $this->assertSame('RESUELTO', $incidencia->fresh()->estado_incidencia->value);
+
+        // Contestada la solicitud (aquí, rechazándola), ya se archiva.
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/rechazar-reapertura", ['motivo' => 'El trabajo quedó verificado en sitio.'])->assertOk();
+        $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertOk();
+
+        $this->assertSame('CERRADO', $incidencia->fresh()->estado_incidencia->value);
+    }
+
+    // Liberar ya no se autoriza con el gate de reclamar (que niega en archivadas): si no, una fila mal cerrada queda trabada para siempre.
+    public function test_el_candado_de_una_incidencia_archivada_se_puede_liberar(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+
+        // Reproduce una fila anterior al arreglo: archivada y con el reclamo todavía puesto.
+        $incidencia->update([
+            'estado_incidencia' => 'CERRADO',
+            'id_admin_atiende' => $admin->id,
+            'reclamo_visto_en' => now(),
+        ]);
+
+        Sanctum::actingAs($admin);
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")
+            ->assertOk()
+            ->assertJsonPath('id_admin_atiende', null);
+
+        $this->assertNull($incidencia->fresh()->id_admin_atiende);
+    }
+
+    // El latido solo refresca los reclamos de incidencias activas: en las archivadas ya no hay candado que mantener vivo.
+    public function test_el_latido_no_toca_las_incidencias_archivadas(): void
+    {
+        $admin = $this->crearUsuario('admin');
+        $autor = $this->crearUsuario('normal');
+
+        $activa = $this->crearIncidencia($autor);
+        $activa->update(['id_admin_atiende' => $admin->id, 'reclamo_visto_en' => now()]);
+
+        $archivada = $this->crearIncidencia($autor);
+        $archivada->update([
+            'estado_incidencia' => 'CERRADO',
+            'id_admin_atiende' => $admin->id,
+            'reclamo_visto_en' => now(),
+        ]);
+
+        $latidoPrevio = $archivada->fresh()->reclamo_visto_en;
+
+        $this->travel(60)->seconds();
+        Sanctum::actingAs($admin);
+        $this->postJson('/api/incidencias/reclamo/heartbeat')->assertNoContent();
+
+        // La activa recibe el latido nuevo; la archivada se queda exactamente como estaba.
+        $this->assertTrue($activa->fresh()->reclamo_visto_en->greaterThan($latidoPrevio));
+        $this->assertTrue($archivada->fresh()->reclamo_visto_en->equalTo($latidoPrevio));
+    }
+
     // El job hourly archiva solo lo RESUELTO hace más de 24h y sin solicitud de reapertura pendiente.
     public function test_comando_archiva_resueltas_de_mas_de_24h_sin_reapertura(): void
     {
@@ -435,5 +526,22 @@ class IncidenciaTest extends TestCase
             'estado_anterior' => 'RESUELTO',
             'estado_nuevo' => 'CERRADO',
         ]);
+    }
+
+    // El auto-archivado es el camino normal de toda resuelta: si no soltara el candado, casi todas terminarían trabadas.
+    public function test_comando_de_archivado_libera_el_candado_de_atencion(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        $incidencia->update(['estado_incidencia' => 'RESUELTO', 'id_admin_atiende' => $admin->id, 'reclamo_visto_en' => now()]);
+        $incidencia->update(['fecha_resolucion' => now()->subHours(30)]);
+
+        Artisan::call('incidencias:archivar-resueltas');
+
+        $incidencia->refresh();
+        $this->assertSame('CERRADO', $incidencia->estado_incidencia->value);
+        $this->assertNull($incidencia->id_admin_atiende);
+        $this->assertNull($incidencia->reclamo_visto_en);
     }
 }
