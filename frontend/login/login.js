@@ -68,6 +68,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     google_email: "Tu cuenta de Google no tiene el correo verificado.",
     google_privilegiado: "Esa cuenta debe iniciar sesión con correo y contraseña.",
     google_state: "La conexión con Google expiró o no es válida. Intenta de nuevo.",
+    google_suspendido:
+      "Esa cuenta está suspendida. Puedes pedir su reactivación desde “¿Cuenta suspendida?”.",
   };
   const errGoogle = paramsUrl.get("error");
   if (erroresGoogle[errGoogle]) {

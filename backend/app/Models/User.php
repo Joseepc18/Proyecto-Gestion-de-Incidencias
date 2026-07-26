@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoSolicitudReactivacion;
 use App\Enums\RolAsignacion;
 use App\Notifications\RestablecerPasswordNotification;
 use App\Notifications\VerificarEmailNotification;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -189,5 +191,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function bitacoraErrores()
     {
         return $this->hasMany(BitacoraError::class, 'id_usuario', 'id');
+    }
+
+    // Solicitud de reactivación abierta (solo la tienen los suspendidos); la consume el listado de usuarios.
+    /** @return HasOne<SolicitudReactivacion, $this> */
+    public function solicitudReactivacionPendiente(): HasOne
+    {
+        return $this->hasOne(SolicitudReactivacion::class, 'id_usuario', 'id')
+            ->where('estado_solicitud', EstadoSolicitudReactivacion::Pendiente);
     }
 }

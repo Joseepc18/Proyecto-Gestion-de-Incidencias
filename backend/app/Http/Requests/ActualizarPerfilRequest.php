@@ -30,9 +30,10 @@ class ActualizarPerfilRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($user->id)->withoutTrashed(),
+                // Sin withoutTrashed: cambiar de correo tampoco puede apropiarse del de una cuenta suspendida.
+                Rule::unique('users', 'email')->ignore($user->id),
                 // No permitir pedir un correo que otro usuario ya tiene pendiente de confirmar.
-                Rule::unique('users', 'email_pendiente')->ignore($user->id)->withoutTrashed(),
+                Rule::unique('users', 'email_pendiente')->ignore($user->id),
             ],
             'password' => ['nullable', 'confirmed', Password::min(8)->letters()->numbers()],
             'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
