@@ -124,6 +124,12 @@ class IncidenciaPolicy
             return Response::deny('La incidencia está resuelta; el chat es solo de lectura.');
         }
 
+        // El autor va primero aunque tenga el permiso de gestión: responder en el chat del propio
+        // reporte es la vía del autor, no gestión (y gestionar lo propio se lo niega esDuenoDelReclamo).
+        if ($incidencia->id_usuario === $user->id) {
+            return Response::allow();
+        }
+
         if ($user->esAdmin()) {
             return $user->tienePermiso('incidencias.gestionar')
                 ? $this->esDuenoDelReclamo($user, $incidencia)

@@ -115,6 +115,14 @@ class TwoFactorTest extends TestCase
             ->assertJsonMissingPath('access_token');
     }
 
+    // H-45: mismo caso que en /login, el limitador por reto tampoco puede reventar con un valor que no es texto.
+    public function test_challenge_con_el_token_como_arreglo_responde_422(): void
+    {
+        $this->postJson('/api/2fa/challenge', ['challenge_token' => ['a', 'b'], 'code' => '000000'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('challenge_token');
+    }
+
     public function test_disable_requiere_codigo_valido(): void
     {
         $usuario = $this->usuarioConDosFactor();
