@@ -1,0 +1,46 @@
+# Override OPCIONAL para desarrollo local en Windows (y macOS).
+#
+# Para activarlo, copiar este archivo quitándole la extensión .example:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#   docker compose up -d
+#   docker compose exec backend composer install   # el volumen arranca vacío
+#
+# Compose lee docker-compose.override.yml automáticamente y lo fusiona con
+# docker-compose.yml; no hace falta ningún flag. El archivo activo está gitignored.
+#
+# QUÉ RESUELVE
+# El código se monta desde el host (./backend:/var/www/html) para que un despliegue
+# sea "git pull + restart" sin reconstruir la imagen. En Linux eso no cuesta nada,
+# pero en Windows Docker corre dentro de una VM y cada acceso a un archivo del host
+# cruza esa frontera. vendor/ son decenas de miles de archivos que PHP lee en cada
+# petición, así que ahí se concentra el castigo. Moverlo a un volumen de Docker lo
+# deja del lado Linux y elimina el cruce, conservando la edición en vivo del código.
+#
+# Medido en Windows 11 con Docker Desktop (WSL2), 20 peticiones a /api/health:
+#   sin override: 5.040 ms por petición   |  artisan route:list: 13,21 s
+#   con override:   141 ms por petición   |  artisan route:list:  0,76 s
+#
+# NO ACTIVAR EN EL SERVIDOR
+# En Linux no aporta nada (no hay frontera que cruzar) y sí introduce un riesgo: el
+# volumen persiste entre despliegues, y como el deploy no ejecuta composer install,
+# un cambio en composer.json dejaría corriendo un vendor/ desactualizado sin error visible.
+
+services:
+  backend:
+    volumes:
+      - backend_vendor:/var/www/html/vendor
+
+  reverb:
+    volumes:
+      - backend_vendor:/var/www/html/vendor
+
+  horizon:
+    volumes:
+      - backend_vendor:/var/www/html/vendor
+
+  scheduler:
+    volumes:
+      - backend_vendor:/var/www/html/vendor
+
+volumes:
+  backend_vendor:
