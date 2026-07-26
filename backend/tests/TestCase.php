@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Models\Ciudad;
 use App\Models\Incidencia;
+use App\Models\Permiso;
 use App\Models\Rol;
 use App\Models\SubtipoIncidencia;
 use App\Models\User;
@@ -67,6 +68,15 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $factory->create(['id_rol' => $rol->id_rol]);
+    }
+
+    // Activa un permiso en un rol, como haría el super_admin desde el panel (no duplica si ya lo tiene).
+    protected function darPermisoAlRol(string $nombreRol, string $clavePermiso): void
+    {
+        $rol = Rol::where('nombre_rol', $nombreRol)->firstOrFail();
+        $permiso = Permiso::where('clave_permiso', $clavePermiso)->firstOrFail();
+
+        $rol->permisos()->syncWithoutDetaching([$permiso->id_permiso]);
     }
 
     // Payload válido para crear una incidencia (coordenadas dentro del rango de Ecuador).

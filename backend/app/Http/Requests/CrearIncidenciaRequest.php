@@ -4,14 +4,18 @@ namespace App\Http\Requests;
 
 use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
+use App\Models\Incidencia;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class CrearIncidenciaRequest extends FormRequest
 {
-    // La autorización (crear = cualquier usuario autenticado) la cubre el middleware.
+    // Reportar depende del permiso incidencias.crear, configurable por rol desde el panel de permisos.
     public function authorize(): bool
     {
+        Gate::authorize('crear', Incidencia::class);
+
         return true;
     }
 
@@ -29,7 +33,9 @@ class CrearIncidenciaRequest extends FormRequest
             'fotos.*' => 'image|mimes:jpg,jpeg,png|max:3072',
         ];
 
-        if ($this->user()?->esAdmin()) {
+        // Nacer con prioridad/estado es triaje: lo decide el permiso de gestión, no el nombre del rol
+        // (con esAdmin() el super_admin view-only también podía, saltándose el triaje).
+        if ($this->user()?->tienePermiso('incidencias.gestionar')) {
             $reglas['prioridad_incidencia'] = ['nullable', Rule::enum(PrioridadIncidencia::class)];
             // No se permite crear en RESUELTO: resolver pasa por cambiarEstado (corre el SP, setea fecha e historial).
             $reglas['estado_incidencia'] = ['nullable', 'in:'.implode(',', [EstadoIncidencia::Pendiente->value, EstadoIncidencia::EnProceso->value])];
