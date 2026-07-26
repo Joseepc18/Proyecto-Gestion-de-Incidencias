@@ -36,6 +36,10 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 Route::post('/password/olvide', [AuthController::class, 'olvidePassword'])->middleware('throttle:5,1,password-olvide');
 Route::post('/password/restablecer', [AuthController::class, 'restablecerPassword'])->middleware('throttle:5,1,password-restablecer');
 
+// Reactivación de una cuenta suspendida (público: el suspendido no puede iniciar sesión).
+// Responde siempre el mismo 200 que /password/olvide para no revelar qué correos existen.
+Route::post('/reactivacion/solicitar', [AuthController::class, 'solicitarReactivacion'])->middleware('throttle:5,1,reactivacion-solicitar');
+
 // Verificación de email vía enlace firmado (navegación del navegador, devuelve redirección al frontend).
 Route::get('/email/verificar/{id}/{hash}', [AuthController::class, 'verificarEmail'])
     ->name('verification.verify')
@@ -164,6 +168,8 @@ Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
         Route::put('/usuarios/{usuario}', [UserController::class, 'actualizar']);
         Route::delete('/usuarios/{usuario}', [UserController::class, 'eliminar']);
         Route::post('/usuarios/{id}/restaurar', [UserController::class, 'restaurar'])->where('id', '[0-9]+');
+        // Rechazar la solicitud de reactivación: la cuenta sigue suspendida y el ciudadano puede volver a pedirlo.
+        Route::post('/usuarios/{id}/rechazar-reactivacion', [UserController::class, 'rechazarReactivacion'])->where('id', '[0-9]+');
         // Restablecer el 2FA de otro admin que perdió su dispositivo (nunca el propio; forzado en el FormRequest).
         Route::post('/usuarios/{usuario}/reset-2fa', [UserController::class, 'resetearDosFactor']);
         Route::get('/roles', [UserController::class, 'roles']);

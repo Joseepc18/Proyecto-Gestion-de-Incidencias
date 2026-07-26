@@ -595,6 +595,12 @@ parameters:
 			path: app/Http/Resources/UserResource.php
 
 		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$solicitudReactivacionPendiente\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
 			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:esAdmin\(\)\.$#'
 			identifier: method.notFound
 			count: 1

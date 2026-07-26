@@ -37,6 +37,11 @@ class UserResource extends JsonResource
             // Solo al dueño: si tiene 2FA activo y si su rol lo exige (para que el front lo guíe a configurarlo).
             'two_factor_enabled' => $esPropietario ? $this->hasEnabledTwoFactorAuthentication() : null,
             'two_factor_required' => $esPropietario ? ($this->esAdmin() && ! $this->hasEnabledTwoFactorAuthentication()) : null,
+            // Solo en el listado de suspendidos (única vista que carga la relación): la solicitud abierta, si la hay.
+            'solicitud_reactivacion' => $this->whenLoaded('solicitudReactivacionPendiente', fn () => $this->solicitudReactivacionPendiente ? [
+                'motivo' => $this->solicitudReactivacionPendiente->motivo_solicitud,
+                'fecha' => $this->solicitudReactivacionPendiente->created_at,
+            ] : null),
         ];
     }
 }

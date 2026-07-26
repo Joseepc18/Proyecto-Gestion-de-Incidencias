@@ -91,8 +91,14 @@ async function cargarUsuarios() {
 
       const tdNombre = document.createElement("td");
       tdNombre.dataset.label = "Nombre";
-      tdNombre.textContent = u.name;
-      if (suspendidos) tdNombre.classList.add("text-decoration-line-through");
+      const nombre = document.createElement("span");
+      nombre.textContent = u.name;
+      // El tachado va en el nombre, no en la celda, para no arrastrar al aviso de solicitud.
+      if (suspendidos) nombre.classList.add("text-decoration-line-through");
+      tdNombre.appendChild(nombre);
+      if (u.solicitud_reactivacion) {
+        tdNombre.appendChild(crearAvisoSolicitud(u.solicitud_reactivacion));
+      }
       tr.appendChild(tdNombre);
 
       const tdEmail = document.createElement("td");
@@ -166,6 +172,24 @@ function inicializarFiltroRol() {
     });
 }
 
+// Bloque bajo el nombre del suspendido que pidió volver: insignia + el motivo que escribió.
+function crearAvisoSolicitud(solicitud) {
+  const bloque = document.createElement("div");
+  bloque.className = "small mt-1";
+
+  const badge = document.createElement("span");
+  badge.className = "badge text-bg-warning";
+  badge.textContent = "Solicitó reactivación";
+  bloque.appendChild(badge);
+
+  const motivo = document.createElement("div");
+  motivo.className = "text-secondary";
+  motivo.textContent = solicitud.motivo;
+  bloque.appendChild(motivo);
+
+  return bloque;
+}
+
 // Iniciales vienen de util.js (helper compartido).
 
 // Avatar de la fila: foto de perfil o iniciales coloreadas según el rol (igual que badge-rol).
@@ -211,8 +235,17 @@ function menuAccionesUsuario(u, suspendido) {
     acciones.push({
       icon: "bi bi-arrow-counterclockwise me-2",
       label: "Restaurar",
-      handler: () => restaurarUsuario(u.id, u.name),
+      handler: () => restaurarUsuario(u.id, u.name, !!u.solicitud_reactivacion),
     });
+    // Rechazar deja la cuenta suspendida; el ciudadano puede volver a pedirlo más adelante.
+    if (u.solicitud_reactivacion) {
+      acciones.push({
+        icon: "bi bi-x-circle me-2",
+        label: "Rechazar solicitud",
+        peligro: true,
+        handler: () => rechazarReactivacion(u.id, u.name),
+      });
+    }
   } else {
     acciones.push({
       icon: "bi bi-slash-circle me-2",
@@ -351,11 +384,15 @@ async function restablecerDosFactor(id, nombre) {
   }
 }
 
-// Reactiva un usuario suspendido (revierte el borrado lógico).
-async function restaurarUsuario(id, nombre) {
+// Reactiva un usuario suspendido (revierte el borrado lógico) y, de paso, aprueba su solicitud si la había.
+async function restaurarUsuario(id, nombre, tieneSolicitud) {
   const ok = await confirmar({
     titulo: "¿Restaurar usuario?",
-    mensaje: 'Se reactivará la cuenta de "' + nombre + '". Volverá a poder iniciar sesión.',
+    mensaje:
+      'Se reactivará la cuenta de "' +
+      nombre +
+      '". Volverá a poder iniciar sesión.' +
+      (tieneSolicitud ? " Su solicitud de reactivación quedará aprobada." : ""),
     textoConfirmar: "Restaurar",
   });
   if (!ok) return;
@@ -364,6 +401,28 @@ async function restaurarUsuario(id, nombre) {
     await apiFetch("/usuarios/" + id + "/restaurar", { method: "POST" });
     await cargarUsuarios();
     mostrarToast("Usuario restaurado", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  }
+}
+
+// Rechaza la solicitud de reactivación: la cuenta sigue suspendida y el ciudadano podrá volver a pedirlo.
+async function rechazarReactivacion(id, nombre) {
+  const ok = await confirmar({
+    titulo: "¿Rechazar la solicitud?",
+    mensaje:
+      'La cuenta de "' +
+      nombre +
+      '" seguirá suspendida. Podrá enviar una solicitud nueva más adelante.',
+    textoConfirmar: "Rechazar",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await apiFetch("/usuarios/" + id + "/rechazar-reactivacion", { method: "POST" });
+    await cargarUsuarios();
+    mostrarToast("Solicitud rechazada", "success");
   } catch (error) {
     mostrarToast(error.message, "error");
   }

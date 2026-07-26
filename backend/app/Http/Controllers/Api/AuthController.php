@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoSolicitudReactivacion;
 use App\Exceptions\AlmacenamientoException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarPerfilRequest;
@@ -10,13 +11,16 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\OlvidePasswordRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\RestablecerPasswordRequest;
+use App\Http\Requests\SolicitarReactivacionRequest;
 use App\Http\Resources\UserResource;
 use App\Models\BitacoraError;
 use App\Models\Rol;
+use App\Models\SolicitudReactivacion;
 use App\Models\User;
 use App\Notifications\AvisoCambioEmailNotification;
 use App\Notifications\ConfirmarCambioEmailNotification;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -213,7 +217,8 @@ class AuthController extends Controller
         }
 
         // Reverificación de unicidad: alguien pudo registrar ese correo entre la solicitud y la confirmación.
-        $ocupado = User::where('email', $user->email_pendiente)->where('id', '!=', $user->id)->exists();
+        // withTrashed: los suspendidos también lo ocupan (si no, aquí se colaría un correo bloqueado y reventaría el UNIQUE).
+        $ocupado = User::withTrashed()->where('email', $user->email_pendiente)->where('id', '!=', $user->id)->exists();
         if ($ocupado) {
             $user->email_pendiente = null;
             $user->save();
@@ -246,6 +251,36 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña.',
         ]);
+    }
+
+    // Solicita la reactivación de una cuenta suspendida. Mismo criterio que olvidePassword: responde
+    // SIEMPRE el mismo 200, exista o no el correo, para no revelar qué cuentas hay ni cuáles están suspendidas.
+    public function solicitarReactivacion(SolicitarReactivacionRequest $request)
+    {
+        $respuesta = response()->json([
+            'message' => 'Si el correo corresponde a una cuenta suspendida, registramos tu solicitud para que un administrador la revise.',
+        ]);
+
+        // onlyTrashed: solo las suspendidas piden reactivación; una cuenta activa no genera nada.
+        $usuario = User::onlyTrashed()->where('email', $request->email)->first();
+
+        if (! $usuario) {
+            return $respuesta;
+        }
+
+        try {
+            // firstOrCreate respeta el índice "una pendiente por usuario": reenviar no duplica ni pisa el motivo original.
+            SolicitudReactivacion::firstOrCreate(
+                ['id_usuario' => $usuario->id, 'estado_solicitud' => EstadoSolicitudReactivacion::Pendiente],
+                ['motivo_solicitud' => $request->motivo],
+            );
+        } catch (QueryException $e) {
+            // Dos envíos simultáneos chocando contra ese índice: ya hay solicitud, no es un fallo que deba
+            // cambiar la respuesta (un 500 aquí delataría que la cuenta existe).
+            BitacoraError::registrar(null, 'BASE_DATOS', 'AuthController@solicitarReactivacion', 'Solicitud de reactivación duplicada: '.$e->getCode());
+        }
+
+        return $respuesta;
     }
 
     // Confirma el reset con el token del correo y guarda la nueva contraseña.
@@ -351,24 +386,31 @@ class AuthController extends Controller
                 return redirect($frontend.'/login/login.html?error=google_email')->withCookie($olvidarState);
             }
 
+            // withTrashed: sin él una cuenta suspendida daba null y se saltaba los dos guardas de abajo.
+            $existente = User::withTrashed()->where('email', $googleUser->getEmail())->first();
+
             // (b) Si ese email ya es de un admin o técnico, no permitimos Google (evita entrar como cuenta privilegiada por Gmail).
-            $existente = User::where('email', $googleUser->getEmail())->first();
             if ($existente && ($existente->esAdmin() || $existente->esTecnico())) {
                 return redirect($frontend.'/login/login.html?error=google_privilegiado')->withCookie($olvidarState);
             }
 
+            // (c) Cuenta suspendida: Google no la revive. Aquí sí podemos ser explícitos porque el dueño
+            // acaba de demostrar que controla ese buzón, así que no hay enumeración de correos ajenos.
+            if ($existente && $existente->trashed()) {
+                return redirect($frontend.'/login/login.html?error=google_suspendido')->withCookie($olvidarState);
+            }
+
             $rolNormal = Rol::where('nombre_rol', Rol::NORMAL)->firstOrFail();
 
-            $user = User::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Usuario Google',
-                    'password' => Str::random(32),
-                    'id_rol' => $rolNormal->id_rol,
-                    // Google ya verificó el correo (validado arriba): la cuenta nace verificada, sin correo extra.
-                    'email_verified_at' => now(),
-                ]
-            );
+            // Ya sabemos si existe: crear a mano en vez de firstOrCreate, que volvería a consultar con el scope.
+            $user = $existente ?? User::create([
+                'email' => $googleUser->getEmail(),
+                'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Usuario Google',
+                'password' => Str::random(32),
+                'id_rol' => $rolNormal->id_rol,
+                // Google ya verificó el correo (validado arriba): la cuenta nace verificada, sin correo extra.
+                'email_verified_at' => now(),
+            ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 

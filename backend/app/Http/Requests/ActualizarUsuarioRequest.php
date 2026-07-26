@@ -26,7 +26,8 @@ class ActualizarUsuarioRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($this->route('usuario')->id)->withoutTrashed(),
+                // Sin withoutTrashed: el correo de una cuenta suspendida sigue ocupado y no se puede reasignar.
+                Rule::unique('users', 'email')->ignore($this->route('usuario')->id),
             ],
             // No se puede degradar a un usuario al rol normal desde la gestión.
             'id_rol' => ['required', Rule::exists('roles', 'id_rol')->whereIn('nombre_rol', ['tecnico', 'admin'])],

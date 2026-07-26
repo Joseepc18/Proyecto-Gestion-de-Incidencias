@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EstadoSolicitudReactivacion;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarUsuarioRequest;
 use App\Http\Requests\CrearUsuarioRequest;
@@ -23,7 +24,8 @@ class UserController extends Controller
 
         if ($request->filled('rol')) {
             if ($request->rol === 'suspendido') {
-                $query->onlyTrashed();
+                // Solo aquí se carga la solicitud de reactivación: es la única vista donde hay suspendidos.
+                $query->onlyTrashed()->with('solicitudReactivacionPendiente');
             } else {
                 $query->conRol($request->rol);
             }
@@ -53,10 +55,28 @@ class UserController extends Controller
 
         $usuario->restore();
 
+        // Restaurar ES la aprobación: si había una solicitud pendiente queda cerrada con quién la resolvió.
+        $usuario->solicitudReactivacionPendiente()->first()?->resolver(EstadoSolicitudReactivacion::Aprobada, $request->user());
+
         return response()->json([
             'message' => 'Usuario restaurado',
             'usuario' => new UserResource($usuario->load('rol')),
         ]);
+    }
+
+    // Rechaza la solicitud de reactivación: la cuenta sigue suspendida y el ciudadano puede volver a pedirlo.
+    public function rechazarReactivacion(Request $request, int $id)
+    {
+        $usuario = User::withTrashed()->findOrFail($id);
+        $solicitud = $usuario->solicitudReactivacionPendiente()->first();
+
+        if (! $solicitud) {
+            return response()->json(['message' => 'El usuario no tiene una solicitud de reactivación pendiente'], 422);
+        }
+
+        $solicitud->resolver(EstadoSolicitudReactivacion::Rechazada, $request->user());
+
+        return response()->json(['message' => 'Solicitud de reactivación rechazada']);
     }
 
     // Listar los roles disponibles (para el desplegable del formulario).
