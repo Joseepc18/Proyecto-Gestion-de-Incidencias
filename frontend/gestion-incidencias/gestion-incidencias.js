@@ -1,6 +1,6 @@
 // gestion-incidencias.js — Listado, filtros, paginación y acciones.
 
-/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout, obtenerEcho, iniciarHeartbeatReclamo */
+/* global apiFetch, aplicarMenuRol, tienePermiso, mostrarToast, toastFlash, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, badgeEstadoHtml, badgePrioridadHtml, rutaDetalleIncidencia, renderizarPaginacion, crearMenuAcciones, filaVaciaHtml, celdaTabla, requerirSesion, cablearLogout, obtenerEcho */
 
 document.addEventListener("DOMContentLoaded", async function () {
   const usuarioActual = await requerirSesion();
@@ -316,8 +316,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   conectarTablero();
-  // Mantiene vivo el candado del admin mientras tenga la gestión abierta.
-  iniciarHeartbeatReclamo();
 
   cargarCatalogos();
   cargarIncidencias();

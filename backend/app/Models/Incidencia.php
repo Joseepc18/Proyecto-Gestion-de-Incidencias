@@ -22,7 +22,8 @@ class Incidencia extends Model
     protected $primaryKey = 'id_incidencia';
 
     // Segundos sin latido tras los cuales el reclamo de un admin se considera vencido (abandonado).
-    public const RECLAMO_TTL_SEGUNDOS = 120;
+    // Debe coincidir con RECLAMO_TTL_MS de detalle-incidencia-gestion.js, que pinta el mismo estado en el cliente.
+    public const RECLAMO_TTL_SEGUNDOS = 300;
 
     // Tope de fotos por tipo de evidencia (REPORTE/RESOLUCION); debe coincidir con v_limite del trigger fn_limite_evidencias.
     public const LIMITE_EVIDENCIAS_POR_TIPO = 3;

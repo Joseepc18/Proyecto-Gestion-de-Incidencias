@@ -1,8 +1,8 @@
 // detalle-incidencia-edicion.js — Edición del ciudadano dueño, llamado desde el núcleo (detalle-incidencia.js)
 
-/* exported edicionAlCargarDetalle */
+/* exported edicionAlCargarDetalle, edicionAlActualizarEnVivo */
 
-/* global apiFetch, tienePermiso, mostrarToast, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto, pintarFotos, fijarOpcionesFotosReporte */
+/* global apiFetch, tienePermiso, mostrarToast, confirmar, abrirModal, motivoConOtroHtml, cablearMotivoConOtro, leerMotivoSeleccionado, crearGaleriaFotos, abrirSelectorFuenteFoto, crearCatalogosIncidencia, incActual, usuarioActual, idActual, activarMapaPicker, pintarMapaLectura, provinciaCiudadTexto, pintarFotos, fijarOpcionesFotosReporte */
 
 // Catálogos + cascadas (helper compartido con registrar-incidencia); se cargan una sola vez.
 const catalogos = crearCatalogosIncidencia({
@@ -343,23 +343,53 @@ const MOTIVOS_REAPERTURA = [
   "No era la solución correcta",
 ];
 
+// Solo se cablea al ciudadano dueño con la incidencia RESUELTA; el hook de tiempo real lo consulta.
+let reaperturaCableada = false;
+
 // El dueño pide reabrir su incidencia resuelta: NO cambia el estado, solo lo notifica al admin.
 function prepararSolicitudReapertura() {
-  const btn = document.getElementById("btnSolicitarReapertura");
-  btn.classList.remove("d-none");
-  btn.addEventListener("click", solicitarReapertura);
-  mostrarAvisoPlazoReapertura();
+  reaperturaCableada = true;
+  document.getElementById("btnSolicitarReapertura").addEventListener("click", solicitarReapertura);
+  document.getElementById("btnCancelarReapertura").addEventListener("click", cancelarReapertura);
+  pintarBotonesReapertura();
+}
+
+// Hook del núcleo: llegó un cambio en vivo. Si el admin contestó la solicitud, el botón de retirarla debe irse solo.
+function edicionAlActualizarEnVivo() {
+  if (!reaperturaCableada) return;
+
+  // Reabierta o archivada: ya no hay nada que pedir ni que retirar.
+  if (incActual.estado_incidencia !== "RESUELTO") {
+    document.getElementById("btnSolicitarReapertura").classList.add("d-none");
+    document.getElementById("btnCancelarReapertura").classList.add("d-none");
+    document.getElementById("avisoPlazoReapertura").classList.add("d-none");
+    return;
+  }
+
+  pintarBotonesReapertura();
+}
+
+// Los dos botones se excluyen: con la solicitud viva solo se puede retirarla, y sin ella solo pedirla.
+// Retirar es la salida cuando nadie contesta: mientras la bandera esté encendida el archivado automático la salta.
+function pintarBotonesReapertura() {
+  const pendiente = !!incActual.reapertura_pendiente;
+  document.getElementById("btnSolicitarReapertura").classList.toggle("d-none", pendiente);
+  document.getElementById("btnCancelarReapertura").classList.toggle("d-none", !pendiente);
+  pintarAvisoPlazoReapertura(pendiente);
 }
 
 // Aviso del plazo para pedir reapertura antes de que el sistema archive la incidencia.
 // Las horas vienen del backend (Incidencia::HORAS_PARA_ARCHIVAR) para no desincronizar con el job.
-function mostrarAvisoPlazoReapertura() {
+// Con una solicitud pendiente el plazo no corre (el job salta esas incidencias), así que el aviso se esconde.
+function pintarAvisoPlazoReapertura(pendiente) {
   const horas = incActual.horas_para_archivar;
-  if (!horas) return;
-
   const aviso = document.getElementById("avisoPlazoReapertura");
-  const texto = document.getElementById("avisoPlazoReaperturaTexto");
-  texto.textContent =
+  if (!horas || pendiente) {
+    aviso.classList.add("d-none");
+    return;
+  }
+
+  document.getElementById("avisoPlazoReaperturaTexto").textContent =
     "Tienes " +
     horas +
     " horas desde que se resolvió para solicitar la reapertura; luego se archiva automáticamente.";
@@ -387,9 +417,34 @@ async function solicitarReapertura() {
   if (!confirmado) return;
 
   mostrarToast("Solicitud enviada. Un administrador la revisará.", "success");
-  document.getElementById("btnSolicitarReapertura").classList.add("d-none");
-  // Ya hay solicitud pendiente: el job no la archiva, así que el aviso del plazo deja de aplicar.
-  document.getElementById("avisoPlazoReapertura").classList.add("d-none");
+  incActual.reapertura_pendiente = true;
+  pintarBotonesReapertura();
+}
+
+// Retira una solicitud que sigue sin contestar; después puede volver a pedirla.
+async function cancelarReapertura() {
+  const ok = await confirmar({
+    titulo: "Retirar la solicitud",
+    mensaje:
+      "Dejará de estar pendiente y la incidencia se archivará como cualquier otra resuelta. Puedes volver a pedirla mientras no se archive.",
+    textoConfirmar: "Retirar",
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById("btnCancelarReapertura");
+  btn.disabled = true;
+  try {
+    const actualizada = await apiFetch("/incidencias/" + idActual + "/solicitar-reapertura", {
+      method: "DELETE",
+    });
+    incActual.reapertura_pendiente = actualizada.reapertura_pendiente;
+    pintarBotonesReapertura();
+    mostrarToast("Solicitud retirada", "success");
+  } catch (error) {
+    mostrarToast(error.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // Eliminar la incidencia completa.

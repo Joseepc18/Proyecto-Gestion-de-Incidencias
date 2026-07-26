@@ -195,7 +195,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_admin_atiende\.$#'
 			identifier: property.notFound
-			count: 3
+			count: 4
 			path: app/Http/Controllers/Api/IncidenciaController.php
 
 		-
@@ -207,7 +207,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$nombre_incidencia\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 5
 			path: app/Http/Controllers/Api/IncidenciaController.php
 
 		-
@@ -801,11 +801,11 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$id_usuario\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 7
 			path: app/Policies/IncidenciaPolicy.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Incidencia\:\:\$reapertura_solicitada\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Policies/IncidenciaPolicy.php

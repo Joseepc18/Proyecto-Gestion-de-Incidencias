@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ActualizarIncidenciaRequest;
 use App\Http\Requests\ArchivarIncidenciaRequest;
 use App\Http\Requests\CambiarEstadoRequest;
+use App\Http\Requests\CancelarReaperturaRequest;
 use App\Http\Requests\CrearIncidenciaRequest;
 use App\Http\Requests\EliminarIncidenciaRequest;
 use App\Http\Requests\LiberarReclamoRequest;
@@ -382,6 +383,22 @@ class IncidenciaController extends Controller
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
     }
 
+    // El reportador retira su propia solicitud: apaga la bandera y la incidencia vuelve al flujo normal de archivado.
+    // Es la salida del limbo cuando nadie la contesta; una vez retirada puede volver a pedirla.
+    public function cancelarReapertura(CancelarReaperturaRequest $request, Incidencia $incidencia)
+    {
+        $incidencia->update(['reapertura_solicitada' => false]);
+        broadcast(new IncidenciaActualizada($incidencia));
+
+        // La solicitud ya no existe: se marcan leídas para que ningún admin persiga un aviso retirado.
+        DatabaseNotification::whereNull('read_at')
+            ->where('data->tipo', 'SOLICITUD_REAPERTURA')
+            ->where('data->id_incidencia', (string) $incidencia->id_incidencia)
+            ->update(['read_at' => now()]);
+
+        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
+    }
+
     // El admin decide no reabrir: apaga la bandera (sin tocar el estado) y avisa al reportador por qué se queda como estaba.
     public function rechazarReapertura(RechazarReaperturaRequest $request, Incidencia $incidencia)
     {
@@ -419,6 +436,9 @@ class IncidenciaController extends Controller
             return response()->json(['message' => 'Esta incidencia ya fue reclamada por otro administrador.'], 422);
         }
 
+        // Se guarda antes del UPDATE: si el reclamo se le arrebata a alguien, hay que avisarle y después ya no se sabe quién era.
+        $duenoAnterior = $incidencia->id_admin_atiende;
+
         // Toma la fila si está libre o si el reclamo anterior venció (sin latido reciente).
         $limite = now()->subSeconds(Incidencia::RECLAMO_TTL_SEGUNDOS);
         $reclamada = Incidencia::where('id_incidencia', $incidencia->id_incidencia)
@@ -435,6 +455,20 @@ class IncidenciaController extends Controller
 
         $incidencia = $incidencia->fresh()->load(Incidencia::RELACIONES_DETALLE);
         broadcast(new ReclamoCambiado($incidencia));
+
+        // Solo si se le quitó a OTRA persona: sin este aviso el dueño anterior se enteraba al intentar gestionar y chocar con el 422.
+        // Reclamar una incidencia libre no notifica a nadie.
+        if ($duenoAnterior !== null && $duenoAnterior !== $userId) {
+            $this->notificarSinRomper(
+                fn () => User::find($duenoAnterior)?->notify(new IncidenciaNotification(
+                    'RECLAMO_TOMADO',
+                    'Tu atención de "'.$incidencia->nombre_incidencia.'" caducó por inactividad y la tomó '.$request->user()->name.'.',
+                    $incidencia->id_incidencia,
+                )),
+                $request->user(),
+                'IncidenciaController@reclamarIncidencia (notificación)'
+            );
+        }
 
         // Reclamar puede ser la última pieza del hito del correo de detalle.
         $this->enviarCorreoDetalleSiListo($incidencia);

@@ -378,6 +378,38 @@ class IncidenciaTest extends TestCase
         ]);
     }
 
+    // Al dueño anterior se le avisa: antes se enteraba de que le habían quitado la incidencia al chocar con el 422 de gestionarla.
+    public function test_tomar_un_reclamo_vencido_avisa_al_dueno_anterior(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin1 = $this->crearUsuario('admin');
+        $admin2 = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin1);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $this->travel(Incidencia::RECLAMO_TTL_SEGUNDOS + 10)->seconds();
+
+        Sanctum::actingAs($admin2);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $this->assertNotificado($admin1, 'RECLAMO_TOMADO');
+        // Quien lo toma no se avisa a sí mismo.
+        $this->assertNoNotificado($admin2, 'RECLAMO_TOMADO');
+    }
+
+    // Reclamar una incidencia libre no le quita nada a nadie: no debe generar aviso.
+    public function test_reclamar_una_incidencia_libre_no_notifica(): void
+    {
+        $incidencia = $this->crearIncidencia($this->crearUsuario('normal'));
+        $admin = $this->crearUsuario('admin');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/reclamar")->assertOk();
+
+        $this->assertNoNotificado($admin, 'RECLAMO_TOMADO');
+    }
+
     // Solo el admin dueño (id_admin_atiende) puede archivar, y solo si ya está RESUELTO.
     public function test_solo_el_admin_que_reclamo_puede_archivar_una_resuelta(): void
     {
@@ -446,6 +478,92 @@ class IncidenciaTest extends TestCase
         $this->patchJson("/api/incidencias/{$incidencia->id_incidencia}/archivar")->assertOk();
 
         $this->assertSame('CERRADO', $incidencia->fresh()->estado_incidencia->value);
+    }
+
+    // Salida del limbo: si nadie contesta la solicitud, el reportador la retira y la incidencia vuelve al flujo normal de archivado.
+    public function test_el_reportador_retira_su_solicitud_de_reapertura(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+
+        Sanctum::actingAs($autor);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El problema sigue exactamente igual que antes.',
+        ])->assertOk();
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")
+            ->assertOk()
+            ->assertJsonPath('reapertura_pendiente', false);
+
+        $this->assertFalse($incidencia->fresh()->reapertura_solicitada);
+
+        // Retirada la solicitud, el auto-archivado deja de saltarse la incidencia.
+        $incidencia->fresh()->update(['fecha_resolucion' => now()->subHours(30)]);
+        Artisan::call('incidencias:archivar-resueltas');
+        $this->assertSame('CERRADO', $incidencia->fresh()->estado_incidencia->value);
+    }
+
+    // Retirarla libera el cupo: el 422 de "ya tienes una pendiente" solo aplica mientras siga viva.
+    public function test_tras_retirarla_puede_volver_a_solicitar_la_reapertura(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+        $motivo = ['motivo' => 'El problema sigue exactamente igual que antes.'];
+
+        Sanctum::actingAs($autor);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", $motivo)->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", $motivo)->assertStatus(422);
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")->assertOk();
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", $motivo)->assertOk();
+
+        $this->assertTrue($incidencia->fresh()->reapertura_solicitada);
+    }
+
+    // La solicitud es del reportador: ni otro ciudadano ni el admin la retiran por él (el admin responde con Reabrir / No reabrir).
+    public function test_solo_el_reportador_retira_la_solicitud_de_reapertura(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+        $incidencia->update(['reapertura_solicitada' => true]);
+
+        Sanctum::actingAs($this->crearUsuario('normal'));
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")->assertForbidden();
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")->assertForbidden();
+
+        $this->assertTrue($incidencia->fresh()->reapertura_solicitada);
+    }
+
+    // Sin solicitud viva no hay nada que retirar: lo niega la policy, no el controller.
+    public function test_retirar_sin_solicitud_pendiente_se_deniega(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+
+        Sanctum::actingAs($autor);
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")->assertForbidden();
+    }
+
+    // La solicitud retirada ya no existe: su aviso no puede quedar sin leer en la bandeja de los gestores.
+    public function test_retirar_la_solicitud_marca_leido_el_aviso_de_los_admins(): void
+    {
+        $autor = $this->crearUsuario('normal');
+        $admin = $this->crearUsuario('admin');
+        $incidencia = $this->crearIncidencia($autor, ['estado_incidencia' => 'RESUELTO']);
+
+        Sanctum::actingAs($autor);
+        $this->postJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura", [
+            'motivo' => 'El problema sigue exactamente igual que antes.',
+        ])->assertOk();
+
+        $this->assertNotificado($admin, 'SOLICITUD_REAPERTURA');
+        $this->assertNull($this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->first()->read_at);
+
+        $this->deleteJson("/api/incidencias/{$incidencia->id_incidencia}/solicitar-reapertura")->assertOk();
+
+        $this->assertNotNull($this->notificacionesDe($admin, 'SOLICITUD_REAPERTURA')->first()->read_at);
     }
 
     // Liberar ya no se autoriza con el gate de reclamar (que niega en archivadas): si no, una fila mal cerrada queda trabada para siempre.
