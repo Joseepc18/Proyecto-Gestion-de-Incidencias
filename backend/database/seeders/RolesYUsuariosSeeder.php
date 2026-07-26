@@ -26,12 +26,14 @@ class RolesYUsuariosSeeder extends Seeder
         }
 
         // Cuenta super_admin: gestiona usuarios, catálogos y permisos (el superset).
+        // Nace verificada como el resto de vías de alta: sin email_verified_at el middleware 'verificado' le cerraría comentarios y evidencias.
         User::firstOrCreate(
             ['email' => 'jose2905.jepc@gmail.com'],
             [
                 'name' => 'Super Administrador',
                 'password' => Hash::make($superPassword ?: 'password123'),
                 'id_rol' => $superAdmin->id_rol,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -43,6 +45,7 @@ class RolesYUsuariosSeeder extends Seeder
                 'name' => 'Administrador',
                 'password' => Hash::make($adminPassword ?: 'password123'),
                 'id_rol' => $admin->id_rol,
+                'email_verified_at' => now(),
             ]
         );
     }

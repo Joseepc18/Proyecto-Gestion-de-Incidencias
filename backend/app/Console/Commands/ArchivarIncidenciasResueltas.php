@@ -23,7 +23,12 @@ class ArchivarIncidenciasResueltas extends Command
 
         foreach ($incidencias as $incidencia) {
             // El update dispara el IncidenciaObserver y el event dispara InvalidarCacheDashboard: la caché ya se limpia sola.
-            $incidencia->update(['estado_incidencia' => EstadoIncidencia::Cerrado->value]);
+            // Suelta el candado junto con el archivado, igual que /archivar: si no, el reclamo del admin quedaría puesto para siempre.
+            $incidencia->update([
+                'estado_incidencia' => EstadoIncidencia::Cerrado->value,
+                'id_admin_atiende' => null,
+                'reclamo_visto_en' => null,
+            ]);
             // actor null = lo archivó el sistema: el listener avisa a reportador y técnicos sin excluir a nadie.
             event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, null));
         }

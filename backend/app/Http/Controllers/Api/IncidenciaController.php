@@ -467,9 +467,11 @@ class IncidenciaController extends Controller
     }
 
     // Latido del candado: mientras el admin tiene la app abierta refresca el lease de sus reclamos (silencioso, solo evita que venzan).
+    // Solo las activas: en las archivadas el candado ya no existe, y sin el filtro el latido reescribía filas muertas cada 40s para siempre.
     public function heartbeatReclamo(Request $request)
     {
-        Incidencia::where('id_admin_atiende', $request->user()->id)
+        Incidencia::activas()
+            ->where('id_admin_atiende', $request->user()->id)
             ->update(['reclamo_visto_en' => now()]);
 
         return response()->noContent();
@@ -484,13 +486,22 @@ class IncidenciaController extends Controller
 
         DB::transaction(function () use ($incidencia, $request) {
             DB::statement("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
-            $incidencia->update(['estado_incidencia' => EstadoIncidencia::Cerrado->value]);
+            // El candado se suelta en el mismo update que archiva: una incidencia cerrada ya no se gestiona, así que no debe quedar a cargo de nadie.
+            $incidencia->update([
+                'estado_incidencia' => EstadoIncidencia::Cerrado->value,
+                'id_admin_atiende' => null,
+                'reclamo_visto_en' => null,
+            ]);
         });
+
+        $incidencia->load(Incidencia::RELACIONES_DETALLE);
 
         // Notifica el archivado (RESUELTO -> CERRADO) e invalida la caché vía listeners.
         event(new IncidenciaCambioEstado($incidencia, EstadoIncidencia::Resuelto->value, EstadoIncidencia::Cerrado->value, $request->user()->id));
         broadcast(new IncidenciaActualizada($incidencia));
+        // El archivado también soltó el candado: sin este evento, los otros admins seguirían viendo la incidencia a cargo de alguien.
+        broadcast(new ReclamoCambiado($incidencia));
 
-        return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
+        return new IncidenciaResource($incidencia);
     }
 }

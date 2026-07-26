@@ -432,8 +432,8 @@ function prepararAtencionAdmin(id) {
       const actualizada = await apiFetch("/incidencias/" + id + "/archivar", { method: "PATCH" });
       incActual.estado_incidencia = actualizada.estado_incidencia;
       pintarBadgeEstado(incActual.estado_incidencia, true);
-      marcarEstadoActivo();
-      pintarAtencionAdmin();
+      // Archivar también suelta el candado en el backend: aplicarReclamo vuelca ese cambio y repinta la gestión.
+      aplicarReclamo(actualizada);
       cargarHistorial(id);
       mostrarToast("Incidencia archivada", "success");
     } catch (error) {
@@ -464,6 +464,21 @@ function pintarAtencionAdmin() {
   const btnArchivar = document.getElementById("btnArchivarIncidencia");
   const admin = incActual.admin_atiende;
 
+  // Archivada: el candado ya no aplica, así que no se reclama ni se archiva de nuevo.
+  // Solo queda liberar si la fila arrastra un reclamo viejo (antes de este arreglo, archivar no lo soltaba).
+  if (incActual.estado_incidencia === "CERRADO") {
+    info.textContent = admin
+      ? "Archivada, pero sigue figurando a cargo de " +
+        admin.name +
+        ". Libérala para dejarla limpia."
+      : "Incidencia archivada: solo lectura.";
+    btnReclamar.classList.add("d-none");
+    btnArchivar.classList.add("d-none");
+    btnForzar.classList.toggle("d-none", !admin);
+    if (admin) etiquetarBotonLiberar(btnForzar, " Liberar atención");
+    return;
+  }
+
   if (!admin) {
     info.textContent = "Sin reclamar. Reclámala para poder gestionarla.";
     btnReclamar.classList.remove("d-none");
@@ -482,14 +497,19 @@ function pintarAtencionAdmin() {
   // Otro admin puede tomar el candado directamente cuando el lease del dueño venció.
   btnReclamar.classList.toggle("d-none", !(vencido && !soyYo));
   // El dueño libera el suyo cuando quiera; super_admin fuerza un lease activo de otro.
-  btnForzar.textContent = "";
-  const iconoForzar = document.createElement("i");
-  iconoForzar.className = "bi bi-unlock me-1";
-  btnForzar.append(iconoForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
+  etiquetarBotonLiberar(btnForzar, soyYo ? " Liberar mi atención" : " Forzar liberar");
   // Solo el dueño libera su propio reclamo; nadie más puede forzar uno activo (super_admin es view-only).
   btnForzar.classList.toggle("d-none", !soyYo);
   // Archivar solo el dueño y solo si está RESUELTO.
   btnArchivar.classList.toggle("d-none", !(soyYo && incActual.estado_incidencia === "RESUELTO"));
+}
+
+// Rehace el contenido del botón de liberar (icono + texto), que cambia según quién sea el dueño.
+function etiquetarBotonLiberar(btn, texto) {
+  btn.textContent = "";
+  const icono = document.createElement("i");
+  icono.className = "bi bi-unlock me-1";
+  btn.append(icono, texto);
 }
 
 // Hook del núcleo: llegó un cambio de estado/prioridad en vivo. Refleja botones y visibilidad del admin.

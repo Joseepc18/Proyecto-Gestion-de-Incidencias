@@ -169,6 +169,16 @@ class IncidenciaPolicy
             : Response::allow();
     }
 
+    // Liberar: la operación inversa de reclamar, y por eso NO comparte su regla.
+    // Sin comprobar el estado a propósito: el candado se suelta siempre, también en archivadas, o una incidencia mal cerrada queda trabada sin salida.
+    // Quién puede soltarlo (dueño, super_admin o lease vencido) lo resuelve el controller con sus 422.
+    public function liberar(User $user, Incidencia $incidencia): Response
+    {
+        return $user->tienePermiso('incidencias.gestionar')
+            ? Response::allow()
+            : Response::deny('No autorizado');
+    }
+
     // Archivar/cerrar: solo el admin que reclamó esta incidencia (el controller valida que esté RESUELTO).
     public function archivar(User $user, Incidencia $incidencia): Response
     {
