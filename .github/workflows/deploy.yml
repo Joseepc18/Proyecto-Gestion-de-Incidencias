@@ -39,3 +39,19 @@ jobs:
       - name: Reiniciar horizon, reverb y scheduler
         working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart horizon reverb scheduler
+
+      # Reintenta porque PHP-FPM tarda tras el reinicio, y exige "db":true porque el endpoint responde "ok" aunque PostgreSQL esté caído.
+      - name: Comprobar que la aplicación responde
+        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
+        run: |
+          for intento in $(seq 1 10); do
+            if curl -fsS --max-time 5 http://localhost/api/health | grep -q '"db":true'; then
+              echo "Salud correcta en el intento $intento."
+              exit 0
+            fi
+            echo "Intento $intento: todavía sin respuesta sana, reintento en 5s."
+            sleep 5
+          done
+          echo "La aplicación no respondió sana tras 10 intentos. Últimos registros:"
+          docker compose logs --tail 50 backend frontend
+          exit 1
