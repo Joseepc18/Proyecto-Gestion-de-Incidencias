@@ -11,6 +11,7 @@ use App\Http\Resources\UserResource;
 use App\Models\BitacoraError;
 use App\Models\Rol;
 use App\Models\User;
+use App\Notifications\ReactivacionResueltaNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
@@ -56,7 +57,17 @@ class UserController extends Controller
         $usuario->restore();
 
         // Restaurar ES la aprobación: si había una solicitud pendiente queda cerrada con quién la resolvió.
-        $usuario->solicitudReactivacionPendiente()->first()?->resolver(EstadoSolicitudReactivacion::Aprobada, $request->user());
+        $solicitud = $usuario->solicitudReactivacionPendiente()->first();
+        $solicitud?->resolver(EstadoSolicitudReactivacion::Aprobada, $request->user());
+
+        // Solo se avisa si el ciudadano lo había pedido; una restauración manual no la disparó él.
+        if ($solicitud) {
+            $this->notificarSinRomper(
+                fn () => $usuario->notify(new ReactivacionResueltaNotification(true)),
+                $request->user(),
+                'UserController@restaurar'
+            );
+        }
 
         return response()->json([
             'message' => 'Usuario restaurado',
@@ -75,6 +86,12 @@ class UserController extends Controller
         }
 
         $solicitud->resolver(EstadoSolicitudReactivacion::Rechazada, $request->user());
+
+        $this->notificarSinRomper(
+            fn () => $usuario->notify(new ReactivacionResueltaNotification(false)),
+            $request->user(),
+            'UserController@rechazarReactivacion'
+        );
 
         return response()->json(['message' => 'Solicitud de reactivación rechazada']);
     }
