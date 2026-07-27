@@ -9,7 +9,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 // Notificación única y reutilizable: multicanal (BD, broadcast Reverb y, si $correo es true, email Markdown).
-// ShouldQueue: el envío completo se difiere a la cola para no bloquear la respuesta HTTP.
+// ShouldQueue: broadcast y correo se difieren a la cola para no bloquear la respuesta HTTP; la campana no (ver viaConnections).
 class IncidenciaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -32,6 +32,14 @@ class IncidenciaNotification extends Notification implements ShouldQueue
         }
 
         return $canales;
+    }
+
+    // Mapea canal -> conexión de cola (ojo al choque de nombres: 'database' aquí es el CANAL, 'sync' la conexión).
+    // La campana se escribe dentro de la petición: si va en cola y Horizon está caído, no aparece nada ni queda rastro.
+    // Broadcast y correo siguen diferidos porque son los lentos (handshake con Reverb, SMTP) y sí pueden esperar.
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
     }
 
     // Lo que se guarda en la columna data (json) de la tabla notifications.
