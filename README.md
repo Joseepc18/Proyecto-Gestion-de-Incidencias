@@ -30,7 +30,7 @@ Proyecto integrador de la carrera de Tecnologías de la Información (UPSE).
 
 La aplicación define **4 roles de cuenta** (fijos por usuario, tabla `roles`) y, aparte, **2 tipos de asignación** del técnico por incidencia (no son un 5º rol: son la relación de ESE técnico con ESA incidencia puntual).
 
-- **Ciudadano (`normal`)** — se registra por sí mismo, reporta incidencias marcando la ubicación en el mapa y adjuntando fotos (máx. 3), y hace seguimiento y chatea en las incidencias que creó.
+- **Ciudadano (`normal`)** — se registra por sí mismo, reporta incidencias marcando la ubicación en el mapa y adjuntando fotos (máx. 3), hace seguimiento y chatea en las incidencias que creó, y puede editar o enviar a la papelera su propio reporte mientras siga en estado *pendiente* (solo un administrador la restaura después).
 - **Técnico (`tecnico`)** — atiende las incidencias que se le asignan. Según el tipo de asignación en esa incidencia: el **responsable** sube la evidencia de resolución (máx. 3 fotos) y es el único que avanza el estado de *en proceso* a *resuelto*; el de **apoyo** solo colabora (ver, chatear), sin subir evidencia ni cerrar.
 - **Administrador (`admin`)** — gestiona **todas las incidencias** (reclamar, asignar técnico, cambiar prioridad/estado, editar, enviar a la papelera) y consulta el tablero de indicadores. Debe **reclamar** una incidencia antes de gestionarla (candado de atención). No administra usuarios, catálogos ni permisos.
 - **Super administrador (`super_admin`)** — gobierno del sistema: administra usuarios, roles, permisos y catálogos, con **visibilidad total** sobre incidencias (dashboard, historial, detalle). Es *view-only* en incidencias: no reclama, asigna, cambia estado, edita ni escribe en el chat.
@@ -39,7 +39,7 @@ La aplicación define **4 roles de cuenta** (fijos por usuario, tabla `roles`) y
 
 ## Stack tecnológico
 
-- **Backend:** Laravel 13.11 · PHP 8.3 — API REST *stateless* con autenticación por token (Laravel Sanctum). Fortify para el 2FA y Socialite para el login con Google.
+- **Backend:** Laravel 13.19 · PHP 8.3 — API REST *stateless* con autenticación por token (Laravel Sanctum). Fortify para el 2FA y Socialite para el login con Google.
 - **Frontend:** HTML + Bootstrap 5 + JavaScript puro (`fetch`, sin framework), sobre la plantilla AdminHMD. Empaquetado con esbuild.
 - **Base de datos:** PostgreSQL 16.
 - **Tiempo real:** Laravel Reverb (WebSockets) para el chat y los avisos de cada incidencia.
@@ -53,7 +53,7 @@ La aplicación define **4 roles de cuenta** (fijos por usuario, tabla `roles`) y
 - **API stateless por token:** `/api/*` siempre responde JSON; la autenticación es Bearer (Sanctum), sin sesiones de login. Nginx unifica el origen: enruta `/api/` al backend y sirve el resto como estático desde `frontend/`.
 - **Autorización y validación separadas de los controladores:** cada endpoint que muta datos pasa por un **FormRequest** cuyo `authorize()` invoca una **Policy** antes de validar.
 - **Pipeline de dominio por eventos:** los hechos del dominio disparan **Events** que atienden **Listeners** y **Notifications** multicanal (base de datos + broadcast por Reverb + correo opcional en cola).
-- **Candado de atención (mutex):** un administrador debe *reclamar* una incidencia antes de gestionarla; funciona como un *lease* con heartbeat (TTL 120 s), de modo que si el dueño deja de latir el reclamo caduca y otro admin lo toma.
+- **Candado de atención (mutex):** un administrador debe *reclamar* una incidencia antes de gestionarla; funciona como un *lease* con heartbeat (TTL 300 s), de modo que si el dueño deja de latir el reclamo caduca y otro admin lo toma.
 
 ## Estructura del repositorio
 

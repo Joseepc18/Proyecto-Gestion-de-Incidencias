@@ -1,4 +1,4 @@
-name: CI - Backend (Pint + Tests)
+name: CI - Backend (Pint + PHPStan + Tests)
 
 on:
   push:
@@ -45,6 +45,10 @@ jobs:
       - name: Verificar formato (Pint)
         working-directory: backend
         run: ./vendor/bin/pint --test
+
+      - name: Análisis estático (PHPStan)
+        working-directory: backend
+        run: ./vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 
       - name: Copiar .env de pruebas
         working-directory: backend

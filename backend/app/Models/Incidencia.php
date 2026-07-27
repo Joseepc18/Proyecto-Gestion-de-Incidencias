@@ -6,6 +6,7 @@ use App\Enums\EstadoIncidencia;
 use App\Enums\PrioridadIncidencia;
 use App\Enums\RolAsignacion;
 use App\Exceptions\AlmacenamientoException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
@@ -13,6 +14,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property-read Collection<int, Evidencia> $evidencias
+ */
 class Incidencia extends Model
 {
     use HasFactory, Prunable, SoftDeletes;

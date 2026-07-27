@@ -11,6 +11,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -48,6 +49,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Gate suelto porque no hay un modelo de por medio (métricas del propio técnico, no de un recurso).
         Gate::define('ver-metricas-tecnico', fn (User $user) => $user->esTecnico());
+
+        // Red de seguridad: en producción TRUSTED_PROXIES es obligatoria y su ausencia degrada en silencio
+        // (URLs firmadas en http y todos los visitantes en el mismo cubo del throttle). Se avisa en el log.
+        if ($this->app->environment('production') && empty(config('trustedproxy.proxies'))) {
+            Log::warning('TRUSTED_PROXIES no está definida en producción: las URLs firmadas y el límite de intentos por IP pueden degradarse en silencio.');
+        }
 
         $this->registrarLimitesDeIntentos();
     }

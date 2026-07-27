@@ -5,10 +5,12 @@
 // tokens round-robin entre los usuarios virtuales. Así la carga se distribuye entre
 // muchos cupos de rate limit (120/min c/u) y el techo pasa a ser el hardware, no el throttle.
 //
-// ⚠️ /api/login tiene throttle:5,1,login = 5 logins/min POR IP. Loguear N>5 usuarios de
-// golpe desde una sola IP hace que los sobrantes reciban 429 y se queden sin token. Por eso
-// los logins se ESCALONAN en tandas de 5 con una pausa de 61 s entre tandas. Con N=15 el
+// ⚠️ /api/login usa el limitador con nombre throttle:login = 5 logins/min POR IP. Loguear N>5
+// usuarios de golpe desde una sola IP hace que los sobrantes reciban 429 y se queden sin token.
+// Por eso los logins se ESCALONAN en tandas de 5 con una pausa de 61 s entre tandas. Con N=15 el
 // arranque tarda ~2 min antes de empezar a medir; es el precio de venir de una sola IP.
+// El escenario con pool de usuarios solo se corre en LOCAL: carga:usuarios-prueba se niega a
+// crear cuentas en producción.
 
 let tokensPromise = null;
 let siguiente = 0;

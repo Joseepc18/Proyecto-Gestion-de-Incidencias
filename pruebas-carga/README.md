@@ -37,9 +37,11 @@ docker compose exec backend php artisan carga:usuarios-prueba crear --cantidad=1
 docker compose exec backend php artisan carga:usuarios-prueba borrar
 ```
 
-> ⚠️ **`/api/login` está limitado a 5/min POR IP** (`throttle:5,1,login`). Levantar el pool
-> desde una sola IP obliga a **escalonar** los logins en tandas de 5 (el processor ya lo hace,
-> con una pausa de 61 s entre tandas: con N=15 el arranque tarda ~2 min).
+> ⚠️ **`/api/login` está limitado a 5/min POR IP** (limitador con nombre `throttle:login`).
+> Levantar el pool desde una sola IP obliga a **escalonar** los logins en tandas de 5 (el
+> processor ya lo hace, con una pausa de 61 s entre tandas: con N=15 el arranque tarda ~2 min).
+> Este escenario con pool de usuarios **solo se corre en local**: `carga:usuarios-prueba` se
+> niega a crear cuentas en producción.
 
 ### Cómo se traduce a usuarios
 

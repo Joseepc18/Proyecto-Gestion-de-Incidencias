@@ -37,7 +37,7 @@ class ConflictoInteresTest extends TestCase
         $this->assertDatabaseCount('incidencias', 0);
     }
 
-    // H-07: el Administrador del Sistema es view-only, así que ya no puede hacer nacer una incidencia en EN_PROCESO.
+    // El Administrador del Sistema es view-only, así que ya no puede hacer nacer una incidencia en EN_PROCESO.
     public function test_el_super_admin_con_permiso_de_reportar_no_fija_estado_ni_prioridad(): void
     {
         $this->darPermisoAlRol('super_admin', 'incidencias.crear');
@@ -109,7 +109,7 @@ class ConflictoInteresTest extends TestCase
         ]);
     }
 
-    // H-44: responder en el chat del propio reporte es la vía del autor, no gestión; antes el conflicto
+    // Responder en el chat del propio reporte es la vía del autor, no gestión; antes el conflicto
     // de interés dejaba al Supervisor autor sin poder contestarle al Supervisor que sí la atiende.
     public function test_el_supervisor_autor_si_comenta_en_el_chat_de_su_reporte(): void
     {
@@ -202,7 +202,7 @@ class ConflictoInteresTest extends TestCase
         ]);
     }
 
-    // H-40: la llave maestra del Administrador del Sistema suelta un candado ajeno aunque siga activo.
+    // La llave maestra del Administrador del Sistema suelta un candado ajeno aunque siga activo.
     public function test_el_super_admin_libera_el_candado_de_otro_administrador(): void
     {
         $supervisor = $this->crearUsuario('admin');
