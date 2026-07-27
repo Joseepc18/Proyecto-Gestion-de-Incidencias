@@ -145,7 +145,7 @@ class AuthTest extends TestCase
             ->assertStatus(429);
     }
 
-    // H-45: el limitador por cuenta no puede reventar antes de contar el intento; un correo que no
+    // El limitador por cuenta no puede reventar antes de contar el intento; un correo que no
     // es texto tiene que morir en la validación (422), no en un 500 que además esquiva el tope.
     public function test_login_con_el_correo_como_arreglo_responde_422(): void
     {
