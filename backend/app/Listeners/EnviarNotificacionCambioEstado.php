@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Concerns\NotificaSinRomper;
 use App\Enums\EstadoIncidencia;
 use App\Events\IncidenciaCambioEstado;
 use App\Models\Incidencia;
@@ -12,7 +13,18 @@ use App\Notifications\IncidenciaNotification;
 // avisa al reportador y a los técnicos asignados (nunca al actor) según la transición.
 class EnviarNotificacionCambioEstado
 {
+    use NotificaSinRomper;
+
     public function handle(IncidenciaCambioEstado $evento): void
+    {
+        $this->notificarSinRomper(
+            fn () => $this->avisar($evento),
+            $evento->actorId ? User::find($evento->actorId) : null,
+            'EnviarNotificacionCambioEstado@handle'
+        );
+    }
+
+    private function avisar(IncidenciaCambioEstado $evento): void
     {
         $incidencia = $evento->incidencia;
         $nombre = $incidencia->nombre_incidencia;

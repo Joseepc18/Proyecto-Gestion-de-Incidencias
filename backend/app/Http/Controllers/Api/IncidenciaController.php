@@ -192,9 +192,14 @@ class IncidenciaController extends Controller
             $incidencia->delete();
             broadcast(new IncidenciaEliminada($incidencia->id_incidencia));
 
+            // Ya borrada: si la notificación falla, se bitácoriza pero no convierte en 500 un borrado que sí ocurrió.
             if (! $esPropia) {
-                User::find($idReportador)?->notify(
-                    new IncidenciaNotification('INCIDENCIA_ELIMINADA', 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo, $incidencia->id_incidencia)
+                $this->notificarSinRomper(
+                    fn () => User::find($idReportador)?->notify(
+                        new IncidenciaNotification('INCIDENCIA_ELIMINADA', 'Tu incidencia "'.$nombreIncidencia.'" fue eliminada. Motivo: '.$motivo, $incidencia->id_incidencia)
+                    ),
+                    $request->user(),
+                    'IncidenciaController@eliminarIncidencia (notificación)'
                 );
             }
 
@@ -371,10 +376,15 @@ class IncidenciaController extends Controller
         $incidencia->update(['reapertura_solicitada' => true]);
         broadcast(new IncidenciaActualizada($incidencia));
 
+        // La solicitud ya está guardada: si el aviso a los gestores falla, se bitácoriza pero no la deshace.
         $admins = User::conPermiso('incidencias.gestionar')->get();
-        Notification::send(
-            $admins,
-            new IncidenciaNotification('SOLICITUD_REAPERTURA', 'Piden reabrir "'.$incidencia->nombre_incidencia.'". Motivo: '.$motivo, $incidencia->id_incidencia)
+        $this->notificarSinRomper(
+            fn () => Notification::send(
+                $admins,
+                new IncidenciaNotification('SOLICITUD_REAPERTURA', 'Piden reabrir "'.$incidencia->nombre_incidencia.'". Motivo: '.$motivo, $incidencia->id_incidencia)
+            ),
+            $request->user(),
+            'IncidenciaController@solicitarReapertura (notificación)'
         );
 
         return response()->json(['message' => 'Solicitud enviada. Un administrador la revisará.']);
@@ -410,13 +420,18 @@ class IncidenciaController extends Controller
         broadcast(new IncidenciaActualizada($incidencia));
         $this->cerrarAvisosDeReapertura($incidencia);
 
+        // El rechazo ya está guardado: si el aviso al ciudadano falla, se bitácoriza pero no lo revierte.
         if ($reportador = User::find($incidencia->id_usuario)) {
-            $reportador->notify(new IncidenciaNotification(
-                'REAPERTURA_RECHAZADA',
-                'Revisamos tu solicitud de reapertura y la incidencia se mantiene resuelta: '.$incidencia->nombre_incidencia.'. Motivo: '.$motivo,
-                $incidencia->id_incidencia,
-                correo: true,
-            ));
+            $this->notificarSinRomper(
+                fn () => $reportador->notify(new IncidenciaNotification(
+                    'REAPERTURA_RECHAZADA',
+                    'Revisamos tu solicitud de reapertura y la incidencia se mantiene resuelta: '.$incidencia->nombre_incidencia.'. Motivo: '.$motivo,
+                    $incidencia->id_incidencia,
+                    correo: true,
+                )),
+                $request->user(),
+                'IncidenciaController@rechazarReapertura (notificación)'
+            );
         }
 
         return new IncidenciaResource($incidencia->load(Incidencia::RELACIONES_DETALLE));
