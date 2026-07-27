@@ -19,11 +19,12 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
+      # npm ci y no npm install: instala clavado al package-lock.json, el mismo árbol que despliega deploy.yml.
       - name: Instalar dependencias
         working-directory: frontend
-        run: npm install
+        run: npm ci
 
       - name: Ejecutar ESLint
         working-directory: frontend
