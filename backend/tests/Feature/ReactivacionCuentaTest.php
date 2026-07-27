@@ -6,7 +6,9 @@ use App\Enums\EstadoSolicitudReactivacion;
 use App\Models\Rol;
 use App\Models\SolicitudReactivacion;
 use App\Models\User;
+use App\Notifications\ReactivacionResueltaNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -187,6 +189,36 @@ class ReactivacionCuentaTest extends TestCase
         // El índice parcial solo bloquea las PENDIENTES: tras el rechazo puede volver a pedirlo.
         $this->postJson('/api/reactivacion/solicitar', $datos)->assertOk();
         $this->assertSame(2, SolicitudReactivacion::where('id_usuario', $suspendido->id)->count());
+    }
+
+    public function test_aprobar_una_solicitud_avisa_al_ciudadano_por_correo(): void
+    {
+        Notification::fake();
+        $suspendido = $this->crearSuspendido();
+        $this->postJson('/api/reactivacion/solicitar', [
+            'email' => self::CORREO_SUSPENDIDO,
+            'motivo' => 'Creo que la suspensión fue un error',
+        ])->assertOk();
+
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $this->postJson("/api/usuarios/{$suspendido->id}/restaurar")->assertOk();
+
+        Notification::assertSentTo($suspendido, ReactivacionResueltaNotification::class, fn ($n) => $n->aprobada === true);
+    }
+
+    public function test_rechazar_una_solicitud_avisa_al_ciudadano_por_correo(): void
+    {
+        Notification::fake();
+        $suspendido = $this->crearSuspendido();
+        $this->postJson('/api/reactivacion/solicitar', [
+            'email' => self::CORREO_SUSPENDIDO,
+            'motivo' => 'Creo que la suspensión fue un error',
+        ])->assertOk();
+
+        Sanctum::actingAs($this->crearUsuario('super_admin'));
+        $this->postJson("/api/usuarios/{$suspendido->id}/rechazar-reactivacion")->assertOk();
+
+        Notification::assertSentTo($suspendido, ReactivacionResueltaNotification::class, fn ($n) => $n->aprobada === false);
     }
 
     public function test_rechazar_sin_solicitud_pendiente_devuelve_422(): void
