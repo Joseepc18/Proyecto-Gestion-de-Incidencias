@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Concerns\NotificaSinRomper;
 use App\Models\Incidencia;
 use App\Models\Notificacion;
 use App\Models\User;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
 
 class RecordarChatSinLeer extends Command
 {
+    use NotificaSinRomper;
+
     protected $signature = 'incidencias:recordar-chat-sin-leer';
 
     protected $description = 'Avisa por correo (una sola vez) a quien tenga mensajes del chat sin leer hace más de 24h';
@@ -48,15 +51,22 @@ class RecordarChatSinLeer extends Command
                 continue;
             }
 
-            $usuario->notify(new IncidenciaNotification(
-                'RECORDATORIO_CHAT',
-                'Tienes mensajes sin leer en la incidencia: '.$incidencia->nombre_incidencia,
-                $incidencia->id_incidencia,
-                correo: true,
-            ));
+            // Se marca como avisado DENTRO del envío: si este falla no se guarda la marca, así la próxima pasada reintenta.
+            $this->notificarSinRomper(
+                function () use ($usuario, $incidencia, $cacheKey, &$avisados) {
+                    $usuario->notify(new IncidenciaNotification(
+                        'RECORDATORIO_CHAT',
+                        'Tienes mensajes sin leer en la incidencia: '.$incidencia->nombre_incidencia,
+                        $incidencia->id_incidencia,
+                        correo: true,
+                    ));
 
-            Cache::put($cacheKey, true, now()->addDays(self::DIAS_SIN_REPETIR));
-            $avisados++;
+                    Cache::put($cacheKey, true, now()->addDays(self::DIAS_SIN_REPETIR));
+                    $avisados++;
+                },
+                $usuario,
+                'RecordarChatSinLeer@handle (notificación)'
+            );
         }
 
         $this->info($avisados.' recordatorio(s) de chat sin leer enviado(s).');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\NotificaSinRomper;
 use App\Exceptions\AlmacenamientoException;
 use App\Models\BitacoraError;
 use App\Models\Incidencia;
@@ -16,6 +17,7 @@ abstract class Controller
 {
     // Habilita $this->authorize(...) en todos los controllers (usa las Policies).
     use AuthorizesRequests;
+    use NotificaSinRomper;
 
     // Lee per_page del request acotado a [1, 100] para evitar listados sin límite.
     protected function perPage(Request $request, int $porDefecto = 10): int
@@ -39,16 +41,6 @@ abstract class Controller
         BitacoraError::registrar($actor, $tipo, $contexto, $e->getMessage(), $e);
 
         return response()->json(['message' => $mensajes[$tipo] ?? $mensajes['default']], 500);
-    }
-
-    // Ejecuta el envío de notificaciones sin dejar que un fallo rompa la respuesta ya commiteada; solo lo bitacoriza.
-    protected function notificarSinRomper(callable $accion, ?User $actor, string $contexto): void
-    {
-        try {
-            $accion();
-        } catch (\Throwable $e) {
-            BitacoraError::registrar($actor, 'SERVIDOR', $contexto, $e->getMessage());
-        }
     }
 
     // Hito idempotente: se llama tras cada acción de gestión (reclamar, asignar, prioridad, estado). Si la incidencia

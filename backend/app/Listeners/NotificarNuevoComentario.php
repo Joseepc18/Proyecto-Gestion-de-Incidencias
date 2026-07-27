@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Concerns\NotificaSinRomper;
 use App\Enums\RolAsignacion;
 use App\Events\ComentarioCreado;
 use App\Models\Incidencia;
@@ -12,7 +13,18 @@ use App\Notifications\IncidenciaNotification;
 // y al técnico responsable (nunca al autor), consolidando en la notificación de COMENTARIO sin leer.
 class NotificarNuevoComentario
 {
+    use NotificaSinRomper;
+
     public function handle(ComentarioCreado $evento): void
+    {
+        $this->notificarSinRomper(
+            fn () => $this->avisar($evento),
+            User::find($evento->comentario->id_usuario),
+            'NotificarNuevoComentario@handle'
+        );
+    }
+
+    private function avisar(ComentarioCreado $evento): void
     {
         $comentario = $evento->comentario;
         $incidencia = Incidencia::find($comentario->id_incidencia);

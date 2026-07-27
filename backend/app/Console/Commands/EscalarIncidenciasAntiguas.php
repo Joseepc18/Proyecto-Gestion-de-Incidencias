@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Concerns\NotificaSinRomper;
 use App\Enums\PrioridadIncidencia;
 use App\Models\Incidencia;
 use App\Models\User;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Notification;
 
 class EscalarIncidenciasAntiguas extends Command
 {
+    use NotificaSinRomper;
+
     protected $signature = 'incidencias:escalar-antiguas';
 
     protected $description = 'Sube un nivel de prioridad a las incidencias PENDIENTE sin atender hace más de 24h';
@@ -37,12 +40,17 @@ class EscalarIncidenciasAntiguas extends Command
             // El observer invalida la caché del dashboard con el update, igual que cualquier otro cambio.
             $incidencia->update(['prioridad_incidencia' => self::SIGUIENTE_PRIORIDAD[$anterior]]);
 
-            Notification::send($admins, new IncidenciaNotification(
-                'ESCALADO',
-                'Incidencia sin atender hace más de 24h, prioridad subida de '.$anterior.' a '.self::SIGUIENTE_PRIORIDAD[$anterior].': '.$incidencia->nombre_incidencia,
-                $incidencia->id_incidencia,
-                correo: true,
-            ));
+            // Protegido por iteración: la prioridad ya está guardada y un fallo al avisar no debe abortar el lote.
+            $this->notificarSinRomper(
+                fn () => Notification::send($admins, new IncidenciaNotification(
+                    'ESCALADO',
+                    'Incidencia sin atender hace más de 24h, prioridad subida de '.$anterior.' a '.self::SIGUIENTE_PRIORIDAD[$anterior].': '.$incidencia->nombre_incidencia,
+                    $incidencia->id_incidencia,
+                    correo: true,
+                )),
+                null,
+                'EscalarIncidenciasAntiguas@handle (notificación)'
+            );
         }
 
         $this->info($incidencias->count().' incidencia(s) escalada(s).');
