@@ -19,16 +19,17 @@ class RolesYUsuariosSeeder extends Seeder
 
         // En producción las claves de las cuentas privilegiadas son obligatorias: nunca el fallback público de dev.
         // Vía config() y no env() directo: con el config cacheado en prod, env() fuera de config/ devuelve null.
+        $superEmail = config('seed.superadmin_email');
         $superPassword = config('seed.superadmin_password');
         $adminPassword = config('seed.admin_password');
-        if (app()->environment('production') && (empty($superPassword) || empty($adminPassword))) {
-            throw new \RuntimeException('En producción define SEED_SUPERADMIN_PASSWORD y SEED_ADMIN_PASSWORD antes de sembrar.');
+        if (app()->environment('production') && (empty($superEmail) || empty($superPassword) || empty($adminPassword))) {
+            throw new \RuntimeException('En producción define SEED_SUPERADMIN_EMAIL, SEED_SUPERADMIN_PASSWORD y SEED_ADMIN_PASSWORD antes de sembrar.');
         }
 
         // Cuenta super_admin: gestiona usuarios, catálogos y permisos (el superset).
         // Nace verificada como el resto de vías de alta: sin email_verified_at el middleware 'verificado' le cerraría comentarios y evidencias.
         User::firstOrCreate(
-            ['email' => 'jose2905.jepc@gmail.com'],
+            ['email' => $superEmail ?: 'superadmin@sistema.com'],
             [
                 'name' => 'Super Administrador',
                 'password' => Hash::make($superPassword ?: 'password123'),

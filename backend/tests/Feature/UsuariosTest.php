@@ -202,7 +202,7 @@ class UsuariosTest extends TestCase
     // Las cuentas del seeder nacen verificadas: sin email_verified_at el middleware 'verificado' les cerraría comentarios y evidencias.
     public function test_las_cuentas_privilegiadas_del_seeder_nacen_verificadas(): void
     {
-        $this->assertNotNull(User::where('email', 'jose2905.jepc@gmail.com')->value('email_verified_at'));
+        $this->assertNotNull(User::where('email', 'superadmin@sistema.com')->value('email_verified_at'));
         $this->assertNotNull(User::where('email', 'admin@sistema.com')->value('email_verified_at'));
     }
 
