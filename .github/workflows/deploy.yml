@@ -9,9 +9,13 @@ jobs:
   deploy:
     runs-on: self-hosted
 
+    # La ruta del servidor vive en una variable del repositorio, no escrita aquí: este repo es público.
+    defaults:
+      run:
+        working-directory: ${{ vars.RUTA_DESPLIEGUE }}
+
     steps:
       - name: Traer últimos cambios
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: git pull origin main
 
       - name: Configurar Node.js
@@ -21,28 +25,24 @@ jobs:
 
       # SPA estático minificado + hasheado (esbuild → frontend/dist). Nginx lo sirve vía FRONTEND_ROOT.
       - name: Build del SPA (esbuild)
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias/frontend
+        working-directory: ${{ vars.RUTA_DESPLIEGUE }}/frontend
         run: npm ci && npm run build
 
       # El entrypoint del contenedor corre "artisan optimize" en cada arranque (solo si APP_ENV=production),
       # así que este restart ya deja config/rutas/eventos/vistas cacheados con el código recién bajado.
       - name: Reiniciar el backend
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart backend
 
       - name: Reiniciar el frontend (nginx)
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart frontend
 
       # Horizon/Reverb/scheduler cargan el código PHP en memoria al arrancar: sin este reinicio
       # siguen corriendo con la versión anterior hasta que alguien los reinicie a mano.
       - name: Reiniciar horizon, reverb y scheduler
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: docker compose restart horizon reverb scheduler
 
       # Reintenta porque PHP-FPM tarda tras el reinicio, y exige "db":true porque el endpoint responde "ok" aunque PostgreSQL esté caído.
       - name: Comprobar que la aplicación responde
-        working-directory: /home/dayronqv/Proyecto-Gestion-de-Incidencias
         run: |
           for intento in $(seq 1 10); do
             if curl -fsS --max-time 5 http://localhost/api/health | grep -q '"db":true'; then
