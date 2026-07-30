@@ -23,6 +23,7 @@ class DashboardController extends Controller
                 ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS pendientes', [EstadoIncidencia::Pendiente->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS en_proceso', [EstadoIncidencia::EnProceso->value])
                 ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS resueltas', [EstadoIncidencia::Resuelto->value])
+                ->selectRaw('COUNT(*) FILTER (WHERE estado_incidencia = ?) AS cerradas', [EstadoIncidencia::Cerrado->value])
                 ->first();
 
             $promedioGlobal = DB::table('incidencias')

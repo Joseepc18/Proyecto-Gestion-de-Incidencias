@@ -38,6 +38,20 @@ class DashboardTest extends TestCase
             ]);
     }
 
+    // Una CERRADO cuenta en totales.cerradas y ya no en resueltas (antes desaparecía del panel al archivarse).
+    public function test_las_cerradas_se_cuentan_aparte_de_las_resueltas(): void
+    {
+        $reportador = $this->crearUsuario('normal');
+        $this->crearIncidencia($reportador)->update(['estado_incidencia' => 'RESUELTO', 'fecha_resolucion' => now()]);
+        $this->crearIncidencia($reportador)->update(['estado_incidencia' => 'CERRADO', 'fecha_resolucion' => now()]);
+
+        Sanctum::actingAs($this->crearUsuario('admin'));
+        $totales = $this->getJson('/api/dashboard/metricas')->assertOk()->json('totales');
+
+        $this->assertEquals(1, $totales['resueltas']);
+        $this->assertEquals(1, $totales['cerradas']);
+    }
+
     // Blinda la regresión de #24: cacheado como Collection/stdClass no se rehidrataba y rompía el dashboard al volver.
     public function test_metricas_se_cachean_como_arrays_planos(): void
     {

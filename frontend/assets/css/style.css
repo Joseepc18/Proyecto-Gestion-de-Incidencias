@@ -676,6 +676,10 @@ a {
   --metric-color: var(--admin-danger);
 }
 
+.metric-secondary {
+  --metric-color: var(--admin-muted);
+}
+
 .metric-label {
   color: var(--admin-muted);
   font-size: var(--fs-xs);
@@ -702,6 +706,10 @@ a {
 
 .metric-danger .metric-icon {
   background: #ffecec;
+}
+
+.metric-secondary .metric-icon {
+  background: #eef1f5;
 }
 
 .metric-value {
