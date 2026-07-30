@@ -177,12 +177,13 @@ function programarRefresco() {
   }, 3500);
 }
 
-// Rellena las 4 tarjetas KPI con los conteos globales.
+// Rellena las tarjetas KPI con los conteos globales.
 function pintarKpis(totales) {
   document.getElementById("kpiTotal").textContent = Number(totales.total || 0);
   document.getElementById("kpiPendientes").textContent = Number(totales.pendientes || 0);
   document.getElementById("kpiEnProceso").textContent = Number(totales.en_proceso || 0);
   document.getElementById("kpiResueltas").textContent = Number(totales.resueltas || 0);
+  document.getElementById("kpiCerradas").textContent = Number(totales.cerradas || 0);
 }
 
 // Crea una gráfica destruyendo antes cualquiera ya montada en ese lienzo (idempotente al repintar).
